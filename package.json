@@ -1,0 +1,25 @@
+{
+	"name": "geckscript-lsp",
+	"publisher": "WarZone762",
+	"version": "0.1.0",
+	"engines": {
+		"node": "*"
+	},
+	"dependencies": {
+		"vscode-languageserver": "*",
+		"vscode-languageserver-textdocument": "*"
+	},
+	"devDependencies": {
+		"@types/node": "*",
+		"@typescript-eslint/eslint-plugin": "*",
+		"@typescript-eslint/parser": "*",
+		"eslint": "*",
+		"typescript": "*"
+	},
+	"scripts": {
+		"tsc-compile": "tsc -b",
+		"tsc-watch": "tsc -b -w",
+		"lint": "eslint ./src --ext .js, .ts, .tsx",
+		"clean": "rm -rf ./out"
+	}
+}
