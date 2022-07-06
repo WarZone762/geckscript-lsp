@@ -22,10 +22,10 @@ import * as htmlparser2 from "htmlparser2"
 import * as https from "https"
 import * as DomUtils from "DomUtils"
 
-function GetFunctionPageSource(func: string): Promise<string> {
+function GetFunctionPageSource(func_name: string): Promise<[string, string]> {
   var options: https.RequestOptions = {
     host: "geckwiki.com",
-    path: `/index.php?title=${func}&action=edit`
+    path: `/index.php?title=${func_name}&action=edit`
   };
 
   return new Promise((resolve, reject) => {
@@ -39,7 +39,7 @@ function GetFunctionPageSource(func: string): Promise<string> {
         if (/#redirect \[\[\w+\]\]/i.test(str)) {
           GetFunctionPageSource(str.match(/(?<=#redirect \[\[)\w+(?=\]\])/i)?.[0] ?? "").then(resolve);
         } else {
-          resolve(DomUtils.textContent(DomUtils.getElementsByTagName("textarea", htmlparser2.parseDocument(str))?.[0]));
+          resolve([func_name, DomUtils.textContent(DomUtils.getElementsByTagName("textarea", htmlparser2.parseDocument(str))?.[0])]);
         }
       });
     }).end();
@@ -47,26 +47,34 @@ function GetFunctionPageSource(func: string): Promise<string> {
 }
 
 interface FunctionData {
+  name: string;
   origin?: string;
   alias?: string;
   summary?: string;
-  arguments: Map<string, string>;
+  return_type?: string;
+  arguments: Array<string>;
 };
 
-function GetFunctionData(func: string): Promise<FunctionData> {
+function GetFunctionData(func_name: string): Promise<FunctionData> {
   var func_data: FunctionData = {
-    arguments: new Map<string, string>()
-  }
+    name: "",
+    arguments: []
+  };
 
   return new Promise((resolve, reject) => {
-    GetFunctionPageSource(func).then((page_source: string) => {
-      func_data.origin = page_source.match(/(?<=\|origin\s*=\s*)\S.*/i)?.[0];
-      func_data.alias = page_source.match(/(?<=\|alias\s*=\s*)\S.*/i)?.[0];
-      func_data.summary = page_source.match(/(?<=\|summary\s*=\s*)\S.*/i)?.[0];
-      var func_args = page_source.match(/(?<={.*?{.*?FunctionArgument.*?)(?<=\|(Type|Name)\s*?=\s*?)\w.*?(?=\s*}|$)(?=.*?}.*?})/sgim)
+    GetFunctionPageSource(func_name).then((data: [string, string]) => {
+      var func_true_name = data[0];
+      var page_source = data[1];
+
+      func_data.name = func_true_name;
+      func_data.origin = page_source.match(/(?<=\|origin\s*?=\s*?)\S.*/i)?.[0];
+      func_data.alias = page_source.match(/(?<=\|alias\s*?=\s*?)\S.*/i)?.[0];
+      func_data.summary = page_source.match(/(?<=\|summary\s*?=\s*?)\S.*/i)?.[0];
+      func_data.return_type = page_source.match(/(?<=\|returnType\s*?=\s*?)\S.*/i)?.[0];
+      var func_args = page_source.match(/(?<={.*?{.*?FunctionArgument.*?)(?<=\|(Type|Name)\s*?=\s*?)\w.*?(?=\s*?}|$)(?=.*?}.*?})/sgim)
       if (func_args) {
         for (let i = 0; i < func_args.length; i += 2) {
-          func_data.arguments?.set(func_args[i], func_args[i + 1]);
+          func_data.arguments.push(`${func_args[i]}:${func_args[i + 1]}`);
         }
       }
 
@@ -75,9 +83,34 @@ function GetFunctionData(func: string): Promise<FunctionData> {
   })
 }
 
-// GetFunctionPageSource("GetQR").then(console.log);
-GetFunctionData("GetQR").then(console.log);
-GetFunctionData("IsKeyPressed").then(console.log);
+function GetFuncCompletionStrings(func_data: FunctionData): [string, string] {
+  var detail = "";
+  var documentation = `Origin: ${func_data.origin}`;
+
+  if (func_data.return_type) {
+    detail += `(${func_data.return_type}) `;
+  }
+
+  detail += func_data.name;
+
+  func_data.arguments.forEach(argument => {
+    detail += ` ${argument}`;
+  });
+
+  if (func_data.summary) {
+    documentation += `\n\n${func_data.summary}`
+  }
+
+  if (func_data.alias) {
+    detail += `\nOr\n${detail.replace(func_data.name, func_data.alias)}`
+  }
+
+  return [detail, documentation];
+}
+
+// GetFunctionData("GetQR").then(console.log);
+GetFunctionData("GetQR").then((func_data) => console.log(GetFuncCompletionStrings(func_data)));
+GetFunctionData("IsKeyPressed").then((func_data) => console.log(GetFuncCompletionStrings(func_data)));
 
 var CompletionItems: {
   Functions: CompletionItem[];
