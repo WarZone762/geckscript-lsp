@@ -18,6 +18,10 @@ import {
 } from "vscode-languageserver-textdocument";
 
 import * as Completions from "./completions"
+
+import * as fs from "fs"
+import * as path from "path";
+
 import * as htmlparser2 from "htmlparser2"
 import * as https from "https"
 import * as DomUtils from "DomUtils"
@@ -55,14 +59,32 @@ function GetFunctionPageSource(func_name: string): Promise<[string, string]> {
   })
 }
 
+function SaveCache(data: { [key: string]: FunctionData }): void {
+  fs.writeFileSync(path.join(__dirname, "../cache.json"), JSON.stringify(data));
+}
+
+function LoadCache(): { [key: string]: FunctionData } {
+  if (!fs.existsSync(path.join(__dirname, "../cache.json"))) return {};
+
+  return JSON.parse(fs.readFileSync(path.join(__dirname, "../cache.json")).toString());
+}
+
+const DataCache: { [key: string]: FunctionData } = LoadCache();
+
 function GetFunctionData(func_name: string): Promise<FunctionData> {
   var func_data: FunctionData = {
     name: "",
     arguments: []
   };
 
-  return new Promise((resolve, reject) => {
-    return GetFunctionPageSource(func_name).then((data: [string, string]) => {
+  return new Promise<FunctionData>((resolve, reject) => {
+    var cached_data = DataCache[func_name];
+    if (cached_data) {
+      resolve(cached_data);
+      return;
+    }
+
+    GetFunctionPageSource(func_name).then((data: [string, string]) => {
       var func_true_name = data[0];
       var page_source = data[1];
 
@@ -77,6 +99,9 @@ function GetFunctionData(func_name: string): Promise<FunctionData> {
           func_data.arguments.push(`${func_args[i]}:${func_args[i + 1]}`);
         }
       }
+
+      DataCache[func_name] = func_data;
+      SaveCache(DataCache);
 
       resolve(func_data);
     })
