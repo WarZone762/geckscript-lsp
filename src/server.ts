@@ -22,6 +22,15 @@ import * as htmlparser2 from "htmlparser2"
 import * as https from "https"
 import * as DomUtils from "DomUtils"
 
+interface FunctionData {
+  name: string;
+  origin?: string;
+  alias?: string;
+  summary?: string;
+  return_type?: string;
+  arguments: Array<string>;
+};
+
 function GetFunctionPageSource(func_name: string): Promise<[string, string]> {
   var options: https.RequestOptions = {
     host: "geckwiki.com",
@@ -46,15 +55,6 @@ function GetFunctionPageSource(func_name: string): Promise<[string, string]> {
   })
 }
 
-interface FunctionData {
-  name: string;
-  origin?: string;
-  alias?: string;
-  summary?: string;
-  return_type?: string;
-  arguments: Array<string>;
-};
-
 function GetFunctionData(func_name: string): Promise<FunctionData> {
   var func_data: FunctionData = {
     name: "",
@@ -62,14 +62,14 @@ function GetFunctionData(func_name: string): Promise<FunctionData> {
   };
 
   return new Promise((resolve, reject) => {
-    GetFunctionPageSource(func_name).then((data: [string, string]) => {
+    return GetFunctionPageSource(func_name).then((data: [string, string]) => {
       var func_true_name = data[0];
       var page_source = data[1];
 
       func_data.name = func_true_name;
       func_data.origin = page_source.match(/(?<=\|origin\s*?=\s*?)\S.*/i)?.[0];
       func_data.alias = page_source.match(/(?<=\|alias\s*?=\s*?)\S.*/i)?.[0];
-      func_data.summary = page_source.match(/(?<=\|summary\s*?=\s*?)\S.*/i)?.[0];
+      func_data.summary = page_source.match(/(?<=\|summary\s*?=\s*?)\S.*?(?=\n.s*?\|)/is)?.[0];
       func_data.return_type = page_source.match(/(?<=\|returnType\s*?=\s*?)\S.*/i)?.[0];
       var func_args = page_source.match(/(?<={.*?{.*?FunctionArgument.*?)(?<=\|(Type|Name)\s*?=\s*?)\w.*?(?=\s*?}|$)(?=.*?}.*?})/sgim)
       if (func_args) {
@@ -83,9 +83,9 @@ function GetFunctionData(func_name: string): Promise<FunctionData> {
   })
 }
 
-function GetFuncCompletionStrings(func_data: FunctionData): [string, string] {
+function ConstructFuncCompletionStrings(func_data: FunctionData): [string, string] {
   var detail = "";
-  var documentation = `Origin: ${func_data.origin}`;
+  var documentation = "";
 
   if (func_data.return_type) {
     detail += `(${func_data.return_type}) `;
@@ -97,20 +97,22 @@ function GetFuncCompletionStrings(func_data: FunctionData): [string, string] {
     detail += ` ${argument}`;
   });
 
-  if (func_data.summary) {
-    documentation += `\n\n${func_data.summary}`
+  if (func_data.alias) {
+    documentation += `Or\n${detail.replace(func_data.name, func_data.alias)}\n\n`
   }
 
-  if (func_data.alias) {
-    detail += `\nOr\n${detail.replace(func_data.name, func_data.alias)}`
+  documentation += `Origin: ${func_data.origin}`;
+
+  if (func_data.summary) {
+    documentation += `\n\n${func_data.summary}`
   }
 
   return [detail, documentation];
 }
 
-// GetFunctionData("GetQR").then(console.log);
-GetFunctionData("GetQR").then((func_data) => console.log(GetFuncCompletionStrings(func_data)));
-GetFunctionData("IsKeyPressed").then((func_data) => console.log(GetFuncCompletionStrings(func_data)));
+function GetFuncCompletionStrings(func_name: string): Promise<[string, string]> {
+  return GetFunctionData(func_name).then(ConstructFuncCompletionStrings);
+}
 
 var CompletionItems: {
   Functions: CompletionItem[];
@@ -121,7 +123,8 @@ var CompletionItems: {
 for (let i = 0; i < Completions.Functions.length; i++) {
   CompletionItems.Functions[i] = {
     label: Completions.Functions[i],
-    kind: CompletionItemKind.Function
+    kind: CompletionItemKind.Function,
+    data: i
   };
 }
 
@@ -262,15 +265,19 @@ connection.onCompletion(
 // This handler resolves additional information for the item selected in
 // the completion list.
 connection.onCompletionResolve(
-  (item: CompletionItem): CompletionItem => {
-    if (item.data === 1) {
-      item.detail = "TypeScript details";
-      item.documentation = "TypeScript documentation";
-    } else if (item.data === 2) {
-      item.detail = "JavaScript details";
-      item.documentation = "JavaScript documentation";
-    }
-    return item;
+  (item: CompletionItem): Promise<CompletionItem> => {
+    return new Promise<CompletionItem>((resolve, reject) => {
+      if (item.data) {
+        GetFuncCompletionStrings(Completions.Functions[item.data]).then(
+          (data: [string, string]) => {
+            item.detail = data[0];
+            item.documentation = data[1];
+
+            resolve(item);
+          }
+        );
+      }
+    })
   }
 );
 
