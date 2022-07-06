@@ -7,7 +7,8 @@
 	},
 	"dependencies": {
 		"vscode-languageserver": "*",
-		"vscode-languageserver-textdocument": "*"
+		"vscode-languageserver-textdocument": "*",
+		"htmlparser2": "*"
 	},
 	"devDependencies": {
 		"@types/node": "*",
