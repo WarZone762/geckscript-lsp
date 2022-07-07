@@ -21,9 +21,9 @@ import {
   TextDocument
 } from "vscode-languageserver-textdocument";
 
-import * as Completions from "./completions";
-
+import * as Constructs from "./geckscript_constructs";
 import * as CompletionData from "./completion_data";
+import * as st from "./semantic_tokens";
 
 // Create a connection for the server, using Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -31,29 +31,6 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-
-enum TokenTypes {
-  function,
-  variable,
-  total
-}
-
-enum TokenModifiers {
-  declaration,
-  total
-}
-
-const legend: SemanticTokensLegend = {
-  tokenTypes: [],
-  tokenModifiers: []
-};
-
-for (let i = 0; i < TokenTypes.total; i++) {
-  legend.tokenTypes[i] = TokenTypes[i];
-}
-for (let i = 0; i < TokenTypes.total; i++) {
-  legend.tokenModifiers[i] = TokenModifiers[i];
-}
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
@@ -99,7 +76,7 @@ connection.onInitialize((params: InitializeParams) => {
         language: "GECKScript",
         scheme: "file"
       }],
-      legend: legend,
+      legend: st.Legend,
       full: true
     };
   }
@@ -107,17 +84,7 @@ connection.onInitialize((params: InitializeParams) => {
   return result;
 });
 
-connection.onRequest(SemanticTokensRequest.method, (
-  documentId: TextDocumentIdentifier,
-  progressToken: ProgressToken
-) => {
-  console.log(legend);
-  const tokensBuilder = new vsc.SemanticTokensBuilder();
-
-  tokensBuilder.push(0, 0, 5, TokenTypes["function"], TokenModifiers["declaration"]);
-
-  return tokensBuilder.build();
-});
+connection.onRequest(SemanticTokensRequest.method, st.onSemanticTokenRequestFull);
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
@@ -189,7 +156,7 @@ connection.onCompletionResolve(
     return new Promise<CompletionItem>((resolve, reject) => {
       if (item.data) {
         CompletionData.FunctionData.GetCompletionStrings(
-          Completions.Functions[item.data]
+          Constructs.Functions[item.data]
         ).then(
           (data: [string, string]) => {
             item.detail = data[0];

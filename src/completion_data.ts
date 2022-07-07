@@ -5,7 +5,7 @@ import * as https from "https";
 import * as htmlparser2 from "htmlparser2";
 import * as DomUtils from "DomUtils";
 
-import * as Completions from "./completions";
+import * as Constructs from "./geckscript_constructs";
 
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver/node";
 
@@ -136,9 +136,9 @@ export const CompletionItems: {
   Functions: []
 };
 
-for (let i = 0; i < Completions.Functions.length; i++) {
+for (let i = 0; i < Constructs.Functions.length; i++) {
   CompletionItems.Functions[i] = {
-    label: Completions.Functions[i],
+    label: Constructs.Functions[i],
     kind: CompletionItemKind.Function,
     data: i
   };
