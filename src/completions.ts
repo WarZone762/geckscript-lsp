@@ -1,4 +1,4 @@
-const Functions = [
+export const Functions: string[] = [
   "Abs",
   "Activate",
   "ActorHasBaseFlag",
@@ -3388,4 +3388,4 @@ const Functions = [
   "UnEquipObject",
   "UseWeapon",
   "WM"
-]
+];

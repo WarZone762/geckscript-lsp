@@ -5,153 +5,25 @@ import {
   DiagnosticSeverity,
   ProposedFeatures,
   InitializeParams,
-  DidChangeConfigurationNotification,
   CompletionItem,
-  CompletionItemKind,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
-  InitializeResult
+  InitializeResult,
+  SemanticTokensRequest,
+  SemanticTokensLegend,
+  TextDocumentIdentifier,
+  ProgressToken
 } from "vscode-languageserver/node";
+
+import * as vsc from "vscode-languageserver/node";
 
 import {
   TextDocument
 } from "vscode-languageserver-textdocument";
 
-import * as Completions from "./completions"
+import * as Completions from "./completions";
 
-import * as fs from "fs"
-import * as path from "path";
-
-import * as htmlparser2 from "htmlparser2"
-import * as https from "https"
-import * as DomUtils from "DomUtils"
-
-interface FunctionData {
-  name: string;
-  origin?: string;
-  alias?: string;
-  summary?: string;
-  return_type?: string;
-  arguments: Array<string>;
-};
-
-function GetFunctionPageSource(func_name: string): Promise<[string, string]> {
-  var options: https.RequestOptions = {
-    host: "geckwiki.com",
-    path: `/index.php?title=${func_name}&action=edit`
-  };
-
-  return new Promise((resolve, reject) => {
-    https.request(options, (response) => {
-      var str = "";
-
-      response.on("data", (chunk: string) => { str += chunk });
-
-      response.on("end", () => {
-        console.log("Request finished");
-        if (/#redirect \[\[\w+\]\]/i.test(str)) {
-          GetFunctionPageSource(str.match(/(?<=#redirect \[\[)\w+(?=\]\])/i)?.[0] ?? "").then(resolve);
-        } else {
-          resolve([func_name, DomUtils.textContent(DomUtils.getElementsByTagName("textarea", htmlparser2.parseDocument(str))?.[0])]);
-        }
-      });
-    }).end();
-  })
-}
-
-function SaveCache(data: { [key: string]: FunctionData }): void {
-  fs.writeFileSync(path.join(__dirname, "../cache.json"), JSON.stringify(data));
-}
-
-function LoadCache(): { [key: string]: FunctionData } {
-  if (!fs.existsSync(path.join(__dirname, "../cache.json"))) return {};
-
-  return JSON.parse(fs.readFileSync(path.join(__dirname, "../cache.json")).toString());
-}
-
-const DataCache: { [key: string]: FunctionData } = LoadCache();
-
-function GetFunctionData(func_name: string): Promise<FunctionData> {
-  var func_data: FunctionData = {
-    name: "",
-    arguments: []
-  };
-
-  return new Promise<FunctionData>((resolve, reject) => {
-    var cached_data = DataCache[func_name];
-    if (cached_data) {
-      resolve(cached_data);
-      return;
-    }
-
-    GetFunctionPageSource(func_name).then((data: [string, string]) => {
-      var func_true_name = data[0];
-      var page_source = data[1];
-
-      func_data.name = func_true_name;
-      func_data.origin = page_source.match(/(?<=\|origin\s*?=\s*?)\S.*/i)?.[0];
-      func_data.alias = page_source.match(/(?<=\|alias\s*?=\s*?)\S.*/i)?.[0];
-      func_data.summary = page_source.match(/(?<=\|summary\s*?=\s*?)\S.*?(?=\n.s*?\|)/is)?.[0];
-      func_data.return_type = page_source.match(/(?<=\|returnType\s*?=\s*?)\S.*/i)?.[0];
-      var func_args = page_source.match(/(?<={.*?{.*?FunctionArgument.*?)(?<=\|(Type|Name)\s*?=\s*?)\w.*?(?=\s*?}|$)(?=.*?}.*?})/sgim)
-      if (func_args) {
-        for (let i = 0; i < func_args.length; i += 2) {
-          func_data.arguments.push(`${func_args[i]}:${func_args[i + 1]}`);
-        }
-      }
-
-      DataCache[func_name] = func_data;
-      SaveCache(DataCache);
-
-      resolve(func_data);
-    })
-  })
-}
-
-function ConstructFuncCompletionStrings(func_data: FunctionData): [string, string] {
-  var detail = "";
-  var documentation = "";
-
-  if (func_data.return_type) {
-    detail += `(${func_data.return_type}) `;
-  }
-
-  detail += func_data.name;
-
-  func_data.arguments.forEach(argument => {
-    detail += ` ${argument}`;
-  });
-
-  if (func_data.alias) {
-    documentation += `Or\n${detail.replace(func_data.name, func_data.alias)}\n\n`
-  }
-
-  documentation += `Origin: ${func_data.origin}`;
-
-  if (func_data.summary) {
-    documentation += `\n\n${func_data.summary}`
-  }
-
-  return [detail, documentation];
-}
-
-function GetFuncCompletionStrings(func_name: string): Promise<[string, string]> {
-  return GetFunctionData(func_name).then(ConstructFuncCompletionStrings);
-}
-
-var CompletionItems: {
-  Functions: CompletionItem[];
-} = {
-  Functions: []
-};
-
-for (let i = 0; i < Completions.Functions.length; i++) {
-  CompletionItems.Functions[i] = {
-    label: Completions.Functions[i],
-    kind: CompletionItemKind.Function,
-    data: i
-  };
-}
+import * as CompletionData from "./completion_data";
 
 // Create a connection for the server, using Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -159,6 +31,29 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+enum TokenTypes {
+  function,
+  variable,
+  total
+}
+
+enum TokenModifiers {
+  declaration,
+  total
+}
+
+const legend: SemanticTokensLegend = {
+  tokenTypes: [],
+  tokenModifiers: []
+};
+
+for (let i = 0; i < TokenTypes.total; i++) {
+  legend.tokenTypes[i] = TokenTypes[i];
+}
+for (let i = 0; i < TokenTypes.total; i++) {
+  legend.tokenModifiers[i] = TokenModifiers[i];
+}
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
@@ -197,19 +92,31 @@ connection.onInitialize((params: InitializeParams) => {
       }
     };
   }
+
+  if (capabilities.textDocument?.semanticTokens) {
+    result.capabilities.semanticTokensProvider = {
+      documentSelector: [{
+        language: "GECKScript",
+        scheme: "file"
+      }],
+      legend: legend,
+      full: true
+    };
+  }
+
   return result;
 });
 
-connection.onInitialized(() => {
-  if (hasConfigurationCapability) {
-    // Register for all configuration changes.
-    connection.client.register(DidChangeConfigurationNotification.type, undefined);
-  }
-  if (hasWorkspaceFolderCapability) {
-    connection.workspace.onDidChangeWorkspaceFolders(_event => {
-      connection.console.log("Workspace folder change event received.");
-    });
-  }
+connection.onRequest(SemanticTokensRequest.method, (
+  documentId: TextDocumentIdentifier,
+  progressToken: ProgressToken
+) => {
+  console.log(legend);
+  const tokensBuilder = new vsc.SemanticTokensBuilder();
+
+  tokensBuilder.push(0, 0, 5, TokenTypes["function"], TokenModifiers["declaration"]);
+
+  return tokensBuilder.build();
 });
 
 // The content of a text document has changed. This event is emitted
@@ -225,7 +132,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   let m: RegExpExecArray | null;
 
   const diagnostics: Diagnostic[] = [];
-  while (m = pattern.exec(text)) {
+  while ((m = pattern.exec(text))) {
     const diagnostic: Diagnostic = {
       severity: DiagnosticSeverity.Warning,
       range: {
@@ -271,19 +178,7 @@ connection.onCompletion(
     // The pass parameter contains the position of the text document in
     // which code complete got requested. For the example we ignore this
     // info and always provide the same completion items.
-    return CompletionItems.Functions
-    return [
-      {
-        label: "TypeScript",
-        kind: CompletionItemKind.Text,
-        data: 1
-      },
-      {
-        label: "JavaScript",
-        kind: CompletionItemKind.Text,
-        data: 2
-      }
-    ];
+    return CompletionData.CompletionItems.Functions;
   }
 );
 
@@ -293,7 +188,9 @@ connection.onCompletionResolve(
   (item: CompletionItem): Promise<CompletionItem> => {
     return new Promise<CompletionItem>((resolve, reject) => {
       if (item.data) {
-        GetFuncCompletionStrings(Completions.Functions[item.data]).then(
+        CompletionData.FunctionData.GetCompletionStrings(
+          Completions.Functions[item.data]
+        ).then(
           (data: [string, string]) => {
             item.detail = data[0];
             item.documentation = data[1];
@@ -302,7 +199,7 @@ connection.onCompletionResolve(
           }
         );
       }
-    })
+    });
   }
 );
 
