@@ -10,12 +10,8 @@ import {
   TextDocumentSyncKind,
   InitializeResult,
   SemanticTokensRequest,
-  SemanticTokensLegend,
-  TextDocumentIdentifier,
-  ProgressToken
+  SemanticTokensParams
 } from "vscode-languageserver/node";
-
-import * as vsc from "vscode-languageserver/node";
 
 import {
   TextDocument
@@ -83,8 +79,6 @@ connection.onInitialize((params: InitializeParams) => {
 
   return result;
 });
-
-connection.onRequest(SemanticTokensRequest.method, st.onSemanticTokenRequestFull);
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
@@ -169,6 +163,12 @@ connection.onCompletionResolve(
     });
   }
 );
+
+connection.onRequest(SemanticTokensRequest.method, (
+  params: SemanticTokensParams
+) => {
+  return st.onSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
+});
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events

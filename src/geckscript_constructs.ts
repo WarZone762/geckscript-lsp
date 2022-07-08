@@ -1,3 +1,11 @@
+export const Types: string[] = [
+  "short",
+  "int",
+  "long",
+  "string_var",
+  "array_var"
+];
+
 export const Functions: string[] = [
   "Abs",
   "Activate",
