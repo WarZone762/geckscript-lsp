@@ -45,6 +45,48 @@ export const Keywords: ObjectMap = {
 
 export const KeywordsLower: ObjectMap = ObjectMapToLower(Keywords);
 
+export const BlockTypes: ObjectMap = {
+  "Function": true,
+  "GameMode": true,
+  "MenuMode": true,
+  "OnActivate": true,
+  "OnActorEquip": true,
+  "OnActorUnequip": true,
+  "OnAdd": true,
+  "OnClose": true,
+  "OnCombatEnd": true,
+  "OnDeath": true,
+  "OnDestructionStageChange": true,
+  "OnDrop": true,
+  "OnEquip": true,
+  "OnFire": true,
+  "OnGrab": true,
+  "OnHit": true,
+  "OnHitWith": true,
+  "OnLoad": true,
+  "OnMagicEffectHit": true,
+  "OnMurder": true,
+  "OnNPCActivate": true,
+  "OnOpen": true,
+  "OnPackageChange": true,
+  "OnPackageDone": true,
+  "OnPackageStart": true,
+  "OnRelease": true,
+  "OnReset": true,
+  "OnSell": true,
+  "OnStartCombat": true,
+  "OnTrigger": true,
+  "OnTriggerEnter": true,
+  "OnTriggerLeave": true,
+  "OnUnequip": true,
+  "SayToDone": true,
+  "ScriptEffectFinish": true,
+  "ScriptEffectStart": true,
+  "ScriptEffectUpdate": true,
+};
+
+export const BlockTypesLower: ObjectMap = ObjectMapToLower(BlockTypes);
+
 export const Operators: ObjectMap = {
   ":=": true,
   "+=": true,

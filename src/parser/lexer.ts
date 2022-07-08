@@ -1,3 +1,4 @@
+import { StringBuffer } from "../common";
 import * as Constructs from "../geckscript_constructs";
 
 export enum TokenType {
@@ -32,32 +33,13 @@ export class Token {
   }
 }
 
-export class StringBuffer {
-  buf: Buffer;
-  pos: number;
-
-  constructor(size: number) {
-    this.buf = Buffer.allocUnsafe(size * 4);
-    this.pos = 0;
-  }
-
-  append(char: string): void {
-    this.pos += this.buf.write(char, this.pos);
-  }
-
-  flush(): string {
-    const str = this.buf.toString(undefined, 0, this.pos);
-    this.pos = 0;
-
-    return str;
-  }
-}
-
 export class Lexer {
   data: string[];
   cur_line: number;
   cur_col: number;
   cur_char: string | undefined;
+
+  prev_token: Token | undefined;
 
   buf: StringBuffer;
 
@@ -76,6 +58,27 @@ export class Lexer {
   nextCharToBuf(): void {
     this.buf.append(this.cur_char as string);
     this.nextChar();
+  }
+
+  determineTokenType(data: string): TokenType {
+    data = data.toLowerCase();
+    if (data in Constructs.TypesLower) {
+      return TokenType.type;
+    } else if (data in Constructs.KeywordsLower) {
+      return TokenType.keyword;
+    } else if (
+      data in Constructs.BlockTypesLower &&
+      this.prev_token?.type === TokenType.keyword &&
+      this.prev_token.content.toLocaleLowerCase() === "begin"
+    ) {
+      return TokenType.keyword;
+    } else if (data in Constructs.Operators) {
+      return TokenType.operator;
+    } else if (data in Constructs.FunctionsLower) {
+      return TokenType.function;
+    } else {
+      return TokenType.variable;
+    }
   }
 
   constructCurrentToken(type: TokenType, content?: string): Token {
@@ -123,9 +126,7 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        const token = this.constructCurrentToken(TokenType.number);
-        this.nextChar();
-        return token;
+        return this.constructCurrentToken(TokenType.number);
       }
     }
 
@@ -133,38 +134,47 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    const token = this.constructCurrentToken(TokenType.number);
-    this.nextChar();
-    return token;
+    return this.constructCurrentToken(TokenType.number);
   }
 
   consumeWord(): Token {
-    while (this.cur_char !== undefined) {
-      if (/\s/.test(this.cur_char)) break;
-      this.nextCharToBuf();
+    if (/\w/.test(this.cur_char as string)) {
+      while (this.cur_char !== undefined) {
+        if (/\W/.test(this.cur_char)) break;
+        this.nextCharToBuf();
+      }
+    } else {
+      while (this.cur_char !== undefined) {
+        if (/\w|\s/.test(this.cur_char)) break;
+        this.nextCharToBuf();
+      }
     }
 
     const content = this.buf.flush();
 
-    return this.constructCurrentToken(Lexer.DetermineTokenType(content), content);
+    return this.constructCurrentToken(this.determineTokenType(content), content);
   }
 
   lexLine(): Token[] | undefined {
     if (this.data[this.cur_line] === undefined) return undefined;
 
     const tokens: Token[] = [];
+    let token: Token;
 
     this.consumeWhitespace();
     while (this.cur_char !== undefined) {
       if (this.cur_char === ";") {
-        tokens.push(this.consumeComment());
+        token = this.consumeComment();
       } else if (/["']/.test(this.cur_char)) {
-        tokens.push(this.consumeString());
+        token = this.consumeString();
       } else if (/\d|\./.test(this.cur_char)) {
-        tokens.push(this.consumeNumber());
+        token = this.consumeNumber();
       } else {
-        tokens.push(this.consumeWord());
+        token = this.consumeWord();
       }
+
+      tokens.push(token);
+      this.prev_token = token;
 
       this.consumeWhitespace();
     }
@@ -184,20 +194,5 @@ export class Lexer {
     }
 
     return tokens;
-  }
-
-  static DetermineTokenType(data: string): TokenType {
-    data = data.toLowerCase();
-    if (data in Constructs.TypesLower) {
-      return TokenType.type;
-    } else if (data in Constructs.KeywordsLower) {
-      return TokenType.keyword;
-    } else if (data in Constructs.Operators) {
-      return TokenType.operator;
-    } else if (data in Constructs.FunctionsLower) {
-      return TokenType.function;
-    } else {
-      return TokenType.unknown;
-    }
   }
 }
