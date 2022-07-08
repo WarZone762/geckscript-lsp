@@ -1,13 +1,14 @@
-import { Position } from "vscode-languageserver";
+import * as Constructs from "../geckscript_constructs";
 
 export enum TokenType {
   unknown,
-  block,
   comment,
-  declaration,
-  expression,
+  function,
+  number,
   keyword,
+  operator,
   string,
+  type,
   variable,
   TOTAL
 }
@@ -72,8 +73,13 @@ export class Lexer {
     this.cur_char = this.data[this.cur_line][++this.cur_col];
   }
 
-  constructCurrentToken(type: TokenType): Token {
-    const content = this.buf.flush();
+  nextCharToBuf(): void {
+    this.buf.append(this.cur_char as string);
+    this.nextChar();
+  }
+
+  constructCurrentToken(type: TokenType, content?: string): Token {
+    content = content ?? this.buf.flush();
     return new Token(type, { line: this.cur_line, column: this.cur_col - content.length }, content);
   }
 
@@ -85,9 +91,7 @@ export class Lexer {
 
   consumeComment(): Token {
     while (this.cur_char !== undefined) {
-      this.buf.append(this.cur_char);
-
-      this.nextChar();
+      this.nextCharToBuf();
     }
 
     return this.constructCurrentToken(TokenType.comment);
@@ -96,32 +100,53 @@ export class Lexer {
   consumeString(): Token {
     const quote: string = this.cur_char as string;
 
-    this.buf.append(quote);
-    this.nextChar();
+    this.nextCharToBuf();
 
     while (this.cur_char !== undefined) {
       if (this.cur_char === quote) {
-        this.buf.append(this.cur_char);
-        this.nextChar();
+        this.nextCharToBuf();
         break;
       }
-      this.buf.append(this.cur_char);
-
-      this.nextChar();
+      this.nextCharToBuf();
     }
 
     return this.constructCurrentToken(TokenType.string);
   }
 
+  consumeNumber(): Token {
+    this.nextCharToBuf();
+
+    while (this.cur_char !== undefined) {
+      if (/\d/.test(this.cur_char)) {
+        this.nextCharToBuf();
+      } else if (this.cur_char === ".") {
+        this.nextCharToBuf();
+        break;
+      } else {
+        const token = this.constructCurrentToken(TokenType.number);
+        this.nextChar();
+        return token;
+      }
+    }
+
+    while (this.cur_char !== undefined && /\d/.test(this.cur_char)) {
+      this.nextCharToBuf();
+    }
+
+    const token = this.constructCurrentToken(TokenType.number);
+    this.nextChar();
+    return token;
+  }
+
   consumeWord(): Token {
     while (this.cur_char !== undefined) {
       if (/\s/.test(this.cur_char)) break;
-      this.buf.append(this.cur_char);
-
-      this.nextChar();
+      this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.unknown);
+    const content = this.buf.flush();
+
+    return this.constructCurrentToken(Lexer.DetermineTokenType(content), content);
   }
 
   lexLine(): Token[] | undefined {
@@ -131,10 +156,12 @@ export class Lexer {
 
     this.consumeWhitespace();
     while (this.cur_char !== undefined) {
-      if (/["']/.test(this.cur_char)) {
-        tokens.push(this.consumeString());
-      } else if (this.cur_char === ";") {
+      if (this.cur_char === ";") {
         tokens.push(this.consumeComment());
+      } else if (/["']/.test(this.cur_char)) {
+        tokens.push(this.consumeString());
+      } else if (/\d|\./.test(this.cur_char)) {
+        tokens.push(this.consumeNumber());
       } else {
         tokens.push(this.consumeWord());
       }
@@ -157,5 +184,20 @@ export class Lexer {
     }
 
     return tokens;
+  }
+
+  static DetermineTokenType(data: string): TokenType {
+    data = data.toLowerCase();
+    if (data in Constructs.TypesLower) {
+      return TokenType.type;
+    } else if (data in Constructs.KeywordsLower) {
+      return TokenType.keyword;
+    } else if (data in Constructs.Operators) {
+      return TokenType.operator;
+    } else if (data in Constructs.FunctionsLower) {
+      return TokenType.function;
+    } else {
+      return TokenType.unknown;
+    }
   }
 }

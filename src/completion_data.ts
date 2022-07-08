@@ -136,9 +136,9 @@ export const CompletionItems: {
   Functions: []
 };
 
-for (let i = 0; i < Constructs.Functions.length; i++) {
+for (let i = 0; i < Object.keys(Constructs.Functions).length; i++) {
   CompletionItems.Functions[i] = {
-    label: Constructs.Functions[i],
+    label: Object.keys(Constructs.Functions)[i],
     kind: CompletionItemKind.Function,
     data: i
   };

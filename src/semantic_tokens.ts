@@ -7,7 +7,11 @@ import * as Lexer from "./parser/lexer";
 enum SemanticTokenTypes {
   comment,
   function,
+  keyword,
+  operator,
+  number,
   string,
+  type,
   variable,
   TOTAL
 }
@@ -57,8 +61,6 @@ export function onSemanticTokenRequestFull(
       );
     });
   });
-
-  tokensBuilder.push(0, 0, 5, SemanticTokenTypes["function"], SemanticTokenModifiers["declaration"]);
 
   return tokensBuilder.build();
 }

@@ -150,7 +150,7 @@ connection.onCompletionResolve(
     return new Promise<CompletionItem>((resolve, reject) => {
       if (item.data) {
         CompletionData.FunctionData.GetCompletionStrings(
-          Constructs.Functions[item.data]
+          Object.keys(Constructs.Functions)[item.data]
         ).then(
           (data: [string, string]) => {
             item.detail = data[0];
