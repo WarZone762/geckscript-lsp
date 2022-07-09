@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import * as Lexer from "../parser/lexer";
+import * as Lexer from "../geckscript/lexer";
 
 const data = fs.readFileSync(path.join(__dirname, "./test.gek")).toString();
 

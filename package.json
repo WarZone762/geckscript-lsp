@@ -8,12 +8,13 @@
 	"dependencies": {
 		"vscode-languageserver": "*",
 		"vscode-languageserver-textdocument": "*",
-		"htmlparser2": "*"
+		"turndown": "*"
 	},
 	"devDependencies": {
 		"@types/node": "*",
 		"@typescript-eslint/eslint-plugin": "*",
 		"@typescript-eslint/parser": "*",
+		"@types/turndown": "*",
 		"eslint": "*",
 		"typescript": "*"
 	},

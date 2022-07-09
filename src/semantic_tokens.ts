@@ -2,7 +2,7 @@ import { ProgressToken, SemanticTokensLegend } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as vsc from "vscode-languageserver/node";
-import * as Lexer from "./parser/lexer";
+import * as Lexer from "./geckscript/lexer";
 
 enum SemanticTokenTypes {
   comment,

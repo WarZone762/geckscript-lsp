@@ -1,5 +1,5 @@
 import { StringBuffer } from "../common";
-import * as Constructs from "../geckscript_constructs";
+import * as Constructs from "./tokens";
 
 export enum TokenType {
   unknown,
