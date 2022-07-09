@@ -82,7 +82,7 @@ async function GetWikiPage(page_title: string): Promise<string> {
   console.log(`Requesting "${page_title}" page`);
   return new Promise<string>((resolve, reject) => {
     https.get(
-      `https://geckwiki.com/api.php?action=parse&page=${page_title}&prop=text&disabletoc=1&format=json`,
+      `https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`,
       (response) => {
         let page = "";
 
