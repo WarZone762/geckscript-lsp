@@ -1,93 +1,73 @@
-type ObjectMap = {
-  [key: string]: boolean;
-}
-
-function ObjectMapToLower(upper: ObjectMap): ObjectMap {
-  const lower: ObjectMap = {};
-
-  for (const entry in upper) {
-    lower[entry.toLowerCase()] = true;
-  }
-
-  return lower;
-}
-
-export const Types: ObjectMap = {
-  "short": true,
-  "int": true,
-  "long": true,
-  "float": true,
-  "ref": true,
-  "string_var": true,
-  "array_var": true,
+export const Types: Record<string, string> = {
+  "short": "short",
+  "int": "int",
+  "long": "long",
+  "float": "float",
+  "ref": "ref",
+  "string_var": "string_var",
+  "array_var": "array_var",
 };
 
-export const TypesLower: ObjectMap = ObjectMapToLower(Types);
-
-export const Keywords: ObjectMap = {
-  "scn": true,
-  "ScriptName": true,
-  "begin": true,
-  "end": true,
-  "if": true,
-  "elseif": true,
-  "else": true,
-  "endif": true,
-  "while": true,
-  "loop": true,
-  "continue": true,
-  "break": true,
-  "return": true,
-  "set": true,
-  "to": true,
-  "let": true,
+export const Keywords: Record<string, string> = {
+  "scn": "scn",
+  "ScriptName": "ScriptName",
+  "begin": "begin",
+  "end": "end",
+  "if": "if",
+  "elseif": "elseif",
+  "else": "else",
+  "endif": "endif",
+  "while": "while",
+  "loop": "loop",
+  "continue": "continue",
+  "break": "break",
+  "return": "return",
+  "set": "set",
+  "to": "to",
+  "let": "let",
 };
 
-export const KeywordsLower: ObjectMap = ObjectMapToLower(Keywords);
-
-export const BlockTypes: ObjectMap = {
-  "Function": true,
-  "GameMode": true,
-  "MenuMode": true,
-  "OnActivate": true,
-  "OnActorEquip": true,
-  "OnActorUnequip": true,
-  "OnAdd": true,
-  "OnClose": true,
-  "OnCombatEnd": true,
-  "OnDeath": true,
-  "OnDestructionStageChange": true,
-  "OnDrop": true,
-  "OnEquip": true,
-  "OnFire": true,
-  "OnGrab": true,
-  "OnHit": true,
-  "OnHitWith": true,
-  "OnLoad": true,
-  "OnMagicEffectHit": true,
-  "OnMurder": true,
-  "OnNPCActivate": true,
-  "OnOpen": true,
-  "OnPackageChange": true,
-  "OnPackageDone": true,
-  "OnPackageStart": true,
-  "OnRelease": true,
-  "OnReset": true,
-  "OnSell": true,
-  "OnStartCombat": true,
-  "OnTrigger": true,
-  "OnTriggerEnter": true,
-  "OnTriggerLeave": true,
-  "OnUnequip": true,
-  "SayToDone": true,
-  "ScriptEffectFinish": true,
-  "ScriptEffectStart": true,
-  "ScriptEffectUpdate": true,
+export const BlockTypes: Record<string, string> = {
+  "Function": "Function",
+  "GameMode": "GameMode",
+  "MenuMode": "MenuMode",
+  "OnActivate": "OnActivate",
+  "OnActorEquip": "OnActorEquip",
+  "OnActorUnequip": "OnActorUnequip",
+  "OnAdd": "OnAdd",
+  "OnClose": "OnClose",
+  "OnCombatEnd": "OnCombatEnd",
+  "OnDeath": "OnDeath",
+  "OnDestructionStageChange": "OnDestructionStageChange",
+  "OnDrop": "OnDrop",
+  "OnEquip": "OnEquip",
+  "OnFire": "OnFire",
+  "OnGrab": "OnGrab",
+  "OnHit": "OnHit",
+  "OnHitWith": "OnHitWith",
+  "OnLoad": "OnLoad",
+  "OnMagicEffectHit": "OnMagicEffectHit",
+  "OnMurder": "OnMurder",
+  "OnNPCActivate": "OnNPCActivate",
+  "OnOpen": "OnOpen",
+  "OnPackageChange": "OnPackageChange",
+  "OnPackageDone": "OnPackageDone",
+  "OnPackageStart": "OnPackageStart",
+  "OnRelease": "OnRelease",
+  "OnReset": "OnReset",
+  "OnSell": "OnSell",
+  "OnStartCombat": "OnStartCombat",
+  "OnTrigger": "OnTrigger",
+  "OnTriggerEnter": "OnTriggerEnter",
+  "OnTriggerLeave": "OnTriggerLeave",
+  "OnUnequip": "OnUnequip",
+  "SayToDone": "SayToDone",
+  "ScriptEffectFinish": "ScriptEffectFinish",
+  "ScriptEffectStart": "ScriptEffectStart",
+  "ScriptEffectUpdate": "ScriptEffectUpdate",
 };
 
-export const BlockTypesLower: ObjectMap = ObjectMapToLower(BlockTypes);
-
-export const Operators: ObjectMap = {
+export const Operators: Record<string, boolean> = {
   ":=": true,
   "+=": true,
   "-=": true,
@@ -3491,16 +3471,53 @@ export const Functions: { [key: string]: string } = {
 
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 
-export const CompletionItems: {
-  Functions: CompletionItem[];
-} = {
-  Functions: []
+export const CompletionItems: { [key: string]: CompletionItem[] } = {
+  Types: [],
+  Keywords: [],
+  BlockTypes: [],
+  Functions: [],
+
+  All: []
 };
+
+export enum CompletionItemData {
+  OnWiki
+}
+
+Object.values(Types).forEach((v, i) => {
+  CompletionItems.Types[i] = {
+    label: v,
+    kind: CompletionItemKind.Keyword,
+    data: CompletionItemData.OnWiki
+  };
+});
+
+Object.values(Keywords).forEach((v, i) => {
+  CompletionItems.Keywords[i] = {
+    label: v,
+    kind: CompletionItemKind.Keyword,
+    data: CompletionItemData.OnWiki
+  };
+});
+
+Object.values(BlockTypes).forEach((v, i) => {
+  CompletionItems.BlockTypes[i] = {
+    label: v,
+    kind: CompletionItemKind.Constant,
+    data: CompletionItemData.OnWiki
+  };
+});
 
 Object.values(Functions).forEach((v, i) => {
   CompletionItems.Functions[i] = {
     label: v,
     kind: CompletionItemKind.Function,
-    data: i
+    data: CompletionItemData.OnWiki
   };
 });
+
+CompletionItems.All = CompletionItems.Types.concat(
+  CompletionItems.Keywords,
+  CompletionItems.BlockTypes,
+  CompletionItems.Functions
+);

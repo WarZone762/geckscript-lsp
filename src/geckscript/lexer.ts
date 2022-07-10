@@ -62,12 +62,12 @@ export class Lexer {
 
   determineTokenType(data: string): TokenType {
     data = data.toLowerCase();
-    if (data in Tokens.TypesLower) {
+    if (data in Tokens.Types) {
       return TokenType.type;
-    } else if (data in Tokens.KeywordsLower) {
+    } else if (data in Tokens.Keywords) {
       return TokenType.keyword;
     } else if (
-      data in Tokens.BlockTypesLower &&
+      data in Tokens.BlockTypes &&
       this.prev_token?.type === TokenType.keyword &&
       this.prev_token.content.toLocaleLowerCase() === "begin"
     ) {
