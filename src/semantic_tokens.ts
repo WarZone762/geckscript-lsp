@@ -4,34 +4,34 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import * as vsc from "vscode-languageserver/node";
 import * as Lexer from "./geckscript/lexer";
 
-enum SemanticTokenTypes {
-  comment,
-  function,
-  keyword,
-  operator,
-  number,
-  string,
-  type,
-  variable,
-  TOTAL
-}
-
-enum SemanticTokenModifiers {
-  declaration,
-  TOTAL
-}
-
 export const Legend: SemanticTokensLegend = {
-  tokenTypes: [],
-  tokenModifiers: []
+  tokenTypes: [
+    "comment",
+    "function",
+    "keyword",
+    "number",
+    "operator",
+    "string",
+    "type",
+    "variable",
+  ],
+  tokenModifiers: [
+    "declaration",
+  ]
 };
 
-for (let i = 0; i < SemanticTokenTypes.TOTAL; i++) {
-  Legend.tokenTypes[i] = SemanticTokenTypes[i];
-}
-for (let i = 0; i < SemanticTokenModifiers.TOTAL; i++) {
-  Legend.tokenModifiers[i] = SemanticTokenModifiers[i];
-}
+const TokenTypeMap: number[] = [];
+
+TokenTypeMap[Lexer.TokenType.unknown] = Legend.tokenTypes.indexOf("variable");
+TokenTypeMap[Lexer.TokenType.comment] = Legend.tokenTypes.indexOf("comment");
+TokenTypeMap[Lexer.TokenType.function] = Legend.tokenTypes.indexOf("function");
+TokenTypeMap[Lexer.TokenType.keyword] = Legend.tokenTypes.indexOf("keyword");
+TokenTypeMap[Lexer.TokenType.number] = Legend.tokenTypes.indexOf("number");
+TokenTypeMap[Lexer.TokenType.operator] = Legend.tokenTypes.indexOf("operator");
+TokenTypeMap[Lexer.TokenType.string] = Legend.tokenTypes.indexOf("string");
+TokenTypeMap[Lexer.TokenType.type] = Legend.tokenTypes.indexOf("type");
+TokenTypeMap[Lexer.TokenType.variable] = Legend.tokenTypes.indexOf("variable");
+
 
 export function onSemanticTokenRequestFull(
   document: TextDocument | undefined,
@@ -41,12 +41,9 @@ export function onSemanticTokenRequestFull(
   const tokensBuilder = new vsc.SemanticTokensBuilder();
   if (document === undefined) return tokensBuilder.build();
 
-  const text = document.getText();
-  const lexer = new Lexer.Lexer(text);
+  const tokens = Lexer.GetTokens(document.getText());
 
-  const tokens = lexer.getTokens();
-
-  tokens.forEach((line_tokens: Lexer.Token[]) => {
+  tokens.data.forEach((line_tokens: Lexer.Token[]) => {
     line_tokens.forEach((token: Lexer.Token) => {
       if (token.type == Lexer.TokenType.unknown) return;
 
@@ -54,10 +51,8 @@ export function onSemanticTokenRequestFull(
         token.position.line,
         token.position.column,
         token.length,
-        // eslint-disable-next-line
-        // @ts-ignore
-        SemanticTokenTypes[Lexer.TokenType[token.type]],
-        SemanticTokenModifiers["declaration"]
+        TokenTypeMap[token.type],
+        Legend.tokenModifiers.indexOf("declaration")
       );
     });
   });

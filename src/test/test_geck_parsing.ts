@@ -5,9 +5,9 @@ import * as Lexer from "../geckscript/lexer";
 
 const data = fs.readFileSync(path.join(__dirname, "./test.gek")).toString();
 
-const lexer = new Lexer.Lexer(data);
+const tokens = Lexer.GetTokens(data);
 
-lexer.getTokens().forEach((line_tokens: Lexer.Token[]) => {
+tokens.data.forEach((line_tokens: Lexer.Token[]) => {
   line_tokens.forEach((token: Lexer.Token) => {
     process.stdout.write(`{${token.content}}(${Lexer.TokenType[token.type]})`);
     process.stdout.write(" ");

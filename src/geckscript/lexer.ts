@@ -1,3 +1,4 @@
+import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
 import * as Tokens from "./tokens";
 
@@ -5,8 +6,8 @@ export enum TokenType {
   unknown,
   comment,
   function,
-  number,
   keyword,
+  number,
   operator,
   string,
   type,
@@ -62,19 +63,19 @@ export class Lexer {
 
   determineTokenType(data: string): TokenType {
     data = data.toLowerCase();
-    if (data in Tokens.Types) {
+    if (data in Tokens.TokensLower.Types) {
       return TokenType.type;
-    } else if (data in Tokens.Keywords) {
+    } else if (data in Tokens.TokensLower.Keywords) {
       return TokenType.keyword;
     } else if (
-      data in Tokens.BlockTypes &&
+      data in Tokens.TokensLower.BlockTypes &&
       this.prev_token?.type === TokenType.keyword &&
       this.prev_token.content.toLocaleLowerCase() === "begin"
     ) {
       return TokenType.keyword;
     } else if (data in Tokens.Operators) {
       return TokenType.operator;
-    } else if (data in Tokens.Functions) {
+    } else if (data in Tokens.TokensLower.Functions) {
       return TokenType.function;
     } else {
       return TokenType.variable;
@@ -185,7 +186,7 @@ export class Lexer {
     return tokens;
   }
 
-  getTokens(): Token[][] {
+  getTokens(): TokensStorage {
     const tokens: Token[][] = [];
     let line_tokens: Token[] | undefined;
 
@@ -193,6 +194,32 @@ export class Lexer {
       tokens.push(line_tokens as Token[]);
     }
 
-    return tokens;
+    return new TokensStorage(tokens);
   }
+}
+
+export class TokensStorage {
+  data: Token[][];
+
+  constructor(data: Token[][]) {
+    this.data = data;
+  }
+
+  getTokenAtPos(pos: Position): Token | null {
+    for (const token of this.data[pos.line]) {
+      if (
+        token.position.column <= pos.character &&
+        pos.character <= token.position.column + token.length
+      ) {
+        return token;
+      }
+    }
+
+    return null;
+  }
+}
+
+export function GetTokens(text: string): TokensStorage {
+  const lexer = new Lexer(text);
+  return lexer.getTokens();
 }

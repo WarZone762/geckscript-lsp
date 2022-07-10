@@ -1,3 +1,6 @@
+import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
+
+
 export const Types: Record<string, string> = {
   "short": "short",
   "int": "int",
@@ -3489,9 +3492,16 @@ export const Functions: { [key: string]: string } = {
   "WM": "WM",
 };
 
-import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
+export const All: Record<string, string> = {};
 
-export const CompletionItems: { [key: string]: CompletionItem[] } = {
+export const CompletionItems: {
+  Types: CompletionItem[];
+  Keywords: CompletionItem[];
+  BlockTypes: CompletionItem[];
+  Functions: CompletionItem[];
+
+  All: CompletionItem[];
+} = {
   Types: [],
   Keywords: [],
   BlockTypes: [],
@@ -3500,36 +3510,72 @@ export const CompletionItems: { [key: string]: CompletionItem[] } = {
   All: []
 };
 
+export const TokensLower: {
+  Types: Record<string, string>;
+  Keywords: Record<string, string>;
+  BlockTypes: Record<string, string>;
+  Functions: Record<string, string>;
+
+  All: Record<string, string>;
+} = {
+  Types: {},
+  Keywords: {},
+  BlockTypes: {},
+  Functions: {},
+
+  All: {},
+};
+
 Object.entries(Types).forEach((v, i) => {
+  All[v[0]] = v[1];
+
   CompletionItems.Types[i] = {
     label: v[0],
     kind: CompletionItemKind.Keyword,
     data: v[1]
   };
+
+  TokensLower.Types[v[0].toLowerCase()] = v[0];
+  TokensLower.All[v[0].toLowerCase()] = v[0];
 });
 
 Object.entries(Keywords).forEach((v, i) => {
+  All[v[0]] = v[1];
+
   CompletionItems.Keywords[i] = {
     label: v[0],
     kind: CompletionItemKind.Keyword,
     data: v[1]
   };
+
+  TokensLower.Keywords[v[0].toLowerCase()] = v[0];
+  TokensLower.All[v[0].toLowerCase()] = v[0];
 });
 
 Object.entries(BlockTypes).forEach((v, i) => {
+  All[v[0]] = v[1];
+
   CompletionItems.BlockTypes[i] = {
     label: v[0],
     kind: CompletionItemKind.Constant,
     data: v[1]
   };
+
+  TokensLower.BlockTypes[v[0].toLowerCase()] = v[0];
+  TokensLower.All[v[0].toLowerCase()] = v[0];
 });
 
 Object.entries(Functions).forEach((v, i) => {
+  All[v[0]] = v[1];
+
   CompletionItems.Functions[i] = {
     label: v[0],
     kind: CompletionItemKind.Function,
     data: v[1]
   };
+
+  TokensLower.Functions[v[0].toLowerCase()] = v[0];
+  TokensLower.All[v[0].toLowerCase()] = v[0];
 });
 
 CompletionItems.All = CompletionItems.Types.concat(

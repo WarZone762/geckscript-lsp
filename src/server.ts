@@ -17,11 +17,14 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as Tokens from "./geckscript/tokens";
 import * as Wiki from "./wiki";
-import * as st from "./semantic_tokens";
+import * as ST from "./semantic_tokens";
+
+import * as Lexer from "./geckscript/lexer";
 
 const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+const documents_tokens: Record<string, Lexer.TokensStorage> = {};
 
 connection.onInitialize((params: InitializeParams) => {
   const result: InitializeResult = {
@@ -48,8 +51,21 @@ connection.onInitialize((params: InitializeParams) => {
   return result;
 });
 
+documents.onDidChangeContent(
+  (params) => {
+    documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
+  }
+);
+
 connection.onCompletion(
-  (_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+  (params) => {
+    const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position);
+    if (token == null) return Tokens.CompletionItems.All;
+
+    if (token.type === Lexer.TokenType.comment || token.type === Lexer.TokenType.string) {
+      return null;
+    }
+
     return Tokens.CompletionItems.All;
   }
 );
@@ -66,27 +82,24 @@ connection.onCompletionResolve(
 );
 
 connection.onHover(
-  async (hover_params: HoverParams): Promise<Hover> => {
-    const doc = documents.get(hover_params.textDocument.uri);
-    const text = doc?.getText();
-    const offset = doc?.offsetAt(hover_params.position);
+  async (params: HoverParams): Promise<Hover | null> => {
+    const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position)?.content.toLowerCase();
+    if (token == null) return null;
 
-    const word = text?.match(new RegExp(`\\b\\w*(?<=^.{${offset}})\\w*\\b`, "s"))?.[0];
+    const page_title = Tokens.All[Tokens.TokensLower.All[token]];
 
-    const token = Tokens.CompletionItems.All.find(element => word?.toLowerCase() === element.label.toLowerCase());
+    if (page_title == null) return null;
 
-    const hover: Hover = {
-      contents: token?.label != undefined ? await Wiki.GetPageMarkdown(token.label) : ""
+    return {
+      contents: await Wiki.GetPageMarkdown(page_title)
     };
-
-    return hover;
   }
 );
 
 connection.onRequest(SemanticTokensRequest.method, (
   params: SemanticTokensParams
 ) => {
-  return st.onSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
+  return ST.onSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
 });
 
 documents.listen(connection);
