@@ -1,8 +1,6 @@
 import {
   createConnection,
   TextDocuments,
-  Diagnostic,
-  DiagnosticSeverity,
   ProposedFeatures,
   InitializeParams,
   CompletionItem,
@@ -24,8 +22,6 @@ const connection = createConnection(ProposedFeatures.all);
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 connection.onInitialize((params: InitializeParams) => {
-  const capabilities = params.capabilities;
-
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -57,9 +53,9 @@ connection.onCompletion(
 
 connection.onCompletionResolve(
   async (item: CompletionItem): Promise<CompletionItem> => {
-    if (item.data === Tokens.CompletionItemData.OnWiki) {
+    if (item.data != undefined) {
       item.detail = item.label;
-      item.documentation = await Wiki.GetPageMarkdown(item.label);
+      item.documentation = await Wiki.GetPageMarkdown(item.data);
     }
 
     return item;
