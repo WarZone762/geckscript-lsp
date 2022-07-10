@@ -36,14 +36,14 @@ HTMLToMDConverter.addRule("GECKWiki_code", {
   replacement: (content, node, options) => {
     return (
       "\n```GECKScript\n" +
-      `${content.replace(/\n$/, "")}\n` +
+      `${content.replace(/\n$/, "").replaceAll("\\", "")}\n` +
       "```\n"
     );
   }
 });
 
 HTMLToMDConverter.addRule("GECKWiki_tr", {
-  filter: ["tr"],
+  filter: "tr",
   replacement: (content, node, options) => {
     if (node.previousSibling != null) return content.replace(/\n$/, "") + "\n";
     return (
@@ -57,6 +57,22 @@ HTMLToMDConverter.addRule("GECKWiki_th", {
   filter: ["th", "td"],
   replacement: (content, node, options) => {
     return `|${content.replace(/\n$/, "")}${(node.nextSibling == null ? "|" : "")}`;
+  }
+});
+
+HTMLToMDConverter.addRule("GECKWiki_i", {
+  filter: "i",
+  replacement: (content, node, options) => {
+    return content;
+  }
+});
+
+HTMLToMDConverter.addRule("GECKWiki_div#contentSub", {
+  filter: (node, options) => {
+    return !!(node.tagName === "DIV" && node.id === "contentSub");
+  },
+  replacement: (content, node, options) => {
+    return "";
   }
 });
 
