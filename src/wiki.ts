@@ -109,20 +109,34 @@ async function GetWikiPage(page_title: string): Promise<string | undefined> {
   return JSON.parse(response)?.parse?.text?.["*"];
 }
 
+const PageMarkdownRequstsRunning: Record<string, Promise<MarkupContent>> = {};
+
 export async function GetPageMarkdown(page_title: string): Promise<MarkupContent> {
   if (DataCache.data?.[page_title] != undefined) return {
     kind: MarkupKind.Markdown,
     value: DataCache.data[page_title]
   };
 
-  const markdown = HTMLToMDConverter.turndown(await GetWikiPage(page_title) ?? "");
-  DataCache.data[page_title] = markdown;
-  DataCache.Save();
+  if (page_title in PageMarkdownRequstsRunning) {
+    return PageMarkdownRequstsRunning[page_title];
+  }
 
-  return {
-    kind: MarkupKind.Markdown,
-    value: markdown
-  };
+  const promise: Promise<MarkupContent> = GetWikiPage(page_title).then(markdown => {
+    markdown = HTMLToMDConverter.turndown(markdown ?? "");
+    DataCache.data[page_title] = markdown;
+    DataCache.Save();
+
+    delete PageMarkdownRequstsRunning[page_title];
+
+    return {
+      kind: MarkupKind.Markdown,
+      value: markdown
+    };
+  });
+
+  PageMarkdownRequstsRunning[page_title] = promise;
+
+  return promise;
 }
 
 export async function GetCategoryPages(category: string, types?: string | string[]): Promise<string[]> {
