@@ -1,5 +1,5 @@
 import { StringBuffer } from "../common";
-import * as Constructs from "./tokens";
+import * as Tokens from "./tokens";
 
 export enum TokenType {
   unknown,
@@ -62,19 +62,19 @@ export class Lexer {
 
   determineTokenType(data: string): TokenType {
     data = data.toLowerCase();
-    if (data in Constructs.TypesLower) {
+    if (data in Tokens.TypesLower) {
       return TokenType.type;
-    } else if (data in Constructs.KeywordsLower) {
+    } else if (data in Tokens.KeywordsLower) {
       return TokenType.keyword;
     } else if (
-      data in Constructs.BlockTypesLower &&
+      data in Tokens.BlockTypesLower &&
       this.prev_token?.type === TokenType.keyword &&
       this.prev_token.content.toLocaleLowerCase() === "begin"
     ) {
       return TokenType.keyword;
-    } else if (data in Constructs.Operators) {
+    } else if (data in Tokens.Operators) {
       return TokenType.operator;
-    } else if (data in Constructs.FunctionsLower) {
+    } else if (data in Tokens.Functions) {
       return TokenType.function;
     } else {
       return TokenType.variable;

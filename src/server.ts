@@ -137,7 +137,7 @@ connection.onCompletion(
     // The pass parameter contains the position of the text document in
     // which code complete got requested. For the example we ignore this
     // info and always provide the same completion items.
-    return Wiki.CompletionItems.Functions;
+    return Tokens.CompletionItems.Functions;
   }
 );
 
@@ -146,9 +146,8 @@ connection.onCompletion(
 connection.onCompletionResolve(
   async (item: CompletionItem): Promise<CompletionItem> => {
     if (item.data != undefined) {
-      const func_name = Object.keys(Tokens.Functions)[item.data];
-      item.detail = func_name;
-      item.documentation = await Wiki.GetPageMarkdown(func_name);
+      item.detail = item.label;
+      item.documentation = await Wiki.GetPageMarkdown(item.label);
     }
 
     return item;

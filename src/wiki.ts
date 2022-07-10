@@ -3,30 +3,12 @@ import * as path from "path";
 import * as https from "https";
 
 import {
-  CompletionItem,
-  CompletionItemKind,
   MarkupContent,
   MarkupKind
 } from "vscode-languageserver/node";
 
 import * as TurndownService from "turndown";
 
-import * as Tokens from "./geckscript/tokens";
-
-
-export const CompletionItems: {
-  Functions: CompletionItem[];
-} = {
-  Functions: []
-};
-
-for (let i = 0; i < Object.keys(Tokens.Functions).length; i++) {
-  CompletionItems.Functions[i] = {
-    label: Object.keys(Tokens.Functions)[i],
-    kind: CompletionItemKind.Function,
-    data: i
-  };
-}
 
 export class DataCache {
   static data: { [key: string]: string } = {};
@@ -45,7 +27,7 @@ export class DataCache {
 
 DataCache.Load();
 
-const HTMLToMDConverter = new TurndownService();
+export const HTMLToMDConverter = new TurndownService();
 
 HTMLToMDConverter.addRule("GECKWiki_code", {
   filter: (node, options) => {
@@ -78,27 +60,37 @@ HTMLToMDConverter.addRule("GECKWiki_th", {
   }
 });
 
-export async function RequestGet(url: string): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
+export async function RequestGet(url: string): Promise<string | undefined> {
+  console.log(`Starting request GET "${url}"`);
+
+  return new Promise<string | undefined>((resolve, reject) => {
     https.get(url, (response) => {
       let data = "";
 
       response.on("data", chunk => data += chunk);
 
       response.on("end", () => {
+        console.log(`Request GET ${url} successful`);
+
         resolve(data);
+      });
+
+      response.on("error", (error) => {
+        console.log(`Request GET ${url} failed (${error})`);
+
+        resolve(undefined);
       });
     }
     );
   });
 }
 
-async function GetWikiPage(page_title: string): Promise<string> {
-  console.log(`Requesting "${page_title}" page`);
+async function GetWikiPage(page_title: string): Promise<string | undefined> {
+  const response = await RequestGet(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`);
 
-  return JSON.parse(
-    await RequestGet(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`)
-  )?.parse?.text?.["*"];
+  if (response == undefined) return undefined;
+
+  return JSON.parse(response)?.parse?.text?.["*"];
 }
 
 export async function GetPageMarkdown(page_title: string): Promise<MarkupContent> {
@@ -107,7 +99,7 @@ export async function GetPageMarkdown(page_title: string): Promise<MarkupContent
     value: DataCache.data[page_title]
   };
 
-  const markdown = HTMLToMDConverter.turndown(await GetWikiPage(page_title));
+  const markdown = HTMLToMDConverter.turndown(await GetWikiPage(page_title) ?? "");
   DataCache.data[page_title] = markdown;
   DataCache.Save();
 
@@ -126,12 +118,14 @@ export async function GetCategoryPages(category: string, types?: string | string
 
   let response = JSON.parse(await RequestGet(
     `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&format=json`
-  ));
+  ) ?? "");
+
   response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));
+
   while (response?.continue?.cmcontinue != undefined) {
     response = JSON.parse(await RequestGet(
       `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&cmcontinue=${response?.continue?.cmcontinue}&format=json`
-    ));
+    ) ?? "");
     response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));
   }
 
