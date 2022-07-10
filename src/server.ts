@@ -8,7 +8,9 @@ import {
   TextDocumentSyncKind,
   InitializeResult,
   SemanticTokensRequest,
-  SemanticTokensParams
+  SemanticTokensParams,
+  HoverParams,
+  Hover
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -27,7 +29,8 @@ connection.onInitialize((params: InitializeParams) => {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       completionProvider: {
         resolveProvider: true
-      }
+      },
+      hoverProvider: true,
     }
   };
 
@@ -59,6 +62,24 @@ connection.onCompletionResolve(
     }
 
     return item;
+  }
+);
+
+connection.onHover(
+  async (hover_params: HoverParams): Promise<Hover> => {
+    const doc = documents.get(hover_params.textDocument.uri);
+    const text = doc?.getText();
+    const offset = doc?.offsetAt(hover_params.position);
+
+    const word = text?.match(new RegExp(`\\b\\w*(?<=^.{${offset}})\\w*\\b`, "s"))?.[0];
+
+    const token = Tokens.CompletionItems.All.find(element => word?.toLowerCase() === element.label.toLowerCase());
+
+    const hover: Hover = {
+      contents: token?.label != undefined ? await Wiki.GetPageMarkdown(token.label) : ""
+    };
+
+    return hover;
   }
 );
 
