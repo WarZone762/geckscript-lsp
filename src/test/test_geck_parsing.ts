@@ -1,16 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
+import { inspect } from "util";
 
 import * as Lexer from "../geckscript/lexer";
+import * as Parser from "../geckscript/parser";
 
-const data = fs.readFileSync(path.join(__dirname, "./test.gek")).toString();
+const data = fs.readFileSync(path.join(__dirname, "./test_geck_parsing.gek")).toString();
 
-const tokens = Lexer.GetTokens(data);
+const parser = new Parser.Parser(Lexer.GetTokens(data));
 
-tokens.data.forEach((line_tokens: Lexer.Token[]) => {
-  line_tokens.forEach((token: Lexer.Token) => {
-    process.stdout.write(`{${token.content}}(${Lexer.TokenType[token.type]})`);
-    process.stdout.write(" ");
-  });
-  process.stdout.write("\n");
-});
+const expr = new Parser.Expression(Parser.ExpressionType.script);
+
+parser.parseScope(expr);
+
+console.log(inspect(expr, false, null, true));
