@@ -3,23 +3,24 @@ import { Token, TokensStorage } from "./lexer";
 
 
 export enum ExpressionType {
+  arg_list,
   block_begin,
   block_foreach,
   block_if,
   block_while,
   expression,
+  function_call,
+  scope,
   script,
   TOTAL
 }
 
 export class Expression {
-  type: ExpressionType;
-  children: (Expression | Token)[];
+  type?: ExpressionType;
+  children?: Record<string | number, any>;  //TODO: make an object
   range: Range;
 
-  constructor(type: ExpressionType) {
-    this.type = type;
-    this.children = [];
+  constructor() {
     this.range = {
       start: {
         character: 0,
@@ -31,38 +32,121 @@ export class Expression {
       }
     };
   }
+
+  prettyPrint(tab = "  ", indentation = 0): void {
+    console.log(this.constructor.name);
+    for (const [k, v] of Object.entries(this.children ?? {})) {
+      process.stdout.write(tab.repeat(1 + indentation) + `${k}: `);
+      if (v?.prettyPrint != undefined) {
+        v.prettyPrint(tab, indentation + 1);
+      } else {
+        console.log(v?.content);
+      }
+    }
+  }
 }
 
-export class HeaderExpression extends Expression {
-  header: Expression;
-  header_range: Range;
+export class ArgList extends Expression {
+  children: (Expression | Token)[];
 
-  constructor(
-    type: ExpressionType,
-  ) {
-    super(type);
+  constructor() {
+    super();
 
-    this.header = new Expression(ExpressionType.expression);
-    this.header_range = {
-      start: {
-        character: 0,
-        line: 0
-      },
-      end: {
-        character: 0,
-        line: 0
-      }
+    this.type = ExpressionType.arg_list;
+    this.children = [];
+  }
+}
+
+export class Scope extends Expression {
+  children: Expression[];
+
+  constructor() {
+    super();
+
+    this.type = ExpressionType.scope;
+    this.children = [];
+  }
+}
+
+export class Script extends Scope {
+  name?: Token;
+
+  constructor() {
+    super();
+
+    this.type = ExpressionType.script;
+  }
+}
+
+export class FunctionCall extends Expression {
+  children: {
+    name: Token;
+    args: ArgList;
+  };
+
+  constructor(func: Token) {
+    super();
+
+    this.type = ExpressionType.function_call;
+    this.children = {
+      name: func,
+      args: new ArgList()
     };
   }
 }
 
-export class NamedExpression extends Expression {
-  name: string | undefined;
+export class BlockBegin extends Expression {
+  children: {
+    header: Expression;
+    body: Scope;
+    terninator?: Token;
+  };
 
-  constructor(type: ExpressionType, name?: string) {
-    super(type);
+  end?: Token;
 
-    this.name = name ?? undefined;
+  constructor() {
+    super();
+
+    this.type = ExpressionType.block_begin;
+    this.children = {
+      header: new Expression(),
+      body: new Scope()
+    };
+  }
+}
+
+export class BlockIf extends Expression {
+  children: {
+    if_blocks: [[Expression, Scope], ...[Expression, Scope][]];
+    else_block?: Scope;
+    terminator?: Token;
+  };
+
+  constructor() {
+    super();
+
+    this.type = ExpressionType.block_if;
+    this.children = {
+      if_blocks: [[new Expression(), new Scope()]]
+    };
+  }
+}
+
+export class BlockWhile extends Expression {
+  children: {
+    condition: Expression;
+    body: Scope;
+    terminator?: Token;
+  };
+
+  constructor() {
+    super();
+
+    this.type = ExpressionType.block_while;
+    this.children = {
+      condition: new Expression(),
+      body: new Scope()
+    };
   }
 }
 
@@ -103,66 +187,91 @@ export class Parser {
     }
   }
 
-  parseExpression(parent: Expression): void {
-    if (this.cur_token?.content == "set") {
-      return;
-    } else {
-      const expr = new NamedExpression(ExpressionType.expression);
-      expr.name = this.cur_token?.content;
-      this.nextTokenOnLine();
+  parseExpression(): Expression {
+    switch (this.cur_token?.content.toLowerCase()) {
+      case "set":
+        return new Expression();
 
-      while (this.cur_token != undefined) {
-        if (this.cur_token.content == "(") {
-          this.nextTokenOnLine();
-          this.parseExpression(expr);
-        } else if (this.cur_token.content == ")") {
-          break;
-        } else {
-          expr.children.push(this.cur_token);
-        }
+      case "begin":
+        return this.parseBlockBegin();
 
+      case "while":
+        return this.parseBlockWhile();
+
+      default:
+        return this.parseFuntionCall();
+    }
+  }
+
+  parseFuntionCall(): FunctionCall {
+    const func_call = new FunctionCall(this.cur_token as Token);
+    this.nextTokenOnLine();
+
+    while (this.cur_token != undefined) {
+      if (this.cur_token.content == "(") {
         this.nextTokenOnLine();
+        func_call.children.args.children.push(this.parseFuntionCall());
+        continue;
+      } else if (this.cur_token.content == ")") {
+        break;
+      } else {
+        func_call.children.args.children.push(this.cur_token);
       }
 
-      parent.children.push(expr);
+      this.nextTokenOnLine();
     }
+
+    this.nextToken();
+
+    return func_call;
   }
 
-  parseScope(parent: Expression): void {
-    if (parent.type == ExpressionType.script) {
-      while (this.cur_token != undefined) {
-        this.parseExpression(parent);
+  parseBlockBegin(): BlockBegin {
+    const block = new BlockBegin();
+
+    this.nextTokenOnLine();
+
+    block.children.header = this.parseFuntionCall();
+
+    while (this.cur_token != undefined) {
+      if (this.cur_token.content.toLowerCase() == "end") {
+        block.children.terninator = this.cur_token;
 
         this.nextToken();
-      }
-    } else if (parent.type == ExpressionType.block_if) {
-      return;
-    } else {
-      let terminator: string;
-      switch (parent.type) {
-        case ExpressionType.block_begin:
-          terminator = "end";
-          break;
-
-        case ExpressionType.block_foreach:
-        case ExpressionType.block_while:
-          terminator = "loop";
-          break;
-
-        default:
-          return;
+        break;
       }
 
-      while (this.cur_token != undefined && this.cur_token.content != terminator) {
-        this.parseExpression(parent);
-
-        this.nextToken();
-      }
+      block.children.body.children.push(this.parseExpression());
     }
+
+    return block;
   }
 
-  parse(): NamedExpression {
-    const script = new NamedExpression(ExpressionType.script);
+  parseBlockWhile(): BlockWhile {
+    const block = new BlockWhile();
+
+    this.nextTokenOnLine();
+
+    if (this.cur_token?.content == "(") this.nextTokenOnLine();
+
+    block.children.condition = this.parseExpression();
+
+    while (this.cur_token != undefined) {
+      if (this.cur_token.content.toLowerCase() == "loop") {
+        block.children.terminator = this.cur_token;
+
+        this.nextToken();
+        break;
+      }
+
+      block.children.body.children.push(this.parseExpression());
+    }
+
+    return block;
+  }
+
+  parse(): Script {
+    const script = new Script();
 
     if (this.cur_token == undefined) return script;
 
@@ -172,13 +281,15 @@ export class Parser {
     ) {
       this.nextTokenOnLine();
       if (this.cur_token != undefined) {
-        script.name = this.cur_token.content;
+        script.name = this.cur_token;
       }
 
       this.nextToken();
     }
 
-    this.parseScope(script);
+    while (this.cur_token != undefined) {
+      script.children.push(this.parseExpression());
+    }
 
     return script;
   }

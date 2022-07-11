@@ -9,8 +9,7 @@ const data = fs.readFileSync(path.join(__dirname, "./test_geck_parsing.gek")).to
 
 const parser = new Parser.Parser(Lexer.GetTokens(data));
 
-const expr = new Parser.Expression(Parser.ExpressionType.script);
+const expr = parser.parse();
 
-parser.parseScope(expr);
-
-console.log(inspect(expr, false, null, true));
+expr.prettyPrint();
+// console.log(inspect(expr, false, null, true));
