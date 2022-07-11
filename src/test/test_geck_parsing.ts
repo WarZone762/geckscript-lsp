@@ -11,5 +11,5 @@ const parser = new Parser.Parser(Lexer.GetTokens(data));
 
 const expr = parser.parse();
 
-expr.prettyPrint();
+Parser.Expression.PrettyPrint(expr);
 // console.log(inspect(expr, false, null, true));

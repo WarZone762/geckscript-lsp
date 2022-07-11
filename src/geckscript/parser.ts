@@ -3,7 +3,6 @@ import { Token, TokensStorage } from "./lexer";
 
 
 export enum ExpressionType {
-  arg_list,
   block_begin,
   block_foreach,
   block_if,
@@ -17,7 +16,7 @@ export enum ExpressionType {
 
 export class Expression {
   type?: ExpressionType;
-  children?: Record<string | number, any>;  //TODO: make an object
+  children?: Record<string | number, any>;
   range: Range;
 
   constructor() {
@@ -33,27 +32,22 @@ export class Expression {
     };
   }
 
-  prettyPrint(tab = "  ", indentation = 0): void {
-    console.log(this.constructor.name);
-    for (const [k, v] of Object.entries(this.children ?? {})) {
-      process.stdout.write(tab.repeat(1 + indentation) + `${k}: `);
-      if (v?.prettyPrint != undefined) {
-        v.prettyPrint(tab, indentation + 1);
-      } else {
-        console.log(v?.content);
+  static PrettyPrint(objects: any, tab = "  ", indent = 0) {
+    if (objects?.children != undefined) {
+      console.log(objects.constructor.name);
+      for (const [k, v] of Object.entries(objects.children)) {
+        process.stdout.write(tab.repeat(1 + indent) + `${k}: `);
+        this.PrettyPrint(v, tab, 1 + indent);
+      }
+    } else if (objects?.content != undefined) {
+      console.log(objects.content);
+    } else {
+      console.log(objects.constructor.name);
+      for (const [k, v] of Object.entries(objects)) {
+        process.stdout.write(tab.repeat(1 + indent) + `${k}: `);
+        this.PrettyPrint(v, tab, 1 + indent);
       }
     }
-  }
-}
-
-export class ArgList extends Expression {
-  children: (Expression | Token)[];
-
-  constructor() {
-    super();
-
-    this.type = ExpressionType.arg_list;
-    this.children = [];
   }
 }
 
@@ -65,6 +59,20 @@ export class Scope extends Expression {
 
     this.type = ExpressionType.scope;
     this.children = [];
+  }
+}
+
+export class ConditionBlock extends Expression {
+  children: {
+    condition?: Expression;
+    scope?: Scope;
+    terminator?: Token;
+  };
+
+  constructor() {
+    super();
+
+    this.children = {};
   }
 }
 
@@ -81,7 +89,7 @@ export class Script extends Scope {
 export class FunctionCall extends Expression {
   children: {
     name: Token;
-    args: ArgList;
+    args: (Expression | Token)[];
   };
 
   constructor(func: Token) {
@@ -90,7 +98,7 @@ export class FunctionCall extends Expression {
     this.type = ExpressionType.function_call;
     this.children = {
       name: func,
-      args: new ArgList()
+      args: []
     };
   }
 }
@@ -98,7 +106,7 @@ export class FunctionCall extends Expression {
 export class BlockBegin extends Expression {
   children: {
     header: Expression;
-    body: Scope;
+    body?: Scope;
     terninator?: Token;
   };
 
@@ -109,15 +117,14 @@ export class BlockBegin extends Expression {
 
     this.type = ExpressionType.block_begin;
     this.children = {
-      header: new Expression(),
-      body: new Scope()
+      header: new Expression()
     };
   }
 }
 
 export class BlockIf extends Expression {
   children: {
-    if_blocks: [[Expression, Scope], ...[Expression, Scope][]];
+    condition_blocks: ConditionBlock[];
     else_block?: Scope;
     terminator?: Token;
   };
@@ -127,7 +134,7 @@ export class BlockIf extends Expression {
 
     this.type = ExpressionType.block_if;
     this.children = {
-      if_blocks: [[new Expression(), new Scope()]]
+      condition_blocks: []
     };
   }
 }
@@ -135,7 +142,7 @@ export class BlockIf extends Expression {
 export class BlockWhile extends Expression {
   children: {
     condition: Expression;
-    body: Scope;
+    body?: Scope;
     terminator?: Token;
   };
 
@@ -144,8 +151,7 @@ export class BlockWhile extends Expression {
 
     this.type = ExpressionType.block_while;
     this.children = {
-      condition: new Expression(),
-      body: new Scope()
+      condition: new Expression()
     };
   }
 }
@@ -195,6 +201,9 @@ export class Parser {
       case "begin":
         return this.parseBlockBegin();
 
+      case "if":
+        return this.parseBlockIf();
+
       case "while":
         return this.parseBlockWhile();
 
@@ -210,12 +219,12 @@ export class Parser {
     while (this.cur_token != undefined) {
       if (this.cur_token.content == "(") {
         this.nextTokenOnLine();
-        func_call.children.args.children.push(this.parseFuntionCall());
+        func_call.children.args.push(this.parseFuntionCall());
         continue;
       } else if (this.cur_token.content == ")") {
         break;
       } else {
-        func_call.children.args.children.push(this.cur_token);
+        func_call.children.args.push(this.cur_token);
       }
 
       this.nextTokenOnLine();
@@ -226,6 +235,49 @@ export class Parser {
     return func_call;
   }
 
+  parseScope(terminators?: string | string[]): [Scope, Token?] {
+    const scope = new Scope();
+
+    if (terminators != undefined) {
+      const terminators_map: Record<string, boolean> = {};
+      const empty: string[] = [];
+      empty.concat(terminators).forEach(t => terminators_map[t] = true);
+
+      while (this.cur_token != undefined) {
+        if (this.cur_token.content.toLowerCase() in terminators_map) {
+          const terminator_token = this.cur_token;
+          this.nextToken();
+
+          return [scope, terminator_token];
+        }
+
+        scope.children.push(this.parseExpression());
+      }
+    } else {
+      while (this.cur_token != undefined) {
+        scope.children.push(this.parseExpression());
+      }
+    }
+
+    return [scope, undefined];
+  }
+
+  parseConditionBlock(): ConditionBlock {
+    const block = new ConditionBlock();
+
+    this.nextTokenOnLine();
+
+    if (this.cur_token?.content == "(") this.nextTokenOnLine();
+
+    block.children.condition = this.parseExpression();
+
+    [block.children.scope, block.children.terminator] = this.parseScope([
+      "elseif", "else", "endif"
+    ]);
+
+    return block;
+  }
+
   parseBlockBegin(): BlockBegin {
     const block = new BlockBegin();
 
@@ -233,15 +285,33 @@ export class Parser {
 
     block.children.header = this.parseFuntionCall();
 
-    while (this.cur_token != undefined) {
-      if (this.cur_token.content.toLowerCase() == "end") {
-        block.children.terninator = this.cur_token;
+    [block.children.body, block.children.terninator] = this.parseScope("end");
 
-        this.nextToken();
-        break;
+    return block;
+  }
+
+  parseBlockIf(): BlockIf {
+    const block = new BlockIf();
+
+    let last_block = this.parseConditionBlock();
+
+    while (last_block.children.terminator != undefined) {
+      block.children.condition_blocks.push(last_block);
+
+      if (last_block.children.terminator.content == "else") {
+        [
+          block.children.else_block,
+          block.children.terminator
+        ] = this.parseScope("endif");
+
+        return block;
+      } else if (last_block.children.terminator.content == "endif") {
+        block.children.terminator = last_block.children.terminator;
+
+        return block;
       }
 
-      block.children.body.children.push(this.parseExpression());
+      last_block = this.parseConditionBlock();
     }
 
     return block;
@@ -256,16 +326,8 @@ export class Parser {
 
     block.children.condition = this.parseExpression();
 
-    while (this.cur_token != undefined) {
-      if (this.cur_token.content.toLowerCase() == "loop") {
-        block.children.terminator = this.cur_token;
+    [block.children.body, block.children.terminator] = this.parseScope("loop");
 
-        this.nextToken();
-        break;
-      }
-
-      block.children.body.children.push(this.parseExpression());
-    }
 
     return block;
   }
