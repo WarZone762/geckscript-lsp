@@ -1,5 +1,4 @@
-import { Position, Range } from "vscode-languageserver-textdocument";
-import { Token, TokensStorage } from "./lexer";
+import { GetTokens, Lexer, Token, TokenPosition, TokensStorage } from "./lexer";
 
 
 export enum ExpressionType {
@@ -14,25 +13,68 @@ export enum ExpressionType {
   TOTAL
 }
 
+export type Range = {
+  start: TokenPosition,
+  end: TokenPosition
+}
+
 export class Expression {
   type?: ExpressionType;
-  children?: Record<string | number, any>;
   range: Range;
+  children?: Record<string | number, any>;
 
   constructor() {
     this.range = {
       start: {
-        character: 0,
+        column: 0,
         line: 0
       },
       end: {
-        character: 0,
+        column: 0,
         line: 0
       }
     };
   }
 
-  static PrettyPrint(objects: any, tab = "  ", indent = 0) {
+  getTokenAtPos(pos: TokenPosition): Element | undefined {
+    if (this.children == undefined) return undefined;
+
+    for (const [k, v] of Object.entries(this.children)) {
+      if (v?.getTokenAtPos != undefined) {
+        const result = v.getTokenAtPos(pos);
+        if (result != undefined) return result;
+
+        if (
+          v.range.start.line <= pos.line &&
+          v.range.start.column <= pos.column &&
+          v.range.end.line >= pos.line &&
+          v.range.end.column >= pos.column
+        ) {
+          return v;
+        }
+      } else if (v?.isArray != undefined && v.isArray() == true) {
+        v.forEach((entry: any) => {
+          if (entry?.getTokenAtPos != undefined) {
+            const result = entry.getTokenAtPos(pos);
+            if (result != undefined) return result;
+
+            if (
+              entry.range.start.line <= pos.line &&
+              entry.range.start.column <= pos.column &&
+              entry.range.end.line >= pos.line &&
+              entry.range.end.column >= pos.column
+            ) {
+              return entry;
+            }
+          }
+        });
+      }
+    }
+
+    return undefined;
+  }
+
+  static PrettyPrint(objects: any, tab = "  ", indent = 0): void {
     if (objects?.children != undefined) {
       console.log(objects.constructor.name);
       for (const [k, v] of Object.entries(objects.children)) {
@@ -76,13 +118,19 @@ export class ConditionBlock extends Expression {
   }
 }
 
-export class Script extends Scope {
-  name?: Token;
+export class Script extends Expression {
+  children: {
+    name?: Token;
+    scope: Scope;
+  };
 
   constructor() {
     super();
 
     this.type = ExpressionType.script;
+    this.children = {
+      scope: new Scope()
+    };
   }
 }
 
@@ -107,10 +155,8 @@ export class BlockBegin extends Expression {
   children: {
     header: Expression;
     body?: Scope;
-    terninator?: Token;
+    terminator?: Token;
   };
-
-  end?: Token;
 
   constructor() {
     super();
@@ -159,14 +205,14 @@ export class BlockWhile extends Expression {
 export class Parser {
   data: TokensStorage;
 
-  cur_token_pos: Position;
+  cur_token_pos: TokenPosition;
   cur_token: Token | undefined;
 
   constructor(data: TokensStorage) {
     this.data = data;
 
     this.cur_token_pos = {
-      character: 0,
+      column: 0,
       line: 0
     };
 
@@ -178,12 +224,12 @@ export class Parser {
   }
 
   nextLine(): void {
-    this.cur_token_pos.character = 0;
+    this.cur_token_pos.column = 0;
     this.cur_token = this.data.data?.[++this.cur_token_pos.line]?.[0];
   }
 
   nextTokenOnLine(): void {
-    this.cur_token = this.data.data?.[this.cur_token_pos.line]?.[++this.cur_token_pos.character];
+    this.cur_token = this.data.data?.[this.cur_token_pos.line]?.[++this.cur_token_pos.column];
   }
 
   nextToken(): void {
@@ -213,7 +259,8 @@ export class Parser {
   }
 
   parseFuntionCall(): FunctionCall {
-    const func_call = new FunctionCall(this.cur_token as Token);
+    const func_call = new FunctionCall(this.cur_token!);
+    func_call.range.start = this.cur_token!.position;
     this.nextTokenOnLine();
 
     while (this.cur_token != undefined) {
@@ -222,10 +269,13 @@ export class Parser {
         func_call.children.args.push(this.parseFuntionCall());
         continue;
       } else if (this.cur_token.content == ")") {
+        func_call.range.end = this.cur_token!.getLastPos();
         break;
       } else {
         func_call.children.args.push(this.cur_token);
       }
+
+      func_call.range.end = this.cur_token!.getLastPos();
 
       this.nextTokenOnLine();
     }
@@ -238,6 +288,8 @@ export class Parser {
   parseScope(terminators?: string | string[]): [Scope, Token?] {
     const scope = new Scope();
 
+    scope.range.start = this.cur_token!.position;
+
     if (terminators != undefined) {
       const terminators_map: Record<string, boolean> = {};
       const empty: string[] = [];
@@ -246,6 +298,9 @@ export class Parser {
       while (this.cur_token != undefined) {
         if (this.cur_token.content.toLowerCase() in terminators_map) {
           const terminator_token = this.cur_token;
+
+          scope.range.end = terminator_token.getLastPos();
+
           this.nextToken();
 
           return [scope, terminator_token];
@@ -256,6 +311,8 @@ export class Parser {
     } else {
       while (this.cur_token != undefined) {
         scope.children.push(this.parseExpression());
+
+        scope.range.end = this.cur_token.getLastPos();
       }
     }
 
@@ -264,6 +321,8 @@ export class Parser {
 
   parseConditionBlock(): ConditionBlock {
     const block = new ConditionBlock();
+
+    block.range.start = this.cur_token!.position;
 
     this.nextTokenOnLine();
 
@@ -275,23 +334,42 @@ export class Parser {
       "elseif", "else", "endif"
     ]);
 
+    if (block.children.terminator != undefined) {
+      block.range.end = block.children.terminator.getLastPos();
+    } else {
+      block.range.end = this.cur_token_pos;
+      block.range.end.column = Infinity;
+    }
+
     return block;
   }
 
   parseBlockBegin(): BlockBegin {
     const block = new BlockBegin();
 
+    block.range.start = this.cur_token!.position;
+
     this.nextTokenOnLine();
 
     block.children.header = this.parseFuntionCall();
 
-    [block.children.body, block.children.terninator] = this.parseScope("end");
+    [block.children.body, block.children.terminator] = this.parseScope("end");
+
+    if (block.children.terminator != undefined) {
+      block.range.end = block.children.terminator.getLastPos();
+    } else {
+      block.range.end = this.cur_token_pos;
+      block.range.end.column = Infinity;
+    }
+
 
     return block;
   }
 
   parseBlockIf(): BlockIf {
     const block = new BlockIf();
+
+    block.range.start = this.cur_token!.position;
 
     let last_block = this.parseConditionBlock();
 
@@ -304,9 +382,18 @@ export class Parser {
           block.children.terminator
         ] = this.parseScope("endif");
 
+        if (block.children.terminator != undefined) {
+          block.range.end = block.children.terminator.getLastPos();
+        } else {
+          block.range.end = this.cur_token_pos;
+          block.range.end.column = Infinity;
+        }
+
         return block;
       } else if (last_block.children.terminator.content == "endif") {
         block.children.terminator = last_block.children.terminator;
+
+        block.range.end = block.children.terminator.getLastPos();
 
         return block;
       }
@@ -314,11 +401,16 @@ export class Parser {
       last_block = this.parseConditionBlock();
     }
 
+    block.range.end = this.cur_token_pos;
+    block.range.end.column = Infinity;
+
     return block;
   }
 
   parseBlockWhile(): BlockWhile {
     const block = new BlockWhile();
+
+    block.range.start = this.cur_token!.position;
 
     this.nextTokenOnLine();
 
@@ -328,6 +420,12 @@ export class Parser {
 
     [block.children.body, block.children.terminator] = this.parseScope("loop");
 
+    if (block.children.terminator != undefined) {
+      block.range.end = block.children.terminator.getLastPos();
+    } else {
+      block.range.end = this.cur_token_pos;
+      block.range.end.column = Infinity;
+    }
 
     return block;
   }
@@ -337,22 +435,33 @@ export class Parser {
 
     if (this.cur_token == undefined) return script;
 
+    script.range.start = this.cur_token!.position;
+
     if (
       this.cur_token.content.toLowerCase() == "scn" ||
       this.cur_token.content.toLowerCase() == "scriptname"
     ) {
       this.nextTokenOnLine();
       if (this.cur_token != undefined) {
-        script.name = this.cur_token;
+        script.children.name = this.cur_token;
       }
 
       this.nextToken();
     }
 
     while (this.cur_token != undefined) {
-      script.children.push(this.parseExpression());
+      script.children.scope.children.push(this.parseExpression());
     }
+
+    script.range.end = this.cur_token_pos;
+    script.range.end.column = Infinity;
 
     return script;
   }
+}
+
+export function GetAST(text: string): Script {
+  const parser = new Parser(GetTokens(text));
+
+  return parser.parse();
 }

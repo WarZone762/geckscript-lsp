@@ -7,9 +7,6 @@ import * as Parser from "../geckscript/parser";
 
 const data = fs.readFileSync(path.join(__dirname, "./test_geck_parsing.gek")).toString();
 
-const parser = new Parser.Parser(Lexer.GetTokens(data));
-
-const expr = parser.parse();
-
-Parser.Expression.PrettyPrint(expr);
-// console.log(inspect(expr, false, null, true));
+// Parser.Expression.PrettyPrint(Parser.GetAST(data));
+console.log(inspect(Parser.GetAST(data).getTokenAtPos({ column: 11, line: 12 }), false, null, true));
+// console.log(inspect(Lexer.GetTokens(data), false, null, true));

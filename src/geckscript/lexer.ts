@@ -32,6 +32,15 @@ export class Token {
     this.content = content;
     this.length = content.length;
   }
+
+  getLastPos(): TokenPosition {
+    const pos: TokenPosition = {
+      column: this.position.column + this.length - 1,
+      line: this.position.line
+    };
+
+    return pos;
+  }
 }
 
 export class Lexer {
