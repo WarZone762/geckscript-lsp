@@ -3,7 +3,8 @@ import * as Tokens from "./tokens";
 
 
 export enum NodeType {
-  assignment_statement,
+  assignment,
+  begin_block,
   comment,
   compound_statement,
   empty,
@@ -121,13 +122,13 @@ export class FunctionNode extends Node {
   }
 }
 
-export class AssignmentStatementNode extends Node {
+export class AssignmentNode extends Node {
   token: Token;
   variable: VariableNode;
   value: Node;
 
   constructor(token: Token, variable: VariableNode, value: Node) {
-    super(NodeType.assignment_statement);
+    super(NodeType.assignment);
 
     this.token = token;
     this.variable = variable;
@@ -142,6 +143,20 @@ export class CompoundStatementNode extends Node {
     super(NodeType.compound_statement);
 
     this.children = [];
+  }
+}
+
+export class BeginBlockNode extends Node {
+  token: Token;
+  expression?: Node;
+  compound_statement: CompoundStatementNode;
+
+  constructor(token: Token, expression: Node | undefined, compound_statement: CompoundStatementNode) {
+    super(NodeType.begin_block);
+
+    this.token = token;
+    this.expression = expression;
+    this.compound_statement = compound_statement;
   }
 }
 
@@ -161,7 +176,7 @@ export class Script extends Node {
   }
 }
 
-export const StatementListTerminators = {
+export const CompoundStatementTerminators = {
   "end": true,
   "loop": true,
   "elseif": true,
@@ -172,7 +187,7 @@ export const StatementListTerminators = {
 /*
   * GRAMMAR
 
-  program:
+  script:
     (scn | ScriptName) variable
     statement_list
 
@@ -182,19 +197,25 @@ export const StatementListTerminators = {
     statement
     statement_list
 
+  begin_block:
+    BEGIN expression?
+      statement_list
+    END
+
   statement:
     assignment_statement
+    |
     empty
-
-  assignment_statement:
-    SET variable TO expression
 
   expression:
     LPAREN? function | literal | variable RPAREN?
 
+  assignment:
+    SET variable TO expression
+
   function: FUNCTION expression*
 
-  variable declaration:
+  variable_declaration:
     TYPE variable
 
   variable:
@@ -291,7 +312,7 @@ export class Parser {
     return new VariableDeclarationNode(type_token, variable);
   }
 
-  parseAssignmentStatementSet(): AssignmentStatementNode {
+  parseAssignmentSet(): AssignmentNode {
     const set_token = this.cur_token!;
 
     this.nextToken();
@@ -300,10 +321,10 @@ export class Parser {
 
     this.nextToken();
 
-    return new AssignmentStatementNode(set_token, variable, this.parseExpression());
+    return new AssignmentNode(set_token, variable, this.parseExpression());
   }
 
-  parseAssignmentStatementLet(): AssignmentStatementNode {
+  parseAssignmentLet(): AssignmentNode {
     const let_token = this.cur_token!;
 
     this.nextToken();
@@ -317,7 +338,7 @@ export class Parser {
 
     this.nextToken();
 
-    return new AssignmentStatementNode(let_token, variable, this.parseExpression());
+    return new AssignmentNode(let_token, variable, this.parseExpression());
   }
 
   parseExpression(): Node {
@@ -344,10 +365,12 @@ export class Parser {
   parseStatement(): Node {
     if (this.cur_token?.content[0] === ";") {
       return this.parseComment();
-    } else if (this.cur_token?.content === "set") {
-      return this.parseAssignmentStatementSet();
-    } else if (this.cur_token?.content === "let") {
-      return this.parseAssignmentStatementLet();
+    } else if (this.cur_token?.content.toLowerCase() === "set") {
+      return this.parseAssignmentSet();
+    } else if (this.cur_token?.content.toLowerCase() === "let") {
+      return this.parseAssignmentLet();
+    } else if (this.cur_token?.content.toLowerCase() === "begin") {
+      return this.parseBeginBlock();
     } else if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
       return this.parseVariableDeclaration();
     } else {
@@ -360,7 +383,7 @@ export class Parser {
 
     while (
       this.cur_token != undefined &&
-      !(this.cur_token!.content in StatementListTerminators)
+      !(this.cur_token!.content in CompoundStatementTerminators)
     ) {
       nodes.push(this.parseStatement());
     }
@@ -368,9 +391,24 @@ export class Parser {
     return nodes;
   }
 
-  parseCompundStatement(): CompoundStatementNode {
+  parseBeginBlock(): BeginBlockNode {
+    const token = this.cur_token!;
+
     this.nextToken();
 
+    let expression;
+    if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.BlockTypes) {
+      expression = this.parseExpression();
+    } else {
+      expression = undefined;
+    }
+
+    const compound_statement = this.parseCompundStatement();
+
+    return new BeginBlockNode(token, expression, compound_statement);
+  }
+
+  parseCompundStatement(): CompoundStatementNode {
     const compound_statement = new CompoundStatementNode();
 
     compound_statement.children = this.parseStatementList();
