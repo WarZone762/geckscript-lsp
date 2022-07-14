@@ -12,6 +12,7 @@ export enum NodeType {
   script,
   string_literal,
   variable,
+  variable_declaration,
 }
 
 export type Range = {
@@ -90,6 +91,21 @@ export class VariableNode extends Node {
   }
 }
 
+export class VariableDeclarationNode extends Node {
+  token: Token;
+  variable_type: string;
+  variable: VariableNode;
+
+  constructor(token: Token, variable: VariableNode) {
+    super(NodeType.variable_declaration);
+
+    this.token = token;
+    this.variable_type = token.content;
+
+    this.variable = variable;
+  }
+}
+
 export class FunctionNode extends Node {
   token: Token;
   name: string;
@@ -133,6 +149,7 @@ export class Script extends Node {
   token: Token;
   name: VariableNode;
   statements: Node[];
+  variables: VariableNode[];
 
   constructor(token: Token) {
     super(NodeType.script);
@@ -140,6 +157,7 @@ export class Script extends Node {
     this.token = token;
     this.name = new VariableNode(token);
     this.statements = [];
+    this.variables = [];
   }
 }
 
@@ -171,13 +189,16 @@ export const StatementListTerminators = {
   assignment_statement:
     SET variable TO expression
 
-  variable:
-    ID
-
   expression:
     LPAREN? function | literal | variable RPAREN?
 
   function: FUNCTION expression*
+
+  variable declaration:
+    TYPE variable
+
+  variable:
+    ID
 
   literal:
     NUMBER | STRING
@@ -186,6 +207,7 @@ export const StatementListTerminators = {
 
 export class Parser {
   data: Token[][];
+  variables: VariableNode[];
 
   cur_token_pos: {
     m: number,
@@ -195,6 +217,7 @@ export class Parser {
 
   constructor(data: Token[][]) {
     this.data = data;
+    this.variables = [];
 
     this.cur_token_pos = {
       m: 0,
@@ -224,6 +247,79 @@ export class Parser {
     }
   }
 
+  parseVariable(): VariableNode {
+    const variable = new VariableNode(this.cur_token!);
+    this.nextToken();
+    return variable;
+  }
+
+  parseComment(): CommentNode {
+    const comment = new CommentNode(this.cur_token!);
+    this.nextToken();
+    return comment;
+  }
+
+  parseFunction(): FunctionNode {
+    const function_statement = new FunctionNode(this.cur_token!);
+
+    const cur_line = this.cur_token_pos.m;
+
+    this.nextToken();
+
+    while (cur_line == this.cur_token_pos.m) {
+      if (this.cur_token!.content == ")") {
+        this.nextToken();
+
+        return function_statement;
+      }
+
+      function_statement.args.push(this.parseExpression());
+    }
+
+    return function_statement;
+  }
+
+  parseVariableDeclaration(): VariableDeclarationNode {
+    const type_token = this.cur_token!;
+
+    this.nextToken();
+
+    const variable = this.parseVariable();
+
+    this.variables.push(variable);
+
+    return new VariableDeclarationNode(type_token, variable);
+  }
+
+  parseAssignmentStatementSet(): AssignmentStatementNode {
+    const set_token = this.cur_token!;
+
+    this.nextToken();
+
+    const variable = this.parseVariable();
+
+    this.nextToken();
+
+    return new AssignmentStatementNode(set_token, variable, this.parseExpression());
+  }
+
+  parseAssignmentStatementLet(): AssignmentStatementNode {
+    const let_token = this.cur_token!;
+
+    this.nextToken();
+
+    let variable;
+    if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
+      variable = this.parseVariableDeclaration().variable;
+    } else {
+      variable = this.parseVariable();
+    }
+
+    this.nextToken();
+
+    return new AssignmentStatementNode(let_token, variable, this.parseExpression());
+  }
+
   parseExpression(): Node {
     let token: Node;
 
@@ -245,56 +341,15 @@ export class Parser {
     return token;
   }
 
-  parseVariable(): VariableNode {
-    const variable = new VariableNode(this.cur_token!);
-    this.nextToken();
-    return variable;
-  }
-
-  parseComment(): CommentNode {
-    const comment = new CommentNode(this.cur_token!);
-    this.nextToken();
-    return comment;
-  }
-
-  parseFunction(): FunctionNode {
-    const function_statement = new FunctionNode(this.cur_token!)
-
-    const cur_line = this.cur_token_pos.m;
-
-    this.nextToken();
-
-    while (cur_line == this.cur_token_pos.m) {
-      if (this.cur_token!.content == ")") {
-        this.nextToken();
-
-        return function_statement;
-      }
-
-      function_statement.args.push(this.parseExpression());
-
-    }
-
-    return function_statement;
-  }
-
-  parseAssignmentStatement(): AssignmentStatementNode {
-    const set_token = this.cur_token!;
-
-    this.nextToken();
-
-    const variable = this.parseVariable();
-
-    this.nextToken();
-
-    return new AssignmentStatementNode(set_token, variable, this.parseExpression());
-  }
-
   parseStatement(): Node {
     if (this.cur_token?.content[0] === ";") {
       return this.parseComment();
     } else if (this.cur_token?.content === "set") {
-      return this.parseAssignmentStatement();
+      return this.parseAssignmentStatementSet();
+    } else if (this.cur_token?.content === "let") {
+      return this.parseAssignmentStatementLet();
+    } else if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
+      return this.parseVariableDeclaration();
     } else {
       return this.parseFunction();
     }
@@ -333,6 +388,8 @@ export class Parser {
     this.nextToken();
 
     script.statements = this.parseStatementList();
+
+    script.variables = this.variables;
 
     return script;
   }
