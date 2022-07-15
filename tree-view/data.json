@@ -1,0 +1,3246 @@
+[
+  {
+    "name": "root",
+    "children": [
+      {
+        "name": "type",
+        "children": [
+          {
+            "name": 7
+          }
+        ]
+      },
+      {
+        "name": "range",
+        "children": [
+          {
+            "name": "start",
+            "children": [
+              {
+                "name": "column",
+                "children": [
+                  {
+                    "name": 0
+                  }
+                ]
+              },
+              {
+                "name": "line",
+                "children": [
+                  {
+                    "name": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "end",
+            "children": [
+              {
+                "name": "column",
+                "children": [
+                  {
+                    "name": 0
+                  }
+                ]
+              },
+              {
+                "name": "line",
+                "children": [
+                  {
+                    "name": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "token",
+        "children": [
+          {
+            "name": "type",
+            "children": [
+              {
+                "name": 8
+              }
+            ]
+          },
+          {
+            "name": "position",
+            "children": [
+              {
+                "name": "line",
+                "children": [
+                  {
+                    "name": 0
+                  }
+                ]
+              },
+              {
+                "name": "column",
+                "children": [
+                  {
+                    "name": 4
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "content",
+            "children": [
+              {
+                "name": "script_name"
+              }
+            ]
+          },
+          {
+            "name": "length",
+            "children": [
+              {
+                "name": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "name",
+        "children": [
+          {
+            "name": "type",
+            "children": [
+              {
+                "name": 9
+              }
+            ]
+          },
+          {
+            "name": "range",
+            "children": [
+              {
+                "name": "start",
+                "children": [
+                  {
+                    "name": "column",
+                    "children": [
+                      {
+                        "name": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "line",
+                    "children": [
+                      {
+                        "name": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "end",
+                "children": [
+                  {
+                    "name": "column",
+                    "children": [
+                      {
+                        "name": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "line",
+                    "children": [
+                      {
+                        "name": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "token",
+            "children": [
+              {
+                "name": "type",
+                "children": [
+                  {
+                    "name": 8
+                  }
+                ]
+              },
+              {
+                "name": "position",
+                "children": [
+                  {
+                    "name": "line",
+                    "children": [
+                      {
+                        "name": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "column",
+                    "children": [
+                      {
+                        "name": 4
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "content",
+                "children": [
+                  {
+                    "name": "script_name"
+                  }
+                ]
+              },
+              {
+                "name": "length",
+                "children": [
+                  {
+                    "name": 11
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "value",
+            "children": [
+              {
+                "name": "script_name"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "statements",
+        "children": [
+          {
+            "name": "0",
+            "children": [
+              {
+                "name": "type",
+                "children": [
+                  {
+                    "name": 1
+                  }
+                ]
+              },
+              {
+                "name": "range",
+                "children": [
+                  {
+                    "name": "start",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "end",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "token",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 3
+                      }
+                    ]
+                  },
+                  {
+                    "name": "position",
+                    "children": [
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 2
+                          }
+                        ]
+                      },
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "content",
+                    "children": [
+                      {
+                        "name": "begin"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "length",
+                    "children": [
+                      {
+                        "name": 5
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "expression",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 5
+                      }
+                    ]
+                  },
+                  {
+                    "name": "range",
+                    "children": [
+                      {
+                        "name": "start",
+                        "children": [
+                          {
+                            "name": "column",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "line",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "end",
+                        "children": [
+                          {
+                            "name": "column",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "line",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "token",
+                    "children": [
+                      {
+                        "name": "type",
+                        "children": [
+                          {
+                            "name": 3
+                          }
+                        ]
+                      },
+                      {
+                        "name": "position",
+                        "children": [
+                          {
+                            "name": "line",
+                            "children": [
+                              {
+                                "name": 2
+                              }
+                            ]
+                          },
+                          {
+                            "name": "column",
+                            "children": [
+                              {
+                                "name": 6
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "content",
+                        "children": [
+                          {
+                            "name": "MenuMode"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "length",
+                        "children": [
+                          {
+                            "name": 8
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "name",
+                    "children": [
+                      {
+                        "name": "MenuMode"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "args",
+                    "children": [
+                      {
+                        "name": "0",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 6
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 4
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 15
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "1000"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 4
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "value",
+                            "children": [
+                              {
+                                "name": 1000
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "compound_statement",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 3
+                      }
+                    ]
+                  },
+                  {
+                    "name": "range",
+                    "children": [
+                      {
+                        "name": "start",
+                        "children": [
+                          {
+                            "name": "column",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "line",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "end",
+                        "children": [
+                          {
+                            "name": "column",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "line",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "children",
+                    "children": [
+                      {
+                        "name": "0",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 10
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 7
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "int"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable_type",
+                            "children": [
+                              {
+                                "name": "int"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 4
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 6
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "var1"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "var1"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "1",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 10
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 7
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 6
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "array_var"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable_type",
+                            "children": [
+                              {
+                                "name": "array_var"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 6
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 12
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "var2"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "var2"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "2",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "set"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 8
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 6
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "var1"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "var1"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "value",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 6
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 8
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 14
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "123"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 3
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": 123
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "3",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 10
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "let"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 10
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 6
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "var2"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "var2"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "value",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 8
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 6
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 10
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 13
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "\"asd\""
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 5
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "asd"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "4",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 0
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 12
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "let"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "variable",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 9
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 8
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 12
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 12
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "var3"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": "var3"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "value",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 6
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "range",
+                                "children": [
+                                  {
+                                    "name": "start",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "end",
+                                    "children": [
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "token",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 4
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "position",
+                                    "children": [
+                                      {
+                                        "name": "line",
+                                        "children": [
+                                          {
+                                            "name": 12
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "column",
+                                        "children": [
+                                          {
+                                            "name": 19
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "content",
+                                    "children": [
+                                      {
+                                        "name": "1.232"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "length",
+                                    "children": [
+                                      {
+                                        "name": 5
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "value",
+                                "children": [
+                                  {
+                                    "name": 1.232
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "5",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 5
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 2
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 14
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "abs"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "name",
+                            "children": [
+                              {
+                                "name": "abs"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "args",
+                            "children": [
+                              {
+                                "name": "0",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 9
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "range",
+                                    "children": [
+                                      {
+                                        "name": "start",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "end",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "token",
+                                    "children": [
+                                      {
+                                        "name": "type",
+                                        "children": [
+                                          {
+                                            "name": 8
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "position",
+                                        "children": [
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 14
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 6
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "content",
+                                        "children": [
+                                          {
+                                            "name": "arg1"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "length",
+                                        "children": [
+                                          {
+                                            "name": 4
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "value",
+                                    "children": [
+                                      {
+                                        "name": "arg1"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "1",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 5
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "range",
+                                    "children": [
+                                      {
+                                        "name": "start",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "end",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "token",
+                                    "children": [
+                                      {
+                                        "name": "type",
+                                        "children": [
+                                          {
+                                            "name": 2
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "position",
+                                        "children": [
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 14
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 12
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "content",
+                                        "children": [
+                                          {
+                                            "name": "abs"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "length",
+                                        "children": [
+                                          {
+                                            "name": 3
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "name",
+                                    "children": [
+                                      {
+                                        "name": "abs"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "args",
+                                    "children": [
+                                      {
+                                        "name": "0",
+                                        "children": [
+                                          {
+                                            "name": "type",
+                                            "children": [
+                                              {
+                                                "name": 9
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "range",
+                                            "children": [
+                                              {
+                                                "name": "start",
+                                                "children": [
+                                                  {
+                                                    "name": "column",
+                                                    "children": [
+                                                      {
+                                                        "name": 0
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "name": "line",
+                                                    "children": [
+                                                      {
+                                                        "name": 0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "name": "end",
+                                                "children": [
+                                                  {
+                                                    "name": "column",
+                                                    "children": [
+                                                      {
+                                                        "name": 0
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "name": "line",
+                                                    "children": [
+                                                      {
+                                                        "name": 0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "token",
+                                            "children": [
+                                              {
+                                                "name": "type",
+                                                "children": [
+                                                  {
+                                                    "name": 8
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "name": "position",
+                                                "children": [
+                                                  {
+                                                    "name": "line",
+                                                    "children": [
+                                                      {
+                                                        "name": 14
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "name": "column",
+                                                    "children": [
+                                                      {
+                                                        "name": 16
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "name": "content",
+                                                "children": [
+                                                  {
+                                                    "name": "arg1"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "name": "length",
+                                                "children": [
+                                                  {
+                                                    "name": 4
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "value",
+                                            "children": [
+                                              {
+                                                "name": "arg1"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "2",
+                                "children": [
+                                  {
+                                    "name": "type",
+                                    "children": [
+                                      {
+                                        "name": 9
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "range",
+                                    "children": [
+                                      {
+                                        "name": "start",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "end",
+                                        "children": [
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "token",
+                                    "children": [
+                                      {
+                                        "name": "type",
+                                        "children": [
+                                          {
+                                            "name": 8
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "position",
+                                        "children": [
+                                          {
+                                            "name": "line",
+                                            "children": [
+                                              {
+                                                "name": 14
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "name": "column",
+                                            "children": [
+                                              {
+                                                "name": 22
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "content",
+                                        "children": [
+                                          {
+                                            "name": "arg2"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "name": "length",
+                                        "children": [
+                                          {
+                                            "name": 4
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "value",
+                                    "children": [
+                                      {
+                                        "name": "arg2"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "6",
+                        "children": [
+                          {
+                            "name": "type",
+                            "children": [
+                              {
+                                "name": 5
+                              }
+                            ]
+                          },
+                          {
+                            "name": "range",
+                            "children": [
+                              {
+                                "name": "start",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "end",
+                                "children": [
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "token",
+                            "children": [
+                              {
+                                "name": "type",
+                                "children": [
+                                  {
+                                    "name": 2
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "position",
+                                "children": [
+                                  {
+                                    "name": "line",
+                                    "children": [
+                                      {
+                                        "name": 16
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "column",
+                                    "children": [
+                                      {
+                                        "name": 2
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "content",
+                                "children": [
+                                  {
+                                    "name": "abs"
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "length",
+                                "children": [
+                                  {
+                                    "name": 3
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "name",
+                            "children": [
+                              {
+                                "name": "abs"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "args",
+                            "children": [
+                              {
+                                "name": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "variables",
+        "children": [
+          {
+            "name": "0",
+            "children": [
+              {
+                "name": "type",
+                "children": [
+                  {
+                    "name": 9
+                  }
+                ]
+              },
+              {
+                "name": "range",
+                "children": [
+                  {
+                    "name": "start",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "end",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "token",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 8
+                      }
+                    ]
+                  },
+                  {
+                    "name": "position",
+                    "children": [
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 4
+                          }
+                        ]
+                      },
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 6
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "content",
+                    "children": [
+                      {
+                        "name": "var1"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "length",
+                    "children": [
+                      {
+                        "name": 4
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "value",
+                "children": [
+                  {
+                    "name": "var1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "1",
+            "children": [
+              {
+                "name": "type",
+                "children": [
+                  {
+                    "name": 9
+                  }
+                ]
+              },
+              {
+                "name": "range",
+                "children": [
+                  {
+                    "name": "start",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "end",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "token",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 8
+                      }
+                    ]
+                  },
+                  {
+                    "name": "position",
+                    "children": [
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 6
+                          }
+                        ]
+                      },
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 12
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "content",
+                    "children": [
+                      {
+                        "name": "var2"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "length",
+                    "children": [
+                      {
+                        "name": 4
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "value",
+                "children": [
+                  {
+                    "name": "var2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "2",
+            "children": [
+              {
+                "name": "type",
+                "children": [
+                  {
+                    "name": 9
+                  }
+                ]
+              },
+              {
+                "name": "range",
+                "children": [
+                  {
+                    "name": "start",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "end",
+                    "children": [
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      },
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "token",
+                "children": [
+                  {
+                    "name": "type",
+                    "children": [
+                      {
+                        "name": 8
+                      }
+                    ]
+                  },
+                  {
+                    "name": "position",
+                    "children": [
+                      {
+                        "name": "line",
+                        "children": [
+                          {
+                            "name": 12
+                          }
+                        ]
+                      },
+                      {
+                        "name": "column",
+                        "children": [
+                          {
+                            "name": 12
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "content",
+                    "children": [
+                      {
+                        "name": "var3"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "length",
+                    "children": [
+                      {
+                        "name": 4
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "value",
+                "children": [
+                  {
+                    "name": "var3"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
