@@ -1,0 +1,508 @@
+{
+  "type": 7,
+  "range": {
+    "start": {
+      "column": 0,
+      "line": 0
+    },
+    "end": {
+      "column": 0,
+      "line": 0
+    }
+  },
+  "token": {
+    "type": 3,
+    "position": {
+      "line": 0,
+      "column": 4
+    },
+    "content": "ScriptName",
+    "length": 10
+  },
+  "name": {
+    "type": 9,
+    "range": {
+      "start": {
+        "column": 0,
+        "line": 0
+      },
+      "end": {
+        "column": 0,
+        "line": 0
+      }
+    },
+    "token": {
+      "type": 3,
+      "position": {
+        "line": 0,
+        "column": 4
+      },
+      "content": "ScriptName",
+      "length": 10
+    },
+    "value": "ScriptName"
+  },
+  "statements": [
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 2,
+          "column": 0
+        },
+        "content": "; begin MenuMode 1024",
+        "length": 21
+      },
+      "value": " begin MenuMode 1024"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 3,
+          "column": 0
+        },
+        "content": ";   fun 1 (fun 1 2) 2 3",
+        "length": 23
+      },
+      "value": "   fun 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 5,
+          "column": 0
+        },
+        "content": ";   while fun 1 2 3",
+        "length": 19
+      },
+      "value": "   while fun 1 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 6,
+          "column": 0
+        },
+        "content": ";     fun 1 (fun 1 2) 2 3",
+        "length": 25
+      },
+      "value": "     fun 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 8,
+          "column": 0
+        },
+        "content": ";     fun 1 (fun 1 2) 2 3",
+        "length": 25
+      },
+      "value": "     fun 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 10,
+          "column": 0
+        },
+        "content": ";   loop",
+        "length": 8
+      },
+      "value": "   loop"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 12,
+          "column": 0
+        },
+        "content": ";   fun 1 (fun 1 2) 2 3",
+        "length": 23
+      },
+      "value": "   fun 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 14,
+          "column": 0
+        },
+        "content": "; end",
+        "length": 5
+      },
+      "value": " end"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 16,
+          "column": 0
+        },
+        "content": "; fun 1 (fun 1 2) 2 3",
+        "length": 21
+      },
+      "value": " fun 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 18,
+          "column": 0
+        },
+        "content": "; fun 1 2 3",
+        "length": 11
+      },
+      "value": " fun 1 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 20,
+          "column": 0
+        },
+        "content": "; fun",
+        "length": 5
+      },
+      "value": " fun"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 22,
+          "column": 0
+        },
+        "content": "; if cond arg1 arg2",
+        "length": 19
+      },
+      "value": " if cond arg1 arg2"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 23,
+          "column": 0
+        },
+        "content": ";   fun1 1 (fun 1 2) 2 3",
+        "length": 24
+      },
+      "value": "   fun1 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 24,
+          "column": 0
+        },
+        "content": "; elseif cond arg1 arg2",
+        "length": 23
+      },
+      "value": " elseif cond arg1 arg2"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 25,
+          "column": 0
+        },
+        "content": ";   fun2 2 (fun 1 2) 2 3",
+        "length": 24
+      },
+      "value": "   fun2 2 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 26,
+          "column": 0
+        },
+        "content": "; elseif (cond arg1 arg2)",
+        "length": 25
+      },
+      "value": " elseif (cond arg1 arg2)"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 27,
+          "column": 0
+        },
+        "content": ";   fun3 1 (fun 1 2) 2 3",
+        "length": 24
+      },
+      "value": "   fun3 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 28,
+          "column": 0
+        },
+        "content": "; else",
+        "length": 6
+      },
+      "value": " else"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 29,
+          "column": 0
+        },
+        "content": ";   fun4 1 (fun 1 2) 2 3",
+        "length": 24
+      },
+      "value": "   fun4 1 (fun 1 2) 2 3"
+    },
+    {
+      "type": 2,
+      "range": {
+        "start": {
+          "column": 0,
+          "line": 0
+        },
+        "end": {
+          "column": 0,
+          "line": 0
+        }
+      },
+      "token": {
+        "type": 1,
+        "position": {
+          "line": 30,
+          "column": 0
+        },
+        "content": "; endif",
+        "length": 7
+      },
+      "value": " endif"
+    }
+  ],
+  "variables": []
+}
