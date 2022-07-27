@@ -8,12 +8,14 @@
 	"dependencies": {
 		"vscode-languageserver": "*",
 		"vscode-languageserver-textdocument": "*",
+		"mime": "*",
 		"turndown": "*"
 	},
 	"devDependencies": {
 		"@types/node": "*",
 		"@typescript-eslint/eslint-plugin": "*",
 		"@typescript-eslint/parser": "*",
+		"@types/mime": "*",
 		"@types/turndown": "*",
 		"eslint": "*",
 		"typescript": "*"

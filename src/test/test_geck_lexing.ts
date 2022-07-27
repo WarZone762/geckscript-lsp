@@ -3,7 +3,7 @@ import * as path from "path";
 
 import * as Lexer from "../geckscript/lexer";
 
-const data = fs.readFileSync(path.join(__dirname, "./test.gek")).toString();
+const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toString();
 
 const tokens = Lexer.GetTokens(data);
 

@@ -1,0 +1,32 @@
+scn ScriptName
+
+; begin MenuMode 1024
+;   fun 1 (fun 1 2) 2 3
+
+;   while fun 1 2 3
+;     fun 1 (fun 1 2) 2 3
+
+;     fun 1 (fun 1 2) 2 3
+
+;   loop
+
+;   fun 1 (fun 1 2) 2 3
+
+; end
+
+; fun 1 (fun 1 2) 2 3
+
+; fun 1 2 3
+
+; fun
+
+; if cond arg1 arg2
+;   fun1 1 (fun 1 2) 2 3
+; elseif cond arg1 arg2
+;   fun2 2 (fun 1 2) 2 3
+; elseif (cond arg1 arg2)
+;   fun3 1 (fun 1 2) 2 3
+; else
+;   fun4 1 (fun 1 2) 2 3
+; endif
+

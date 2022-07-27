@@ -15,11 +15,19 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 
+import * as ASTViewServer from "./ast_view/server";
+
 import * as Tokens from "./geckscript/tokens";
 import * as Wiki from "./wiki";
 import * as ST from "./semantic_tokens";
 
 import * as Lexer from "./geckscript/lexer";
+
+let ast_view_server: ASTViewServer.ASTViewServer | undefined;
+if (process.argv.find(e => e === "--ast-view-server") !== undefined) {
+  console.log("Running AST view server");
+  ast_view_server = new ASTViewServer.ASTViewServer();
+}
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -53,7 +61,9 @@ connection.onInitialize((params: InitializeParams) => {
 
 documents.onDidChangeContent(
   (params) => {
-    documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
+    const tokens = Lexer.GetTokens(params.document.getText());
+    documents_tokens[params.document.uri] = tokens;
+    ast_view_server?.write_message(JSON.stringify(tokens));
   }
 );
 
@@ -100,6 +110,10 @@ connection.onRequest(SemanticTokensRequest.method, (
   params: SemanticTokensParams
 ) => {
   return ST.onSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
+});
+
+connection.onExit(() => {
+  ast_view_server?.close();
 });
 
 documents.listen(connection);

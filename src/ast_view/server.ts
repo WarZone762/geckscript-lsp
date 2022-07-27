@@ -1,0 +1,65 @@
+import * as http from "http";
+import * as fs from "fs";
+import * as path from "path";
+
+import * as mime from "mime";
+
+const public_path = path.join(__dirname, "../../../ast-view/dist");
+
+export class ASTViewServer {
+  server: http.Server;
+  clients: http.ServerResponse[];
+  last_data: any;
+
+  constructor() {
+    this.clients = [];
+
+    this.server = http.createServer((req, res) => {
+      if (req.url === "/data" && req.headers.accept === "text/event-stream") {
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        });
+
+        res.write("\n\n");
+
+        res.write(`data: ${this.last_data}\n\n`);
+
+        this.clients.push(res);
+
+        return;
+      }
+
+      if (req.url === undefined || req.url === "/") req.url = "/index.html";
+      const file_path = path.join(public_path, req.url);
+
+      res.statusCode = 200;
+      res.setHeader("Content-Type", mime.getType(path.extname(req.url).toLowerCase()) ?? "text/plain");
+      if (fs.existsSync(file_path))
+        res.end(fs.readFileSync(file_path));
+      else
+        res.end();
+    }).listen(8000, "localhost");
+
+    console.log("ASTViewServer running");
+  }
+
+  write_message(data: any) {
+    this.last_data = data;
+    for (const res of this.clients)
+      res.write(`data: ${data}\n\n`);
+  }
+
+  close() {
+    for (const res of this.clients) {
+      res.write("event: close\ndata: \n\n");
+      res.end();
+    }
+    this.server.close();
+
+
+    console.log("TreeViewServer closed");
+  }
+}
+
