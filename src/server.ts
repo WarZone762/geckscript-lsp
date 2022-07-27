@@ -15,7 +15,7 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import * as ASTViewServer from "./ast_view/server";
+import * as TreeViewServer from "./tree_view/server";
 
 import * as Tokens from "./geckscript/tokens";
 import * as Wiki from "./wiki";
@@ -49,10 +49,10 @@ function ObjectToHierarchy(obj: any, root_name?: string, exclude = {}): Hierarch
 }
 
 
-let ast_view_server: ASTViewServer.ASTViewServer | undefined;
-if (process.argv.find(e => e === "--ast-view-server") !== undefined) {
-  console.log("Running AST view server");
-  ast_view_server = new ASTViewServer.ASTViewServer();
+let tree_view_server: TreeViewServer.TreeViewServer | undefined;
+if (process.argv.find(e => e === "--tree-view-server") !== undefined) {
+  console.log("Running tree view server");
+  tree_view_server = new TreeViewServer.TreeViewServer();
 }
 
 const connection = createConnection(ProposedFeatures.all);
@@ -88,7 +88,7 @@ connection.onInitialize((params: InitializeParams) => {
 documents.onDidChangeContent(
   (params) => {
     documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
-    ast_view_server?.write_message(JSON.stringify(ObjectToHierarchy(
+    tree_view_server?.write_message(JSON.stringify(ObjectToHierarchy(
       Parser.GetAST(params.document.getText()),
       undefined,
       {
@@ -148,7 +148,7 @@ connection.onRequest(SemanticTokensRequest.method, (
 });
 
 connection.onExit(() => {
-  ast_view_server?.close();
+  tree_view_server?.close();
 });
 
 documents.listen(connection);

@@ -4,9 +4,9 @@ import * as path from "path";
 
 import * as mime from "mime";
 
-const public_path = path.join(__dirname, "../../../ast-view/dist");
+const public_path = path.join(__dirname, "../../../tree-view/dist");
 
-export class ASTViewServer {
+export class TreeViewServer {
   server: http.Server;
   clients: http.ServerResponse[];
   last_data: string;
@@ -43,7 +43,7 @@ export class ASTViewServer {
         res.end();
     }).listen(8000, "localhost");
 
-    console.log("ASTViewServer running");
+    console.log("TreeViewServer running");
   }
 
   write_message(data: any) {
