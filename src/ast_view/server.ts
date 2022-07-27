@@ -9,10 +9,11 @@ const public_path = path.join(__dirname, "../../../ast-view/dist");
 export class ASTViewServer {
   server: http.Server;
   clients: http.ServerResponse[];
-  last_data: any;
+  last_data: string;
 
   constructor() {
     this.clients = [];
+    this.last_data = "{}";
 
     this.server = http.createServer((req, res) => {
       if (req.url === "/data" && req.headers.accept === "text/event-stream") {

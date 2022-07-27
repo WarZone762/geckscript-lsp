@@ -22,6 +22,32 @@ import * as Wiki from "./wiki";
 import * as ST from "./semantic_tokens";
 
 import * as Lexer from "./geckscript/lexer";
+import * as Parser from "./geckscript/parser";
+
+
+type HierarchicalData = {
+  name: string,
+  children?: HierarchicalData[]
+}
+function ObjectToHierarchy(obj: any, root_name?: string, exclude = {}): HierarchicalData {
+  if (typeof obj !== "object" || obj === null) return {
+    name: root_name ?? "root",
+    children: [{ name: obj.toString() }]
+  };
+
+  const hierarchical: HierarchicalData = {
+    name: root_name ?? `root: ${obj.constructor.name}`,
+    children: []
+  };
+
+  for (const [k, v] of Object.entries(obj as object)) {
+    if (k in exclude) continue;
+    hierarchical.children!.push(ObjectToHierarchy(v, `${k}: ${v.constructor.name}`, exclude));
+  }
+
+  return hierarchical;
+}
+
 
 let ast_view_server: ASTViewServer.ASTViewServer | undefined;
 if (process.argv.find(e => e === "--ast-view-server") !== undefined) {
@@ -61,9 +87,18 @@ connection.onInitialize((params: InitializeParams) => {
 
 documents.onDidChangeContent(
   (params) => {
-    const tokens = Lexer.GetTokens(params.document.getText());
-    documents_tokens[params.document.uri] = tokens;
-    ast_view_server?.write_message(JSON.stringify(tokens));
+    documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
+    ast_view_server?.write_message(JSON.stringify(ObjectToHierarchy(
+      Parser.GetAST(params.document.getText()),
+      undefined,
+      {
+        "type": true,
+        "range": true,
+        "position": true,
+        "length": true,
+        "token": true,
+      }
+    )));
   }
 );
 
