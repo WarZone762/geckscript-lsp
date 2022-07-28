@@ -12,7 +12,7 @@ export enum NodeType {
   numerical,
   script,
   string_literal,
-  variable,
+  identifier,
   variable_declaration,
 }
 
@@ -80,12 +80,12 @@ export class CommentNode extends Node {
   }
 }
 
-export class VariableNode extends Node {
+export class IdentifierNode extends Node {
   token: Token;
   value: string;
 
   constructor(token: Token) {
-    super(NodeType.variable);
+    super(NodeType.identifier);
 
     this.token = token;
     this.value = token.content;
@@ -95,20 +95,22 @@ export class VariableNode extends Node {
 export class VariableDeclarationNode extends Node {
   token: Token;
   variable_type: string;
-  variable: VariableNode;
+  identifier: IdentifierNode;
 
-  constructor(token: Token, variable: VariableNode) {
+  constructor(token: Token, identifier: IdentifierNode) {
     super(NodeType.variable_declaration);
 
     this.token = token;
     this.variable_type = token.content;
 
-    this.variable = variable;
+    this.identifier = identifier;
   }
 }
 
 export class FunctionNode extends Node {
   token: Token;
+  lparen_token?: Token;
+  rparen_token?: Token;
   name: string;
   args: Node[];
 
@@ -123,54 +125,53 @@ export class FunctionNode extends Node {
 }
 
 export class AssignmentNode extends Node {
-  token: Token;
-  variable: VariableNode;
+  set_token?: Token;
+  to_token?: Token;
+
+  let_token?: Token;
+  variable_type?: string;
+  equals_token?: Token;
+
+  identifier: IdentifierNode;
   value: Node;
 
-  constructor(token: Token, variable: VariableNode, value: Node) {
+  constructor(token: Token, identifier: IdentifierNode, value: Node) {
     super(NodeType.assignment);
 
-    this.token = token;
-    this.variable = variable;
+    this.let_token = token;
+    this.identifier = identifier;
     this.value = value;
   }
 }
 
-export class CompoundStatementNode extends Node {
-  children: Node[];
-
-  constructor() {
-    super(NodeType.compound_statement);
-
-    this.children = [];
-  }
-}
+export type CompoundStatementNode = Node[];
 
 export class BeginBlockNode extends Node {
-  token: Token;
+  begin_token?: Token;
+  end_token?: Token;
   expression?: Node;
   compound_statement: CompoundStatementNode;
 
   constructor(token: Token, expression: Node | undefined, compound_statement: CompoundStatementNode) {
     super(NodeType.begin_block);
 
-    this.token = token;
+    this.begin_token = token;
     this.expression = expression;
     this.compound_statement = compound_statement;
   }
 }
 
 export class Script extends Node {
-  token: Token;
-  name: VariableNode;
-  statements: Node[];
-  variables: VariableNode[];
+  scriptname_token: Token;
+  name: IdentifierNode;
+  statements: CompoundStatementNode;
+  variables: IdentifierNode[];
 
   constructor(token: Token) {
     super(NodeType.script);
 
-    this.token = token;
-    this.name = new VariableNode(token);
+    this.scriptname_token = token;
+    this.name = new IdentifierNode(token);
     this.statements = [];
     this.variables = [];
   }
@@ -188,7 +189,7 @@ export const CompoundStatementTerminators = {
   * GRAMMAR
 
   script:
-    (scn | ScriptName) variable
+    SCRIPTNAME ID
     statement_list
 
   statement_list:
@@ -204,14 +205,20 @@ export const CompoundStatementTerminators = {
 
   statement:
     assignment_statement
+    declaration_assignment
     |
     empty
 
   expression:
-    LPAREN? function | literal | variable RPAREN?
+    (LPAREN | LBRACKET)? function | literal | variable (RPAREN | RBRACKET)?
 
   assignment:
     SET variable TO expression
+    |
+    LET? variable (EQUALS | COLON_EQUALS) expression
+
+  declaration_assignment:
+    LET? variable TYPE (EQUALS | COLON_EQUALS) expression
 
   function: FUNCTION expression*
 
@@ -224,11 +231,56 @@ export const CompoundStatementTerminators = {
   literal:
     NUMBER | STRING
 
+
+  * TOKENS
+
+  NUMBER:
+    decimal or hexedecimal(with 0x in front) number
+
+  STRING:
+    string enclosed in ""
+
+  ID:
+    any word, can contain numbers, except at the first position
+
+  TYPE:
+    short, int, long, float, reference, ref, string_var, array_var
+
+  BEGIN:
+    begin
+
+  END:
+    end
+
+  LET:
+    let
+
+  SET:
+    set
+
+  EQUALS:
+    =
+
+  COLON_EQUALS:
+    :=
+
+  LPAREN:
+    (
+
+  RPAREN:
+    )
+
+  LBRACKET:
+    {
+
+  RBRACKET:
+    }
+
 */
 
 export class Parser {
   data: Token[][];
-  variables: VariableNode[];
+  variables: IdentifierNode[];
 
   cur_token_pos: {
     m: number,
@@ -268,8 +320,8 @@ export class Parser {
     }
   }
 
-  parseVariable(): VariableNode {
-    const variable = new VariableNode(this.cur_token!);
+  parseVariable(): IdentifierNode {
+    const variable = new IdentifierNode(this.cur_token!);
     this.nextToken();
     return variable;
   }
@@ -331,7 +383,7 @@ export class Parser {
 
     let variable;
     if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
-      variable = this.parseVariableDeclaration().variable;
+      variable = this.parseVariableDeclaration().identifier;
     } else {
       variable = this.parseVariable();
     }
@@ -355,7 +407,7 @@ export class Parser {
     } else if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Functions) {
       token = this.parseFunction();
     } else {
-      token = new VariableNode(this.cur_token!);
+      token = new IdentifierNode(this.cur_token!);
       this.nextToken();
     }
 
@@ -409,9 +461,7 @@ export class Parser {
   }
 
   parseCompundStatement(): CompoundStatementNode {
-    const compound_statement = new CompoundStatementNode();
-
-    compound_statement.children = this.parseStatementList();
+    const compound_statement = this.parseStatementList();
 
     this.nextToken();
 
