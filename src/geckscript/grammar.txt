@@ -1,0 +1,85 @@
+GRAMMAR
+
+  script:
+    SCRIPTNAME ID
+    statement_list
+
+  statement_list:
+    statement
+    |
+    statement
+    statement_list
+
+  begin_block:
+    BEGIN expression?
+      statement_list
+    END
+
+  statement:
+    assignment_statement
+    |
+    empty
+
+  expression:
+    (LPAREN | LBRACKET)? function | literal | variable (RPAREN | RBRACKET)?
+
+  assignment:
+    SET variable TO expression
+    |
+    LET? (variable | variable_declaration) (EQUALS | COLON_EQUALS) expression
+
+  function: FUNCTION expression*
+
+  variable_declaration:
+    TYPE variable
+
+  variable:
+    ID
+
+  literal:
+    NUMBER | STRING
+
+
+TOKENS
+
+  NUMBER:
+    decimal or hexedecimal(with 0x in front) number
+
+  STRING:
+    string enclosed in ""
+
+  ID:
+    any word, can contain numbers, except at the first position
+
+  TYPE:
+    short, int, long, float, reference, ref, string_var, array_var
+
+  BEGIN:
+    begin
+
+  END:
+    end
+
+  LET:
+    let
+
+  SET:
+    set
+
+  EQUALS:
+    =
+
+  COLON_EQUALS:
+    :=
+
+  LPAREN:
+    (
+
+  RPAREN:
+    )
+
+  LBRACKET:
+    {
+
+  RBRACKET:
+    }

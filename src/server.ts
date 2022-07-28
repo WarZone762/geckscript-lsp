@@ -32,7 +32,7 @@ type HierarchicalData = {
 function ObjectToHierarchy(obj: any, root_name?: string, exclude = {}): HierarchicalData {
   if (typeof obj !== "object" || obj === null) return {
     name: root_name ?? "root",
-    children: [{ name: obj.toString() }]
+    children: [{ name: String(obj) }]
   };
 
   const hierarchical: HierarchicalData = {
@@ -41,7 +41,7 @@ function ObjectToHierarchy(obj: any, root_name?: string, exclude = {}): Hierarch
   };
 
   for (const [k, v] of Object.entries(obj as object)) {
-    if (k in exclude) continue;
+    if (k in exclude || v === undefined) continue;
     hierarchical.children!.push(ObjectToHierarchy(v, `${k}: ${v.constructor.name}`, exclude));
   }
 
@@ -97,6 +97,7 @@ documents.onDidChangeContent(
         "position": true,
         "length": true,
         "token": true,
+        "content": true,
       }
     )));
   }
