@@ -108,13 +108,24 @@ documents.onDidChangeContent(
 connection.onCompletion(
   (params) => {
     const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position);
-    if (token == null) return Tokens.CompletionItems.All;
+    const completion_items: CompletionItem[] = [];
+    if (token == null) return completion_items.concat(
+      Tokens.Typenames.completion_items,
+      Tokens.Keywords.completion_items,
+      Tokens.BlockTypes.completion_items,
+      Tokens.Functions.completion_items,
+    );
 
     if (token.type === TokenType.COMMENT || token.type === TokenType.STRING) {
       return null;
     }
 
-    return Tokens.CompletionItems.All;
+    return completion_items.concat(
+      Tokens.Typenames.completion_items,
+      Tokens.Keywords.completion_items,
+      Tokens.BlockTypes.completion_items,
+      Tokens.Functions.completion_items,
+    );
   }
 );
 
@@ -131,10 +142,33 @@ connection.onCompletionResolve(
 
 connection.onHover(
   async (params: HoverParams): Promise<Hover | null> => {
-    const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position)?.content.toLowerCase();
+    const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position);
     if (token == null) return null;
 
-    const page_title = Tokens.All.getTokenPageName(token);
+    const token_type = token.type;
+
+    let page_title: string | undefined;
+    switch (token_type) {
+      case TokenType.TYPENAME:
+        page_title = Tokens.Typenames.getTokenPageName(token.content.toLowerCase());
+        break;
+
+      case TokenType.KEYWORD:
+        page_title = Tokens.Keywords.getTokenPageName(token.content.toLowerCase());
+        break;
+
+      case TokenType.BLOCK_TYPE:
+        page_title = Tokens.BlockTypes.getTokenPageName(token.content.toLowerCase());
+        break;
+
+      case TokenType.OPERATOR:
+        page_title = Tokens.Operators.getTokenPageName(token.content.toLowerCase());
+        break;
+
+      case TokenType.FUNCTION:
+        page_title = Tokens.Functions.getTokenPageName(token.content.toLowerCase());
+        break;
+    }
 
     if (page_title == null) return null;
 

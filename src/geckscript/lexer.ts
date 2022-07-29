@@ -2,33 +2,21 @@ import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
 import * as Tokens from "./tokens";
 
-export enum SemanticTokenType {
-  UNKNOWN,
-  COMMENT,
-  FUNCTION,
-  VARIABLE,
-  KEYWORD,
-  NUMBER,
-  OPERATOR,
-  STRING,
-  TYPE,
-}
-
 export type TokenPosition = {
   line: number;
   column: number;
 }
 
 export class Token {
-  semantic_type: SemanticTokenType;
   type: Tokens.TokenType;
+  subtype?: Tokens.TokenSubtype;
   position: TokenPosition;
   content: string;
   length: number;
 
-  constructor(type: Tokens.TokenType, semantic_type: SemanticTokenType, position: TokenPosition, content: string) {
-    this.semantic_type = semantic_type;
+  constructor(type: Tokens.TokenType, subtype: Tokens.TokenSubtype | undefined, position: TokenPosition, content: string) {
     this.type = type;
+    this.subtype = subtype;
     this.position = position;
     this.content = content;
     this.length = content.length;
@@ -71,29 +59,29 @@ export class Lexer {
     this.nextChar();
   }
 
-  determineTokenType(data: string): [Tokens.TokenType, SemanticTokenType] {
-    if (Tokens.Types.containsToken(data)) {
-      return [Tokens.Types.getTokenID(data)!, SemanticTokenType.TYPE];
+  determineTokenType(data: string): [Tokens.TokenType, Tokens.TokenSubtype | undefined] {
+    if (Tokens.Typenames.containsToken(data)) {
+      return [Tokens.TokenType.TYPENAME, Tokens.Typenames.getTokenSubtype(data)!];
     } else if (Tokens.Keywords.containsToken(data)) {
-      return [Tokens.Keywords.getTokenID(data)!, SemanticTokenType.KEYWORD];
+      return [Tokens.TokenType.KEYWORD, Tokens.Keywords.getTokenSubtype(data)!];
     } else if (
       Tokens.BlockTypes.containsToken(data) &&
-      this.prev_token?.type === Tokens.TokenType.BEGIN
+      this.prev_token?.subtype === Tokens.TokenSubtype.BEGIN
     ) {
-      return [Tokens.TokenType.BLOCK_TYPE, SemanticTokenType.KEYWORD];
+      return [Tokens.TokenType.BLOCK_TYPE, undefined];
     } else if (Tokens.Operators.containsToken(data)) {
-      return [Tokens.Operators.getTokenID(data)!, SemanticTokenType.OPERATOR];
+      return [Tokens.TokenType.OPERATOR, Tokens.Operators.getTokenSubtype(data)!];
     } else if (Tokens.Functions.containsToken(data)) {
-      return [Tokens.TokenType.FUNCTION, SemanticTokenType.FUNCTION];
+      return [Tokens.TokenType.FUNCTION, undefined];
     } else {
-      return [Tokens.TokenType.ID, SemanticTokenType.VARIABLE];
+      return [Tokens.TokenType.ID, undefined];
     }
   }
 
-  constructCurrentToken(type: Tokens.TokenType, semantic_type: SemanticTokenType): Token {
+  constructCurrentToken(type: Tokens.TokenType, subtype?: Tokens.TokenSubtype): Token {
     const content = this.buf.flush();
 
-    return new Token(type, semantic_type, { line: this.cur_line, column: this.cur_col - content.length }, content);
+    return new Token(type, subtype, { line: this.cur_line, column: this.cur_col - content.length }, content);
   }
 
   consumeWhitespace(): void {
@@ -107,7 +95,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.COMMENT, SemanticTokenType.COMMENT);
+    return this.constructCurrentToken(Tokens.TokenType.COMMENT);
   }
 
   consumeString(): Token {
@@ -123,7 +111,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.STRING, SemanticTokenType.STRING);
+    return this.constructCurrentToken(Tokens.TokenType.STRING);
   }
 
   consumeNumber(): Token {
@@ -136,7 +124,7 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        return this.constructCurrentToken(Tokens.TokenType.NUMBER, SemanticTokenType.NUMBER);
+        return this.constructCurrentToken(Tokens.TokenType.NUMBER);
       }
     }
 
@@ -144,7 +132,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.NUMBER, SemanticTokenType.NUMBER);
+    return this.constructCurrentToken(Tokens.TokenType.NUMBER);
   }
 
   consumeWord(): Token {

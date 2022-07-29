@@ -1,5 +1,5 @@
 import { GetTokens, Token, TokenPosition, TokensStorage } from "./lexer";
-import { TokenType } from "./tokens";
+import { TokenSubtype } from "./tokens";
 import * as Tokens from "./tokens";
 
 
@@ -298,7 +298,7 @@ export class Parser {
 
     node.let_token = this.nextToken();
 
-    if (Tokens.Types.containsToken(this.cur_token!.content)) {
+    if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -314,7 +314,7 @@ export class Parser {
   parseAssignment(): AssignmentNode {
     const node = new AssignmentNode();
 
-    if (Tokens.Types.containsToken(this.cur_token!.content)) {
+    if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -348,23 +348,23 @@ export class Parser {
   parseStatement(): Node {
     if (this.cur_token?.content[0] === ";") {
       return this.parseComment();
-    } else if (this.cur_token?.type === TokenType.SET) {
+    } else if (this.cur_token?.subtype === TokenSubtype.SET) {
       return this.parseAssignmentSet();
-    } else if (this.cur_token?.type === TokenType.LET) {
+    } else if (this.cur_token?.subtype === TokenSubtype.LET) {
       return this.parseAssignmentLet();
-    } else if (this.cur_token?.type === TokenType.BEGIN) {
+    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
-    } else if (Tokens.Types.containsToken(this.cur_token!.content)) {
+    } else if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
       if (
-        (t => t === TokenType.EQUALS || t === TokenType.COLON_EQUALS)(
-          this.peekTokenOnLine(2)?.type
+        (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
+          this.peekTokenOnLine(2)?.subtype
         ))
         return this.parseAssignment();
       else
         return this.parseVariableDeclaration();
     } else if (
-      (t => t === TokenType.EQUALS || t === TokenType.COLON_EQUALS)(
-        this.peekTokenOnLine(1)?.type
+      (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
+        this.peekTokenOnLine(1)?.subtype
       )) {
       return this.parseAssignment();
     } else {

@@ -23,15 +23,15 @@ export const Legend: SemanticTokensLegend = {
 
 const TokenTypeMap: number[] = [];
 
-TokenTypeMap[Lexer.SemanticTokenType.UNKNOWN] = Legend.tokenTypes.indexOf("variable");
-TokenTypeMap[Lexer.SemanticTokenType.COMMENT] = Legend.tokenTypes.indexOf("comment");
-TokenTypeMap[Lexer.SemanticTokenType.FUNCTION] = Legend.tokenTypes.indexOf("function");
-TokenTypeMap[Lexer.SemanticTokenType.KEYWORD] = Legend.tokenTypes.indexOf("keyword");
-TokenTypeMap[Lexer.SemanticTokenType.NUMBER] = Legend.tokenTypes.indexOf("number");
-TokenTypeMap[Lexer.SemanticTokenType.OPERATOR] = Legend.tokenTypes.indexOf("operator");
-TokenTypeMap[Lexer.SemanticTokenType.STRING] = Legend.tokenTypes.indexOf("string");
-TokenTypeMap[Lexer.SemanticTokenType.TYPE] = Legend.tokenTypes.indexOf("type");
-TokenTypeMap[Lexer.SemanticTokenType.VARIABLE] = Legend.tokenTypes.indexOf("variable");
+TokenTypeMap[TokenType.UNKNOWN] = Legend.tokenTypes.indexOf("variable");
+TokenTypeMap[TokenType.COMMENT] = Legend.tokenTypes.indexOf("comment");
+TokenTypeMap[TokenType.FUNCTION] = Legend.tokenTypes.indexOf("function");
+TokenTypeMap[TokenType.KEYWORD] = Legend.tokenTypes.indexOf("keyword");
+TokenTypeMap[TokenType.NUMBER] = Legend.tokenTypes.indexOf("number");
+TokenTypeMap[TokenType.OPERATOR] = Legend.tokenTypes.indexOf("operator");
+TokenTypeMap[TokenType.STRING] = Legend.tokenTypes.indexOf("string");
+TokenTypeMap[TokenType.TYPENAME] = Legend.tokenTypes.indexOf("type");
+TokenTypeMap[TokenType.ID] = Legend.tokenTypes.indexOf("variable");
 
 
 export function onSemanticTokenRequestFull(
