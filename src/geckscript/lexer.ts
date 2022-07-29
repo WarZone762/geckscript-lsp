@@ -69,7 +69,7 @@ export class Lexer {
       this.prev_token?.subtype === TokenSubtype.BEGIN
     ) {
       return [TokenType.BLOCK_TYPE, undefined];
-    } else if (Tokens[TokenType.BLOCK_TYPE].containsToken(data)) {
+    } else if (Tokens[TokenType.OPERATOR].containsToken(data)) {
       return [TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(data)!];
     } else if (Tokens[TokenType.FUNCTION].containsToken(data)) {
       return [TokenType.FUNCTION, undefined];
@@ -115,6 +115,22 @@ export class Lexer {
   }
 
   consumeNumber(): Token {
+    if (
+      this.cur_char === "0" &&
+      this.data[this.cur_line][this.cur_col + 1]?.toLowerCase() === "x"
+    ) {
+      this.nextCharToBuf();
+      this.nextCharToBuf();
+
+      while (this.cur_char !== undefined) {
+        if (/[0-9a-fA-F]/.test(this.cur_char))
+          this.nextCharToBuf();
+        else
+          return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.HEX);
+      }
+
+      return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.HEX);
+    }
     this.nextCharToBuf();
 
     while (this.cur_char !== undefined) {
@@ -124,7 +140,7 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        return this.constructCurrentToken(TokenType.NUMBER);
+        return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.DECIMAL);
       }
     }
 
@@ -132,7 +148,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.NUMBER);
+    return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.DECIMAL);
   }
 
   consumeWord(): Token {

@@ -49,7 +49,7 @@ export class NumericalNode extends Node {
     super(NodeType.numerical);
 
     this.token = token;
-    if (token.content[1] === "x") {
+    if (token.subtype === TokenSubtype.HEX) {
       this.value = parseInt(token.content);
     } else {
       this.value = parseFloat(token.content);
@@ -176,14 +176,6 @@ export class Script extends Node {
   }
 }
 
-export const CompoundStatementTerminators = {
-  "end": true,
-  "loop": true,
-  "elseif": true,
-  "else": true,
-  "endif": true,
-};
-
 export class Parser {
   data: Token[][];
   variables: IdentifierNode[];
@@ -257,7 +249,7 @@ export class Parser {
     this.skipToken();
 
     while (cur_line == this.cur_token_pos.ln) {
-      if (this.cur_token!.content == ")") {
+      if (this.cur_token?.subtype === TokenSubtype.RPAREN) {
         this.skipToken();
 
         return function_statement;
@@ -330,11 +322,11 @@ export class Parser {
   parseExpression(): Node {
     let token: Node;
 
-    if (this.cur_token?.content == "(") this.skipToken();
+    if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipToken();
 
-    if (this.cur_token?.content[0] === "\"") {
+    if (this.cur_token?.type === TokenType.STRING) {
       token = new StringLiteralNode(this.nextToken()!);
-    } else if (!isNaN(this.cur_token?.content as any)) {
+    } else if (this.cur_token?.type === TokenType.NUMBER) {
       token = new NumericalNode(this.nextToken()!);
     } else if (this.cur_token?.type === TokenType.FUNCTION) {
       token = this.parseFunction();
@@ -346,7 +338,7 @@ export class Parser {
   }
 
   parseStatement(): Node {
-    if (this.cur_token?.content[0] === ";") {
+    if (this.cur_token?.type === TokenType.COMMENT) {
       return this.parseComment();
     } else if (this.cur_token?.subtype === TokenSubtype.SET) {
       return this.parseAssignmentSet();
@@ -377,7 +369,13 @@ export class Parser {
 
     while (
       this.cur_token != undefined &&
-      !(this.cur_token!.content in CompoundStatementTerminators)
+      !(t =>
+        t === TokenSubtype.END ||
+        t === TokenSubtype.LOOP ||
+        t === TokenSubtype.ELSEIF ||
+        t === TokenSubtype.ELSE ||
+        t === TokenSubtype.ENDIF
+      )(this.cur_token.subtype)
     ) {
       nodes.push(this.parseStatement());
     }

@@ -17,6 +17,10 @@ export const enum TokenType {
 export const enum TokenSubtype {
   UNKNOWN,
 
+  // Numbers
+  DECIMAL,
+  HEX,
+
   // Types
   SHORT,
   INT,
