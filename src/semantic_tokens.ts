@@ -3,6 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as vsc from "vscode-languageserver/node";
 import * as Lexer from "./geckscript/lexer";
+import { TokenType } from "./geckscript/tokens";
 
 export const Legend: SemanticTokensLegend = {
   tokenTypes: [
@@ -22,15 +23,15 @@ export const Legend: SemanticTokensLegend = {
 
 const TokenTypeMap: number[] = [];
 
-TokenTypeMap[Lexer.TokenType.unknown] = Legend.tokenTypes.indexOf("variable");
-TokenTypeMap[Lexer.TokenType.comment] = Legend.tokenTypes.indexOf("comment");
-TokenTypeMap[Lexer.TokenType.function] = Legend.tokenTypes.indexOf("function");
-TokenTypeMap[Lexer.TokenType.keyword] = Legend.tokenTypes.indexOf("keyword");
-TokenTypeMap[Lexer.TokenType.number] = Legend.tokenTypes.indexOf("number");
-TokenTypeMap[Lexer.TokenType.operator] = Legend.tokenTypes.indexOf("operator");
-TokenTypeMap[Lexer.TokenType.string] = Legend.tokenTypes.indexOf("string");
-TokenTypeMap[Lexer.TokenType.type] = Legend.tokenTypes.indexOf("type");
-TokenTypeMap[Lexer.TokenType.variable] = Legend.tokenTypes.indexOf("variable");
+TokenTypeMap[Lexer.SemanticTokenType.UNKNOWN] = Legend.tokenTypes.indexOf("variable");
+TokenTypeMap[Lexer.SemanticTokenType.COMMENT] = Legend.tokenTypes.indexOf("comment");
+TokenTypeMap[Lexer.SemanticTokenType.FUNCTION] = Legend.tokenTypes.indexOf("function");
+TokenTypeMap[Lexer.SemanticTokenType.KEYWORD] = Legend.tokenTypes.indexOf("keyword");
+TokenTypeMap[Lexer.SemanticTokenType.NUMBER] = Legend.tokenTypes.indexOf("number");
+TokenTypeMap[Lexer.SemanticTokenType.OPERATOR] = Legend.tokenTypes.indexOf("operator");
+TokenTypeMap[Lexer.SemanticTokenType.STRING] = Legend.tokenTypes.indexOf("string");
+TokenTypeMap[Lexer.SemanticTokenType.TYPE] = Legend.tokenTypes.indexOf("type");
+TokenTypeMap[Lexer.SemanticTokenType.VARIABLE] = Legend.tokenTypes.indexOf("variable");
 
 
 export function onSemanticTokenRequestFull(
@@ -45,7 +46,7 @@ export function onSemanticTokenRequestFull(
 
   tokens.data.forEach((line_tokens: Lexer.Token[]) => {
     line_tokens.forEach((token: Lexer.Token) => {
-      if (token.type == Lexer.TokenType.unknown) return;
+      if (token.type == TokenType.UNKNOWN) return;
 
       tokensBuilder.push(
         token.position.line,

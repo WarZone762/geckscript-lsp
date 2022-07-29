@@ -11,6 +11,10 @@ export class StringBuffer {
     this.pos += this.buf.write(char, this.pos);
   }
 
+  toString(): string {
+    return this.buf.toString(undefined, 0, this.pos);
+  }
+
   flush(): string {
     const str = this.buf.toString(undefined, 0, this.pos);
     this.pos = 0;

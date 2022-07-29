@@ -1,4 +1,5 @@
 import { GetTokens, Token, TokenPosition, TokensStorage } from "./lexer";
+import { TokenType } from "./tokens";
 import * as Tokens from "./tokens";
 
 
@@ -297,7 +298,7 @@ export class Parser {
 
     node.let_token = this.nextToken();
 
-    if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
+    if (Tokens.Types.containsToken(this.cur_token!.content)) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -313,7 +314,7 @@ export class Parser {
   parseAssignment(): AssignmentNode {
     const node = new AssignmentNode();
 
-    if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
+    if (Tokens.Types.containsToken(this.cur_token!.content)) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -335,7 +336,7 @@ export class Parser {
       token = new StringLiteralNode(this.nextToken()!);
     } else if (!isNaN(this.cur_token?.content as any)) {
       token = new NumericalNode(this.nextToken()!);
-    } else if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Functions) {
+    } else if (Tokens.Functions.containsToken(this.cur_token!.content)) {
       token = this.parseFunction();
     } else {
       token = new IdentifierNode(this.nextToken()!);
@@ -347,18 +348,24 @@ export class Parser {
   parseStatement(): Node {
     if (this.cur_token?.content[0] === ";") {
       return this.parseComment();
-    } else if (this.cur_token?.content.toLowerCase() === "set") {
+    } else if (this.cur_token?.type === TokenType.SET) {
       return this.parseAssignmentSet();
-    } else if (this.cur_token?.content.toLowerCase() === "let") {
+    } else if (this.cur_token?.type === TokenType.LET) {
       return this.parseAssignmentLet();
-    } else if (this.cur_token?.content.toLowerCase() === "begin") {
+    } else if (this.cur_token?.type === TokenType.BEGIN) {
       return this.parseBeginBlock();
-    } else if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.Types) {
-      if (this.peekTokenOnLine(2)?.content.includes("="))
+    } else if (Tokens.Types.containsToken(this.cur_token!.content)) {
+      if (
+        (t => t === TokenType.EQUALS || t === TokenType.COLON_EQUALS)(
+          this.peekTokenOnLine(2)?.type
+        ))
         return this.parseAssignment();
       else
         return this.parseVariableDeclaration();
-    } else if (this.peekTokenOnLine(1)?.content.includes("=")) {
+    } else if (
+      (t => t === TokenType.EQUALS || t === TokenType.COLON_EQUALS)(
+        this.peekTokenOnLine(1)?.type
+      )) {
       return this.parseAssignment();
     } else {
       return this.parseFunction();
@@ -382,7 +389,7 @@ export class Parser {
     const token = this.nextToken()!;
 
     let expression;
-    if (this.cur_token!.content.toLowerCase() in Tokens.TokensLower.BlockTypes) {
+    if (Tokens.BlockTypes.containsToken(this.cur_token!.content)) {
       expression = this.parseExpression();
     } else {
       expression = undefined;

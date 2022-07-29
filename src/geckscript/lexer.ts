@@ -2,17 +2,16 @@ import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
 import * as Tokens from "./tokens";
 
-export enum TokenType {
-  unknown,
-  comment,
-  function,
-  keyword,
-  number,
-  operator,
-  string,
-  type,
-  variable,
-  TOTAL
+export enum SemanticTokenType {
+  UNKNOWN,
+  COMMENT,
+  FUNCTION,
+  VARIABLE,
+  KEYWORD,
+  NUMBER,
+  OPERATOR,
+  STRING,
+  TYPE,
 }
 
 export type TokenPosition = {
@@ -21,12 +20,14 @@ export type TokenPosition = {
 }
 
 export class Token {
-  type: TokenType;
+  semantic_type: SemanticTokenType;
+  type: Tokens.TokenType;
   position: TokenPosition;
   content: string;
   length: number;
 
-  constructor(type: TokenType, position: TokenPosition, content: string) {
+  constructor(type: Tokens.TokenType, semantic_type: SemanticTokenType, position: TokenPosition, content: string) {
+    this.semantic_type = semantic_type;
     this.type = type;
     this.position = position;
     this.content = content;
@@ -70,30 +71,29 @@ export class Lexer {
     this.nextChar();
   }
 
-  determineTokenType(data: string): TokenType {
-    data = data.toLowerCase();
-    if (data in Tokens.TokensLower.Types) {
-      return TokenType.type;
-    } else if (data in Tokens.TokensLower.Keywords) {
-      return TokenType.keyword;
+  determineTokenType(data: string): [Tokens.TokenType, SemanticTokenType] {
+    if (Tokens.Types.containsToken(data)) {
+      return [Tokens.Types.getTokenID(data)!, SemanticTokenType.TYPE];
+    } else if (Tokens.Keywords.containsToken(data)) {
+      return [Tokens.Keywords.getTokenID(data)!, SemanticTokenType.KEYWORD];
     } else if (
-      data in Tokens.TokensLower.BlockTypes &&
-      this.prev_token?.type === TokenType.keyword &&
-      this.prev_token.content.toLocaleLowerCase() === "begin"
+      Tokens.BlockTypes.containsToken(data) &&
+      this.prev_token?.type === Tokens.TokenType.BEGIN
     ) {
-      return TokenType.keyword;
-    } else if (data in Tokens.Operators) {
-      return TokenType.operator;
-    } else if (data in Tokens.TokensLower.Functions) {
-      return TokenType.function;
+      return [Tokens.TokenType.BLOCK_TYPE, SemanticTokenType.KEYWORD];
+    } else if (Tokens.Operators.containsToken(data)) {
+      return [Tokens.Operators.getTokenID(data)!, SemanticTokenType.OPERATOR];
+    } else if (Tokens.Functions.containsToken(data)) {
+      return [Tokens.TokenType.FUNCTION, SemanticTokenType.FUNCTION];
     } else {
-      return TokenType.variable;
+      return [Tokens.TokenType.ID, SemanticTokenType.VARIABLE];
     }
   }
 
-  constructCurrentToken(type: TokenType, content?: string): Token {
-    content = content ?? this.buf.flush();
-    return new Token(type, { line: this.cur_line, column: this.cur_col - content.length }, content);
+  constructCurrentToken(type: Tokens.TokenType, semantic_type: SemanticTokenType): Token {
+    const content = this.buf.flush();
+
+    return new Token(type, semantic_type, { line: this.cur_line, column: this.cur_col - content.length }, content);
   }
 
   consumeWhitespace(): void {
@@ -107,7 +107,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.comment);
+    return this.constructCurrentToken(Tokens.TokenType.COMMENT, SemanticTokenType.COMMENT);
   }
 
   consumeString(): Token {
@@ -123,7 +123,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.string);
+    return this.constructCurrentToken(Tokens.TokenType.STRING, SemanticTokenType.STRING);
   }
 
   consumeNumber(): Token {
@@ -136,7 +136,7 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        return this.constructCurrentToken(TokenType.number);
+        return this.constructCurrentToken(Tokens.TokenType.NUMBER, SemanticTokenType.NUMBER);
       }
     }
 
@@ -144,7 +144,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.number);
+    return this.constructCurrentToken(Tokens.TokenType.NUMBER, SemanticTokenType.NUMBER);
   }
 
   consumeWord(): Token {
@@ -160,9 +160,7 @@ export class Lexer {
       }
     }
 
-    const content = this.buf.flush();
-
-    return this.constructCurrentToken(this.determineTokenType(content), content);
+    return this.constructCurrentToken(...this.determineTokenType(this.buf.toString()));
   }
 
   lexLine(): Token[] | undefined {

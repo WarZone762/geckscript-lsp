@@ -76,7 +76,7 @@ HTMLToMDConverter.addRule("GECKWiki_div#contentSub", {
   }
 });
 
-export async function RequestGet(url: string): Promise<string | undefined> {
+export async function GETRequest(url: string): Promise<string | undefined> {
   console.log(`Starting request GET "${url}"`);
 
   return new Promise<string | undefined>((resolve, reject) => {
@@ -102,7 +102,7 @@ export async function RequestGet(url: string): Promise<string | undefined> {
 }
 
 async function GetWikiPage(page_title: string): Promise<string | undefined> {
-  const response = await RequestGet(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`);
+  const response = await GETRequest(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`);
 
   if (response == undefined) return undefined;
 
@@ -146,14 +146,14 @@ export async function GetCategoryPages(category: string, types?: string | string
 
   const items: string[] = [];
 
-  let response = JSON.parse(await RequestGet(
+  let response = JSON.parse(await GETRequest(
     `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&format=json`
   ) ?? "");
 
   response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));
 
   while (response?.continue?.cmcontinue != undefined) {
-    response = JSON.parse(await RequestGet(
+    response = JSON.parse(await GETRequest(
       `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&cmcontinue=${response?.continue?.cmcontinue}&format=json`
     ) ?? "");
     response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));

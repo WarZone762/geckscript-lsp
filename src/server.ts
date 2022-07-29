@@ -17,6 +17,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as TreeViewServer from "./tree_view/server";
 
+import { TokenType } from "./geckscript/tokens";
 import * as Tokens from "./geckscript/tokens";
 import * as Wiki from "./wiki";
 import * as ST from "./semantic_tokens";
@@ -93,6 +94,7 @@ documents.onDidChangeContent(
       undefined,
       {
         "type": true,
+        "semantic_type": true,
         "range": true,
         "position": true,
         "length": true,
@@ -108,7 +110,7 @@ connection.onCompletion(
     const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position);
     if (token == null) return Tokens.CompletionItems.All;
 
-    if (token.type === Lexer.TokenType.comment || token.type === Lexer.TokenType.string) {
+    if (token.type === TokenType.COMMENT || token.type === TokenType.STRING) {
       return null;
     }
 
@@ -132,7 +134,7 @@ connection.onHover(
     const token = documents_tokens[params.textDocument.uri].getTokenAtPos(params.position)?.content.toLowerCase();
     if (token == null) return null;
 
-    const page_title = Tokens.All[Tokens.TokensLower.All[token]];
+    const page_title = Tokens.All.getTokenPageName(token);
 
     if (page_title == null) return null;
 
