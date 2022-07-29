@@ -1,6 +1,6 @@
 import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
-import * as Tokens from "./tokens";
+import { TokenType, TokenSubtype, Tokens } from "./tokens";
 
 export type TokenPosition = {
   line: number;
@@ -8,13 +8,13 @@ export type TokenPosition = {
 }
 
 export class Token {
-  type: Tokens.TokenType;
-  subtype?: Tokens.TokenSubtype;
+  type: TokenType;
+  subtype?: TokenSubtype;
   position: TokenPosition;
   content: string;
   length: number;
 
-  constructor(type: Tokens.TokenType, subtype: Tokens.TokenSubtype | undefined, position: TokenPosition, content: string) {
+  constructor(type: TokenType, subtype: TokenSubtype | undefined, position: TokenPosition, content: string) {
     this.type = type;
     this.subtype = subtype;
     this.position = position;
@@ -59,26 +59,26 @@ export class Lexer {
     this.nextChar();
   }
 
-  determineTokenType(data: string): [Tokens.TokenType, Tokens.TokenSubtype | undefined] {
-    if (Tokens.Typenames.containsToken(data)) {
-      return [Tokens.TokenType.TYPENAME, Tokens.Typenames.getTokenSubtype(data)!];
-    } else if (Tokens.Keywords.containsToken(data)) {
-      return [Tokens.TokenType.KEYWORD, Tokens.Keywords.getTokenSubtype(data)!];
+  determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
+    if (Tokens[TokenType.TYPENAME].containsToken(data)) {
+      return [TokenType.TYPENAME, Tokens[TokenType.TYPENAME].getTokenSubtype(data)!];
+    } else if (Tokens[TokenType.KEYWORD].containsToken(data)) {
+      return [TokenType.KEYWORD, Tokens[TokenType.KEYWORD].getTokenSubtype(data)!];
     } else if (
-      Tokens.BlockTypes.containsToken(data) &&
-      this.prev_token?.subtype === Tokens.TokenSubtype.BEGIN
+      Tokens[TokenType.BLOCK_TYPE].containsToken(data) &&
+      this.prev_token?.subtype === TokenSubtype.BEGIN
     ) {
-      return [Tokens.TokenType.BLOCK_TYPE, undefined];
-    } else if (Tokens.Operators.containsToken(data)) {
-      return [Tokens.TokenType.OPERATOR, Tokens.Operators.getTokenSubtype(data)!];
-    } else if (Tokens.Functions.containsToken(data)) {
-      return [Tokens.TokenType.FUNCTION, undefined];
+      return [TokenType.BLOCK_TYPE, undefined];
+    } else if (Tokens[TokenType.BLOCK_TYPE].containsToken(data)) {
+      return [TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(data)!];
+    } else if (Tokens[TokenType.FUNCTION].containsToken(data)) {
+      return [TokenType.FUNCTION, undefined];
     } else {
-      return [Tokens.TokenType.ID, undefined];
+      return [TokenType.ID, undefined];
     }
   }
 
-  constructCurrentToken(type: Tokens.TokenType, subtype?: Tokens.TokenSubtype): Token {
+  constructCurrentToken(type: TokenType, subtype?: TokenSubtype): Token {
     const content = this.buf.flush();
 
     return new Token(type, subtype, { line: this.cur_line, column: this.cur_col - content.length }, content);
@@ -95,7 +95,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.COMMENT);
+    return this.constructCurrentToken(TokenType.COMMENT);
   }
 
   consumeString(): Token {
@@ -111,7 +111,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.STRING);
+    return this.constructCurrentToken(TokenType.STRING);
   }
 
   consumeNumber(): Token {
@@ -124,7 +124,7 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        return this.constructCurrentToken(Tokens.TokenType.NUMBER);
+        return this.constructCurrentToken(TokenType.NUMBER);
       }
     }
 
@@ -132,7 +132,7 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(Tokens.TokenType.NUMBER);
+    return this.constructCurrentToken(TokenType.NUMBER);
   }
 
   consumeWord(): Token {

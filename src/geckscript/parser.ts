@@ -1,9 +1,9 @@
 import { GetTokens, Token, TokenPosition, TokensStorage } from "./lexer";
 import { TokenSubtype } from "./tokens";
-import * as Tokens from "./tokens";
+import { TokenType } from "./tokens";
 
 
-export enum NodeType {
+export const enum NodeType {
   assignment,
   begin_block,
   comment,
@@ -298,7 +298,7 @@ export class Parser {
 
     node.let_token = this.nextToken();
 
-    if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
+    if (this.cur_token?.type === TokenType.TYPENAME) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -314,7 +314,7 @@ export class Parser {
   parseAssignment(): AssignmentNode {
     const node = new AssignmentNode();
 
-    if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
+    if (this.cur_token?.type === TokenType.TYPENAME) {
       node.identifier = this.parseVariableDeclaration();
     } else {
       node.identifier = this.parseIdentifier();
@@ -336,7 +336,7 @@ export class Parser {
       token = new StringLiteralNode(this.nextToken()!);
     } else if (!isNaN(this.cur_token?.content as any)) {
       token = new NumericalNode(this.nextToken()!);
-    } else if (Tokens.Functions.containsToken(this.cur_token!.content)) {
+    } else if (this.cur_token?.type === TokenType.FUNCTION) {
       token = this.parseFunction();
     } else {
       token = new IdentifierNode(this.nextToken()!);
@@ -354,7 +354,7 @@ export class Parser {
       return this.parseAssignmentLet();
     } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
-    } else if (Tokens.Typenames.containsToken(this.cur_token!.content)) {
+    } else if (this.cur_token?.type === TokenType.TYPENAME) {
       if (
         (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
           this.peekTokenOnLine(2)?.subtype
@@ -389,7 +389,7 @@ export class Parser {
     const token = this.nextToken()!;
 
     let expression;
-    if (Tokens.BlockTypes.containsToken(this.cur_token!.content)) {
+    if (this.cur_token?.type === TokenType.BLOCK_TYPE) {
       expression = this.parseExpression();
     } else {
       expression = undefined;

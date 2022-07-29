@@ -10,7 +10,7 @@ const tokens = Lexer.GetTokens(data);
 
 tokens.data.forEach((line_tokens: Lexer.Token[]) => {
   line_tokens.forEach((token: Lexer.Token) => {
-    process.stdout.write(`{${token.content}}(${TokenType[token.type]})`);
+    process.stdout.write(`{${token.content}}(${token.type})`);
     process.stdout.write(" ");
   });
   process.stdout.write("\n");

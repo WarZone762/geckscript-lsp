@@ -1,7 +1,7 @@
 import { GetTokens, Lexer, Token, TokenPosition, TokensStorage } from "./lexer";
 
 
-export enum ExpressionType {
+export const enum ExpressionType {
   block_begin,
   block_foreach,
   block_if,
