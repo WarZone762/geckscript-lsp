@@ -41,85 +41,58 @@ export class Node {
   }
 }
 
-export class NumericalNode extends Node {
-  token: Token;
-  value: number;
+export class NumberNode extends Node {
+  token?: Token;
+  value?: number;
 
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.numerical);
-
-    this.token = token;
-    if (token.subtype === TokenSubtype.HEX) {
-      this.value = parseInt(token.content);
-    } else {
-      this.value = parseFloat(token.content);
-    }
   }
 }
+export class StringNode extends Node {
+  token?: Token;
+  value?: string;
 
-export class StringLiteralNode extends Node {
-  token: Token;
-  value: string;
-
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.string_literal);
-
-    this.token = token;
-    this.value = token.content.substring(1, token.length - 1);
   }
 }
 
 export class CommentNode extends Node {
-  token: Token;
-  value: string;
+  token?: Token;
+  value?: string;
 
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.comment);
-
-    this.token = token;
-    this.value = token.content.substring(1);
   }
 }
 
 export class IdentifierNode extends Node {
-  token: Token;
-  value: string;
+  token?: Token;
+  value?: string;
 
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.identifier);
-
-    this.token = token;
-    this.value = token.content;
   }
 }
 
 export class VariableDeclarationNode extends Node {
-  token: Token;
-  variable_type: string;
-  identifier: IdentifierNode;
+  type_token?: Token;
+  variable_type?: string;
+  identifier?: IdentifierNode;
 
-  constructor(token: Token, identifier: IdentifierNode) {
+  constructor() {
     super(NodeType.variable_declaration);
-
-    this.token = token;
-    this.variable_type = token.content;
-
-    this.identifier = identifier;
   }
 }
 
 export class FunctionNode extends Node {
-  token: Token;
-  lparen_token?: Token;
-  name: string;
-  args: Node[];
-  rparen_token?: Token;
+  token?: Token;
+  name?: string;
+  args: (Node | undefined)[];
 
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.function);
-
-    this.token = token;
-    this.name = token.content;
 
     this.args = [];
   }
@@ -143,36 +116,36 @@ export class AssignmentNode extends Node {
   }
 }
 
-export type CompoundStatementNode = Node[];
+export class CompoundStatementNode extends Node {
+  children: (Node | undefined)[];
+  symbol_table: IdentifierNode[];
+
+  constructor() {
+    super(NodeType.compound_statement);
+
+    this.children = [];
+    this.symbol_table = [];
+  }
+}
 
 export class BeginBlockNode extends Node {
   begin_token?: Token;
   expression?: Node;
-  compound_statement: CompoundStatementNode;
+  compound_statement?: CompoundStatementNode;
   end_token?: Token;
 
-  constructor(token: Token, expression: Node | undefined, compound_statement: CompoundStatementNode) {
+  constructor() {
     super(NodeType.begin_block);
-
-    this.begin_token = token;
-    this.expression = expression;
-    this.compound_statement = compound_statement;
   }
 }
 
 export class Script extends Node {
-  scriptname_token: Token;
-  name: IdentifierNode;
-  statements: CompoundStatementNode;
-  variables: IdentifierNode[];
+  scriptname_token?: Token;
+  name?: IdentifierNode;
+  statements?: CompoundStatementNode;
 
-  constructor(token: Token) {
+  constructor() {
     super(NodeType.script);
-
-    this.scriptname_token = token;
-    this.name = new IdentifierNode(token);
-    this.statements = [];
-    this.variables = [];
   }
 }
 
@@ -225,60 +198,121 @@ export class Parser {
     return token;
   }
 
+  nextTokenOfType(type: TokenType): Token | undefined {
+    const token = this.cur_token;
+
+    if (token?.type !== type) return undefined;
+    this.skipToken();
+
+    return token;
+  }
+
+  nextTokenOnLineOfType(type: TokenType): Token | undefined {
+    const token = this.cur_token;
+
+    if (token?.type !== type) return undefined;
+    this.skipTokenOnLine();
+
+    return token;
+  }
+
+  nextTokenOfSubtype(subtype: TokenSubtype): Token | undefined {
+    const token = this.cur_token;
+
+    if (token?.subtype !== subtype) return undefined;
+    this.skipToken();
+
+    return token;
+  }
+
   peekTokenOnLine(offset: number): Token | undefined {
     return this.data[this.cur_token_pos.ln][this.cur_token_pos.col + offset];
   }
 
-  parseIdentifier(): IdentifierNode {
-    const variable = new IdentifierNode(this.nextToken()!);
-
-    return variable;
-  }
-
   parseComment(): CommentNode {
-    const comment = new CommentNode(this.nextToken()!);
-
-    return comment;
-  }
-
-  parseFunction(): FunctionNode {
-    const function_statement = new FunctionNode(this.cur_token!);
-
-    const cur_line = this.cur_token_pos.ln;
-
-    this.skipToken();
-
-    while (cur_line == this.cur_token_pos.ln) {
-      if (this.cur_token?.subtype === TokenSubtype.RPAREN) {
-        this.skipToken();
-
-        return function_statement;
-      }
-
-      function_statement.args.push(this.parseExpression());
+    const node = new CommentNode();
+    node.token = this.nextTokenOfType(TokenType.COMMENT);
+    if (node.token == undefined) {
+      return node;
     }
 
-    return function_statement;
+    node.value = node.token.content.substring(1);
+
+    return node;
+  }
+
+  parseNumber(): NumberNode {
+    const node = new NumberNode();
+
+    node.token = this.nextTokenOfType(TokenType.NUMBER);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    if (node.token.subtype === TokenSubtype.HEX) {
+      node.value = parseInt(node.token.content);
+    } else {
+      node.value = parseFloat(node.token.content);
+    }
+
+    return node;
+  }
+
+  parseString(): StringNode {
+    const node = new StringNode();
+
+    node.token = this.nextTokenOfType(TokenType.NUMBER);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.value = node.token.content.substring(1, node.token.length);
+
+    return node;
+  }
+
+  parseIdentifier(): IdentifierNode {
+    const node = new IdentifierNode();
+
+    node.token = this.nextTokenOfType(TokenType.ID);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.value = node.token.content;
+
+    return node;
   }
 
   parseVariableDeclaration(): VariableDeclarationNode {
-    const type_token = this.nextToken()!;
+    const node = new VariableDeclarationNode();
 
-    const variable = this.parseIdentifier();
+    node.type_token = this.nextTokenOfType(TokenType.TYPENAME);
+    if (node.type_token == undefined) {
+      return node;
+    }
 
-    this.variables.push(variable);
+    node.variable_type = node.type_token.content;
 
-    return new VariableDeclarationNode(type_token, variable);
+    node.identifier = this.parseIdentifier();
+
+    return node;
   }
 
   parseAssignmentSet(): AssignmentNode {
     const node = new AssignmentNode();
 
-    node.set_token = this.nextToken();
+    node.set_token = this.nextTokenOfSubtype(TokenSubtype.SET);
+    if (node.set_token == undefined) {
+      return node;
+    }
 
     node.identifier = this.parseIdentifier();
 
-    node.to_token = this.nextToken();
+    node.to_token = this.nextTokenOfSubtype(TokenSubtype.TO);
+    if (node.to_token == undefined) {
+      return node;
+    }
 
     node.value = this.parseExpression();
 
@@ -319,25 +353,51 @@ export class Parser {
     return node;
   }
 
-  parseExpression(): Node {
-    let token: Node;
+  parseFunction(): FunctionNode {
+    const node = new FunctionNode();
 
+    if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipTokenOnLine();
+
+    node.token = this.nextTokenOnLineOfType(TokenType.FUNCTION);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.name = node.token.content;
+
+    let expr = this.parseExpression();
+
+    while (expr != undefined) {
+      if (this.cur_token?.subtype === TokenSubtype.RPAREN) {
+        this.skipToken();
+
+        return node;
+      }
+
+      node.args.push(expr);
+      expr = this.parseExpression();
+    }
+
+    return node;
+  }
+
+  parseExpression(): Node | undefined {
     if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipToken();
 
     if (this.cur_token?.type === TokenType.STRING) {
-      token = new StringLiteralNode(this.nextToken()!);
+      return this.parseString();
     } else if (this.cur_token?.type === TokenType.NUMBER) {
-      token = new NumericalNode(this.nextToken()!);
+      return this.parseNumber();
     } else if (this.cur_token?.type === TokenType.FUNCTION) {
-      token = this.parseFunction();
-    } else {
-      token = new IdentifierNode(this.nextToken()!);
+      return this.parseFunction();
+    } else if (this.cur_token?.type === TokenType.ID) {
+      return this.parseIdentifier();
     }
 
-    return token;
+    this.skipToken();
   }
 
-  parseStatement(): Node {
+  parseStatement(): Node | undefined {
     if (this.cur_token?.type === TokenType.COMMENT) {
       return this.parseComment();
     } else if (this.cur_token?.subtype === TokenSubtype.SET) {
@@ -359,13 +419,15 @@ export class Parser {
         this.peekTokenOnLine(1)?.subtype
       )) {
       return this.parseAssignment();
-    } else {
+    } else if (this.cur_token?.type === TokenType.FUNCTION) {
       return this.parseFunction();
     }
+
+    this.skipToken();
   }
 
-  parseStatementList(): Node[] {
-    const nodes: Node[] = [];
+  parseStatementList(): CompoundStatementNode {
+    const node = new CompoundStatementNode();
 
     while (
       this.cur_token != undefined &&
@@ -377,45 +439,45 @@ export class Parser {
         t === TokenSubtype.ENDIF
       )(this.cur_token.subtype)
     ) {
-      nodes.push(this.parseStatement());
+      node.children.push(this.parseStatement());
     }
 
-    return nodes;
+    return node;
   }
 
   parseBeginBlock(): BeginBlockNode {
-    const token = this.nextToken()!;
+    const node = new BeginBlockNode();
 
-    let expression;
-    if (this.cur_token?.type === TokenType.BLOCK_TYPE) {
-      expression = this.parseExpression();
-    } else {
-      expression = undefined;
+    node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
+    if (node.begin_token == undefined) {
+      return node;
     }
 
-    const compound_statement = this.parseCompundStatement();
+    node.expression = this.parseExpression();
 
-    return new BeginBlockNode(token, expression, compound_statement);
-  }
+    node.compound_statement = this.parseStatementList();
 
-  parseCompundStatement(): CompoundStatementNode {
-    const compound_statement = this.parseStatementList();
+    node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+    if (node.end_token == undefined) {
+      return node;
+    }
 
-    this.skipToken();
-
-    return compound_statement;
+    return node;
   }
 
   parse(): Script {
-    this.skipToken();
+    const node = new Script();
 
-    const script = new Script(this.nextToken()!);
+    node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
+    if (node.scriptname_token == undefined) {
+      return node;
+    }
 
-    script.statements = this.parseStatementList();
+    node.name = this.parseIdentifier();
 
-    script.variables = this.variables;
+    node.statements = this.parseStatementList();
 
-    return script;
+    return node;
   }
 }
 
