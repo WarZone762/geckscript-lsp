@@ -6,10 +6,13 @@ import { TokenType } from "./tokens";
 export const enum NodeType {
   assignment,
   begin_block,
+  bin_op,
   comment,
   compound_statement,
+  conditional,
   empty,
   function,
+  if_block,
   numerical,
   script,
   string_literal,
@@ -86,18 +89,6 @@ export class VariableDeclarationNode extends Node {
   }
 }
 
-export class FunctionNode extends Node {
-  token?: Token;
-  name?: string;
-  args: (Node | undefined)[];
-
-  constructor() {
-    super(NodeType.function);
-
-    this.args = [];
-  }
-}
-
 export class AssignmentNode extends Node {
   set_token?: Token;
   let_token?: Token;
@@ -113,6 +104,28 @@ export class AssignmentNode extends Node {
 
   constructor() {
     super(NodeType.assignment);
+  }
+}
+
+export class BinOpNode extends Node {
+  lhs?: Node;
+  op_token?: Token;
+  rhs?: Node;
+
+  constructor() {
+    super(NodeType.bin_op);
+  }
+}
+
+export class FunctionNode extends Node {
+  token?: Token;
+  name?: string;
+  args: (Node | undefined)[];
+
+  constructor() {
+    super(NodeType.function);
+
+    this.args = [];
   }
 }
 
@@ -136,6 +149,29 @@ export class BeginBlockNode extends Node {
 
   constructor() {
     super(NodeType.begin_block);
+  }
+}
+
+export class ConditionalNode extends Node {
+  token?: Token;
+  condition?: Node;
+  statements?: CompoundStatementNode;
+
+  constructor() {
+    super(NodeType.conditional);
+  }
+}
+
+export class IfBlockNode extends Node {
+  branches: ConditionalNode[];
+  else_token?: Token;
+  else_branch?: CompoundStatementNode;
+  endif_token?: Token;
+
+  constructor() {
+    super(NodeType.if_block);
+
+    this.branches = [];
   }
 }
 
@@ -351,6 +387,21 @@ export class Parser {
     return node;
   }
 
+  parseBinOp(): BinOpNode {
+    const node = new BinOpNode();
+
+    node.lhs = this.parseExpression();
+
+    node.op_token = this.nextTokenOfType(TokenType.OPERATOR);
+    if (node.op_token == undefined) {
+      return node;
+    }
+
+    node.rhs = this.parseExpression();
+
+    return node;
+  }
+
   parseFunction(): FunctionNode {
     const node = new FunctionNode();
 
@@ -405,6 +456,8 @@ export class Parser {
       return this.parseAssignmentLet();
     } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.IF) {
+      return this.parseIfBlock();
     } else if (this.cur_token?.type === TokenType.TYPENAME) {
       if (
         (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
@@ -457,6 +510,54 @@ export class Parser {
 
     node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
     if (node.end_token == undefined) {
+      return node;
+    }
+
+    return node;
+  }
+
+  parseConditional(
+    type: TokenSubtype,
+    terminator_predicate: (t: Token) => boolean = () => false
+  ): ConditionalNode {
+    const node = new ConditionalNode();
+
+    node.token = this.nextTokenOfSubtype(type);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.condition = this.parseExpression();
+
+    node.statements = this.parseCompoundStatement(terminator_predicate);
+
+    return node;
+  }
+
+  parseIfBlock() {
+    const node = new IfBlockNode();
+
+    node.branches[0] = this.parseConditional(TokenSubtype.IF, t =>
+      t.subtype === TokenSubtype.ELSEIF ||
+      t.subtype === TokenSubtype.ELSE ||
+      t.subtype === TokenSubtype.ENDIF
+    );
+
+    while (this.cur_token?.subtype === TokenSubtype.ELSEIF) {
+      node.branches.push(this.parseConditional(TokenSubtype.ELSEIF, t =>
+        t.subtype === TokenSubtype.ELSEIF ||
+        t.subtype === TokenSubtype.ELSE ||
+        t.subtype === TokenSubtype.ENDIF
+      ));
+    }
+
+    if (this.cur_token?.subtype === TokenSubtype.ELSE) {
+      node.else_token = this.nextToken();
+      node.else_branch = this.parseCompoundStatement(t => t.subtype === TokenSubtype.ENDIF);
+    }
+
+    node.endif_token = this.nextTokenOfSubtype(TokenSubtype.ENDIF);
+    if (node.endif_token == undefined) {
       return node;
     }
 
