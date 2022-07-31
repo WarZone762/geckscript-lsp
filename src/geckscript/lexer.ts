@@ -202,7 +202,8 @@ export class Lexer {
     let line_tokens: Token[] | undefined;
 
     while ((line_tokens = this.lexLine()) !== undefined) {
-      tokens.push(line_tokens as Token[]);  // TODO: skip blank lines, as this is supposed to be an abstract representation
+      if (line_tokens.length === 0) continue;
+      tokens.push(line_tokens);
     }
 
     return new TokensStorage(tokens);

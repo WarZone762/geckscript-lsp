@@ -186,9 +186,7 @@ export class Parser {
 
   skipToken(): void {
     this.skipTokenOnLine();
-    while (this.cur_token == undefined && this.cur_token_pos.ln < this.data.length) {
-      this.skipLine();
-    }
+    if (this.cur_token == undefined) this.skipLine();
   }
 
   nextToken(): Token | undefined {
@@ -261,12 +259,12 @@ export class Parser {
   parseString(): StringNode {
     const node = new StringNode();
 
-    node.token = this.nextTokenOfType(TokenType.NUMBER);
+    node.token = this.nextTokenOfType(TokenType.STRING);
     if (node.token == undefined) {
       return node;
     }
 
-    node.value = node.token.content.substring(1, node.token.length);
+    node.value = node.token.content.substring(1, node.token.length - 1);
 
     return node;
   }
@@ -356,8 +354,6 @@ export class Parser {
   parseFunction(): FunctionNode {
     const node = new FunctionNode();
 
-    if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipTokenOnLine();
-
     node.token = this.nextTokenOnLineOfType(TokenType.FUNCTION);
     if (node.token == undefined) {
       return node;
@@ -365,17 +361,14 @@ export class Parser {
 
     node.name = node.token.content;
 
-    let expr = this.parseExpression();
-
-    while (expr != undefined) {
+    while (this.cur_token != undefined && this.cur_token_pos.col !== 0) {
       if (this.cur_token?.subtype === TokenSubtype.RPAREN) {
         this.skipToken();
 
         return node;
       }
 
-      node.args.push(expr);
-      expr = this.parseExpression();
+      node.args.push(this.parseExpression());
     }
 
     return node;
@@ -384,17 +377,23 @@ export class Parser {
   parseExpression(): Node | undefined {
     if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipToken();
 
+    let node: Node | undefined;
     if (this.cur_token?.type === TokenType.STRING) {
-      return this.parseString();
+      node = this.parseString();
     } else if (this.cur_token?.type === TokenType.NUMBER) {
-      return this.parseNumber();
+      node = this.parseNumber();
     } else if (this.cur_token?.type === TokenType.FUNCTION) {
-      return this.parseFunction();
+      node = this.parseFunction();
     } else if (this.cur_token?.type === TokenType.ID) {
-      return this.parseIdentifier();
+      node = this.parseIdentifier();
+    } else {
+      this.skipToken();
+      return undefined;
     }
 
-    this.skipToken();
+    if (this.cur_token?.subtype === TokenSubtype.RPAREN) this.skipToken();
+
+    return node;
   }
 
   parseStatement(): Node | undefined {
@@ -426,20 +425,17 @@ export class Parser {
     this.skipToken();
   }
 
-  parseStatementList(): CompoundStatementNode {
+  parseCompoundStatement(
+    terminator_predicate: (token: Token) => boolean = () => false
+  ): CompoundStatementNode {
     const node = new CompoundStatementNode();
 
     while (
       this.cur_token != undefined &&
-      !(t =>
-        t === TokenSubtype.END ||
-        t === TokenSubtype.LOOP ||
-        t === TokenSubtype.ELSEIF ||
-        t === TokenSubtype.ELSE ||
-        t === TokenSubtype.ENDIF
-      )(this.cur_token.subtype)
+      !terminator_predicate(this.cur_token)
     ) {
       node.children.push(this.parseStatement());
+      console.log(this.cur_token);
     }
 
     return node;
@@ -455,7 +451,9 @@ export class Parser {
 
     node.expression = this.parseExpression();
 
-    node.compound_statement = this.parseStatementList();
+    node.compound_statement = this.parseCompoundStatement(t =>
+      t.subtype === TokenSubtype.END
+    );
 
     node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
     if (node.end_token == undefined) {
@@ -475,7 +473,7 @@ export class Parser {
 
     node.name = this.parseIdentifier();
 
-    node.statements = this.parseStatementList();
+    node.statements = this.parseCompoundStatement();
 
     return node;
   }

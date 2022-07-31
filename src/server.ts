@@ -93,7 +93,7 @@ documents.onDidChangeContent(
       undefined,
       {
         "type": true,
-        "semantic_type": true,
+        "subtype": true,
         "range": true,
         "position": true,
         "length": true,
