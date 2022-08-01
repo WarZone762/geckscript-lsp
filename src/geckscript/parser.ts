@@ -11,13 +11,15 @@ export const enum NodeType {
   compound_statement,
   conditional,
   empty,
+  foreach_block,
   function,
+  identifier,
   if_block,
   numerical,
   script,
   string_literal,
-  identifier,
   variable_declaration,
+  while_block,
 }
 
 export type Range = {
@@ -152,6 +154,21 @@ export class BeginBlockNode extends Node {
   }
 }
 
+export class ForeachBlockNode extends Node {
+  foreach_token?: Token;
+  idetifier?: IdentifierNode | VariableDeclarationNode;
+  larrow_token?: Token;
+  iterable?: Node;
+
+  statements?: CompoundStatementNode;
+
+  loop_token?: Token;
+
+  constructor() {
+    super(NodeType.foreach_block);
+  }
+}
+
 export class ConditionalNode extends Node {
   token?: Token;
   condition?: Node;
@@ -159,6 +176,15 @@ export class ConditionalNode extends Node {
 
   constructor() {
     super(NodeType.conditional);
+  }
+}
+
+export class WhileBlockNode extends Node {
+  while_node?: ConditionalNode;
+  loop_token?: Token;
+
+  constructor() {
+    super(NodeType.while_block);
   }
 }
 
@@ -283,11 +309,9 @@ export class Parser {
       return node;
     }
 
-    if (node.token.subtype === TokenSubtype.HEX) {
-      node.value = parseInt(node.token.content);
-    } else {
-      node.value = parseFloat(node.token.content);
-    }
+    node.value = node.token.subtype === TokenSubtype.HEX ?
+      parseInt(node.token.content) :
+      parseFloat(node.token.content);
 
     return node;
   }
@@ -358,11 +382,9 @@ export class Parser {
 
     node.let_token = this.nextToken();
 
-    if (this.cur_token?.type === TokenType.TYPENAME) {
-      node.identifier = this.parseVariableDeclaration();
-    } else {
-      node.identifier = this.parseIdentifier();
-    }
+    node.identifier = this.cur_token?.type === TokenType.TYPENAME ?
+      this.parseVariableDeclaration() :
+      this.parseIdentifier();
 
     node.equals_token = this.nextToken();
 
@@ -374,11 +396,9 @@ export class Parser {
   parseAssignment(): AssignmentNode {
     const node = new AssignmentNode();
 
-    if (this.cur_token?.type === TokenType.TYPENAME) {
-      node.identifier = this.parseVariableDeclaration();
-    } else {
-      node.identifier = this.parseIdentifier();
-    }
+    node.identifier = this.cur_token?.type === TokenType.TYPENAME ?
+      this.parseVariableDeclaration() :
+      this.parseIdentifier();
 
     node.equals_token = this.nextToken();
 
@@ -405,7 +425,7 @@ export class Parser {
   parseFunction(): FunctionNode {
     const node = new FunctionNode();
 
-    node.token = this.nextTokenOnLineOfType(TokenType.FUNCTION);
+    node.token = this.nextTokenOfType(TokenType.FUNCTION);
     if (node.token == undefined) {
       return node;
     }
@@ -456,6 +476,10 @@ export class Parser {
       return this.parseAssignmentLet();
     } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.WHILE) {
+      return this.parseWhileBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.FOREACH) {
+      return this.parseForeachBlock();
     } else if (this.cur_token?.subtype === TokenSubtype.IF) {
       return this.parseIfBlock();
     } else if (this.cur_token?.type === TokenType.TYPENAME) {
@@ -488,7 +512,6 @@ export class Parser {
       !terminator_predicate(this.cur_token)
     ) {
       node.children.push(this.parseStatement());
-      console.log(this.cur_token);
     }
 
     return node;
@@ -516,6 +539,37 @@ export class Parser {
     return node;
   }
 
+  parseForeachBlock(): ForeachBlockNode {
+    const node = new ForeachBlockNode();
+
+    node.foreach_token = this.nextTokenOfSubtype(TokenSubtype.FOREACH);
+    if (node.foreach_token == undefined) {
+      return node;
+    }
+
+    node.idetifier = this.cur_token?.type === TokenType.TYPENAME ?
+      this.parseVariableDeclaration() :
+      this.parseIdentifier();
+
+    node.larrow_token = this.nextTokenOfSubtype(TokenSubtype.LARROW);
+    if (node.larrow_token == undefined) {
+      return node;
+    }
+
+    node.iterable = this.parseExpression();
+
+    node.statements = this.parseCompoundStatement(
+      t => t.subtype === TokenSubtype.LOOP
+    );
+
+    node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+    if (node.loop_token == undefined) {
+      return node;
+    }
+
+    return node;
+  }
+
   parseConditional(
     type: TokenSubtype,
     terminator_predicate: (t: Token) => boolean = () => false
@@ -534,7 +588,22 @@ export class Parser {
     return node;
   }
 
-  parseIfBlock() {
+  parseWhileBlock(): WhileBlockNode {
+    const node = new WhileBlockNode();
+
+    node.while_node = this.parseConditional(
+      TokenSubtype.WHILE, t => t.subtype === TokenSubtype.LOOP
+    );
+
+    node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+    if (node.loop_token == undefined) {
+      return node;
+    }
+
+    return node;
+  }
+
+  parseIfBlock(): IfBlockNode {
     const node = new IfBlockNode();
 
     node.branches[0] = this.parseConditional(TokenSubtype.IF, t =>
