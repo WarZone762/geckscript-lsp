@@ -1,8 +1,54 @@
 GRAMMAR
 
-  script:
-    SCRIPTNAME ID
-    statement_list
+  literal:
+    NUMBER | STRING
+
+  variable:
+    ID
+
+  primary_expression:
+    literal | variable | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
+
+  variable_declaration:
+    TYPE variable
+
+  assignment_statement:
+    SET variable TO expression
+    |
+    LET? (variable | variable_declaration) (EQUALS | COLON_EQUALS) expression
+
+  block_type:
+    BLOCK_TYPE expression*
+
+  comp_expression:
+    primary_expression ((EQUALS_EQUALS | GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) primary_expression)*
+
+  and_expression:
+    comp_expression (AND comp_expression)*
+
+  or_expression:
+    and_expression (OR and_expression)*
+
+  mul_expression:
+    or_expression ((MUL | DIV | MOD) mul_expression)*
+
+  sum_expression:
+    mul_expression ((PLUS | MINUS) mul_expression)*
+
+  function:
+    FUNCTION sum_expression*
+
+  expression:
+     function | sum_expression
+
+  statement:
+    (expression |
+     variable_declaration |
+     assignment_statement |
+     begin_block |
+     if_block |
+     while_block |
+     foreach_block)?
 
   statement_list:
     statement
@@ -11,75 +57,29 @@ GRAMMAR
     statement_list
 
   begin_block:
-    BEGIN expression?
+    BEGIN block_type?
       statement_list
     END
 
-  statement:
-    assignment_statement
-    |
-    empty
+  if_block:
+    IF expression
+      statement_list
+    (ELSEIF expression
+        statement_list)*
+    (ELSE
+      statement_list)?
+    ENDIF
 
-  expression:
-    (LPAREN | LBRACKET)? function | literal | variable (RPAREN | RBRACKET)?
+  while_block:
+    WHILE expression
+      statement_list
+    LOOP
 
-  assignment:
-    SET variable TO expression
-    |
-    LET? (variable | variable_declaration) (EQUALS | COLON_EQUALS) expression
+  foreach_block:
+    FOREACH (variable | variable_declaration) LARROW expression
+      statement_list
+    LOOP
 
-  function: FUNCTION expression*
-
-  variable_declaration:
-    TYPE variable
-
-  variable:
-    ID
-
-  literal:
-    NUMBER | STRING
-
-
-TOKENS
-
-  NUMBER:
-    decimal or hexedecimal(with 0x in front) number
-
-  STRING:
-    string enclosed in ""
-
-  ID:
-    any word, can contain numbers, except at the first position
-
-  TYPE:
-    short, int, long, float, reference, ref, string_var, array_var
-
-  BEGIN:
-    begin
-
-  END:
-    end
-
-  LET:
-    let
-
-  SET:
-    set
-
-  EQUALS:
-    =
-
-  COLON_EQUALS:
-    :=
-
-  LPAREN:
-    (
-
-  RPAREN:
-    )
-
-  LBRACKET:
-    {
-
-  RBRACKET:
-    }
+  script:
+    SCRIPTNAME ID
+    statement_list
