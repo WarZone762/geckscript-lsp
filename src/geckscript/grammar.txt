@@ -9,6 +9,27 @@ GRAMMAR
   primary_expression:
     literal | variable | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
 
+  mul_expression:
+    primary_expression ((MUL | DIV | MOD) primary_expression)*
+
+  sum_expression:
+    mul_expression ((PLUS | MINUS) mul_expression)*
+
+  function:
+    FUNCTION sum_expression*
+
+  comp_expression:
+    function ((EQUALS_EQUALS | NOT_EQUALS | GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) function)*
+
+  and_expression:
+    comp_expression (AND comp_expression)*
+
+  or_expression:
+    and_expression (OR and_expression)*
+
+  expression:
+     or_expression
+
   variable_declaration:
     TYPE variable
 
@@ -19,27 +40,6 @@ GRAMMAR
 
   block_type:
     BLOCK_TYPE expression*
-
-  comp_expression:
-    primary_expression ((EQUALS_EQUALS | GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) primary_expression)*
-
-  and_expression:
-    comp_expression (AND comp_expression)*
-
-  or_expression:
-    and_expression (OR and_expression)*
-
-  mul_expression:
-    or_expression ((MUL | DIV | MOD) mul_expression)*
-
-  sum_expression:
-    mul_expression ((PLUS | MINUS) mul_expression)*
-
-  function:
-    FUNCTION sum_expression*
-
-  expression:
-     function | sum_expression
 
   statement:
     (expression |
