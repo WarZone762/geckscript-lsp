@@ -342,6 +342,22 @@ export class Parser {
     return node;
   }
 
+  parsePrimaryExpression(): Node | undefined {
+    let node: Node | undefined;
+    if (this.cur_token?.type === TokenType.STRING) {
+      node = this.parseString();
+    } else if (this.cur_token?.type === TokenType.NUMBER) {
+      node = this.parseNumber();
+    } else if (this.cur_token?.type === TokenType.ID) {
+      node = this.parseIdentifier();
+    } else {
+      this.skipToken();
+      return undefined;
+    }
+
+    return node;
+  }
+
   parseVariableDeclaration(): VariableDeclarationNode {
     const node = new VariableDeclarationNode();
 
@@ -407,19 +423,38 @@ export class Parser {
     return node;
   }
 
-  parseBinOp(): BinOpNode {
-    const node = new BinOpNode();
+  parseMul(lhs?: Node): Node | undefined {
+    lhs = lhs ?? this.parsePrimaryExpression();
+    const subtype = this.cur_token?.subtype;
 
-    node.lhs = this.parseExpression();
+    if (subtype === TokenSubtype.MUL || subtype === TokenSubtype.DIVIDE || subtype === TokenSubtype.MOD) {
+      const node = new BinOpNode();
 
-    node.op_token = this.nextTokenOfType(TokenType.OPERATOR);
-    if (node.op_token == undefined) {
-      return node;
+      node.lhs = lhs;
+      node.op_token = this.nextToken();
+      node.rhs = this.parsePrimaryExpression();
+
+      return this.parseMul(node);
     }
 
-    node.rhs = this.parseExpression();
+    return lhs;
+  }
 
-    return node;
+  parseSum(lhs?: Node): Node | undefined {
+    lhs = lhs ?? this.parseMul();
+    const subtype = this.cur_token?.subtype;
+
+    if (subtype === TokenSubtype.PLUS || subtype === TokenSubtype.MINUS) {
+      const node = new BinOpNode();
+
+      node.lhs = lhs;
+      node.op_token = this.nextToken();
+      node.rhs = this.parseMul();
+
+      return this.parseSum(node);
+    }
+
+    return lhs;
   }
 
   parseFunction(): FunctionNode {
@@ -433,36 +468,25 @@ export class Parser {
     node.name = node.token.content;
 
     while (this.cur_token != undefined && this.cur_token_pos.col !== 0) {
-      if (this.cur_token?.subtype === TokenSubtype.RPAREN) {
-        this.skipToken();
-
-        return node;
-      }
-
-      node.args.push(this.parseExpression());
+      node.args.push(this.parseSum());
     }
 
     return node;
   }
 
   parseExpression(): Node | undefined {
-    if (this.cur_token?.subtype === TokenSubtype.LPAREN) this.skipToken();
-
     let node: Node | undefined;
-    if (this.cur_token?.type === TokenType.STRING) {
-      node = this.parseString();
-    } else if (this.cur_token?.type === TokenType.NUMBER) {
-      node = this.parseNumber();
-    } else if (this.cur_token?.type === TokenType.FUNCTION) {
+
+    if (this.cur_token?.type === TokenType.FUNCTION) {
       node = this.parseFunction();
-    } else if (this.cur_token?.type === TokenType.ID) {
-      node = this.parseIdentifier();
     } else {
-      this.skipToken();
-      return undefined;
+      node = this.parseSum();
     }
 
-    if (this.cur_token?.subtype === TokenSubtype.RPAREN) this.skipToken();
+    // if (node == undefined) {
+    //   this.skipToken();
+    //   return undefined;
+    // }
 
     return node;
   }
