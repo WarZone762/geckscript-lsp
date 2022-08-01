@@ -423,38 +423,46 @@ export class Parser {
     return node;
   }
 
-  parseMul(lhs?: Node): Node | undefined {
-    lhs = lhs ?? this.parsePrimaryExpression();
-    const subtype = this.cur_token?.subtype;
+  parseBinOp(
+    parse_child: () => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean },
+    lhs?: Node
+  ): Node | undefined {
+    lhs = lhs ?? parse_child();
+    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
 
-    if (subtype === TokenSubtype.MUL || subtype === TokenSubtype.DIVIDE || subtype === TokenSubtype.MOD) {
+    if (subtype in valid_tokens) {
       const node = new BinOpNode();
 
       node.lhs = lhs;
       node.op_token = this.nextToken();
-      node.rhs = this.parsePrimaryExpression();
+      node.rhs = parse_child();
 
-      return this.parseMul(node);
+      return this.parseBinOp(parse_child, valid_tokens, node);
     }
 
     return lhs;
   }
 
-  parseSum(lhs?: Node): Node | undefined {
-    lhs = lhs ?? this.parseMul();
-    const subtype = this.cur_token?.subtype;
+  parseMul(): Node | undefined {
+    return this.parseBinOp(
+      () => this.parsePrimaryExpression(),
+      {
+        [TokenSubtype.MUL]: true,
+        [TokenSubtype.DIVIDE]: true,
+        [TokenSubtype.MOD]: true,
+      }
+    );
+  }
 
-    if (subtype === TokenSubtype.PLUS || subtype === TokenSubtype.MINUS) {
-      const node = new BinOpNode();
-
-      node.lhs = lhs;
-      node.op_token = this.nextToken();
-      node.rhs = this.parseMul();
-
-      return this.parseSum(node);
-    }
-
-    return lhs;
+  parseSum(): Node | undefined {
+    return this.parseBinOp(
+      () => this.parseMul(),
+      {
+        [TokenSubtype.PLUS]: true,
+        [TokenSubtype.MINUS]: true,
+      }
+    );
   }
 
   parseFunction(): FunctionNode {
@@ -482,11 +490,6 @@ export class Parser {
     } else {
       node = this.parseSum();
     }
-
-    // if (node == undefined) {
-    //   this.skipToken();
-    //   return undefined;
-    // }
 
     return node;
   }
