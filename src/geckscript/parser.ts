@@ -344,10 +344,11 @@ export class Parser {
   }
 
   parseBinOpRight(
-    parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean }
+    parse_child: (lhs?: Node) => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean },
+    lhs?: Node
   ): Node | undefined {
-    const lhs = parse_child();
+    lhs = lhs ?? parse_child();
     const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
 
     if (subtype in valid_tokens) {
@@ -365,7 +366,7 @@ export class Parser {
   }
 
   parseBinOpLeft(
-    parse_child: () => Node | undefined,
+    parse_child: (lhs?: Node) => Node | undefined,
     valid_tokens: { [key in TokenSubtype]?: boolean },
     lhs?: Node
   ): Node | undefined {
@@ -413,24 +414,26 @@ export class Parser {
     }
   }
 
-  parseMul(): Node | undefined {
+  parseMul(lhs?: Node): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parsePrimaryExpression(),
       {
         [TokenSubtype.MUL]: true,
         [TokenSubtype.DIVIDE]: true,
         [TokenSubtype.MOD]: true,
-      }
+      },
+      lhs
     );
   }
 
-  parseSum(): Node | undefined {
+  parseSum(lhs?: Node): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseMul(),
       {
         [TokenSubtype.PLUS]: true,
         [TokenSubtype.MINUS]: true,
-      }
+      },
+      lhs
     );
   }
 
@@ -457,10 +460,10 @@ export class Parser {
       node.args.push(this.parseSum());
     }
 
-    return node;
+    return this.parseSum(node);
   }
 
-  parseComp(): Node | undefined {
+  parseComp(lhs?: Node): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseFunction(),
       {
@@ -470,31 +473,35 @@ export class Parser {
         [TokenSubtype.GREATER_EQULAS]: true,
         [TokenSubtype.LESS]: true,
         [TokenSubtype.LESS_EQULAS]: true,
-      }
+      },
+      lhs
     );
   }
 
-  parseAnd(): Node | undefined {
+  parseAnd(lhs?: Node): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseComp(),
-      { [TokenSubtype.AND]: true }
+      { [TokenSubtype.AND]: true },
+      lhs
     );
   }
 
-  parseOr(): Node | undefined {
+  parseOr(lhs?: Node): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseAnd(),
-      { [TokenSubtype.OR]: true }
+      { [TokenSubtype.OR]: true },
+      lhs
     );
   }
 
-  parseAssignment(): Node | undefined {
+  parseAssignment(lhs?: Node): Node | undefined {
     return this.parseBinOpRight(
       () => this.parseOr(),
       {
         [TokenSubtype.EQUALS]: true,
         [TokenSubtype.COLON_EQUALS]: true
-      }
+      },
+      lhs
     );
   }
 
@@ -519,8 +526,6 @@ export class Parser {
       return this.parseIfBlock();
     } else if (this.cur_token?.type === TokenType.TYPENAME) {
       return this.parseVariableDeclaration();
-    } else if (this.cur_token?.type === TokenType.FUNCTION) {
-      return this.parseFunction();
     } else {
       return this.parseExpression();
     }
