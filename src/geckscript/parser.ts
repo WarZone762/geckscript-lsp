@@ -362,7 +362,7 @@ export class Parser {
       this.cur_token != undefined &&
       this.cur_x !== 0
     ) {
-      node.args.push(this.parseSum());
+      node.args.push(this.parsePair());
     }
 
     return node;
@@ -478,9 +478,16 @@ export class Parser {
     );
   }
 
-  parseAnd(): Node | undefined {
+  parsePair(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseComp(),
+      { [TokenSubtype.COLON_COLON]: true }
+    );
+  }
+
+  parseAnd(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parsePair(),
       { [TokenSubtype.AND]: true }
     );
   }

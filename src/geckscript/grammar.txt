@@ -7,7 +7,7 @@ GRAMMAR
     ID
 
   function:
-    FUNCTION sum_expression*
+    FUNCTION pair_expression*
 
   primary_expression:
     literal | variable | function | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
@@ -21,8 +21,11 @@ GRAMMAR
   comp_expression:
     sum_expression ((EQUALS_EQUALS | NOT_EQUALS | GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) sum_expression)*
 
+  pair_expression:
+    comp_expression (COLON_COLON comp_expression)*
+
   and_expression:
-    comp_expression (AND comp_expression)*
+    pair_expression (AND pair_expression)*
 
   or_expression:
     and_expression (OR and_expression)*
