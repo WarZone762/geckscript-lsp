@@ -216,20 +216,17 @@ export class Parser {
   data: Token[][];
   variables: IdentifierNode[];
 
-  cur_token_pos: {
-    ln: number,
-    col: number,
-  };
+  cur_x: number;
+  cur_ln: number;
+
   cur_token: Token | undefined;
 
   constructor(data: Token[][]) {
     this.data = data;
     this.variables = [];
 
-    this.cur_token_pos = {
-      ln: 0,
-      col: 0
-    };
+    this.cur_x = 0;
+    this.cur_ln = 0;
 
     this.cur_token = data[0][0];
 
@@ -239,12 +236,12 @@ export class Parser {
   }
 
   skipLine(): void {
-    this.cur_token_pos.col = 0;
-    this.cur_token = this.data?.[++this.cur_token_pos.ln]?.[0];
+    this.cur_x = 0;
+    this.cur_token = this.data?.[++this.cur_ln]?.[0];
   }
 
   skipTokenOnLine(): void {
-    this.cur_token = this.data?.[this.cur_token_pos.ln]?.[++this.cur_token_pos.col];
+    this.cur_token = this.data?.[this.cur_ln]?.[++this.cur_x];
   }
 
   skipToken(): void {
@@ -287,7 +284,7 @@ export class Parser {
   }
 
   peekTokenOnLine(offset: number): Token | undefined {
-    return this.data[this.cur_token_pos.ln][this.cur_token_pos.col + offset];
+    return this.data[this.cur_ln][this.cur_x + offset];
   }
 
   parseComment(): CommentNode {
@@ -431,7 +428,7 @@ export class Parser {
         this.cur_token.subtype === TokenSubtype.LBRACKET
       ) &&
       this.cur_token != undefined &&
-      this.cur_token_pos.col !== 0
+      this.cur_x !== 0
     ) {
       node.args.push(this.parseSum());
     }
@@ -471,8 +468,6 @@ export class Parser {
     let node: Node | undefined;
 
     return this.parseOr();
-
-    return node;
   }
 
   parseStatement(): Node | undefined {
