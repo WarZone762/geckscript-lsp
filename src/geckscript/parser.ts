@@ -343,8 +343,64 @@ export class Parser {
     return node;
   }
 
+  parseFunction(): Node | undefined {
+    const node = new FunctionNode();
+
+    node.token = this.nextTokenOfType(TokenType.FUNCTION)!;
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.name = node.token.content;
+
+    while (
+      (
+        this.cur_token?.type !== TokenType.OPERATOR ||
+        this.cur_token?.subtype === TokenSubtype.LPAREN ||
+        this.cur_token?.subtype === TokenSubtype.LBRACKET
+      ) &&
+      this.cur_token != undefined &&
+      this.cur_x !== 0
+    ) {
+      node.args.push(this.parseSum());
+    }
+
+    return node;
+  }
+
+  parsePrimaryExpression(): Node | undefined {
+    if (this.cur_token?.type === TokenType.STRING) {
+      return this.parseString();
+    } else if (this.cur_token?.type === TokenType.NUMBER) {
+      return this.parseNumber();
+    } else if (this.cur_token?.type === TokenType.ID) {
+      return this.parseIdentifier();
+    } else if (this.cur_token?.type === TokenType.FUNCTION) {
+      return this.parseFunction();
+    } else if (
+      this.cur_token?.subtype === TokenSubtype.LPAREN ||
+      this.cur_token?.subtype === TokenSubtype.LBRACKET
+    ) {
+      this.skipToken();
+
+      const node = this.parseExpression();
+      const token = this.nextTokenOfType(TokenType.OPERATOR);
+      if (
+        token?.subtype !== TokenSubtype.RPAREN &&
+        token?.subtype !== TokenSubtype.RBRACKET
+      ) {
+        return node;  // parsing error: ")" or "}" expected
+      }
+
+      return node;
+    } else {
+      this.skipToken();
+      return undefined;
+    }
+  }
+
   parseBinOpRight(
-    parse_child: (lhs?: Node) => Node | undefined,
+    parse_child: () => Node | undefined,
     valid_tokens: { [key in TokenSubtype]?: boolean },
     lhs?: Node
   ): Node | undefined {
@@ -366,7 +422,7 @@ export class Parser {
   }
 
   parseBinOpLeft(
-    parse_child: (lhs?: Node) => Node | undefined,
+    parse_child: () => Node | undefined,
     valid_tokens: { [key in TokenSubtype]?: boolean },
     lhs?: Node
   ): Node | undefined {
@@ -387,85 +443,30 @@ export class Parser {
     return lhs;
   }
 
-  parsePrimaryExpression(): Node | undefined {
-    if (this.cur_token?.type === TokenType.STRING) {
-      return this.parseString();
-    } else if (this.cur_token?.type === TokenType.NUMBER) {
-      return this.parseNumber();
-    } else if (this.cur_token?.type === TokenType.ID) {
-      return this.parseIdentifier();
-    } else if (
-      this.cur_token?.subtype === TokenSubtype.LPAREN ||
-      this.cur_token?.subtype === TokenSubtype.LBRACKET
-    ) {
-      this.skipToken();
-
-      const node = this.parseExpression();
-
-      const token = this.nextTokenOfType(TokenType.OPERATOR);
-      if (token?.subtype !== TokenSubtype.RPAREN && token?.subtype !== TokenSubtype.RBRACKET) {
-        return node;  // parsing error: ")" or "}" expected
-      }
-
-      return node;
-    } else {
-      this.skipToken();
-      return undefined;
-    }
-  }
-
-  parseMul(lhs?: Node): Node | undefined {
+  parseMul(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parsePrimaryExpression(),
       {
         [TokenSubtype.MUL]: true,
         [TokenSubtype.DIVIDE]: true,
         [TokenSubtype.MOD]: true,
-      },
-      lhs
+      }
     );
   }
 
-  parseSum(lhs?: Node): Node | undefined {
+  parseSum(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseMul(),
       {
         [TokenSubtype.PLUS]: true,
         [TokenSubtype.MINUS]: true,
-      },
-      lhs
+      }
     );
   }
 
-  parseFunction(): Node | undefined {
-    if (this.cur_token?.type !== TokenType.FUNCTION) {
-      return this.parseSum();
-    }
-
-    const node = new FunctionNode();
-
-    node.token = this.nextToken()!;
-    node.name = node.token.content;
-
-    while (
-      (
-        // @ts-expect-error ts(2367)
-        this.cur_token.type !== TokenType.OPERATOR ||
-        this.cur_token.subtype === TokenSubtype.LPAREN ||
-        this.cur_token.subtype === TokenSubtype.LBRACKET
-      ) &&
-      this.cur_token != undefined &&
-      this.cur_x !== 0
-    ) {
-      node.args.push(this.parseSum());
-    }
-
-    return this.parseSum(node);
-  }
-
-  parseComp(lhs?: Node): Node | undefined {
+  parseComp(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parseFunction(),
+      () => this.parseSum(),
       {
         [TokenSubtype.EQUALS_EQUALS]: true,
         [TokenSubtype.NOT_EQUALS]: true,
@@ -473,62 +474,36 @@ export class Parser {
         [TokenSubtype.GREATER_EQULAS]: true,
         [TokenSubtype.LESS]: true,
         [TokenSubtype.LESS_EQULAS]: true,
-      },
-      lhs
+      }
     );
   }
 
-  parseAnd(lhs?: Node): Node | undefined {
+  parseAnd(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseComp(),
-      { [TokenSubtype.AND]: true },
-      lhs
+      { [TokenSubtype.AND]: true }
     );
   }
 
-  parseOr(lhs?: Node): Node | undefined {
+  parseOr(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseAnd(),
-      { [TokenSubtype.OR]: true },
-      lhs
+      { [TokenSubtype.OR]: true }
     );
   }
 
-  parseAssignment(lhs?: Node): Node | undefined {
+  parseAssignment(): Node | undefined {
     return this.parseBinOpRight(
       () => this.parseOr(),
       {
         [TokenSubtype.EQUALS]: true,
         [TokenSubtype.COLON_EQUALS]: true
-      },
-      lhs
+      }
     );
   }
 
   parseExpression(): Node | undefined {
     return this.parseAssignment();
-  }
-
-  parseStatement(): Node | undefined {
-    if (this.cur_token?.type === TokenType.COMMENT) {
-      return this.parseComment();
-    } else if (this.cur_token?.subtype === TokenSubtype.SET) {
-      return this.parseSet();
-    } else if (this.cur_token?.subtype === TokenSubtype.LET) {
-      return this.parseLet();
-    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
-      return this.parseBeginBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.WHILE) {
-      return this.parseWhileBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.FOREACH) {
-      return this.parseForeachBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.IF) {
-      return this.parseIfBlock();
-    } else if (this.cur_token?.type === TokenType.TYPENAME) {
-      return this.parseVariableDeclaration();
-    } else {
-      return this.parseExpression();
-    }
   }
 
   parseVariableDeclaration(): VariableDeclarationNode {
@@ -541,7 +516,7 @@ export class Parser {
 
     node.variable_type = node.type_token.content;
 
-    node.value = this.parseExpression();
+    node.value = this.parseAssignment();
 
     return node;
   }
@@ -604,7 +579,7 @@ export class Parser {
       return node;
     }
 
-    node.expression = this.parseExpression();
+    node.expression = this.parsePrimaryExpression();
 
     node.compound_statement = this.parseCompoundStatement(t =>
       t.subtype === TokenSubtype.END
@@ -710,6 +685,28 @@ export class Parser {
     }
 
     return node;
+  }
+
+  parseStatement(): Node | undefined {
+    if (this.cur_token?.type === TokenType.COMMENT) {
+      return this.parseComment();
+    } else if (this.cur_token?.subtype === TokenSubtype.SET) {
+      return this.parseSet();
+    } else if (this.cur_token?.subtype === TokenSubtype.LET) {
+      return this.parseLet();
+    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
+      return this.parseBeginBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.WHILE) {
+      return this.parseWhileBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.FOREACH) {
+      return this.parseForeachBlock();
+    } else if (this.cur_token?.subtype === TokenSubtype.IF) {
+      return this.parseIfBlock();
+    } else if (this.cur_token?.type === TokenType.TYPENAME) {
+      return this.parseVariableDeclaration();
+    } else {
+      return this.parseExpression();
+    }
   }
 
   parse(): Script {
