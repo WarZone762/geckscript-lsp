@@ -4,7 +4,6 @@ import { TokenType } from "./tokens";
 
 
 export const enum NodeType {
-  assignment,
   begin_block,
   bin_op,
   comment,
@@ -15,8 +14,10 @@ export const enum NodeType {
   function,
   identifier,
   if_block,
+  let,
   numerical,
   script,
+  set,
   string_literal,
   variable_declaration,
   while_block,
@@ -84,28 +85,30 @@ export class IdentifierNode extends Node {
 export class VariableDeclarationNode extends Node {
   type_token?: Token;
   variable_type?: string;
-  identifier?: IdentifierNode;
+  value?: Node;
 
   constructor() {
     super(NodeType.variable_declaration);
   }
 }
 
-export class AssignmentNode extends Node {
+export class SetNode extends Node {
   set_token?: Token;
-  let_token?: Token;
-
-  variable_type?: string;
-
-  identifier?: IdentifierNode | VariableDeclarationNode;
-
-  equals_token?: Token;
+  identifier?: IdentifierNode;
   to_token?: Token;
-
   value?: Node;
 
   constructor() {
-    super(NodeType.assignment);
+    super(NodeType.set);
+  }
+}
+
+export class LetNode extends Node {
+  let_token?: Token;
+  value?: Node;
+
+  constructor() {
+    super(NodeType.let);
   }
 }
 
@@ -340,6 +343,49 @@ export class Parser {
     return node;
   }
 
+  parseBinOpRight(
+    parse_child: () => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean }
+  ): Node | undefined {
+    const lhs = parse_child();
+    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
+
+    if (subtype in valid_tokens) {
+      const node = new BinOpNode();
+
+      node.lhs = lhs;
+      node.op_token = this.nextToken();
+      node.op = node.op_token?.content;
+      node.rhs = this.parseBinOpRight(parse_child, valid_tokens);
+
+      return node;
+    }
+
+    return lhs;
+  }
+
+  parseBinOpLeft(
+    parse_child: () => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean },
+    lhs?: Node
+  ): Node | undefined {
+    lhs = lhs ?? parse_child();
+    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
+
+    if (subtype in valid_tokens) {
+      const node = new BinOpNode();
+
+      node.lhs = lhs;
+      node.op_token = this.nextToken();
+      node.op = node.op_token?.content;
+      node.rhs = parse_child();
+
+      return this.parseBinOpLeft(parse_child, valid_tokens, node);
+    }
+
+    return lhs;
+  }
+
   parsePrimaryExpression(): Node | undefined {
     if (this.cur_token?.type === TokenType.STRING) {
       return this.parseString();
@@ -367,30 +413,8 @@ export class Parser {
     }
   }
 
-  parseBinOp(
-    parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean },
-    lhs?: Node
-  ): Node | undefined {
-    lhs = lhs ?? parse_child();
-    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
-
-    if (subtype in valid_tokens) {
-      const node = new BinOpNode();
-
-      node.lhs = lhs;
-      node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
-      node.rhs = parse_child();
-
-      return this.parseBinOp(parse_child, valid_tokens, node);
-    }
-
-    return lhs;
-  }
-
   parseMul(): Node | undefined {
-    return this.parseBinOp(
+    return this.parseBinOpLeft(
       () => this.parsePrimaryExpression(),
       {
         [TokenSubtype.MUL]: true,
@@ -401,7 +425,7 @@ export class Parser {
   }
 
   parseSum(): Node | undefined {
-    return this.parseBinOp(
+    return this.parseBinOpLeft(
       () => this.parseMul(),
       {
         [TokenSubtype.PLUS]: true,
@@ -437,7 +461,7 @@ export class Parser {
   }
 
   parseComp(): Node | undefined {
-    return this.parseBinOp(
+    return this.parseBinOpLeft(
       () => this.parseFunction(),
       {
         [TokenSubtype.EQUALS_EQUALS]: true,
@@ -451,32 +475,40 @@ export class Parser {
   }
 
   parseAnd(): Node | undefined {
-    return this.parseBinOp(
+    return this.parseBinOpLeft(
       () => this.parseComp(),
       { [TokenSubtype.AND]: true }
     );
   }
 
   parseOr(): Node | undefined {
-    return this.parseBinOp(
+    return this.parseBinOpLeft(
       () => this.parseAnd(),
       { [TokenSubtype.OR]: true }
     );
   }
 
-  parseExpression(): Node | undefined {
-    let node: Node | undefined;
+  parseAssignment(): Node | undefined {
+    return this.parseBinOpRight(
+      () => this.parseOr(),
+      {
+        [TokenSubtype.EQUALS]: true,
+        [TokenSubtype.COLON_EQUALS]: true
+      }
+    );
+  }
 
-    return this.parseOr();
+  parseExpression(): Node | undefined {
+    return this.parseAssignment();
   }
 
   parseStatement(): Node | undefined {
     if (this.cur_token?.type === TokenType.COMMENT) {
       return this.parseComment();
     } else if (this.cur_token?.subtype === TokenSubtype.SET) {
-      return this.parseAssignmentSet();
+      return this.parseSet();
     } else if (this.cur_token?.subtype === TokenSubtype.LET) {
-      return this.parseAssignmentLet();
+      return this.parseLet();
     } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
     } else if (this.cur_token?.subtype === TokenSubtype.WHILE) {
@@ -486,23 +518,12 @@ export class Parser {
     } else if (this.cur_token?.subtype === TokenSubtype.IF) {
       return this.parseIfBlock();
     } else if (this.cur_token?.type === TokenType.TYPENAME) {
-      if (
-        (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
-          this.peekTokenOnLine(2)?.subtype
-        ))
-        return this.parseAssignment();
-      else
-        return this.parseVariableDeclaration();
-    } else if (
-      (t => t === TokenSubtype.EQUALS || t === TokenSubtype.COLON_EQUALS)(
-        this.peekTokenOnLine(1)?.subtype
-      )) {
-      return this.parseAssignment();
+      return this.parseVariableDeclaration();
     } else if (this.cur_token?.type === TokenType.FUNCTION) {
       return this.parseFunction();
+    } else {
+      return this.parseExpression();
     }
-
-    this.skipToken();
   }
 
   parseVariableDeclaration(): VariableDeclarationNode {
@@ -515,13 +536,13 @@ export class Parser {
 
     node.variable_type = node.type_token.content;
 
-    node.identifier = this.parseIdentifier();
+    node.value = this.parseExpression();
 
     return node;
   }
 
-  parseAssignmentSet(): AssignmentNode {
-    const node = new AssignmentNode();
+  parseSet(): SetNode {
+    const node = new SetNode();
 
     node.set_token = this.nextTokenOfSubtype(TokenSubtype.SET);
     if (node.set_token == undefined) {
@@ -535,37 +556,22 @@ export class Parser {
       return node;
     }
 
-    node.value = this.parseExpression();
+    node.value = this.parseOr();
 
     return node;
   }
 
-  parseAssignmentLet(): AssignmentNode {
-    const node = new AssignmentNode();
+  parseLet(): LetNode {
+    const node = new LetNode();
 
     node.let_token = this.nextToken();
+    if (node.let_token == undefined) {
+      return node;
+    }
 
-    node.identifier = this.cur_token?.type === TokenType.TYPENAME ?
+    node.value = this.cur_token?.type === TokenType.TYPENAME ?
       this.parseVariableDeclaration() :
-      this.parseIdentifier();
-
-    node.equals_token = this.nextToken();
-
-    node.value = this.parseExpression();
-
-    return node;
-  }
-
-  parseAssignment(): AssignmentNode {
-    const node = new AssignmentNode();
-
-    node.identifier = this.cur_token?.type === TokenType.TYPENAME ?
-      this.parseVariableDeclaration() :
-      this.parseIdentifier();
-
-    node.equals_token = this.nextToken();
-
-    node.value = this.parseExpression();
+      this.parseExpression();
 
     return node;
   }
