@@ -112,6 +112,7 @@ export class AssignmentNode extends Node {
 export class BinOpNode extends Node {
   lhs?: Node;
   op_token?: Token;
+  op?: string;
   rhs?: Node;
 
   constructor() {
@@ -343,19 +344,30 @@ export class Parser {
   }
 
   parsePrimaryExpression(): Node | undefined {
-    let node: Node | undefined;
     if (this.cur_token?.type === TokenType.STRING) {
-      node = this.parseString();
+      return this.parseString();
     } else if (this.cur_token?.type === TokenType.NUMBER) {
-      node = this.parseNumber();
+      return this.parseNumber();
     } else if (this.cur_token?.type === TokenType.ID) {
-      node = this.parseIdentifier();
+      return this.parseIdentifier();
+    } else if (
+      this.cur_token?.subtype === TokenSubtype.LPAREN ||
+      this.cur_token?.subtype === TokenSubtype.LBRACKET
+    ) {
+      this.skipToken();
+
+      const node = this.parseExpression();
+
+      const token = this.nextTokenOfType(TokenType.OPERATOR);
+      if (token?.subtype !== TokenSubtype.RPAREN && token?.subtype !== TokenSubtype.RBRACKET) {
+        return node;  // parsing error: ")" or "}" expected
+      }
+
+      return node;
     } else {
       this.skipToken();
       return undefined;
     }
-
-    return node;
   }
 
   parseBinOp(
@@ -371,6 +383,7 @@ export class Parser {
 
       node.lhs = lhs;
       node.op_token = this.nextToken();
+      node.op = node.op_token?.content;
       node.rhs = parse_child();
 
       return this.parseBinOp(parse_child, valid_tokens, node);
@@ -410,8 +423,16 @@ export class Parser {
     node.token = this.nextToken()!;
     node.name = node.token.content;
 
-    // @ts-expect-error ts(2367)
-    while (this.cur_token.type !== TokenType.OPERATOR && this.cur_token != undefined && this.cur_token_pos.col !== 0) {
+    while (
+      (
+        // @ts-expect-error ts(2367)
+        this.cur_token.type !== TokenType.OPERATOR ||
+        this.cur_token.subtype === TokenSubtype.LPAREN ||
+        this.cur_token.subtype === TokenSubtype.LBRACKET
+      ) &&
+      this.cur_token != undefined &&
+      this.cur_token_pos.col !== 0
+    ) {
       node.args.push(this.parseSum());
     }
 

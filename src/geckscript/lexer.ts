@@ -152,13 +152,20 @@ export class Lexer {
   }
 
   consumeWord(): Token {
-    if (/\w/.test(this.cur_char as string)) {
+    if (/\w/.test(this.cur_char!)) {
       while (this.cur_char !== undefined) {
         if (/\W/.test(this.cur_char)) break;
         this.nextCharToBuf();
       }
     } else {
       while (this.cur_char !== undefined) {
+        if (
+          this.cur_char === "(" || this.cur_char === "{" || this.cur_char === "[" ||
+          this.cur_char === ")" || this.cur_char === "}" || this.cur_char === "]"
+        ) {
+          this.nextCharToBuf();
+          break;
+        }
         if (/\w|\s/.test(this.cur_char)) break;
         this.nextCharToBuf();
       }
