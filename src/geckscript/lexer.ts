@@ -199,7 +199,12 @@ export class Lexer {
         token = this.consumeComment();
       } else if (/["']/.test(this.cur_char)) {
         token = this.consumeString();
-      } else if (/\d|\./.test(this.cur_char)) {
+      } else if (/\d/.test(this.cur_char)) {
+        token = this.consumeNumber();
+      } else if (
+        /\./.test(this.cur_char) &&
+        (char => char != undefined && /\d/.test(char))(this.peekCharOnLine(1))
+      ) {
         token = this.consumeNumber();
       } else if (/\w/.test(this.cur_char)) {
         token = this.consumeWord();

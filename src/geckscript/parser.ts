@@ -3,6 +3,12 @@ import { TokenSubtype } from "./tokens";
 import { TokenType } from "./tokens";
 
 
+
+
+
+
+
+
 export const enum NodeType {
   begin_block,
   bin_op,
@@ -21,6 +27,8 @@ export const enum NodeType {
   string_literal,
   variable_declaration,
   while_block,
+  unary_op,
+  bin_op_paired
 }
 
 export type Range = {
@@ -112,14 +120,36 @@ export class LetNode extends Node {
   }
 }
 
-export class BinOpNode extends Node {
-  lhs?: Node;
+export class UnaryOpNode extends Node {
   op_token?: Token;
   op?: string;
+  operand?: Node;
+
+  constructor() {
+    super(NodeType.unary_op);
+  }
+}
+
+export class BinOpNode extends Node {
+  lhs?: Node;
+  op?: string;
+  op_token?: Token;
   rhs?: Node;
 
   constructor() {
     super(NodeType.bin_op);
+  }
+}
+
+export class BinOpPairedNode extends Node {
+  lhs?: Node;
+  op?: string;
+  left_op_token?: Token;
+  rhs?: Node;
+  right_op_token?: Token;
+
+  constructor() {
+    super(NodeType.bin_op_paired);
   }
 }
 
@@ -290,6 +320,48 @@ export class Parser {
     return this.data[this.cur_ln][this.cur_x + offset];
   }
 
+  parseBinOpRight(
+    parse_child: () => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean },
+    lhs?: Node
+  ): Node | undefined {
+    lhs = lhs ?? parse_child();
+
+    if (
+      !((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens)
+    ) return lhs;
+
+    const node = new BinOpNode();
+
+    node.lhs = lhs;
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+    node.rhs = this.parseBinOpRight(parse_child, valid_tokens);
+
+    return node;
+  }
+
+  parseBinOpLeft(
+    parse_child: () => Node | undefined,
+    valid_tokens: { [key in TokenSubtype]?: boolean },
+    lhs?: Node
+  ): Node | undefined {
+    lhs = lhs ?? parse_child();
+
+    if (
+      !((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens)
+    ) return lhs;
+
+    const node = new BinOpNode();
+
+    node.lhs = lhs;
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+    node.rhs = parse_child();
+
+    return this.parseBinOpLeft(parse_child, valid_tokens, node);
+  }
+
   parseComment(): CommentNode {
     const node = new CommentNode();
     node.token = this.nextTokenOfType(TokenType.COMMENT);
@@ -362,7 +434,7 @@ export class Parser {
       ) &&
       this.cur_x !== 0
     ) {
-      node.args.push(this.parsePair());
+      node.args.push(this.parseSliceMakePair());
     }
 
     return node;
@@ -399,53 +471,125 @@ export class Parser {
     }
   }
 
-  parseBinOpRight(
-    parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean },
-    lhs?: Node
-  ): Node | undefined {
-    lhs = lhs ?? parse_child();
-    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
+  parseMember(lhs?: Node): Node | undefined {
+    lhs = lhs ?? this.parsePrimaryExpression();
 
-    if (subtype in valid_tokens) {
+    if (this.cur_token?.type !== TokenType.OPERATOR) return lhs;
+
+    const subtype = this.cur_token.subtype;
+
+    if (subtype === TokenSubtype.LSQ_BRACKET) {
+      const node = new BinOpPairedNode();
+
+      node.lhs = lhs;
+      node.left_op_token = this.nextToken();
+      node.op = "[]";
+      node.rhs = this.parseExpression();
+      node.right_op_token = this.nextTokenOfSubtype(TokenSubtype.RSQ_BRACKET);
+      if (node.right_op_token == undefined) {
+        // error: "]" expected
+      }
+
+      return this.parseMember(node);
+
+    } else if (subtype === TokenSubtype.RARROW) {
       const node = new BinOpNode();
 
       node.lhs = lhs;
       node.op_token = this.nextToken();
       node.op = node.op_token?.content;
-      node.rhs = this.parseBinOpRight(parse_child, valid_tokens);
 
-      return node;
-    }
+      const type = this.cur_token.type;
+      if (
+        // @ts-expect-error ts(2367)
+        type !== TokenType.STRING &&
+        // @ts-expect-error ts(2367)
+        type !== TokenType.NUMBER &&
+        // @ts-expect-error ts(2367)
+        type !== TokenType.ID &&
+        // @ts-expect-error ts(2367)
+        type !== TokenType.FUNCTION
+      ) {
+        node.rhs = undefined;
+        this.skipToken();
+      } else {
+        node.rhs = this.parsePrimaryExpression();
+      }
 
-    return lhs;
-  }
+      return this.parseMember(node);
 
-  parseBinOpLeft(
-    parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean },
-    lhs?: Node
-  ): Node | undefined {
-    lhs = lhs ?? parse_child();
-    const subtype = this.cur_token?.subtype ?? TokenSubtype.UNKNOWN;
-
-    if (subtype in valid_tokens) {
+    } else if (subtype === TokenSubtype.DOT) {
       const node = new BinOpNode();
 
       node.lhs = lhs;
       node.op_token = this.nextToken();
       node.op = node.op_token?.content;
-      node.rhs = parse_child();
 
-      return this.parseBinOpLeft(parse_child, valid_tokens, node);
+      const type = this.cur_token.type;
+      if (
+        // @ts-expect-error ts(2367)
+        type !== TokenType.ID &&
+        // @ts-expect-error ts(2367)
+        type !== TokenType.FUNCTION
+      ) {
+        node.rhs = undefined;
+        this.skipToken();
+      } else {
+        node.rhs = this.parsePrimaryExpression();
+      }
+
+      return this.parseMember(node);
+    } else {
+      return lhs;
     }
-
-    return lhs;
   }
 
-  parseMul(): Node | undefined {
+  parseLogicalNot(): Node | undefined {
+    if (
+      this.cur_token?.type !== TokenType.OPERATOR &&
+      this.cur_token?.subtype !== TokenSubtype.EXCLAMATION
+    ) return this.parseMember();
+
+    const node = new UnaryOpNode();
+
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+    node.operand = this.parseMember();
+
+    return node;
+  }
+
+  parseUnary(): Node | undefined {
+    if (this.cur_token?.type !== TokenType.OPERATOR) return this.parseLogicalNot();
+
+    const subtype = this.cur_token?.subtype;
+    if (
+      subtype !== TokenSubtype.MINUS &&
+      subtype !== TokenSubtype.DOLLAR &&
+      subtype !== TokenSubtype.HASH &&
+      subtype !== TokenSubtype.ASTERISK &&
+      subtype !== TokenSubtype.AMPERSAND
+    ) return this.parseLogicalNot();
+
+    const node = new UnaryOpNode();
+
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+    node.operand = this.parseLogicalNot();
+
+    return node;
+  }
+
+  parseExponential(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parsePrimaryExpression(),
+      () => this.parseUnary(),
+      { [TokenSubtype.CIRCUMFLEX]: true }
+    );
+  }
+
+  parseMultiplicative(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parseExponential(),
       {
         [TokenSubtype.ASTERISK]: true,
         [TokenSubtype.SLASH]: true,
@@ -454,9 +598,9 @@ export class Parser {
     );
   }
 
-  parseSum(): Node | undefined {
+  parseAdditive(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parseMul(),
+      () => this.parseMultiplicative(),
       {
         [TokenSubtype.PLUS]: true,
         [TokenSubtype.MINUS]: true,
@@ -464,12 +608,34 @@ export class Parser {
     );
   }
 
-  parseComp(): Node | undefined {
+  parseShift(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parseSum(),
+      () => this.parseAdditive(),
       {
-        [TokenSubtype.DOUBLE_EQUALS]: true,
-        [TokenSubtype.EXCLAMATION_EQUALS]: true,
+        [TokenSubtype.DOUBLE_LESS]: true,
+        [TokenSubtype.DOUBLE_GREATER]: true,
+      }
+    );
+  }
+
+  parseAnd(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parseShift(),
+      { [TokenSubtype.AMPERSAND]: true }
+    );
+  }
+
+  parseOr(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parseAnd(),
+      { [TokenSubtype.VBAR]: true }
+    );
+  }
+
+  parseRelational(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parseOr(),
+      {
         [TokenSubtype.GREATER]: true,
         [TokenSubtype.GREATER_EQULAS]: true,
         [TokenSubtype.LESS]: true,
@@ -478,30 +644,53 @@ export class Parser {
     );
   }
 
-  parsePair(): Node | undefined {
+  parseEquality(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parseComp(),
-      { [TokenSubtype.DOUBLE_COLON]: true }
+      () => this.parseRelational(),
+      {
+        [TokenSubtype.DOUBLE_EQUALS]: true,
+        [TokenSubtype.EXCLAMATION_EQUALS]: true,
+      }
     );
   }
 
-  parseAnd(): Node | undefined {
+  parseSliceMakePair(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parsePair(),
-      { [TokenSubtype.DOUBLE_AMPERSAND]: true }
+      () => this.parseEquality(),
+      {
+        [TokenSubtype.COLON]: true,
+        [TokenSubtype.DOUBLE_COLON]: true,
+      }
     );
   }
 
-  parseOr(): Node | undefined {
+  parseLogicalAndCompoundAssignment(): Node | undefined {
     return this.parseBinOpLeft(
-      () => this.parseAnd(),
+      () => this.parseSliceMakePair(),
+      {
+        [TokenSubtype.DOUBLE_AMPERSAND]: true,
+        [TokenSubtype.PLUS_EQUALS]: true,
+        [TokenSubtype.MINUS_EQUALS]: true,
+        [TokenSubtype.ASTERISK_EQUALS]: true,
+        [TokenSubtype.SLASH_EQUALS]: true,
+        [TokenSubtype.CIRCUMFLEX_EQUALS]: true,
+        [TokenSubtype.VBAR_EQUALS]: true,
+        [TokenSubtype.AMPERSAND_EQUALS]: true,
+        [TokenSubtype.PERCENT_EQUALS]: true,
+      }
+    );
+  }
+
+  parseLogicalOr(): Node | undefined {
+    return this.parseBinOpLeft(
+      () => this.parseLogicalAndCompoundAssignment(),
       { [TokenSubtype.DOUBLE_VBAR]: true }
     );
   }
 
   parseAssignment(): Node | undefined {
     return this.parseBinOpRight(
-      () => this.parseOr(),
+      () => this.parseLogicalOr(),
       {
         [TokenSubtype.EQUALS]: true,
         [TokenSubtype.COLON_EQUALS]: true
@@ -543,7 +732,7 @@ export class Parser {
       return node;
     }
 
-    node.value = this.parseOr();
+    node.value = this.parseLogicalOr();
 
     return node;
   }

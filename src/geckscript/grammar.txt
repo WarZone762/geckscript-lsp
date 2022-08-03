@@ -1,4 +1,4 @@
-GRAMMAR  # TODO: rest of the operators, lambdas and UDFs, commas in function args, keywords
+GRAMMAR  # TODO: lambdas and UDFs, commas in function args, keywords
 
   literal:
     NUMBER | STRING
