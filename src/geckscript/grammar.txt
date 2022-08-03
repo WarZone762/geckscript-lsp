@@ -1,10 +1,13 @@
-GRAMMAR  # TODO: lambdas and UDFs, commas in function args, keywords
+GRAMMAR  # TODO: lambdas and UDFs, commas in function args
 
   literal:
     NUMBER | STRING
 
   variable:
     ID
+
+  keyword:
+    KEYWORD
 
   function:
     FUNCTION slice_make_pair_expression*

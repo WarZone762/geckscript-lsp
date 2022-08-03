@@ -9,6 +9,14 @@ import { TokenType } from "./tokens";
 
 
 
+
+
+
+
+
+
+
+
 export const enum NodeType {
   begin_block,
   bin_op,
@@ -28,7 +36,8 @@ export const enum NodeType {
   variable_declaration,
   while_block,
   unary_op,
-  bin_op_paired
+  bin_op_paired,
+  keyword
 }
 
 export type Range = {
@@ -87,6 +96,15 @@ export class IdentifierNode extends Node {
 
   constructor() {
     super(NodeType.identifier);
+  }
+}
+
+export class KeywordNode extends Node {
+  token?: Token;
+  keyword?: string;
+
+  constructor() {
+    super(NodeType.keyword);
   }
 }
 
@@ -411,6 +429,19 @@ export class Parser {
     }
 
     node.value = node.token.content;
+
+    return node;
+  }
+
+  parseKeyword(): KeywordNode {
+    const node = new KeywordNode();
+
+    node.token = this.nextTokenOfType(TokenType.KEYWORD);
+    if (node.token == undefined) {
+      return node;
+    }
+
+    node.keyword = node.token.content;
 
     return node;
   }
@@ -884,22 +915,30 @@ export class Parser {
   }
 
   parseStatement(): Node | undefined {
-    if (this.cur_token?.type === TokenType.COMMENT) {
-      return this.parseComment();
-    } else if (this.cur_token?.subtype === TokenSubtype.SET) {
+    const subtype = this.cur_token?.subtype;
+
+    if (subtype === TokenSubtype.SET) {
       return this.parseSet();
-    } else if (this.cur_token?.subtype === TokenSubtype.LET) {
+    } else if (subtype === TokenSubtype.LET) {
       return this.parseLet();
-    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
+    } else if (subtype === TokenSubtype.BEGIN) {
       return this.parseBeginBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.WHILE) {
+    } else if (subtype === TokenSubtype.WHILE) {
       return this.parseWhileBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.FOREACH) {
+    } else if (subtype === TokenSubtype.FOREACH) {
       return this.parseForeachBlock();
-    } else if (this.cur_token?.subtype === TokenSubtype.IF) {
+    } else if (subtype === TokenSubtype.IF) {
       return this.parseIfBlock();
-    } else if (this.cur_token?.type === TokenType.TYPENAME) {
+    }
+
+    const type = this.cur_token?.type;
+
+    if (type === TokenType.COMMENT) {
+      return this.parseComment();
+    } else if (type === TokenType.TYPENAME) {
       return this.parseVariableDeclaration();
+    } else if (type === TokenType.KEYWORD) {
+      return this.parseKeyword();
     } else {
       return this.parseExpression();
     }
