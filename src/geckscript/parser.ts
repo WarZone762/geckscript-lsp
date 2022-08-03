@@ -354,12 +354,12 @@ export class Parser {
     node.name = node.token.content;
 
     while (
-      (
-        this.cur_token?.type !== TokenType.OPERATOR ||
-        this.cur_token?.subtype === TokenSubtype.LPAREN ||
-        this.cur_token?.subtype === TokenSubtype.LBRACKET
-      ) &&
       this.cur_token != undefined &&
+      (
+        this.cur_token.type !== TokenType.OPERATOR ||
+        this.cur_token.subtype === TokenSubtype.LPAREN ||
+        this.cur_token.subtype === TokenSubtype.LBRACKET
+      ) &&
       this.cur_x !== 0
     ) {
       node.args.push(this.parsePair());
@@ -447,9 +447,9 @@ export class Parser {
     return this.parseBinOpLeft(
       () => this.parsePrimaryExpression(),
       {
-        [TokenSubtype.MUL]: true,
-        [TokenSubtype.DIVIDE]: true,
-        [TokenSubtype.MOD]: true,
+        [TokenSubtype.ASTERISK]: true,
+        [TokenSubtype.SLASH]: true,
+        [TokenSubtype.PERCENT]: true,
       }
     );
   }
@@ -468,8 +468,8 @@ export class Parser {
     return this.parseBinOpLeft(
       () => this.parseSum(),
       {
-        [TokenSubtype.EQUALS_EQUALS]: true,
-        [TokenSubtype.NOT_EQUALS]: true,
+        [TokenSubtype.DOUBLE_EQUALS]: true,
+        [TokenSubtype.EXCLAMATION_EQUALS]: true,
         [TokenSubtype.GREATER]: true,
         [TokenSubtype.GREATER_EQULAS]: true,
         [TokenSubtype.LESS]: true,
@@ -481,21 +481,21 @@ export class Parser {
   parsePair(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseComp(),
-      { [TokenSubtype.COLON_COLON]: true }
+      { [TokenSubtype.DOUBLE_COLON]: true }
     );
   }
 
   parseAnd(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parsePair(),
-      { [TokenSubtype.AND]: true }
+      { [TokenSubtype.DOUBLE_AMPERSAND]: true }
     );
   }
 
   parseOr(): Node | undefined {
     return this.parseBinOpLeft(
       () => this.parseAnd(),
-      { [TokenSubtype.OR]: true }
+      { [TokenSubtype.DOUBLE_VBAR]: true }
     );
   }
 

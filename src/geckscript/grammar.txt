@@ -1,4 +1,4 @@
-GRAMMAR
+GRAMMAR  # TODO: rest of the operators, lambdas and UDFs, commas in function args, keywords
 
   literal:
     NUMBER | STRING
@@ -7,31 +7,70 @@ GRAMMAR
     ID
 
   function:
-    FUNCTION pair_expression*
+    FUNCTION slice_make_pair_expression*
 
   primary_expression:
     literal | variable | function | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
 
-  mul_expression:
-    primary_expression ((MUL | DIV | MOD) primary_expression)*
+  member_expression:
+    primary_expression |
+    member_expression LSQ_BRACKET expression RSQ_BRACKET |
+    member_expression RARROW (ID | STRING | NUMBER | FUNCTION) |
+    member_expression DOT (ID | FUNCTION)
 
-  sum_expression:
-    mul_expression ((PLUS | MINUS) mul_expression)*
+  logical_not_expression:
+    member_expression |
+    EXCLAMATION member_expression
 
-  comp_expression:
-    sum_expression ((EQUALS_EQUALS | NOT_EQUALS | GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) sum_expression)*
+  unary_expression:
+    logical_not_expression |
+    (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) logical_not_expression
 
-  pair_expression:
-    comp_expression (COLON_COLON comp_expression)*
+  exponential_expression:
+    unary_expression (CIRCUMFLEX unary_expression)*
+
+  multiplicative_expression:
+    exponential_expression ((ASTERISK | SLASH | PERCENT) exponential_expression)*
+
+  additive_expression:
+    multiplicative_expression ((PLUS | MINUS) multiplicative_expression)*
+
+  shift_expression:
+    additive_expression ((DOUBLE_LESS | DOUBLE_GREATER) additive_expression)*
 
   and_expression:
-    pair_expression (AND pair_expression)*
+    shift_expression (AMPERSAND shift_expression)*
 
   or_expression:
-    and_expression (OR and_expression)*
+    and_expression (VBAR and_expression)*
+
+  relational_expression:
+    or_expression ((GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) or_expression)*
+
+  equality_expression:
+    relational_expression ((DOUBLE_EQUALS | EXCLAMATION_EQUALS) relational_expression)*
+
+  slice_make_pair_expression:
+    equality_expression ((COLON | DOUBLE_COLON) equality_expression)*
+
+  logical_and_compound_assignment_expression:
+    slice_make_pair_expression ((
+      DOUBLE_AMPERSAND |
+      PLUS_EQUALS |
+      MINUS_EQUALS |
+      ASTERISK_EQUALS |
+      SLASH_EQUALS |
+      CIRCUMFLEX_EQUALS |
+      VBAR_EQUALS |
+      AMPERSAND_EQUALS |
+      PERCENT_EQULAS
+    ) slice_make_pair_expression)*
+
+  logical_or_expression:
+    logical_and_compound_assignment_expression (DOUBLE_VBAR logical_and_compound_assignment_expression)*
 
   assignment_expression:
-    or_expression
+    logical_or_expression ((EQUALS | COLON_EQUALS) | logical_or_expression)*
 
   expression:
      assignment_expression
@@ -40,7 +79,7 @@ GRAMMAR
     TYPE assignment_expression
 
   assignment_set:
-    SET variable TO or_expression
+    SET variable TO logical_or_expression
 
   assignment_let:
     let (variable_declaration | assignment_expression)
