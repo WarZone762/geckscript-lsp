@@ -3,23 +3,10 @@ import { TokenSubtype } from "./tokens";
 import { TokenType } from "./tokens";
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const enum NodeType {
   begin_block,
   bin_op,
+  bin_op_paired,
   comment,
   compound_statement,
   conditional,
@@ -28,16 +15,17 @@ export const enum NodeType {
   function,
   identifier,
   if_block,
+  keyword,
+  lambda,
+  lambda_inline,
   let,
   numerical,
   script,
   set,
   string_literal,
+  unary_op,
   variable_declaration,
   while_block,
-  unary_op,
-  bin_op_paired,
-  keyword
 }
 
 export type Range = {
@@ -183,6 +171,39 @@ export class FunctionNode extends Node {
   }
 }
 
+export class LambdaInlineNode extends Node {
+  lbracket_token?: Token;
+  params: Node[];
+  rbracket_token?: Token;
+  arrow_token?: Token;
+
+  expression?: Node;
+
+  constructor() {
+    super(NodeType.lambda_inline);
+
+    this.params = [];
+  }
+}
+
+export class LambdaNode extends Node {
+  begin_token?: Token;
+  function_token?: Token;
+  lbracket_token?: Token;
+  params: Node[];
+  rbracket_token?: Token;
+
+  compound_statement?: CompoundStatementNode;
+
+  end_token?: Token;
+
+  constructor() {
+    super(NodeType.lambda);
+
+    this.params = [];
+  }
+}
+
 export class CompoundStatementNode extends Node {
   children: (Node | undefined)[];
   symbol_table: IdentifierNode[];
@@ -263,6 +284,21 @@ export class Script extends Node {
   }
 }
 
+export class UnexpectedTokenError extends Error {
+  expected_type?: any;
+  parsed_type?: any;
+}
+
+export class UnexpectedTokenTypeError extends UnexpectedTokenError {
+  declare expected_type?: TokenType;
+  declare parsed_type?: TokenType;
+}
+
+export class UnexpectedTokenSubtypeError extends UnexpectedTokenError {
+  declare expected_type?: TokenSubtype;
+  declare parsed_type?: TokenSubtype;
+}
+
 export class Parser {
   data: Token[][];
   variables: IdentifierNode[];
@@ -307,28 +343,19 @@ export class Parser {
     return token;
   }
 
-  nextTokenOfType(type: TokenType): Token | undefined {
+  nextTokenOfType(type: TokenType): Token {
     const token = this.cur_token;
 
-    if (token?.type !== type) return undefined;
+    if (token?.type !== type) throw new UnexpectedTokenTypeError();
     this.skipToken();
 
     return token;
   }
 
-  nextTokenOnLineOfType(type: TokenType): Token | undefined {
+  nextTokenOfSubtype(subtype: TokenSubtype): Token {
     const token = this.cur_token;
 
-    if (token?.type !== type) return undefined;
-    this.skipTokenOnLine();
-
-    return token;
-  }
-
-  nextTokenOfSubtype(subtype: TokenSubtype): Token | undefined {
-    const token = this.cur_token;
-
-    if (token?.subtype !== subtype) return undefined;
+    if (token?.subtype !== subtype) throw new UnexpectedTokenSubtypeError();
     this.skipToken();
 
     return token;
@@ -382,12 +409,13 @@ export class Parser {
 
   parseComment(): CommentNode {
     const node = new CommentNode();
-    node.token = this.nextTokenOfType(TokenType.COMMENT);
-    if (node.token == undefined) {
-      return node;
-    }
 
-    node.value = node.token.content.substring(1);
+    try {
+      node.token = this.nextTokenOfType(TokenType.COMMENT);
+      node.value = node.token.content.substring(1);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
 
     return node;
   }
@@ -395,14 +423,15 @@ export class Parser {
   parseNumber(): NumberNode {
     const node = new NumberNode();
 
-    node.token = this.nextTokenOfType(TokenType.NUMBER);
-    if (node.token == undefined) {
-      return node;
-    }
+    try {
+      node.token = this.nextTokenOfType(TokenType.NUMBER);
 
-    node.value = node.token.subtype === TokenSubtype.HEX ?
-      parseInt(node.token.content) :
-      parseFloat(node.token.content);
+      node.value = node.token.subtype === TokenSubtype.HEX ?
+        parseInt(node.token.content) :
+        parseFloat(node.token.content);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
 
     return node;
   }
@@ -410,12 +439,12 @@ export class Parser {
   parseString(): StringNode {
     const node = new StringNode();
 
-    node.token = this.nextTokenOfType(TokenType.STRING);
-    if (node.token == undefined) {
-      return node;
+    try {
+      node.token = this.nextTokenOfType(TokenType.STRING);
+      node.value = node.token.content.substring(1, node.token.length - 1);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.value = node.token.content.substring(1, node.token.length - 1);
 
     return node;
   }
@@ -423,12 +452,12 @@ export class Parser {
   parseIdentifier(): IdentifierNode {
     const node = new IdentifierNode();
 
-    node.token = this.nextTokenOfType(TokenType.ID);
-    if (node.token == undefined) {
-      return node;
+    try {
+      node.token = this.nextTokenOfType(TokenType.ID);
+      node.value = node.token.content;
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.value = node.token.content;
 
     return node;
   }
@@ -436,43 +465,105 @@ export class Parser {
   parseKeyword(): KeywordNode {
     const node = new KeywordNode();
 
-    node.token = this.nextTokenOfType(TokenType.KEYWORD);
-    if (node.token == undefined) {
-      return node;
+    try {
+      node.token = this.nextTokenOfType(TokenType.KEYWORD);
+      node.keyword = node.token.content;
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.keyword = node.token.content;
 
     return node;
   }
 
-  parseFunction(): Node | undefined {
+  parseFunction(): FunctionNode {
     const node = new FunctionNode();
 
-    node.token = this.nextTokenOfType(TokenType.FUNCTION)!;
-    if (node.token == undefined) {
-      return node;
-    }
+    try {
+      node.token = this.nextTokenOfType(TokenType.FUNCTION)!;
+      node.name = node.token.content;
 
-    node.name = node.token.content;
-
-    while (this.cur_token != undefined && this.cur_x !== 0) {
-      if (this.cur_token.type === TokenType.OPERATOR) {
-        if (this.cur_token.subtype === TokenSubtype.COMMA) {
-          this.skipToken();
-          continue;
-        } else if (
-          this.cur_token.subtype !== TokenSubtype.LPAREN &&
-          this.cur_token.subtype !== TokenSubtype.LBRACKET
-        ) {
-          break;
+      while (this.cur_token != undefined && this.cur_x !== 0) {
+        if (this.cur_token.type === TokenType.OPERATOR) {
+          if (this.cur_token.subtype === TokenSubtype.COMMA) {
+            this.skipToken();
+            continue;
+          } else if (
+            this.cur_token.subtype !== TokenSubtype.LPAREN &&
+            this.cur_token.subtype !== TokenSubtype.LBRACKET
+          ) {
+            break;
+          }
         }
-      }
 
-      node.args.push(this.parseSliceMakePair());
+        node.args.push(this.parseSliceMakePair());
+      }
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
 
     return node;
+  }
+
+  parseLambdaInline(): LambdaInlineNode {
+    const node = new LambdaInlineNode();
+
+    try {
+      node.lbracket_token = this.nextTokenOfSubtype(TokenSubtype.LBRACKET);
+
+      while (
+        this.cur_token != undefined &&
+        this.cur_token.subtype !== TokenSubtype.RBRACKET
+      ) {
+        if (this.cur_token.type === TokenType.TYPENAME)
+          node.params.push(this.parseVariableDeclaration());
+        else if (this.cur_token.type === TokenType.ID)
+          node.params.push(this.parseIdentifier());
+        else
+          this.skipToken();
+      }
+
+      node.rbracket_token = this.nextTokenOfSubtype(TokenSubtype.RBRACKET);
+      node.arrow_token = this.nextTokenOfSubtype(TokenSubtype.EQUALS_GREATER);
+      node.expression = this.parseExpression();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
+
+    return node;
+  }
+
+  parseLambda(): LambdaNode {
+    const node = new LambdaNode();
+
+    try {
+      node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
+      node.function_token = this.nextTokenOfSubtype(TokenSubtype.FUNCTION);
+      node.lbracket_token = this.nextTokenOfSubtype(TokenSubtype.LBRACKET);
+
+      while (
+        this.cur_token != undefined &&
+        this.cur_token.subtype !== TokenSubtype.RBRACKET
+      ) {
+        if (this.cur_token.type === TokenType.TYPENAME)
+          node.params.push(this.parseVariableDeclaration());
+        else if (this.cur_token.type === TokenType.ID)
+          node.params.push(this.parseIdentifier());
+        else
+          this.skipToken();
+      }
+
+      node.rbracket_token = this.nextTokenOfSubtype(TokenSubtype.RBRACKET);
+      node.compound_statement = this.parseCompoundStatement(
+        t => t.subtype === TokenSubtype.END
+      );
+      node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
+
+    return node;
+
   }
 
   parsePrimaryExpression(): Node | undefined {
@@ -484,26 +575,86 @@ export class Parser {
       return this.parseIdentifier();
     } else if (this.cur_token?.type === TokenType.FUNCTION) {
       return this.parseFunction();
-    } else if (
-      this.cur_token?.subtype === TokenSubtype.LPAREN ||
-      this.cur_token?.subtype === TokenSubtype.LBRACKET
-    ) {
+    } else if (this.cur_token?.subtype === TokenSubtype.LPAREN) {
       this.skipToken();
 
       const node = this.parseExpression();
-      const token = this.nextTokenOfType(TokenType.OPERATOR);
-      if (
-        token?.subtype !== TokenSubtype.RPAREN &&
-        token?.subtype !== TokenSubtype.RBRACKET
-      ) {
-        return node;  // parsing error: ")" or "}" expected
+
+      try {
+        this.nextTokenOfSubtype(TokenSubtype.RPAREN);
+      } catch (e) {
+        if (!(e instanceof UnexpectedTokenError)) throw e;
       }
 
       return node;
+    } else if (this.cur_token?.subtype === TokenSubtype.LBRACKET) {
+      return this.parseLambdaInline();
+    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
+      return this.parseLambda();
     } else {
       this.skipToken();
       return undefined;
     }
+  }
+
+  parseMemeberSquareBrackets(lhs?: Node): Node | undefined {
+    const node = new BinOpPairedNode();
+
+    try {
+      node.lhs = lhs;
+      node.left_op_token = this.nextToken();
+      node.op = "[]";
+      node.rhs = this.parseExpression();
+      node.right_op_token = this.nextTokenOfSubtype(TokenSubtype.RSQ_BRACKET);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
+
+    return this.parseMember(node);
+  }
+
+  parseMemberRArrow(lhs?: Node): Node | undefined {
+    const node = new BinOpNode();
+
+    node.lhs = lhs;
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+
+    const type = this.cur_token?.type;
+    if (
+      type !== TokenType.STRING &&
+      type !== TokenType.NUMBER &&
+      type !== TokenType.ID &&
+      type !== TokenType.FUNCTION
+    ) {
+      node.rhs = undefined;
+      this.skipToken();
+    } else {
+      node.rhs = this.parsePrimaryExpression();
+    }
+
+    return this.parseMember(node);
+  }
+
+  parseMemberDot(lhs?: Node): Node | undefined {
+    const node = new BinOpNode();
+
+    node.lhs = lhs;
+    node.op_token = this.nextToken();
+    node.op = node.op_token?.content;
+
+    const type = this.cur_token?.type;
+    if (
+      type !== TokenType.ID &&
+      type !== TokenType.FUNCTION
+    ) {
+      node.rhs = undefined;
+      this.skipToken();
+    } else {
+      node.rhs = this.parsePrimaryExpression();
+    }
+
+    return this.parseMember(node);
   }
 
   parseMember(lhs?: Node): Node | undefined {
@@ -514,66 +665,11 @@ export class Parser {
     const subtype = this.cur_token.subtype;
 
     if (subtype === TokenSubtype.LSQ_BRACKET) {
-      const node = new BinOpPairedNode();
-
-      node.lhs = lhs;
-      node.left_op_token = this.nextToken();
-      node.op = "[]";
-      node.rhs = this.parseExpression();
-      node.right_op_token = this.nextTokenOfSubtype(TokenSubtype.RSQ_BRACKET);
-      if (node.right_op_token == undefined) {
-        // error: "]" expected
-      }
-
-      return this.parseMember(node);
-
+      return this.parseMemeberSquareBrackets(lhs);
     } else if (subtype === TokenSubtype.RARROW) {
-      const node = new BinOpNode();
-
-      node.lhs = lhs;
-      node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
-
-      const type = this.cur_token.type;
-      if (
-        // @ts-expect-error ts(2367)
-        type !== TokenType.STRING &&
-        // @ts-expect-error ts(2367)
-        type !== TokenType.NUMBER &&
-        // @ts-expect-error ts(2367)
-        type !== TokenType.ID &&
-        // @ts-expect-error ts(2367)
-        type !== TokenType.FUNCTION
-      ) {
-        node.rhs = undefined;
-        this.skipToken();
-      } else {
-        node.rhs = this.parsePrimaryExpression();
-      }
-
-      return this.parseMember(node);
-
+      return this.parseMemberRArrow(lhs);
     } else if (subtype === TokenSubtype.DOT) {
-      const node = new BinOpNode();
-
-      node.lhs = lhs;
-      node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
-
-      const type = this.cur_token.type;
-      if (
-        // @ts-expect-error ts(2367)
-        type !== TokenType.ID &&
-        // @ts-expect-error ts(2367)
-        type !== TokenType.FUNCTION
-      ) {
-        node.rhs = undefined;
-        this.skipToken();
-      } else {
-        node.rhs = this.parsePrimaryExpression();
-      }
-
-      return this.parseMember(node);
+      return this.parseMemberDot(lhs);
     } else {
       return lhs;
     }
@@ -581,7 +677,6 @@ export class Parser {
 
   parseLogicalNot(): Node | undefined {
     if (
-      this.cur_token?.type !== TokenType.OPERATOR &&
       this.cur_token?.subtype !== TokenSubtype.EXCLAMATION
     ) return this.parseMember();
 
@@ -740,14 +835,13 @@ export class Parser {
   parseVariableDeclaration(): VariableDeclarationNode {
     const node = new VariableDeclarationNode();
 
-    node.type_token = this.nextTokenOfType(TokenType.TYPENAME);
-    if (node.type_token == undefined) {
-      return node;
+    try {
+      node.type_token = this.nextTokenOfType(TokenType.TYPENAME);
+      node.variable_type = node.type_token.content;
+      node.value = this.parseAssignment();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.variable_type = node.type_token.content;
-
-    node.value = this.parseAssignment();
 
     return node;
   }
@@ -755,19 +849,14 @@ export class Parser {
   parseSet(): SetNode {
     const node = new SetNode();
 
-    node.set_token = this.nextTokenOfSubtype(TokenSubtype.SET);
-    if (node.set_token == undefined) {
-      return node;
+    try {
+      node.set_token = this.nextTokenOfSubtype(TokenSubtype.SET);
+      node.identifier = this.parseIdentifier();
+      node.to_token = this.nextTokenOfSubtype(TokenSubtype.TO);
+      node.value = this.parseLogicalOr();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.identifier = this.parseIdentifier();
-
-    node.to_token = this.nextTokenOfSubtype(TokenSubtype.TO);
-    if (node.to_token == undefined) {
-      return node;
-    }
-
-    node.value = this.parseLogicalOr();
 
     return node;
   }
@@ -775,14 +864,15 @@ export class Parser {
   parseLet(): LetNode {
     const node = new LetNode();
 
-    node.let_token = this.nextToken();
-    if (node.let_token == undefined) {
-      return node;
-    }
+    try {
+      node.let_token = this.nextToken();
 
-    node.value = this.cur_token?.type === TokenType.TYPENAME ?
-      this.parseVariableDeclaration() :
-      this.parseExpression();
+      node.value = this.cur_token?.type === TokenType.TYPENAME ?
+        this.parseVariableDeclaration() :
+        this.parseExpression();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
 
     return node;
   }
@@ -805,20 +895,17 @@ export class Parser {
   parseBeginBlock(): BeginBlockNode {
     const node = new BeginBlockNode();
 
-    node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
-    if (node.begin_token == undefined) {
-      return node;
-    }
+    try {
+      node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
+      node.expression = this.parsePrimaryExpression();
 
-    node.expression = this.parsePrimaryExpression();
+      node.compound_statement = this.parseCompoundStatement(t =>
+        t.subtype === TokenSubtype.END
+      );
 
-    node.compound_statement = this.parseCompoundStatement(t =>
-      t.subtype === TokenSubtype.END
-    );
-
-    node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
-    if (node.end_token == undefined) {
-      return node;
+      node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
 
     return node;
@@ -827,29 +914,23 @@ export class Parser {
   parseForeachBlock(): ForeachBlockNode {
     const node = new ForeachBlockNode();
 
-    node.foreach_token = this.nextTokenOfSubtype(TokenSubtype.FOREACH);
-    if (node.foreach_token == undefined) {
-      return node;
-    }
+    try {
+      node.foreach_token = this.nextTokenOfSubtype(TokenSubtype.FOREACH);
 
-    node.idetifier = this.cur_token?.type === TokenType.TYPENAME ?
-      this.parseVariableDeclaration() :
-      this.parseIdentifier();
+      node.idetifier = this.cur_token?.type === TokenType.TYPENAME ?
+        this.parseVariableDeclaration() :
+        this.parseIdentifier();
 
-    node.larrow_token = this.nextTokenOfSubtype(TokenSubtype.LARROW);
-    if (node.larrow_token == undefined) {
-      return node;
-    }
+      node.larrow_token = this.nextTokenOfSubtype(TokenSubtype.LARROW);
+      node.iterable = this.parseExpression();
 
-    node.iterable = this.parseExpression();
+      node.statements = this.parseCompoundStatement(
+        t => t.subtype === TokenSubtype.LOOP
+      );
 
-    node.statements = this.parseCompoundStatement(
-      t => t.subtype === TokenSubtype.LOOP
-    );
-
-    node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
-    if (node.loop_token == undefined) {
-      return node;
+      node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
 
     return node;
@@ -861,14 +942,13 @@ export class Parser {
   ): ConditionalNode {
     const node = new ConditionalNode();
 
-    node.token = this.nextTokenOfSubtype(type);
-    if (node.token == undefined) {
-      return node;
+    try {
+      node.token = this.nextTokenOfSubtype(type);
+      node.condition = this.parseExpression();
+      node.statements = this.parseCompoundStatement(terminator_predicate);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.condition = this.parseExpression();
-
-    node.statements = this.parseCompoundStatement(terminator_predicate);
 
     return node;
   }
@@ -876,13 +956,14 @@ export class Parser {
   parseWhileBlock(): WhileBlockNode {
     const node = new WhileBlockNode();
 
-    node.while_node = this.parseConditional(
-      TokenSubtype.WHILE, t => t.subtype === TokenSubtype.LOOP
-    );
+    try {
+      node.while_node = this.parseConditional(
+        TokenSubtype.WHILE, t => t.subtype === TokenSubtype.LOOP
+      );
 
-    node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
-    if (node.loop_token == undefined) {
-      return node;
+      node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
 
     return node;
@@ -891,28 +972,29 @@ export class Parser {
   parseIfBlock(): IfBlockNode {
     const node = new IfBlockNode();
 
-    node.branches[0] = this.parseConditional(TokenSubtype.IF, t =>
-      t.subtype === TokenSubtype.ELSEIF ||
-      t.subtype === TokenSubtype.ELSE ||
-      t.subtype === TokenSubtype.ENDIF
-    );
-
-    while (this.cur_token?.subtype === TokenSubtype.ELSEIF) {
-      node.branches.push(this.parseConditional(TokenSubtype.ELSEIF, t =>
+    try {
+      node.branches[0] = this.parseConditional(TokenSubtype.IF, t =>
         t.subtype === TokenSubtype.ELSEIF ||
         t.subtype === TokenSubtype.ELSE ||
         t.subtype === TokenSubtype.ENDIF
-      ));
-    }
+      );
 
-    if (this.cur_token?.subtype === TokenSubtype.ELSE) {
-      node.else_token = this.nextToken();
-      node.else_branch = this.parseCompoundStatement(t => t.subtype === TokenSubtype.ENDIF);
-    }
+      while (this.cur_token?.subtype === TokenSubtype.ELSEIF) {
+        node.branches.push(this.parseConditional(TokenSubtype.ELSEIF, t =>
+          t.subtype === TokenSubtype.ELSEIF ||
+          t.subtype === TokenSubtype.ELSE ||
+          t.subtype === TokenSubtype.ENDIF
+        ));
+      }
 
-    node.endif_token = this.nextTokenOfSubtype(TokenSubtype.ENDIF);
-    if (node.endif_token == undefined) {
-      return node;
+      if (this.cur_token?.subtype === TokenSubtype.ELSE) {
+        node.else_token = this.nextToken();
+        node.else_branch = this.parseCompoundStatement(t => t.subtype === TokenSubtype.ENDIF);
+      }
+
+      node.endif_token = this.nextTokenOfSubtype(TokenSubtype.ENDIF);
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
 
     return node;
@@ -951,14 +1033,13 @@ export class Parser {
   parse(): Script {
     const node = new Script();
 
-    node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
-    if (node.scriptname_token == undefined) {
-      return node;
+    try {
+      node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
+      node.name = this.parseIdentifier();
+      node.statements = this.parseCompoundStatement();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
     }
-
-    node.name = this.parseIdentifier();
-
-    node.statements = this.parseCompoundStatement();
 
     return node;
   }

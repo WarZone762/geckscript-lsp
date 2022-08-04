@@ -14,9 +14,11 @@ export const enum TokenType {
   TYPENAME,
 }
 
-
 export const enum TokenSubtype {
   UNKNOWN,
+
+  // Block Types
+  FUNCTION,
 
   // Numbers
   DECIMAL,
@@ -93,6 +95,7 @@ export const enum TokenSubtype {
   DOT,
   DOUBLE_COLON,
   COMMA,
+  EQUALS_GREATER,
 }
 
 type TokenInfo = {
@@ -141,7 +144,7 @@ export const Tokens = {
     "reference": [TokenSubtype.REF, "reference", "reference"],
     "string_var": [TokenSubtype.STRING_VAR, "string_var", "string_var"],
     "array_var": [TokenSubtype.ARRAY_VAR, "array_var", "array_var"],
-  }, TokenType.TYPENAME),
+  }, CompletionItemKind.TypeParameter),
 
   [TokenType.KEYWORD]: new TokenCategory({
     "scn": [TokenSubtype.SCN, "scn", "scn"],
@@ -161,10 +164,10 @@ export const Tokens = {
     "set": [TokenSubtype.SET, "set", "set"],
     "to": [TokenSubtype.TO, "to", "to"],
     "let": [TokenSubtype.LET, "let", "let"],
-  }, TokenType.KEYWORD),
+  }, CompletionItemKind.Keyword),
 
   [TokenType.BLOCK_TYPE]: new TokenCategory({
-    "function": [undefined, "Function", "Function"],
+    "function": [TokenSubtype.FUNCTION, "Function", "Function"],
     "gamemode": [undefined, "GameMode", "GameMode"],
     "menumode": [undefined, "MenuMode", "MenuMode"],
     "onactivate": [undefined, "OnActivate", "OnActivate"],
@@ -201,7 +204,7 @@ export const Tokens = {
     "scripteffectfinish": [undefined, "ScriptEffectFinish", "ScriptEffectFinish"],
     "scripteffectstart": [undefined, "ScriptEffectStart", "ScriptEffectStart"],
     "scripteffectupdate": [undefined, "ScriptEffectUpdate", "ScriptEffectUpdate"],
-  }, TokenType.BLOCK_TYPE),
+  }, CompletionItemKind.Constant),
 
   [TokenType.OPERATOR]: new TokenCategory({
     "=": [TokenSubtype.EQUALS, "=", "NVSE_Expressions"],
@@ -247,7 +250,8 @@ export const Tokens = {
     ".": [TokenSubtype.DOT, ".", "NVSE_Expressions"],
     "::": [TokenSubtype.DOUBLE_COLON, "::", "NVSE_Expressions"],
     ",": [TokenSubtype.COMMA, ",", "NVSE_Expressions"],
-  }, TokenType.OPERATOR),
+    "=>": [TokenSubtype.EQUALS_GREATER, ",", "NVSE_Expressions"],
+  }, CompletionItemKind.Operator),
 
   [TokenType.FUNCTION]: new TokenCategory({
     "abs": [undefined, "Abs", "Abs"],
@@ -3626,5 +3630,5 @@ export const Tokens = {
     // "unequipitem"                         :  [undefined ,  "UnEquipItem"                            ,  "UnEquipItem"],
     "unequipobject": [undefined, "UnEquipObject", "UnEquipObject"],
     "wm": [undefined, "WM", "WM"],
-  }, TokenType.FUNCTION),
+  }, CompletionItemKind.Function),
 };

@@ -64,17 +64,19 @@ export class Lexer {
   }
 
   determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
+    data = data.toLowerCase();
+
     if (Tokens[TokenType.TYPENAME].containsToken(data)) {
-      return [TokenType.TYPENAME, Tokens[TokenType.TYPENAME].getTokenSubtype(data)!];
+      return [TokenType.TYPENAME, Tokens[TokenType.TYPENAME].getTokenSubtype(data)];
     } else if (Tokens[TokenType.KEYWORD].containsToken(data)) {
-      return [TokenType.KEYWORD, Tokens[TokenType.KEYWORD].getTokenSubtype(data)!];
+      return [TokenType.KEYWORD, Tokens[TokenType.KEYWORD].getTokenSubtype(data)];
     } else if (
       Tokens[TokenType.BLOCK_TYPE].containsToken(data) &&
       this.prev_token?.subtype === TokenSubtype.BEGIN
     ) {
-      return [TokenType.BLOCK_TYPE, undefined];
+      return [TokenType.BLOCK_TYPE, Tokens[TokenType.BLOCK_TYPE].getTokenSubtype(data)];
     } else if (Tokens[TokenType.OPERATOR].containsToken(data)) {
-      return [TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(data)!];
+      return [TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(data)];
     } else if (Tokens[TokenType.FUNCTION].containsToken(data)) {
       return [TokenType.FUNCTION, undefined];
     } else {

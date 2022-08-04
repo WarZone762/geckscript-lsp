@@ -1,4 +1,4 @@
-GRAMMAR  # TODO: lambdas and UDFs
+GRAMMAR  # TODO: node range
 
   literal:
     NUMBER | STRING
@@ -11,6 +11,12 @@ GRAMMAR  # TODO: lambdas and UDFs
 
   function:
     FUNCTION (slice_make_pair_expression COMMA?)*
+
+  lambda:
+    LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |
+    BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET
+      compound_statement
+    END
 
   primary_expression:
     literal | variable | function | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
