@@ -456,15 +456,19 @@ export class Parser {
 
     node.name = node.token.content;
 
-    while (
-      this.cur_token != undefined &&
-      (
-        this.cur_token.type !== TokenType.OPERATOR ||
-        this.cur_token.subtype === TokenSubtype.LPAREN ||
-        this.cur_token.subtype === TokenSubtype.LBRACKET
-      ) &&
-      this.cur_x !== 0
-    ) {
+    while (this.cur_token != undefined && this.cur_x !== 0) {
+      if (this.cur_token.type === TokenType.OPERATOR) {
+        if (this.cur_token.subtype === TokenSubtype.COMMA) {
+          this.skipToken();
+          continue;
+        } else if (
+          this.cur_token.subtype !== TokenSubtype.LPAREN &&
+          this.cur_token.subtype !== TokenSubtype.LBRACKET
+        ) {
+          break;
+        }
+      }
+
       node.args.push(this.parseSliceMakePair());
     }
 

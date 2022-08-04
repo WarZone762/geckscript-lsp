@@ -1,4 +1,4 @@
-GRAMMAR  # TODO: lambdas and UDFs, commas in function args
+GRAMMAR  # TODO: lambdas and UDFs
 
   literal:
     NUMBER | STRING
@@ -10,7 +10,7 @@ GRAMMAR  # TODO: lambdas and UDFs, commas in function args
     KEYWORD
 
   function:
-    FUNCTION slice_make_pair_expression*
+    FUNCTION (slice_make_pair_expression COMMA?)*
 
   primary_expression:
     literal | variable | function | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)

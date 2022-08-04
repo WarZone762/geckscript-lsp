@@ -14,6 +14,7 @@ export const enum TokenType {
   TYPENAME,
 }
 
+
 export const enum TokenSubtype {
   UNKNOWN,
 
@@ -91,6 +92,7 @@ export const enum TokenSubtype {
   RARROW,
   DOT,
   DOUBLE_COLON,
+  COMMA,
 }
 
 type TokenInfo = {
@@ -244,6 +246,7 @@ export const Tokens = {
     "->": [TokenSubtype.RARROW, "->", "NVSE_Expressions"],
     ".": [TokenSubtype.DOT, ".", "NVSE_Expressions"],
     "::": [TokenSubtype.DOUBLE_COLON, "::", "NVSE_Expressions"],
+    ",": [TokenSubtype.COMMA, ",", "NVSE_Expressions"],
   }, TokenType.OPERATOR),
 
   [TokenType.FUNCTION]: new TokenCategory({
