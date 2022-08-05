@@ -93,9 +93,6 @@ GRAMMAR
   assignment_let:
     let (variable_declaration | assignment_expression)
 
-  block_type:
-    BLOCK_TYPE primary_expression*
-
   statement:
     COMMENT |
     assignment_set |
@@ -109,6 +106,9 @@ GRAMMAR
 
   compound_statement:
     statement*
+
+  block_type:
+    BLOCK_TYPE primary_expression*
 
   begin_block:
     BEGIN block_type

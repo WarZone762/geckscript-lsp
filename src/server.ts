@@ -1,3 +1,4 @@
+// TODO: better debug view
 import {
   createConnection,
   TextDocuments,
@@ -23,30 +24,6 @@ import * as ST from "./semantic_tokens";
 
 import * as Lexer from "./geckscript/lexer";
 import * as Parser from "./geckscript/parser";
-
-
-type HierarchicalData = {
-  name: string,
-  children?: HierarchicalData[]
-}
-function ObjectToHierarchy(obj: any, root_name?: string, exclude = {}): HierarchicalData {
-  if (typeof obj !== "object" || obj === null) return {
-    name: root_name ?? "root",
-    children: [{ name: String(obj) }]
-  };
-
-  const hierarchical: HierarchicalData = {
-    name: root_name ?? `root: ${obj.constructor.name}`,
-    children: []
-  };
-
-  for (const [k, v] of Object.entries(obj as object)) {
-    if (k in exclude || v === undefined) continue;
-    hierarchical.children!.push(ObjectToHierarchy(v, `${k}: ${v.constructor.name}`, exclude));
-  }
-
-  return hierarchical;
-}
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -88,19 +65,9 @@ connection.onInitialize((params: InitializeParams) => {
 documents.onDidChangeContent(
   (params) => {
     documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
-    tree_view_server?.write_message(JSON.stringify(ObjectToHierarchy(
-      Parser.GetAST(params.document.getText()),
-      undefined,
-      {
-        "type": true,
-        "subtype": true,
-        // "range": true,
-        "position": true,
-        "length": true,
-        "token": true,
-        "content": true,
-      }
-    )));
+    tree_view_server?.write_message(JSON.stringify(
+      Parser.GetAST(params.document.getText()).toTree(),
+    ));
   }
 );
 

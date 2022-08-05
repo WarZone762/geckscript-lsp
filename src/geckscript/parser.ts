@@ -28,12 +28,31 @@ export const enum NodeType {
   while_block,
 }
 
+export class TreeData {
+  name: string;
+  children: TreeData[];
+
+  constructor(name: string, children: TreeData[] = []) {
+    this.name = name;
+    this.children = children;
+  }
+
+  append(child: TreeData | undefined): void {
+    if (child != undefined) this.children.push(child);
+  }
+
+  concat(children: TreeData[] | undefined): void {
+    if (children != undefined)
+      this.children = this.children.concat(children);
+  }
+}
+
 export type Range = {
   start?: TokenPosition,
   end?: TokenPosition
 }
 
-export class Node {
+export abstract class Node {
   type: NodeType;
   range: Range;
 
@@ -41,6 +60,8 @@ export class Node {
     this.type = type;
     this.range = {};
   }
+
+  abstract toTree(): TreeData
 }
 
 export class NumberNode extends Node {
@@ -50,6 +71,10 @@ export class NumberNode extends Node {
   constructor() {
     super(NodeType.numerical);
   }
+
+  toTree(): TreeData {
+    return new TreeData(String(this.value));
+  }
 }
 export class StringNode extends Node {
   token?: Token;
@@ -57,6 +82,10 @@ export class StringNode extends Node {
 
   constructor() {
     super(NodeType.string_literal);
+  }
+
+  toTree(): TreeData {
+    return new TreeData(`"${String(this.value)}"`);
   }
 }
 
@@ -67,6 +96,10 @@ export class CommentNode extends Node {
   constructor() {
     super(NodeType.comment);
   }
+
+  toTree(): TreeData {
+    return new TreeData(`;${String(this.value)}`);
+  }
 }
 
 export class IdentifierNode extends Node {
@@ -75,6 +108,10 @@ export class IdentifierNode extends Node {
 
   constructor() {
     super(NodeType.identifier);
+  }
+
+  toTree(): TreeData {
+    return new TreeData(String(this.value));
   }
 }
 
@@ -85,6 +122,10 @@ export class KeywordNode extends Node {
   constructor() {
     super(NodeType.keyword);
   }
+
+  toTree(): TreeData {
+    return new TreeData(`Keyword: ${this.keyword}`);
+  }
 }
 
 export class VariableDeclarationNode extends Node {
@@ -94,6 +135,14 @@ export class VariableDeclarationNode extends Node {
 
   constructor() {
     super(NodeType.variable_declaration);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData(`Type: ${this.variable_type}`);
+
+    tree.append(this.value?.toTree());
+
+    return tree;
   }
 }
 
@@ -106,6 +155,16 @@ export class SetNode extends Node {
   constructor() {
     super(NodeType.set);
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData("set");
+
+    tree.append(this.identifier?.toTree());
+    tree.append(new TreeData("to"));
+    tree.append(this.value?.toTree());
+
+    return tree;
+  }
 }
 
 export class LetNode extends Node {
@@ -114,6 +173,14 @@ export class LetNode extends Node {
 
   constructor() {
     super(NodeType.let);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData("let");
+
+    tree.append(this.value?.toTree());
+
+    return tree;
   }
 }
 
@@ -125,6 +192,14 @@ export class UnaryOpNode extends Node {
   constructor() {
     super(NodeType.unary_op);
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData(String(this.op));
+
+    tree.append(this.operand?.toTree());
+
+    return tree;
+  }
 }
 
 export class BinOpNode extends Node {
@@ -135,6 +210,15 @@ export class BinOpNode extends Node {
 
   constructor() {
     super(NodeType.bin_op);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData(String(this.op));
+
+    tree.append(this.lhs?.toTree());
+    tree.append(this.rhs?.toTree());
+
+    return tree;
   }
 }
 
@@ -148,17 +232,34 @@ export class BinOpPairedNode extends Node {
   constructor() {
     super(NodeType.bin_op_paired);
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData(String(this.op));
+
+    tree.append(this.lhs?.toTree());
+    tree.append(this.rhs?.toTree());
+
+    return tree;
+  }
 }
 
 export class FunctionNode extends Node {
   token?: Token;
   name?: string;
-  args: (Node | undefined)[];
+  args: Node[];
 
   constructor() {
     super(NodeType.function);
 
     this.args = [];
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData(String(this.name));
+
+    tree.concat(this.args.map(a => a.toTree()));
+
+    return tree;
   }
 }
 
@@ -174,6 +275,15 @@ export class LambdaInlineNode extends Node {
     super(NodeType.lambda_inline);
 
     this.params = [];
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData("Inline Lambda");
+
+    tree.concat(this.params.map(a => a.toTree()));
+    tree.append(this.expression?.toTree());
+
+    return tree;
   }
 }
 
@@ -193,10 +303,19 @@ export class LambdaNode extends Node {
 
     this.params = [];
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData("Lambda");
+
+    tree.concat(this.params.map(a => a.toTree()));
+    tree.append(this.compound_statement?.toTree());
+
+    return tree;
+  }
 }
 
 export class CompoundStatementNode extends Node {
-  children: (Node | undefined)[];
+  children: Node[];
   symbol_table: IdentifierNode[];
 
   constructor() {
@@ -204,6 +323,20 @@ export class CompoundStatementNode extends Node {
 
     this.children = [];
     this.symbol_table = [];
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData(
+      "Compound Statement",
+      this.children.map(c => c.toTree())
+    );
+
+    tree.append(new TreeData(
+      "Symbol Table",
+      this.symbol_table.map(s => s.toTree())
+    ));
+
+    return tree;
   }
 }
 
@@ -215,6 +348,15 @@ export class BeginBlockNode extends Node {
 
   constructor() {
     super(NodeType.begin_block);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData("begin");
+
+    tree.append(this.expression?.toTree());
+    tree.append(this.compound_statement?.toTree());
+
+    return tree;
   }
 }
 
@@ -231,6 +373,16 @@ export class ForeachBlockNode extends Node {
   constructor() {
     super(NodeType.foreach_block);
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData("foreach");
+
+    tree.append(this.idetifier?.toTree());
+    tree.append(this.iterable?.toTree());
+    tree.append(this.statements?.toTree());
+
+    return tree;
+  }
 }
 
 export class ConditionalNode extends Node {
@@ -241,6 +393,15 @@ export class ConditionalNode extends Node {
   constructor() {
     super(NodeType.conditional);
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData("Conditional");
+
+    tree.append(this.condition?.toTree());
+    tree.append(this.statements?.toTree());
+
+    return tree;
+  }
 }
 
 export class WhileBlockNode extends Node {
@@ -249,6 +410,14 @@ export class WhileBlockNode extends Node {
 
   constructor() {
     super(NodeType.while_block);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData("while");
+
+    tree.append(this.while_node?.toTree());
+
+    return tree;
   }
 }
 
@@ -263,6 +432,15 @@ export class IfBlockNode extends Node {
 
     this.branches = [];
   }
+
+  toTree(): TreeData {
+    const tree = new TreeData("if");
+
+    tree.concat(this.branches.map(b => b.toTree()));
+    tree.append(this.else_branch?.toTree());
+
+    return tree;
+  }
 }
 
 export class Script extends Node {
@@ -272,6 +450,15 @@ export class Script extends Node {
 
   constructor() {
     super(NodeType.script);
+  }
+
+  toTree(): TreeData {
+    const tree = new TreeData("Script");
+
+    tree.append(this.name?.toTree());
+    tree.append(this.statements?.toTree());
+
+    return tree;
   }
 }
 
@@ -515,7 +702,11 @@ export class Parser {
           }
         }
 
-        node.args.push(this.parseSliceMakePair());
+        const arg = this.parseSliceMakePair();
+        if (arg != undefined)
+          node.args.push(arg);
+        else
+          break;
       }
 
       node.range.start = node.token.position;
@@ -936,11 +1127,39 @@ export class Parser {
       this.cur_token != undefined &&
       !terminator_predicate(this.cur_token)
     ) {
-      node.children.push(this.parseStatement());
+      const statement = this.parseStatement();
+
+      if (statement != undefined)
+        node.children.push(statement);
     }
 
     node.range.start = node.children[0]?.range.start;
     node.range.start = node.children[node.children.length - 1]?.range.end;
+
+    return node;
+  }
+
+  parseBlockType(): FunctionNode {
+    const node = new FunctionNode();
+
+    try {
+      node.token = this.nextTokenOfType(TokenType.BLOCK_TYPE);
+      node.name = node.token.content;
+
+      while (this.cur_token != undefined && this.cur_x !== 0) {
+        const arg = this.parsePrimaryExpression();
+
+        if (arg != undefined)
+          node.args.push(arg);
+        else
+          break;
+      }
+
+      node.range.start = node.token.position;
+      node.range.end = node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos();
+    } catch (e) {
+      if (!(e instanceof UnexpectedTokenError)) throw e;
+    }
 
     return node;
   }
@@ -950,7 +1169,7 @@ export class Parser {
 
     try {
       node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
-      node.expression = this.parsePrimaryExpression();
+      node.expression = this.parseBlockType();
 
       node.compound_statement = this.parseCompoundStatement(t =>
         t.subtype === TokenSubtype.END
