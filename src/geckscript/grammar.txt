@@ -1,4 +1,4 @@
-GRAMMAR  # TODO: node range
+GRAMMAR
 
   literal:
     NUMBER | STRING

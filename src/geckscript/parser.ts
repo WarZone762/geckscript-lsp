@@ -29,8 +29,8 @@ export const enum NodeType {
 }
 
 export type Range = {
-  start: TokenPosition,
-  end: TokenPosition
+  start?: TokenPosition,
+  end?: TokenPosition
 }
 
 export class Node {
@@ -39,16 +39,7 @@ export class Node {
 
   constructor(type: NodeType) {
     this.type = type;
-    this.range = {
-      start: {
-        column: 0,
-        line: 0
-      },
-      end: {
-        column: 0,
-        line: 0
-      }
-    };
+    this.range = {};
   }
 }
 
@@ -383,6 +374,9 @@ export class Parser {
     node.op = node.op_token?.content;
     node.rhs = this.parseBinOpRight(parse_child, valid_tokens);
 
+    node.range.start = lhs?.range.start;
+    node.range.end = node.rhs?.range.end;
+
     return node;
   }
 
@@ -404,6 +398,9 @@ export class Parser {
     node.op = node.op_token?.content;
     node.rhs = parse_child();
 
+    node.range.start = lhs?.range.start;
+    node.range.end = node.rhs?.range.end;
+
     return this.parseBinOpLeft(parse_child, valid_tokens, node);
   }
 
@@ -413,6 +410,9 @@ export class Parser {
     try {
       node.token = this.nextTokenOfType(TokenType.COMMENT);
       node.value = node.token.content.substring(1);
+
+      node.range.start = node.token.position;
+      node.range.end = node.token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -425,10 +425,12 @@ export class Parser {
 
     try {
       node.token = this.nextTokenOfType(TokenType.NUMBER);
-
       node.value = node.token.subtype === TokenSubtype.HEX ?
         parseInt(node.token.content) :
         parseFloat(node.token.content);
+
+      node.range.start = node.token.position;
+      node.range.end = node.token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -455,6 +457,9 @@ export class Parser {
     try {
       node.token = this.nextTokenOfType(TokenType.ID);
       node.value = node.token.content;
+
+      node.range.start = node.token.position;
+      node.range.end = node.token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -468,6 +473,9 @@ export class Parser {
     try {
       node.token = this.nextTokenOfType(TokenType.KEYWORD);
       node.keyword = node.token.content;
+
+      node.range.start = node.token.position;
+      node.range.end = node.token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -497,6 +505,9 @@ export class Parser {
 
         node.args.push(this.parseSliceMakePair());
       }
+
+      node.range.start = node.token.position;
+      node.range.end = node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -525,6 +536,9 @@ export class Parser {
       node.rbracket_token = this.nextTokenOfSubtype(TokenSubtype.RBRACKET);
       node.arrow_token = this.nextTokenOfSubtype(TokenSubtype.EQUALS_GREATER);
       node.expression = this.parseExpression();
+
+      node.range.start = node.lbracket_token.position;
+      node.range.end = node.expression?.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -558,6 +572,8 @@ export class Parser {
       );
       node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
 
+      node.range.start = node.begin_token.position;
+      node.range.end = node.end_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -606,6 +622,9 @@ export class Parser {
       node.op = "[]";
       node.rhs = this.parseExpression();
       node.right_op_token = this.nextTokenOfSubtype(TokenSubtype.RSQ_BRACKET);
+
+      node.range.start = node.lhs?.range.start;
+      node.range.end = node.right_op_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -633,6 +652,9 @@ export class Parser {
       node.rhs = this.parsePrimaryExpression();
     }
 
+    node.range.start = lhs?.range.start;
+    node.range.end = node.rhs?.range.end;
+
     return this.parseMember(node);
   }
 
@@ -653,6 +675,9 @@ export class Parser {
     } else {
       node.rhs = this.parsePrimaryExpression();
     }
+
+    node.range.start = lhs?.range.start;
+    node.range.end = node.rhs?.range.end;
 
     return this.parseMember(node);
   }
@@ -676,15 +701,17 @@ export class Parser {
   }
 
   parseLogicalNot(): Node | undefined {
-    if (
-      this.cur_token?.subtype !== TokenSubtype.EXCLAMATION
-    ) return this.parseMember();
+    if (this.cur_token?.subtype !== TokenSubtype.EXCLAMATION)
+      return this.parseMember();
 
     const node = new UnaryOpNode();
 
     node.op_token = this.nextToken();
     node.op = node.op_token?.content;
     node.operand = this.parseMember();
+
+    node.range.start = node.op_token?.position;
+    node.range.end = node.operand?.range.end;
 
     return node;
   }
@@ -706,6 +733,9 @@ export class Parser {
     node.op_token = this.nextToken();
     node.op = node.op_token?.content;
     node.operand = this.parseLogicalNot();
+
+    node.range.start = node.op_token?.position;
+    node.range.end = node.operand?.range.end;
 
     return node;
   }
@@ -839,6 +869,9 @@ export class Parser {
       node.type_token = this.nextTokenOfType(TokenType.TYPENAME);
       node.variable_type = node.type_token.content;
       node.value = this.parseAssignment();
+
+      node.range.start = node.type_token.position;
+      node.range.end = node.value?.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -854,6 +887,9 @@ export class Parser {
       node.identifier = this.parseIdentifier();
       node.to_token = this.nextTokenOfSubtype(TokenSubtype.TO);
       node.value = this.parseLogicalOr();
+
+      node.range.start = node.set_token.position;
+      node.range.end = node.value?.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -866,10 +902,12 @@ export class Parser {
 
     try {
       node.let_token = this.nextToken();
-
       node.value = this.cur_token?.type === TokenType.TYPENAME ?
         this.parseVariableDeclaration() :
         this.parseExpression();
+
+      node.range.start = node.let_token?.position;
+      node.range.end = node.value?.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -889,6 +927,9 @@ export class Parser {
       node.children.push(this.parseStatement());
     }
 
+    node.range.start = node.children[0]?.range.start;
+    node.range.start = node.children[node.children.length - 1]?.range.end;
+
     return node;
   }
 
@@ -904,6 +945,9 @@ export class Parser {
       );
 
       node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+
+      node.range.start = node.begin_token.position;
+      node.range.end = node.end_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -929,6 +973,9 @@ export class Parser {
       );
 
       node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+
+      node.range.start = node.foreach_token.position;
+      node.range.end = node.loop_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -946,6 +993,9 @@ export class Parser {
       node.token = this.nextTokenOfSubtype(type);
       node.condition = this.parseExpression();
       node.statements = this.parseCompoundStatement(terminator_predicate);
+
+      node.range.start = node.token.position;
+      node.range.end = node.statements.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -962,6 +1012,9 @@ export class Parser {
       );
 
       node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+
+      node.range.start = node.while_node.range.start;
+      node.range.end = node.loop_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -993,6 +1046,9 @@ export class Parser {
       }
 
       node.endif_token = this.nextTokenOfSubtype(TokenSubtype.ENDIF);
+
+      node.range.start = node.branches[0].range.start;
+      node.range.end = node.endif_token.getLastPos();
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }
@@ -1037,6 +1093,9 @@ export class Parser {
       node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
       node.name = this.parseIdentifier();
       node.statements = this.parseCompoundStatement();
+
+      node.range.start = node.scriptname_token.position;
+      node.range.end = node.statements.range.end;
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) throw e;
     }

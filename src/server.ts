@@ -94,7 +94,7 @@ documents.onDidChangeContent(
       {
         "type": true,
         "subtype": true,
-        "range": true,
+        // "range": true,
         "position": true,
         "length": true,
         "token": true,
