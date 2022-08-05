@@ -4,6 +4,8 @@ import { TokenType } from "./tokens";
 
 
 export const enum NodeType {
+  unknown,
+
   begin_block,
   bin_op,
   bin_op_paired,
@@ -19,10 +21,10 @@ export const enum NodeType {
   lambda,
   lambda_inline,
   let,
-  numerical,
+  number,
   script,
   set,
-  string_literal,
+  string,
   unary_op,
   variable_declaration,
   while_block,
@@ -52,315 +54,149 @@ export type Range = {
   end?: TokenPosition
 }
 
-export abstract class Node {
-  type: NodeType;
-  range: Range;
-
-  constructor(type: NodeType) {
-    this.type = type;
-    this.range = {};
-  }
-
-  abstract toTree(): TreeData
+export class Node {
+  type: NodeType = NodeType.unknown;
+  range: Range = {};
 }
 
 export class NumberNode extends Node {
+  type = NodeType.number;
+
   token?: Token;
   value?: number;
-
-  constructor() {
-    super(NodeType.numerical);
-  }
-
-  toTree(): TreeData {
-    return new TreeData(String(this.value));
-  }
 }
+
 export class StringNode extends Node {
+  type = NodeType.string;
+
   token?: Token;
   value?: string;
-
-  constructor() {
-    super(NodeType.string_literal);
-  }
-
-  toTree(): TreeData {
-    return new TreeData(`"${String(this.value)}"`);
-  }
 }
 
 export class CommentNode extends Node {
+  type = NodeType.comment;
+
   token?: Token;
   value?: string;
-
-  constructor() {
-    super(NodeType.comment);
-  }
-
-  toTree(): TreeData {
-    return new TreeData(`;${String(this.value)}`);
-  }
 }
 
 export class IdentifierNode extends Node {
+  type = NodeType.identifier;
+
   token?: Token;
   value?: string;
-
-  constructor() {
-    super(NodeType.identifier);
-  }
-
-  toTree(): TreeData {
-    return new TreeData(String(this.value));
-  }
 }
 
 export class KeywordNode extends Node {
+  type = NodeType.keyword;
+
   token?: Token;
-  keyword?: string;
-
-  constructor() {
-    super(NodeType.keyword);
-  }
-
-  toTree(): TreeData {
-    return new TreeData(`Keyword: ${this.keyword}`);
-  }
+  value?: string;
 }
 
 export class VariableDeclarationNode extends Node {
+  type = NodeType.variable_declaration;
+
   type_token?: Token;
   variable_type?: string;
   value?: Node;
-
-  constructor() {
-    super(NodeType.variable_declaration);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(`Type: ${this.variable_type}`);
-
-    tree.append(this.value?.toTree());
-
-    return tree;
-  }
 }
 
 export class SetNode extends Node {
+  type = NodeType.set;
+
   set_token?: Token;
   identifier?: IdentifierNode;
   to_token?: Token;
   value?: Node;
-
-  constructor() {
-    super(NodeType.set);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("set");
-
-    tree.append(this.identifier?.toTree());
-    tree.append(new TreeData("to"));
-    tree.append(this.value?.toTree());
-
-    return tree;
-  }
 }
 
 export class LetNode extends Node {
+  type = NodeType.let;
+
   let_token?: Token;
   value?: Node;
-
-  constructor() {
-    super(NodeType.let);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("let");
-
-    tree.append(this.value?.toTree());
-
-    return tree;
-  }
 }
 
 export class UnaryOpNode extends Node {
+  type = NodeType.unary_op;
+
   op_token?: Token;
   op?: string;
   operand?: Node;
-
-  constructor() {
-    super(NodeType.unary_op);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(String(this.op));
-
-    tree.append(this.operand?.toTree());
-
-    return tree;
-  }
 }
 
 export class BinOpNode extends Node {
+  type = NodeType.bin_op;
+
   lhs?: Node;
   op?: string;
   op_token?: Token;
   rhs?: Node;
-
-  constructor() {
-    super(NodeType.bin_op);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(String(this.op));
-
-    tree.append(this.lhs?.toTree());
-    tree.append(this.rhs?.toTree());
-
-    return tree;
-  }
 }
 
 export class BinOpPairedNode extends Node {
+  type = NodeType.bin_op_paired;
+
   lhs?: Node;
   op?: string;
   left_op_token?: Token;
   rhs?: Node;
   right_op_token?: Token;
-
-  constructor() {
-    super(NodeType.bin_op_paired);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(String(this.op));
-
-    tree.append(this.lhs?.toTree());
-    tree.append(this.rhs?.toTree());
-
-    return tree;
-  }
 }
 
 export class FunctionNode extends Node {
+  type = NodeType.function;
+
   token?: Token;
   name?: string;
-  args: Node[];
-
-  constructor() {
-    super(NodeType.function);
-
-    this.args = [];
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(String(this.name));
-
-    tree.concat(this.args.map(a => a.toTree()));
-
-    return tree;
-  }
+  args: Node[] = [];
 }
 
 export class LambdaInlineNode extends Node {
+  type = NodeType.lambda_inline;
+
   lbracket_token?: Token;
-  params: Node[];
+  params: Node[] = [];
   rbracket_token?: Token;
   arrow_token?: Token;
 
   expression?: Node;
-
-  constructor() {
-    super(NodeType.lambda_inline);
-
-    this.params = [];
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("Inline Lambda");
-
-    tree.concat(this.params.map(a => a.toTree()));
-    tree.append(this.expression?.toTree());
-
-    return tree;
-  }
 }
 
 export class LambdaNode extends Node {
+  type = NodeType.lambda;
+
   begin_token?: Token;
   function_token?: Token;
   lbracket_token?: Token;
-  params: Node[];
+  params: Node[] = [];
   rbracket_token?: Token;
 
   compound_statement?: CompoundStatementNode;
 
   end_token?: Token;
-
-  constructor() {
-    super(NodeType.lambda);
-
-    this.params = [];
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("Lambda");
-
-    tree.concat(this.params.map(a => a.toTree()));
-    tree.append(this.compound_statement?.toTree());
-
-    return tree;
-  }
 }
 
 export class CompoundStatementNode extends Node {
-  children: Node[];
-  symbol_table: IdentifierNode[];
+  type = NodeType.compound_statement;
 
-  constructor() {
-    super(NodeType.compound_statement);
-
-    this.children = [];
-    this.symbol_table = [];
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData(
-      "Compound Statement",
-      this.children.map(c => c.toTree())
-    );
-
-    tree.append(new TreeData(
-      "Symbol Table",
-      this.symbol_table.map(s => s.toTree())
-    ));
-
-    return tree;
-  }
+  children: Node[] = [];
+  symbol_table: IdentifierNode[] = [];
 }
 
 export class BeginBlockNode extends Node {
+  type = NodeType.begin_block;
+
   begin_token?: Token;
   expression?: Node;
   compound_statement?: CompoundStatementNode;
   end_token?: Token;
-
-  constructor() {
-    super(NodeType.begin_block);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("begin");
-
-    tree.append(this.expression?.toTree());
-    tree.append(this.compound_statement?.toTree());
-
-    return tree;
-  }
 }
 
 export class ForeachBlockNode extends Node {
+  type = NodeType.foreach_block;
+
   foreach_token?: Token;
   idetifier?: IdentifierNode | VariableDeclarationNode;
   larrow_token?: Token;
@@ -369,96 +205,192 @@ export class ForeachBlockNode extends Node {
   statements?: CompoundStatementNode;
 
   loop_token?: Token;
-
-  constructor() {
-    super(NodeType.foreach_block);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("foreach");
-
-    tree.append(this.idetifier?.toTree());
-    tree.append(this.iterable?.toTree());
-    tree.append(this.statements?.toTree());
-
-    return tree;
-  }
 }
 
 export class ConditionalNode extends Node {
+  type = NodeType.conditional;
+
   token?: Token;
   condition?: Node;
   statements?: CompoundStatementNode;
-
-  constructor() {
-    super(NodeType.conditional);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("Conditional");
-
-    tree.append(this.condition?.toTree());
-    tree.append(this.statements?.toTree());
-
-    return tree;
-  }
 }
 
 export class WhileBlockNode extends Node {
+  type = NodeType.while_block;
+
   while_node?: ConditionalNode;
   loop_token?: Token;
-
-  constructor() {
-    super(NodeType.while_block);
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("while");
-
-    tree.append(this.while_node?.toTree());
-
-    return tree;
-  }
 }
 
 export class IfBlockNode extends Node {
-  branches: ConditionalNode[];
+  type = NodeType.if_block;
+
+  branches: ConditionalNode[] = [];
   else_token?: Token;
   else_branch?: CompoundStatementNode;
   endif_token?: Token;
-
-  constructor() {
-    super(NodeType.if_block);
-
-    this.branches = [];
-  }
-
-  toTree(): TreeData {
-    const tree = new TreeData("if");
-
-    tree.concat(this.branches.map(b => b.toTree()));
-    tree.append(this.else_branch?.toTree());
-
-    return tree;
-  }
 }
 
 export class Script extends Node {
+  type = NodeType.script;
+
   scriptname_token?: Token;
   name?: IdentifierNode;
   statements?: CompoundStatementNode;
+}
 
-  constructor() {
-    super(NodeType.script);
-  }
+export function ToTree(node: Node | undefined): TreeData | undefined {
+  if (node == undefined) return undefined;
 
-  toTree(): TreeData {
-    const tree = new TreeData("Script");
+  const type = node.type;
 
-    tree.append(this.name?.toTree());
-    tree.append(this.statements?.toTree());
+  if (type === NodeType.number) {
+    type T = NumberNode;
+    return new TreeData(`${String((node as T).value)}`);
+  } else if (type === NodeType.string) {
+    type T = StringNode;
+    return new TreeData(`"${String((node as T).value)}"`);
+  } else if (type === NodeType.comment) {
+    type T = CommentNode;
+    return new TreeData(`;${String((node as T).value)}`);
+  } else if (type === NodeType.identifier) {
+    type T = IdentifierNode;
+    return new TreeData(String((node as T).value));
+  } else if (type === NodeType.keyword) {
+    type T = KeywordNode;
+    return new TreeData(`Keyword ${(node as T).value}`);
+  } else if (type === NodeType.variable_declaration) {
+    type T = VariableDeclarationNode;
+    const tree = new TreeData(`Type: ${(node as T).variable_type}`);
+
+    tree.append(ToTree((node as T).value));
 
     return tree;
+  } else if (type === NodeType.set) {
+    type T = SetNode;
+    const tree = new TreeData("set");
+
+    tree.append(ToTree((node as T).identifier));
+    tree.append(new TreeData("to"));
+    tree.append(ToTree((node as T).value));
+
+    return tree;
+  } else if (type === NodeType.let) {
+    type T = LetNode;
+    const tree = new TreeData("let");
+
+    tree.append(ToTree((node as T).value));
+
+    return tree;
+  } else if (type === NodeType.unary_op) {
+    type T = UnaryOpNode;
+    const tree = new TreeData(String((node as T).op));
+
+    tree.append(ToTree((node as T).operand));
+
+    return tree;
+  } else if (type === NodeType.bin_op) {
+    type T = BinOpNode;
+    const tree = new TreeData(String((node as T).op));
+
+    tree.append(ToTree((node as T).lhs));
+    tree.append(ToTree((node as T).rhs));
+
+    return tree;
+  } else if (type === NodeType.bin_op_paired) {
+    type T = BinOpPairedNode;
+    const tree = new TreeData(String((node as T).op));
+
+    tree.append(ToTree((node as T).lhs));
+    tree.append(ToTree((node as T).rhs));
+
+    return tree;
+  } else if (type === NodeType.function) {
+    type T = FunctionNode;
+    const tree = new TreeData(String((node as T).name));
+
+    tree.concat((node as T).args.map(ToTree) as TreeData[]);
+
+    return tree;
+  } else if (type === NodeType.lambda_inline) {
+    type T = LambdaInlineNode;
+    const tree = new TreeData("Inline Lambda");
+
+    tree.concat((node as T).params.map(ToTree) as TreeData[]);
+    tree.append(ToTree((node as T).expression));
+
+    return tree;
+  } else if (type === NodeType.lambda) {
+    type T = LambdaNode;
+    const tree = new TreeData("Lambda");
+
+    tree.concat((node as T).params.map(ToTree) as TreeData[]);
+    tree.append(ToTree((node as T).compound_statement));
+
+    return tree;
+  } else if (type === NodeType.compound_statement) {
+    type T = CompoundStatementNode;
+    const tree = new TreeData(
+      "Compound Statement",
+      (node as T).children.map(ToTree) as TreeData[]
+    );
+
+    tree.append(new TreeData(
+      "Symbol Table",
+      (node as T).symbol_table.map(ToTree) as TreeData[]
+    ));
+
+    return tree;
+  } else if (type === NodeType.begin_block) {
+    type T = BeginBlockNode;
+    const tree = new TreeData("begin");
+
+    tree.append(ToTree((node as T).expression));
+    tree.append(ToTree((node as T).compound_statement));
+
+    return tree;
+  } else if (type === NodeType.foreach_block) {
+    type T = ForeachBlockNode;
+    const tree = new TreeData("foreach");
+
+    tree.append(ToTree((node as T).idetifier));
+    tree.append(ToTree((node as T).iterable));
+    tree.append(ToTree((node as T).statements));
+
+    return tree;
+  } else if (type === NodeType.conditional) {
+    type T = ConditionalNode;
+    const tree = new TreeData("Conditional");
+
+    tree.append(ToTree((node as T).condition));
+    tree.append(ToTree((node as T).statements));
+
+    return tree;
+  } else if (type === NodeType.while_block) {
+    type T = WhileBlockNode;
+    const tree = new TreeData("while");
+
+    tree.append(ToTree((node as T).while_node));
+
+    return tree;
+  } else if (type === NodeType.if_block) {
+    type T = IfBlockNode;
+    const tree = new TreeData("if");
+
+    tree.concat((node as T).branches.map(ToTree) as TreeData[]);
+    tree.append(ToTree((node as T).else_branch));
+
+    return tree;
+  } else if (type === NodeType.script) {
+    type T = Script;
+    const tree = new TreeData("Script");
+
+    tree.append(ToTree((node as T).name));
+    tree.append(ToTree((node as T).statements));
+
+    return tree;
+  } else {
+    return new TreeData("Node");
   }
 }
 
@@ -479,19 +411,15 @@ export class UnexpectedTokenSubtypeError extends UnexpectedTokenError {
 
 export class Parser {
   data: Token[][];
-  variables: IdentifierNode[];
+  variables: IdentifierNode[] = [];
 
-  cur_x: number;
-  cur_ln: number;
+  cur_x = 0;
+  cur_ln = 0;
 
   cur_token: Token | undefined;
 
   constructor(data: Token[][]) {
     this.data = data;
-    this.variables = [];
-
-    this.cur_x = 0;
-    this.cur_ln = 0;
 
     this.cur_token = data[0][0];
 
@@ -671,7 +599,7 @@ export class Parser {
 
     try {
       node.token = this.nextTokenOfType(TokenType.KEYWORD);
-      node.keyword = node.token.content;
+      node.value = node.token.content;
 
       node.range.start = node.token.position;
       node.range.end = node.token.getLastPos();

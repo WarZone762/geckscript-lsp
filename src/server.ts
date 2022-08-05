@@ -66,7 +66,7 @@ documents.onDidChangeContent(
   (params) => {
     documents_tokens[params.document.uri] = Lexer.GetTokens(params.document.getText());
     tree_view_server?.write_message(JSON.stringify(
-      Parser.GetAST(params.document.getText()).toTree(),
+      Parser.ToTree(Parser.GetAST(params.document.getText()))
     ));
   }
 );
