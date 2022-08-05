@@ -358,50 +358,62 @@ export class Parser {
 
   parseBinOpRight(
     parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean },
-    lhs?: Node
+    valid_tokens: { [key in TokenSubtype]?: boolean }
   ): Node | undefined {
-    lhs = lhs ?? parse_child();
+    let lhs = parse_child();
 
-    if (
-      !((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens)
-    ) return lhs;
+    if ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+      let last_node = new BinOpNode();
+      last_node.lhs = lhs;
+      last_node.op_token = this.nextToken();
+      last_node.op = last_node.op_token?.content;
+      last_node.rhs = parse_child();
 
-    const node = new BinOpNode();
+      last_node.range.start = lhs?.range.start;
+      last_node.range.end = last_node.rhs?.range.end;
 
-    node.lhs = lhs;
-    node.op_token = this.nextToken();
-    node.op = node.op_token?.content;
-    node.rhs = this.parseBinOpRight(parse_child, valid_tokens);
+      lhs = last_node;
 
-    node.range.start = lhs?.range.start;
-    node.range.end = node.rhs?.range.end;
+      while ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+        const node = new BinOpNode();
 
-    return node;
+        node.lhs = last_node.rhs;
+        node.op_token = this.nextToken();
+        node.op = node.op_token?.content;
+        node.rhs = parse_child();
+
+        node.range.start = lhs?.range.start;
+        node.range.end = node.rhs?.range.end;
+
+        last_node.rhs = node;
+        last_node = node;
+      }
+    }
+
+    return lhs;
   }
 
   parseBinOpLeft(
     parse_child: () => Node | undefined,
-    valid_tokens: { [key in TokenSubtype]?: boolean },
-    lhs?: Node
+    valid_tokens: { [key in TokenSubtype]?: boolean }
   ): Node | undefined {
-    lhs = lhs ?? parse_child();
+    let lhs = parse_child();
 
-    if (
-      !((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens)
-    ) return lhs;
+    while ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+      const node = new BinOpNode();
 
-    const node = new BinOpNode();
+      node.lhs = lhs;
+      node.op_token = this.nextToken();
+      node.op = node.op_token?.content;
+      node.rhs = parse_child();
 
-    node.lhs = lhs;
-    node.op_token = this.nextToken();
-    node.op = node.op_token?.content;
-    node.rhs = parse_child();
+      node.range.start = lhs?.range.start;
+      node.range.end = node.rhs?.range.end;
 
-    node.range.start = lhs?.range.start;
-    node.range.end = node.rhs?.range.end;
+      lhs = node;
+    }
 
-    return this.parseBinOpLeft(parse_child, valid_tokens, node);
+    return lhs;
   }
 
   parseComment(): CommentNode {
