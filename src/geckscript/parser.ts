@@ -12,7 +12,6 @@ export const enum NodeType {
   comment,
   compound_statement,
   conditional,
-  empty,
   foreach_block,
   function,
   identifier,
@@ -231,7 +230,7 @@ export class IfBlockNode extends Node {
   endif_token?: Token;
 }
 
-export class Script extends Node {
+export class ScriptNode extends Node {
   type = NodeType.script;
 
   scriptname_token?: Token;
@@ -239,159 +238,161 @@ export class Script extends Node {
   statements?: CompoundStatementNode;
 }
 
-export function ToTree(node: Node | undefined): TreeData | undefined {
-  if (node == undefined) return undefined;
+const ToTreeFunctions: { [key in NodeType]: (node: any) => TreeData } = {
+  [NodeType.unknown]: (node: Node) => {
+    return new TreeData("Node");
+  },
+  [NodeType.number]: (node: NumberNode) => {
+    return new TreeData(`${String(node.value)}`);
+  },
+  [NodeType.string]: (node: StringNode) => {
+    return new TreeData(`"${String(node.value)}"`);
+  },
+  [NodeType.comment]: (node: CommentNode) => {
+    return new TreeData(`;${String(node.value)}`);
+  },
+  [NodeType.identifier]: (node: IdentifierNode) => {
+    return new TreeData(String(node.value));
+  },
+  [NodeType.keyword]: (node: KeywordNode) => {
+    return new TreeData(`Keyword ${node.value}`);
+  },
+  [NodeType.variable_declaration]: (node: VariableDeclarationNode) => {
+    const tree = new TreeData(`Type: ${node.variable_type}`);
 
-  const type = node.type;
-
-  if (type === NodeType.number) {
-    type T = NumberNode;
-    return new TreeData(`${String((node as T).value)}`);
-  } else if (type === NodeType.string) {
-    type T = StringNode;
-    return new TreeData(`"${String((node as T).value)}"`);
-  } else if (type === NodeType.comment) {
-    type T = CommentNode;
-    return new TreeData(`;${String((node as T).value)}`);
-  } else if (type === NodeType.identifier) {
-    type T = IdentifierNode;
-    return new TreeData(String((node as T).value));
-  } else if (type === NodeType.keyword) {
-    type T = KeywordNode;
-    return new TreeData(`Keyword ${(node as T).value}`);
-  } else if (type === NodeType.variable_declaration) {
-    type T = VariableDeclarationNode;
-    const tree = new TreeData(`Type: ${(node as T).variable_type}`);
-
-    tree.append(ToTree((node as T).value));
+    tree.append(ToTree(node.value));
 
     return tree;
-  } else if (type === NodeType.set) {
-    type T = SetNode;
+  },
+  [NodeType.set]: (node: SetNode) => {
     const tree = new TreeData("set");
 
-    tree.append(ToTree((node as T).identifier));
+    tree.append(ToTree(node.identifier));
     tree.append(new TreeData("to"));
-    tree.append(ToTree((node as T).value));
+    tree.append(ToTree(node.value));
 
     return tree;
-  } else if (type === NodeType.let) {
-    type T = LetNode;
+  },
+  [NodeType.let]: (node: LetNode) => {
     const tree = new TreeData("let");
 
-    tree.append(ToTree((node as T).value));
+    tree.append(ToTree(node.value));
 
     return tree;
-  } else if (type === NodeType.unary_op) {
-    type T = UnaryOpNode;
-    const tree = new TreeData(String((node as T).op));
+  },
+  [NodeType.unary_op]: (node: UnaryOpNode) => {
+    const tree = new TreeData(String(node.op));
 
-    tree.append(ToTree((node as T).operand));
-
-    return tree;
-  } else if (type === NodeType.bin_op) {
-    type T = BinOpNode;
-    const tree = new TreeData(String((node as T).op));
-
-    tree.append(ToTree((node as T).lhs));
-    tree.append(ToTree((node as T).rhs));
+    tree.append(ToTree(node.operand));
 
     return tree;
-  } else if (type === NodeType.bin_op_paired) {
-    type T = BinOpPairedNode;
-    const tree = new TreeData(String((node as T).op));
+  },
+  [NodeType.bin_op]: (node: BinOpNode) => {
+    const tree = new TreeData(String(node.op));
 
-    tree.append(ToTree((node as T).lhs));
-    tree.append(ToTree((node as T).rhs));
-
-    return tree;
-  } else if (type === NodeType.function) {
-    type T = FunctionNode;
-    const tree = new TreeData(String((node as T).name));
-
-    tree.concat((node as T).args.map(ToTree) as TreeData[]);
+    tree.append(ToTree(node.lhs));
+    tree.append(ToTree(node.rhs));
 
     return tree;
-  } else if (type === NodeType.lambda_inline) {
-    type T = LambdaInlineNode;
+  },
+  [NodeType.bin_op_paired]: (node: BinOpPairedNode) => {
+    const tree = new TreeData(String(node.op));
+
+    tree.append(ToTree(node.lhs));
+    tree.append(ToTree(node.rhs));
+
+    return tree;
+  },
+  [NodeType.function]: (node: FunctionNode) => {
+    const tree = new TreeData(String(node.name));
+
+    tree.concat(node.args.map(ToTree) as TreeData[]);
+
+    return tree;
+  },
+  [NodeType.lambda_inline]: (node: LambdaInlineNode) => {
     const tree = new TreeData("Inline Lambda");
 
-    tree.concat((node as T).params.map(ToTree) as TreeData[]);
-    tree.append(ToTree((node as T).expression));
+    tree.concat(node.params.map(ToTree) as TreeData[]);
+    tree.append(ToTree(node.expression));
 
     return tree;
-  } else if (type === NodeType.lambda) {
-    type T = LambdaNode;
+  },
+  [NodeType.lambda]: (node: LambdaNode) => {
     const tree = new TreeData("Lambda");
 
-    tree.concat((node as T).params.map(ToTree) as TreeData[]);
-    tree.append(ToTree((node as T).compound_statement));
+    tree.concat(node.params.map(ToTree) as TreeData[]);
+    tree.append(ToTree(node.compound_statement));
 
     return tree;
-  } else if (type === NodeType.compound_statement) {
-    type T = CompoundStatementNode;
+  },
+  [NodeType.compound_statement]: (node: CompoundStatementNode) => {
     const tree = new TreeData(
       "Compound Statement",
-      (node as T).children.map(ToTree) as TreeData[]
+      node.children.map(ToTree) as TreeData[]
     );
 
     tree.append(new TreeData(
       "Symbol Table",
-      (node as T).symbol_table.map(ToTree) as TreeData[]
+      node.symbol_table.map(ToTree) as TreeData[]
     ));
 
     return tree;
-  } else if (type === NodeType.begin_block) {
-    type T = BeginBlockNode;
+  },
+  [NodeType.begin_block]: (node: BeginBlockNode) => {
     const tree = new TreeData("begin");
 
-    tree.append(ToTree((node as T).expression));
-    tree.append(ToTree((node as T).compound_statement));
+    tree.append(ToTree(node.expression));
+    tree.append(ToTree(node.compound_statement));
 
     return tree;
-  } else if (type === NodeType.foreach_block) {
-    type T = ForeachBlockNode;
+  },
+  [NodeType.foreach_block]: (node: ForeachBlockNode) => {
     const tree = new TreeData("foreach");
 
-    tree.append(ToTree((node as T).idetifier));
-    tree.append(ToTree((node as T).iterable));
-    tree.append(ToTree((node as T).statements));
+    tree.append(ToTree(node.idetifier));
+    tree.append(ToTree(node.iterable));
+    tree.append(ToTree(node.statements));
 
     return tree;
-  } else if (type === NodeType.conditional) {
-    type T = ConditionalNode;
+  },
+  [NodeType.conditional]: (node: ConditionalNode) => {
     const tree = new TreeData("Conditional");
 
-    tree.append(ToTree((node as T).condition));
-    tree.append(ToTree((node as T).statements));
+    tree.append(ToTree(node.condition));
+    tree.append(ToTree(node.statements));
 
     return tree;
-  } else if (type === NodeType.while_block) {
-    type T = WhileBlockNode;
+  },
+  [NodeType.while_block]: (node: WhileBlockNode) => {
     const tree = new TreeData("while");
 
-    tree.append(ToTree((node as T).while_node));
+    tree.append(ToTree(node.while_node));
 
     return tree;
-  } else if (type === NodeType.if_block) {
-    type T = IfBlockNode;
+  },
+  [NodeType.if_block]: (node: IfBlockNode) => {
     const tree = new TreeData("if");
 
-    tree.concat((node as T).branches.map(ToTree) as TreeData[]);
-    tree.append(ToTree((node as T).else_branch));
+    tree.concat(node.branches.map(ToTree) as TreeData[]);
+    tree.append(ToTree(node.else_branch));
 
     return tree;
-  } else if (type === NodeType.script) {
-    type T = Script;
+  },
+  [NodeType.script]: (node: ScriptNode) => {
     const tree = new TreeData("Script");
 
-    tree.append(ToTree((node as T).name));
-    tree.append(ToTree((node as T).statements));
+    tree.append(ToTree(node.name));
+    tree.append(ToTree(node.statements));
 
     return tree;
-  } else {
-    return new TreeData("Node");
   }
+};
+
+export function ToTree(node: Node | undefined): TreeData | undefined {
+  if (node == undefined) return undefined;
+
+  return ToTreeFunctions[node.type](node);
 }
 
 export class UnexpectedTokenError extends Error {
@@ -1245,8 +1246,8 @@ export class Parser {
     }
   }
 
-  parse(): Script {
-    const node = new Script();
+  parse(): ScriptNode {
+    const node = new ScriptNode();
 
     try {
       node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
@@ -1263,7 +1264,7 @@ export class Parser {
   }
 }
 
-export function GetAST(text: string): Script {
+export function GetAST(text: string): ScriptNode {
   const parser = new Parser(GetTokens(text).data);
 
   return parser.parse();
