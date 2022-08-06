@@ -63,8 +63,11 @@ connection.onInitialize((params: InitializeParams) => {
 
 documents.onDidChangeContent(
   (params) => {
-    const ast = Parser.Parse(params.document.getText());
+    const doc = params.document;
+
+    const ast = Parser.Parse(doc.getText());
     tree_view_server?.write_message(JSON.stringify(ast.toTree()));
+    connection.sendDiagnostics({ uri: doc.uri, diagnostics: ast.diagnostics });
   }
 );
 

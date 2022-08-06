@@ -66,18 +66,18 @@ export class Lexer {
   determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
     data = data.toLowerCase();
 
-    if (TokenData[TokenType.TYPENAME].containsToken(data)) {
-      return [TokenType.TYPENAME, TokenData[TokenType.TYPENAME].getTokenSubtype(data)];
-    } else if (TokenData[TokenType.KEYWORD].containsToken(data)) {
-      return [TokenType.KEYWORD, TokenData[TokenType.KEYWORD].getTokenSubtype(data)];
+    if (TokenData.typename.containsToken(data)) {
+      return [TokenType.TYPENAME, TokenData.typename.getTokenSubtype(data)];
+    } else if (TokenData.keyword.containsToken(data)) {
+      return [TokenType.KEYWORD, TokenData.keyword.getTokenSubtype(data)];
     } else if (
-      TokenData[TokenType.BLOCK_TYPE].containsToken(data) &&
+      TokenData.block_type.containsToken(data) &&
       this.prev_token?.subtype === TokenSubtype.BEGIN
     ) {
-      return [TokenType.BLOCK_TYPE, TokenData[TokenType.BLOCK_TYPE].getTokenSubtype(data)];
-    } else if (TokenData[TokenType.OPERATOR].containsToken(data)) {
-      return [TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(data)];
-    } else if (TokenData[TokenType.FUNCTION].containsToken(data)) {
+      return [TokenType.BLOCK_TYPE, TokenData.block_type.getTokenSubtype(data)];
+    } else if (TokenData.operator.containsToken(data)) {
+      return [TokenType.OPERATOR, TokenData.operator.getTokenSubtype(data)];
+    } else if (TokenData.function.containsToken(data)) {
       return [TokenType.FUNCTION, undefined];
     } else {
       return [TokenType.ID, undefined];
@@ -161,18 +161,18 @@ export class Lexer {
     const next_char = this.peekCharOnLine(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
-      if (TokenData[TokenType.OPERATOR].containsToken(operator)) {
+      if (TokenData.operator.containsToken(operator)) {
         this.nextCharToBuf();
         this.nextCharToBuf();
 
-        return this.constructCurrentToken(TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(operator));
+        return this.constructCurrentToken(TokenType.OPERATOR, TokenData.operator.getTokenSubtype(operator));
       }
     }
 
-    if (TokenData[TokenType.OPERATOR].containsToken(this.cur_char!)) {
+    if (TokenData.operator.containsToken(this.cur_char!)) {
       this.nextCharToBuf();
 
-      return this.constructCurrentToken(TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(this.buf.toString()));
+      return this.constructCurrentToken(TokenType.OPERATOR, TokenData.operator.getTokenSubtype(this.buf.toString()));
     }
 
     this.nextCharToBuf();

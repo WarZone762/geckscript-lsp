@@ -135,7 +135,7 @@ class TokenCategory {
 }
 
 export const TokenData = {
-  [TokenType.TYPENAME]: new TokenCategory({
+  typename: new TokenCategory({
     "short": [TokenSubtype.SHORT, "short", "short"],
     "int": [TokenSubtype.INT, "int", "int"],
     "long": [TokenSubtype.LONG, "long", "long"],
@@ -146,7 +146,7 @@ export const TokenData = {
     "array_var": [TokenSubtype.ARRAY_VAR, "array_var", "array_var"],
   }, CompletionItemKind.TypeParameter),
 
-  [TokenType.KEYWORD]: new TokenCategory({
+  keyword: new TokenCategory({
     "scn": [TokenSubtype.SCN, "scn", "scn"],
     "scriptname": [TokenSubtype.SCN, "ScriptName", "ScriptName"],
     "begin": [TokenSubtype.BEGIN, "begin", "begin"],
@@ -166,7 +166,7 @@ export const TokenData = {
     "let": [TokenSubtype.LET, "let", "let"],
   }, CompletionItemKind.Keyword),
 
-  [TokenType.BLOCK_TYPE]: new TokenCategory({
+  block_type: new TokenCategory({
     "function": [TokenSubtype.FUNCTION, "Function", "Function"],
     "gamemode": [undefined, "GameMode", "GameMode"],
     "menumode": [undefined, "MenuMode", "MenuMode"],
@@ -206,7 +206,7 @@ export const TokenData = {
     "scripteffectupdate": [undefined, "ScriptEffectUpdate", "ScriptEffectUpdate"],
   }, CompletionItemKind.Constant),
 
-  [TokenType.OPERATOR]: new TokenCategory({
+  operator: new TokenCategory({
     "=": [TokenSubtype.EQUALS, "=", "NVSE_Expressions"],
     ":=": [TokenSubtype.COLON_EQUALS, ":=", "NVSE_Expressions"],
     "+=": [TokenSubtype.PLUS_EQUALS, "+=", "NVSE_Expressions"],
@@ -253,7 +253,7 @@ export const TokenData = {
     "=>": [TokenSubtype.EQUALS_GREATER, ",", "NVSE_Expressions"],
   }, CompletionItemKind.Operator),
 
-  [TokenType.FUNCTION]: new TokenCategory({
+  function: new TokenCategory({
     "abs": [undefined, "Abs", "Abs"],
     "activate": [undefined, "Activate", "Activate"],
     "actorhasbaseflag": [undefined, "ActorHasBaseFlag", "ActorHasBaseFlag"],
@@ -3631,4 +3631,22 @@ export const TokenData = {
     "unequipobject": [undefined, "UnEquipObject", "UnEquipObject"],
     "wm": [undefined, "WM", "WM"],
   }, CompletionItemKind.Function),
+
+  getType(
+    type: (
+      TokenType.TYPENAME |
+      TokenType.KEYWORD |
+      TokenType.BLOCK_TYPE |
+      TokenType.OPERATOR |
+      TokenType.FUNCTION
+    )
+  ): TokenCategory {
+    return {
+      [TokenType.TYPENAME]: this.typename,
+      [TokenType.KEYWORD]: this.keyword,
+      [TokenType.BLOCK_TYPE]: this.block_type,
+      [TokenType.OPERATOR]: this.operator,
+      [TokenType.FUNCTION]: this.function,
+    }[type];
+  }
 };

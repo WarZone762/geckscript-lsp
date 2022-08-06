@@ -1,6 +1,6 @@
 import { Diagnostic } from "vscode-languageserver";
 import { Token, TokenPosition, Lexer } from "./lexer";
-import { TokenSubtype } from "./token_data";
+import { TokenData, TokenSubtype } from "./token_data";
 import { TokenType } from "./token_data";
 
 
@@ -55,47 +55,47 @@ export type Range = {
 }
 
 export class Node {
-  type: NodeType = NodeType.unknown;
+  readonly type: NodeType = NodeType.unknown;
   range: Range = {};
 }
 
 export class NumberNode extends Node {
-  type = NodeType.number;
+  readonly type = NodeType.number;
 
   token?: Token;
   value?: number;
 }
 
 export class StringNode extends Node {
-  type = NodeType.string;
+  readonly type = NodeType.string;
 
   token?: Token;
   value?: string;
 }
 
 export class CommentNode extends Node {
-  type = NodeType.comment;
+  readonly type = NodeType.comment;
 
   token?: Token;
   value?: string;
 }
 
 export class IdentifierNode extends Node {
-  type = NodeType.identifier;
+  readonly type = NodeType.identifier;
 
   token?: Token;
   value?: string;
 }
 
 export class KeywordNode extends Node {
-  type = NodeType.keyword;
+  readonly type = NodeType.keyword;
 
   token?: Token;
   value?: string;
 }
 
 export class VariableDeclarationNode extends Node {
-  type = NodeType.variable_declaration;
+  readonly type = NodeType.variable_declaration;
 
   type_token?: Token;
   variable_type?: string;
@@ -103,7 +103,7 @@ export class VariableDeclarationNode extends Node {
 }
 
 export class SetNode extends Node {
-  type = NodeType.set;
+  readonly type = NodeType.set;
 
   set_token?: Token;
   identifier?: IdentifierNode;
@@ -112,14 +112,14 @@ export class SetNode extends Node {
 }
 
 export class LetNode extends Node {
-  type = NodeType.let;
+  readonly type = NodeType.let;
 
   let_token?: Token;
   value?: Node;
 }
 
 export class UnaryOpNode extends Node {
-  type = NodeType.unary_op;
+  readonly type = NodeType.unary_op;
 
   op_token?: Token;
   op?: string;
@@ -127,7 +127,7 @@ export class UnaryOpNode extends Node {
 }
 
 export class BinOpNode extends Node {
-  type = NodeType.bin_op;
+  readonly type = NodeType.bin_op;
 
   lhs?: Node;
   op?: string;
@@ -136,7 +136,7 @@ export class BinOpNode extends Node {
 }
 
 export class BinOpPairedNode extends Node {
-  type = NodeType.bin_op_paired;
+  readonly type = NodeType.bin_op_paired;
 
   lhs?: Node;
   op?: string;
@@ -146,7 +146,7 @@ export class BinOpPairedNode extends Node {
 }
 
 export class FunctionNode extends Node {
-  type = NodeType.function;
+  readonly type = NodeType.function;
 
   token?: Token;
   name?: string;
@@ -154,7 +154,7 @@ export class FunctionNode extends Node {
 }
 
 export class LambdaInlineNode extends Node {
-  type = NodeType.lambda_inline;
+  readonly type = NodeType.lambda_inline;
 
   lbracket_token?: Token;
   params: Node[] = [];
@@ -165,7 +165,7 @@ export class LambdaInlineNode extends Node {
 }
 
 export class LambdaNode extends Node {
-  type = NodeType.lambda;
+  readonly type = NodeType.lambda;
 
   begin_token?: Token;
   function_token?: Token;
@@ -179,14 +179,14 @@ export class LambdaNode extends Node {
 }
 
 export class CompoundStatementNode extends Node {
-  type = NodeType.compound_statement;
+  readonly type = NodeType.compound_statement;
 
   children: Node[] = [];
   symbol_table: IdentifierNode[] = [];
 }
 
 export class BeginBlockNode extends Node {
-  type = NodeType.begin_block;
+  readonly type = NodeType.begin_block;
 
   begin_token?: Token;
   expression?: Node;
@@ -195,7 +195,7 @@ export class BeginBlockNode extends Node {
 }
 
 export class ForeachBlockNode extends Node {
-  type = NodeType.foreach_block;
+  readonly type = NodeType.foreach_block;
 
   foreach_token?: Token;
   idetifier?: IdentifierNode | VariableDeclarationNode;
@@ -208,7 +208,7 @@ export class ForeachBlockNode extends Node {
 }
 
 export class ConditionalNode extends Node {
-  type = NodeType.conditional;
+  readonly type = NodeType.conditional;
 
   token?: Token;
   condition?: Node;
@@ -216,14 +216,14 @@ export class ConditionalNode extends Node {
 }
 
 export class WhileBlockNode extends Node {
-  type = NodeType.while_block;
+  readonly type = NodeType.while_block;
 
   while_node?: ConditionalNode;
   loop_token?: Token;
 }
 
 export class IfBlockNode extends Node {
-  type = NodeType.if_block;
+  readonly type = NodeType.if_block;
 
   branches: ConditionalNode[] = [];
   else_token?: Token;
@@ -232,7 +232,7 @@ export class IfBlockNode extends Node {
 }
 
 export class ScriptNode extends Node {
-  type = NodeType.script;
+  readonly type = NodeType.script;
 
   scriptname_token?: Token;
   name?: IdentifierNode;
@@ -240,13 +240,15 @@ export class ScriptNode extends Node {
 }
 
 export class UnexpectedTokenError<T> extends Error {
+  parsed_token?: Token;
   expected?: T;
   parsed?: T;
 
-  constructor(expected?: T, parsed?: T) {
+  constructor(expected?: T, parsed?: T, parsed_token?: Token) {
     super();
     this.expected = expected;
     this.parsed = parsed;
+    this.parsed_token = parsed_token;
   }
 }
 
@@ -255,12 +257,13 @@ export class UnexpectedTokenSubtypeError extends UnexpectedTokenError<TokenSubty
 
 export class Parser {
   data: Token[][];
-  variables: IdentifierNode[] = [];
 
   cur_x = 0;
   cur_ln = 0;
 
   cur_token: Token | undefined;
+
+  diagnostics: Diagnostic[] = [];
 
   constructor(data: Token[][]) {
     this.data = data;
@@ -297,7 +300,7 @@ export class Parser {
     const token = this.cur_token;
 
     if (token?.type !== type)
-      throw new UnexpectedTokenTypeError(type, token?.type);
+      throw new UnexpectedTokenTypeError(type, token?.type, token);
     this.skipToken();
 
     return token;
@@ -307,7 +310,7 @@ export class Parser {
     const token = this.cur_token;
 
     if (token?.subtype !== subtype)
-      throw new UnexpectedTokenSubtypeError(subtype, token?.subtype);
+      throw new UnexpectedTokenSubtypeError(subtype, token?.subtype, token);
     this.skipToken();
 
     return token;
@@ -324,7 +327,21 @@ export class Parser {
       if (!(e instanceof UnexpectedTokenError)) {
         throw e;
       } else {
-        console.log(e);
+        this.diagnostics.push(
+          {
+            message: `Parsing error: expected ${e.expected}, got ${e.parsed_token?.content}`,
+            range: {
+              start: {
+                character: this.cur_token?.position.column ?? 0,
+                line: this.cur_token?.position.line ?? 0
+              },
+              end: {
+                character: this.cur_token?.getLastPos().column ?? 1,
+                line: this.cur_token?.getLastPos().line ?? 0
+              }
+            }
+          }
+        );
       }
     }
 
@@ -542,7 +559,25 @@ export class Parser {
       return this.parseLambdaInline();
     } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
       return this.parseLambda();
+    } else if (this.cur_token?.type === TokenType.COMMENT) {
+      this.skipToken();
+      return undefined;
     } else {
+      this.diagnostics.push(
+        {
+          message: "Parsing error: expected expression",
+          range: {
+            start: {
+              character: this.cur_token?.position.column ?? 0,
+              line: this.cur_token?.position.line ?? 0
+            },
+            end: {
+              character: this.cur_token?.getLastPos().column ?? 1,
+              line: this.cur_token?.getLastPos().line ?? 0
+            }
+          }
+        }
+      );
       this.skipToken();
       return undefined;
     }
@@ -988,12 +1023,18 @@ export class Parser {
   }
 
   static Parse(text: string): AST {
-    return new AST(new Parser(Lexer.Lex(text)).parseScript());
+    const parser = new Parser(Lexer.Lex(text));
+
+    const ast = new AST(parser.parseScript());
+    ast.diagnostics = parser.diagnostics;
+
+    return ast;
   }
 }
 
 export class AST {
   root: Node;
+  diagnostics: Diagnostic[] = [];
 
   static ToTreeFunctions: { [key in NodeType]: (node: any) => TreeData } = {
     [NodeType.unknown]: (node: Node) => {
