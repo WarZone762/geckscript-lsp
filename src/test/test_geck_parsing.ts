@@ -7,7 +7,7 @@ import * as Parser from "../geckscript/parser";
 
 const data = fs.readFileSync(path.join(__dirname, "../../test/test_geck_parsing.gek")).toString();
 
-const ast = Parser.GetAST(data);
+const ast = Parser.Parser.Parse(data);
 
 // Parser.Expression.PrettyPrint(Parser.GetAST(data));
 // console.log(inspect(Parser.GetAST(data), false, null, true));
