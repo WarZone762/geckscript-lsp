@@ -213,11 +213,11 @@ export class Lexer {
       } else if (/\S/.test(this.cur_char)) {
         token = this.consumeOperator();
       } else {
-        throw new Error(`
-          Unknown character "${this.cur_char}"\n
-          ${this.data[this.cur_ln]}\n
-          ${" ".repeat(this.cur_col)}^
-        `);
+        throw new Error(
+          `Unknown character "${this.cur_char}"\n` +
+          `${this.data[this.cur_ln]}\n` +
+          `${" ".repeat(this.cur_col)}^`
+        );
       }
 
       tokens.push(token);

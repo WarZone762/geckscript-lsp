@@ -98,16 +98,17 @@ export const enum TokenSubtype {
   EQUALS_GREATER,
 }
 
-type TokenInfo = {
+type TokenInfo = [TokenSubtype | undefined, string, string]
+type TokenIndex = {
   // [Lower-case name]: [subtype ID, canonical name, wiki page title]
-  [key: string]: [TokenSubtype | undefined, string, string]
+  [key: string]: TokenInfo
 }
 class TokenCategory {
-  data: TokenInfo;
+  data: TokenIndex;
   completion_item_kind: CompletionItemKind;
   completion_items: CompletionItem[];
 
-  constructor(data: TokenInfo, kind: CompletionItemKind) {
+  constructor(data: TokenIndex, kind: CompletionItemKind) {
     this.data = data;
     this.completion_item_kind = kind;
     this.completion_items = [];
@@ -134,8 +135,8 @@ class TokenCategory {
   }
 }
 
-export const TokenData = {
-  typename: new TokenCategory({
+export class TokenData {
+  static typename = new TokenCategory({
     "short": [TokenSubtype.SHORT, "short", "short"],
     "int": [TokenSubtype.INT, "int", "int"],
     "long": [TokenSubtype.LONG, "long", "long"],
@@ -144,9 +145,9 @@ export const TokenData = {
     "reference": [TokenSubtype.REF, "reference", "reference"],
     "string_var": [TokenSubtype.STRING_VAR, "string_var", "string_var"],
     "array_var": [TokenSubtype.ARRAY_VAR, "array_var", "array_var"],
-  }, CompletionItemKind.TypeParameter),
+  }, CompletionItemKind.TypeParameter);
 
-  keyword: new TokenCategory({
+  static keyword = new TokenCategory({
     "scn": [TokenSubtype.SCN, "scn", "scn"],
     "scriptname": [TokenSubtype.SCN, "ScriptName", "ScriptName"],
     "begin": [TokenSubtype.BEGIN, "begin", "begin"],
@@ -164,9 +165,9 @@ export const TokenData = {
     "set": [TokenSubtype.SET, "set", "set"],
     "to": [TokenSubtype.TO, "to", "to"],
     "let": [TokenSubtype.LET, "let", "let"],
-  }, CompletionItemKind.Keyword),
+  }, CompletionItemKind.Keyword);
 
-  block_type: new TokenCategory({
+  static block_type = new TokenCategory({
     "function": [TokenSubtype.FUNCTION, "Function", "Function"],
     "gamemode": [undefined, "GameMode", "GameMode"],
     "menumode": [undefined, "MenuMode", "MenuMode"],
@@ -204,9 +205,9 @@ export const TokenData = {
     "scripteffectfinish": [undefined, "ScriptEffectFinish", "ScriptEffectFinish"],
     "scripteffectstart": [undefined, "ScriptEffectStart", "ScriptEffectStart"],
     "scripteffectupdate": [undefined, "ScriptEffectUpdate", "ScriptEffectUpdate"],
-  }, CompletionItemKind.Constant),
+  }, CompletionItemKind.Constant);
 
-  operator: new TokenCategory({
+  static operator = new TokenCategory({
     "=": [TokenSubtype.EQUALS, "=", "NVSE_Expressions"],
     ":=": [TokenSubtype.COLON_EQUALS, ":=", "NVSE_Expressions"],
     "+=": [TokenSubtype.PLUS_EQUALS, "+=", "NVSE_Expressions"],
@@ -251,9 +252,9 @@ export const TokenData = {
     "::": [TokenSubtype.DOUBLE_COLON, "::", "NVSE_Expressions"],
     ",": [TokenSubtype.COMMA, ",", "NVSE_Expressions"],
     "=>": [TokenSubtype.EQUALS_GREATER, ",", "NVSE_Expressions"],
-  }, CompletionItemKind.Operator),
+  }, CompletionItemKind.Operator);
 
-  function: new TokenCategory({
+  static function = new TokenCategory({
     "abs": [undefined, "Abs", "Abs"],
     "activate": [undefined, "Activate", "Activate"],
     "actorhasbaseflag": [undefined, "ActorHasBaseFlag", "ActorHasBaseFlag"],
@@ -3630,9 +3631,9 @@ export const TokenData = {
     // "unequipitem"                         :  [undefined ,  "UnEquipItem"                            ,  "UnEquipItem"],
     "unequipobject": [undefined, "UnEquipObject", "UnEquipObject"],
     "wm": [undefined, "WM", "WM"],
-  }, CompletionItemKind.Function),
+  }, CompletionItemKind.Function);
 
-  getType(
+  static getType(
     type: (
       TokenType.TYPENAME |
       TokenType.KEYWORD |
@@ -3649,4 +3650,11 @@ export const TokenData = {
       [TokenType.FUNCTION]: this.function,
     }[type];
   }
-};
+
+  static subtype_index: TokenInfo[] = [];
+}
+
+for (const e of Object.values(TokenData.keyword.data)) {
+  if (e[0] != undefined)
+    TokenData.subtype_index[e[0]] = e;
+}

@@ -329,7 +329,10 @@ export class Parser {
       } else {
         this.diagnostics.push(
           {
-            message: `Parsing error: expected ${e.expected}, got ${e.parsed_token?.content}`,
+            message:
+              `Parsing error: expected "` +
+              `${TokenData.subtype_index[e.expected]?.[1] ?? e.expected}` +
+              `", got ${e.parsed_token?.content}`,
             range: {
               start: {
                 character: this.cur_token?.position.column ?? 0,
@@ -664,7 +667,7 @@ export class Parser {
     return this.tryParse(new UnaryOpNode(), node => {
       node.op_token = this.nextToken();
       node.op = node.op_token?.content;
-      node.operand = this.parseMember();
+      node.operand = this.parseLogicalNot();
 
       node.range.start = node.op_token?.position;
       node.range.end = node.operand?.range.end;
@@ -686,7 +689,7 @@ export class Parser {
     return this.tryParse(new UnaryOpNode(), node => {
       node.op_token = this.nextToken();
       node.op = node.op_token?.content;
-      node.operand = this.parseLogicalNot();
+      node.operand = this.parseUnary();
 
       node.range.start = node.op_token?.position;
       node.range.end = node.operand?.range.end;

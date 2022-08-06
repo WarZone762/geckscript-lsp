@@ -29,11 +29,11 @@ GRAMMAR
 
   logical_not_expression:
     member_expression |
-    EXCLAMATION member_expression
+    EXCLAMATION logical_not_expression
 
   unary_expression:
     logical_not_expression |
-    (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) logical_not_expression
+    (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) unary_expression
 
   exponential_expression:
     unary_expression (CIRCUMFLEX unary_expression)*
