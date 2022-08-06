@@ -134,7 +134,7 @@ class TokenCategory {
   }
 }
 
-export const Tokens = {
+export const TokenData = {
   [TokenType.TYPENAME]: new TokenCategory({
     "short": [TokenSubtype.SHORT, "short", "short"],
     "int": [TokenSubtype.INT, "int", "int"],

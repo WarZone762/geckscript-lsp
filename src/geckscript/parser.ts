@@ -1,6 +1,7 @@
-import { GetTokens, Token, TokenPosition, TokensStorage } from "./lexer";
-import { TokenSubtype } from "./tokens";
-import { TokenType } from "./tokens";
+import { Diagnostic } from "vscode-languageserver";
+import { Token, TokenPosition, Lexer } from "./lexer";
+import { TokenSubtype } from "./token_data";
+import { TokenType } from "./token_data";
 
 
 export const enum NodeType {
@@ -236,163 +237,6 @@ export class ScriptNode extends Node {
   scriptname_token?: Token;
   name?: IdentifierNode;
   statements?: CompoundStatementNode;
-}
-
-const ToTreeFunctions: { [key in NodeType]: (node: any) => TreeData } = {
-  [NodeType.unknown]: (node: Node) => {
-    return new TreeData("Node");
-  },
-  [NodeType.number]: (node: NumberNode) => {
-    return new TreeData(`${String(node.value)}`);
-  },
-  [NodeType.string]: (node: StringNode) => {
-    return new TreeData(`"${String(node.value)}"`);
-  },
-  [NodeType.comment]: (node: CommentNode) => {
-    return new TreeData(`;${String(node.value)}`);
-  },
-  [NodeType.identifier]: (node: IdentifierNode) => {
-    return new TreeData(String(node.value));
-  },
-  [NodeType.keyword]: (node: KeywordNode) => {
-    return new TreeData(`Keyword ${node.value}`);
-  },
-  [NodeType.variable_declaration]: (node: VariableDeclarationNode) => {
-    const tree = new TreeData(`Type: ${node.variable_type}`);
-
-    tree.append(ToTree(node.value));
-
-    return tree;
-  },
-  [NodeType.set]: (node: SetNode) => {
-    const tree = new TreeData("set");
-
-    tree.append(ToTree(node.identifier));
-    tree.append(new TreeData("to"));
-    tree.append(ToTree(node.value));
-
-    return tree;
-  },
-  [NodeType.let]: (node: LetNode) => {
-    const tree = new TreeData("let");
-
-    tree.append(ToTree(node.value));
-
-    return tree;
-  },
-  [NodeType.unary_op]: (node: UnaryOpNode) => {
-    const tree = new TreeData(String(node.op));
-
-    tree.append(ToTree(node.operand));
-
-    return tree;
-  },
-  [NodeType.bin_op]: (node: BinOpNode) => {
-    const tree = new TreeData(String(node.op));
-
-    tree.append(ToTree(node.lhs));
-    tree.append(ToTree(node.rhs));
-
-    return tree;
-  },
-  [NodeType.bin_op_paired]: (node: BinOpPairedNode) => {
-    const tree = new TreeData(String(node.op));
-
-    tree.append(ToTree(node.lhs));
-    tree.append(ToTree(node.rhs));
-
-    return tree;
-  },
-  [NodeType.function]: (node: FunctionNode) => {
-    const tree = new TreeData(String(node.name));
-
-    tree.concat(node.args.map(ToTree) as TreeData[]);
-
-    return tree;
-  },
-  [NodeType.lambda_inline]: (node: LambdaInlineNode) => {
-    const tree = new TreeData("Inline Lambda");
-
-    tree.concat(node.params.map(ToTree) as TreeData[]);
-    tree.append(ToTree(node.expression));
-
-    return tree;
-  },
-  [NodeType.lambda]: (node: LambdaNode) => {
-    const tree = new TreeData("Lambda");
-
-    tree.concat(node.params.map(ToTree) as TreeData[]);
-    tree.append(ToTree(node.compound_statement));
-
-    return tree;
-  },
-  [NodeType.compound_statement]: (node: CompoundStatementNode) => {
-    const tree = new TreeData(
-      "Compound Statement",
-      node.children.map(ToTree) as TreeData[]
-    );
-
-    tree.append(new TreeData(
-      "Symbol Table",
-      node.symbol_table.map(ToTree) as TreeData[]
-    ));
-
-    return tree;
-  },
-  [NodeType.begin_block]: (node: BeginBlockNode) => {
-    const tree = new TreeData("begin");
-
-    tree.append(ToTree(node.expression));
-    tree.append(ToTree(node.compound_statement));
-
-    return tree;
-  },
-  [NodeType.foreach_block]: (node: ForeachBlockNode) => {
-    const tree = new TreeData("foreach");
-
-    tree.append(ToTree(node.idetifier));
-    tree.append(ToTree(node.iterable));
-    tree.append(ToTree(node.statements));
-
-    return tree;
-  },
-  [NodeType.conditional]: (node: ConditionalNode) => {
-    const tree = new TreeData("Conditional");
-
-    tree.append(ToTree(node.condition));
-    tree.append(ToTree(node.statements));
-
-    return tree;
-  },
-  [NodeType.while_block]: (node: WhileBlockNode) => {
-    const tree = new TreeData("while");
-
-    tree.append(ToTree(node.while_node));
-
-    return tree;
-  },
-  [NodeType.if_block]: (node: IfBlockNode) => {
-    const tree = new TreeData("if");
-
-    tree.concat(node.branches.map(ToTree) as TreeData[]);
-    tree.append(ToTree(node.else_branch));
-
-    return tree;
-  },
-  [NodeType.script]: (node: ScriptNode) => {
-    const tree = new TreeData("Script");
-
-    tree.append(ToTree(node.name));
-    tree.append(ToTree(node.statements));
-
-    return tree;
-  }
-};
-
-export function ToTree(node: Node | undefined): TreeData | undefined {
-  if (node == undefined) return undefined;
-
-  return ToTreeFunctions[node.type](node);
 }
 
 export class UnexpectedTokenError extends Error {
@@ -1246,7 +1090,7 @@ export class Parser {
     }
   }
 
-  parse(): ScriptNode {
+  parseScript(): ScriptNode {
     const node = new ScriptNode();
 
     try {
@@ -1262,10 +1106,179 @@ export class Parser {
 
     return node;
   }
+
+  static Parse(text: string): AST {
+    return new AST(new Parser(Lexer.Lex(text)).parseScript());
+  }
 }
 
-export function GetAST(text: string): ScriptNode {
-  const parser = new Parser(GetTokens(text).data);
+export class AST {
+  root: Node;
 
-  return parser.parse();
+  static ToTreeFunctions: { [key in NodeType]: (node: any) => TreeData } = {
+    [NodeType.unknown]: (node: Node) => {
+      return new TreeData("Node");
+    },
+    [NodeType.number]: (node: NumberNode) => {
+      return new TreeData(`${String(node.value)}`);
+    },
+    [NodeType.string]: (node: StringNode) => {
+      return new TreeData(`"${String(node.value)}"`);
+    },
+    [NodeType.comment]: (node: CommentNode) => {
+      return new TreeData(`;${String(node.value)}`);
+    },
+    [NodeType.identifier]: (node: IdentifierNode) => {
+      return new TreeData(String(node.value));
+    },
+    [NodeType.keyword]: (node: KeywordNode) => {
+      return new TreeData(`Keyword ${node.value}`);
+    },
+    [NodeType.variable_declaration]: (node: VariableDeclarationNode) => {
+      const tree = new TreeData(`Type: ${node.variable_type}`);
+
+      tree.append(AST.ToTree(node.value));
+
+      return tree;
+    },
+    [NodeType.set]: (node: SetNode) => {
+      const tree = new TreeData("set");
+
+      tree.append(AST.ToTree(node.identifier));
+      tree.append(new TreeData("to"));
+      tree.append(AST.ToTree(node.value));
+
+      return tree;
+    },
+    [NodeType.let]: (node: LetNode) => {
+      const tree = new TreeData("let");
+
+      tree.append(AST.ToTree(node.value));
+
+      return tree;
+    },
+    [NodeType.unary_op]: (node: UnaryOpNode) => {
+      const tree = new TreeData(String(node.op));
+
+      tree.append(AST.ToTree(node.operand));
+
+      return tree;
+    },
+    [NodeType.bin_op]: (node: BinOpNode) => {
+      const tree = new TreeData(String(node.op));
+
+      tree.append(AST.ToTree(node.lhs));
+      tree.append(AST.ToTree(node.rhs));
+
+      return tree;
+    },
+    [NodeType.bin_op_paired]: (node: BinOpPairedNode) => {
+      const tree = new TreeData(String(node.op));
+
+      tree.append(AST.ToTree(node.lhs));
+      tree.append(AST.ToTree(node.rhs));
+
+      return tree;
+    },
+    [NodeType.function]: (node: FunctionNode) => {
+      const tree = new TreeData(String(node.name));
+
+      tree.concat(node.args.map(AST.ToTree) as TreeData[]);
+
+      return tree;
+    },
+    [NodeType.lambda_inline]: (node: LambdaInlineNode) => {
+      const tree = new TreeData("Inline Lambda");
+
+      tree.concat(node.params.map(AST.ToTree) as TreeData[]);
+      tree.append(AST.ToTree(node.expression));
+
+      return tree;
+    },
+    [NodeType.lambda]: (node: LambdaNode) => {
+      const tree = new TreeData("Lambda");
+
+      tree.concat(node.params.map(AST.ToTree) as TreeData[]);
+      tree.append(AST.ToTree(node.compound_statement));
+
+      return tree;
+    },
+    [NodeType.compound_statement]: (node: CompoundStatementNode) => {
+      const tree = new TreeData(
+        "Compound Statement",
+        node.children.map(AST.ToTree) as TreeData[]
+      );
+
+      tree.append(new TreeData(
+        "Symbol Table",
+        node.symbol_table.map(AST.ToTree) as TreeData[]
+      ));
+
+      return tree;
+    },
+    [NodeType.begin_block]: (node: BeginBlockNode) => {
+      const tree = new TreeData("begin");
+
+      tree.append(AST.ToTree(node.expression));
+      tree.append(AST.ToTree(node.compound_statement));
+
+      return tree;
+    },
+    [NodeType.foreach_block]: (node: ForeachBlockNode) => {
+      const tree = new TreeData("foreach");
+
+      tree.append(AST.ToTree(node.idetifier));
+      tree.append(AST.ToTree(node.iterable));
+      tree.append(AST.ToTree(node.statements));
+
+      return tree;
+    },
+    [NodeType.conditional]: (node: ConditionalNode) => {
+      const tree = new TreeData("Conditional");
+
+      tree.append(AST.ToTree(node.condition));
+      tree.append(AST.ToTree(node.statements));
+
+      return tree;
+    },
+    [NodeType.while_block]: (node: WhileBlockNode) => {
+      const tree = new TreeData("while");
+
+      tree.append(AST.ToTree(node.while_node));
+
+      return tree;
+    },
+    [NodeType.if_block]: (node: IfBlockNode) => {
+      const tree = new TreeData("if");
+
+      tree.concat(node.branches.map(AST.ToTree) as TreeData[]);
+      tree.append(AST.ToTree(node.else_branch));
+
+      return tree;
+    },
+    [NodeType.script]: (node: ScriptNode) => {
+      const tree = new TreeData("Script");
+
+      tree.append(AST.ToTree(node.name));
+      tree.append(AST.ToTree(node.statements));
+
+      return tree;
+    }
+  };
+
+  constructor(root: Node) {
+    this.root = root;
+  }
+
+  toTree(): TreeData | undefined {
+    return AST.ToTreeFunctions[this.root.type](this.root);
+  }
+
+  validate(): Diagnostic[] { return []; }
+
+  static ToTree(node: Node | undefined): TreeData | undefined {
+    if (node == undefined) return undefined;
+
+    return AST.ToTreeFunctions[node.type](node);
+  }
 }

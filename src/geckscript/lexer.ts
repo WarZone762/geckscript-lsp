@@ -1,6 +1,6 @@
 import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
-import { TokenType, TokenSubtype, Tokens } from "./tokens";
+import { TokenType, TokenSubtype, TokenData } from "./token_data";
 
 export type TokenPosition = {
   line: number;
@@ -66,18 +66,18 @@ export class Lexer {
   determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
     data = data.toLowerCase();
 
-    if (Tokens[TokenType.TYPENAME].containsToken(data)) {
-      return [TokenType.TYPENAME, Tokens[TokenType.TYPENAME].getTokenSubtype(data)];
-    } else if (Tokens[TokenType.KEYWORD].containsToken(data)) {
-      return [TokenType.KEYWORD, Tokens[TokenType.KEYWORD].getTokenSubtype(data)];
+    if (TokenData[TokenType.TYPENAME].containsToken(data)) {
+      return [TokenType.TYPENAME, TokenData[TokenType.TYPENAME].getTokenSubtype(data)];
+    } else if (TokenData[TokenType.KEYWORD].containsToken(data)) {
+      return [TokenType.KEYWORD, TokenData[TokenType.KEYWORD].getTokenSubtype(data)];
     } else if (
-      Tokens[TokenType.BLOCK_TYPE].containsToken(data) &&
+      TokenData[TokenType.BLOCK_TYPE].containsToken(data) &&
       this.prev_token?.subtype === TokenSubtype.BEGIN
     ) {
-      return [TokenType.BLOCK_TYPE, Tokens[TokenType.BLOCK_TYPE].getTokenSubtype(data)];
-    } else if (Tokens[TokenType.OPERATOR].containsToken(data)) {
-      return [TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(data)];
-    } else if (Tokens[TokenType.FUNCTION].containsToken(data)) {
+      return [TokenType.BLOCK_TYPE, TokenData[TokenType.BLOCK_TYPE].getTokenSubtype(data)];
+    } else if (TokenData[TokenType.OPERATOR].containsToken(data)) {
+      return [TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(data)];
+    } else if (TokenData[TokenType.FUNCTION].containsToken(data)) {
       return [TokenType.FUNCTION, undefined];
     } else {
       return [TokenType.ID, undefined];
@@ -161,18 +161,18 @@ export class Lexer {
     const next_char = this.peekCharOnLine(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
-      if (Tokens[TokenType.OPERATOR].containsToken(operator)) {
+      if (TokenData[TokenType.OPERATOR].containsToken(operator)) {
         this.nextCharToBuf();
         this.nextCharToBuf();
 
-        return this.constructCurrentToken(TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(operator));
+        return this.constructCurrentToken(TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(operator));
       }
     }
 
-    if (Tokens[TokenType.OPERATOR].containsToken(this.cur_char!)) {
+    if (TokenData[TokenType.OPERATOR].containsToken(this.cur_char!)) {
       this.nextCharToBuf();
 
-      return this.constructCurrentToken(TokenType.OPERATOR, Tokens[TokenType.OPERATOR].getTokenSubtype(this.buf.toString()));
+      return this.constructCurrentToken(TokenType.OPERATOR, TokenData[TokenType.OPERATOR].getTokenSubtype(this.buf.toString()));
     }
 
     this.nextCharToBuf();
@@ -232,41 +232,16 @@ export class Lexer {
     return tokens;
   }
 
-  getTokens(): TokensStorage {
+  static Lex(text: string): Token[][] {
+    const lexer = new Lexer(text);
     const tokens: Token[][] = [];
     let line_tokens: Token[] | undefined;
 
-    while ((line_tokens = this.lexLine()) !== undefined) {
+    while ((line_tokens = lexer.lexLine()) !== undefined) {
       if (line_tokens.length === 0) continue;
       tokens.push(line_tokens);
     }
 
-    return new TokensStorage(tokens);
+    return tokens;
   }
-}
-
-export class TokensStorage {
-  data: Token[][];
-
-  constructor(data: Token[][]) {
-    this.data = data;
-  }
-
-  getTokenAtPos(pos: Position): Token | null {
-    for (const token of this.data[pos.line]) {
-      if (
-        token.position.column <= pos.character &&
-        pos.character <= token.position.column + token.length
-      ) {
-        return token;
-      }
-    }
-
-    return null;
-  }
-}
-
-export function GetTokens(text: string): TokensStorage {
-  const lexer = new Lexer(text);
-  return lexer.getTokens();
 }

@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as vsc from "vscode-languageserver/node";
 import * as Lexer from "./geckscript/lexer";
-import { TokenType } from "./geckscript/tokens";
+import { TokenType } from "./geckscript/token_data";
 
 export const Legend: SemanticTokensLegend = {
   tokenTypes: [
@@ -34,7 +34,7 @@ TokenTypeMap[TokenType.TYPENAME] = Legend.tokenTypes.indexOf("type");
 TokenTypeMap[TokenType.ID] = Legend.tokenTypes.indexOf("variable");
 
 
-export function onSemanticTokenRequestFull(
+export function OnSemanticTokenRequestFull(
   document: TextDocument | undefined,
   partialResultToken?: ProgressToken,
   workDoneToken?: ProgressToken
@@ -42,9 +42,9 @@ export function onSemanticTokenRequestFull(
   const tokensBuilder = new vsc.SemanticTokensBuilder();
   if (document === undefined) return tokensBuilder.build();
 
-  const tokens = Lexer.GetTokens(document.getText());
+  const tokens = Lexer.Lexer.Lex(document.getText());
 
-  tokens.data.forEach((line_tokens: Lexer.Token[]) => {
+  tokens.forEach((line_tokens: Lexer.Token[]) => {
     line_tokens.forEach((token: Lexer.Token) => {
       if (token.type == TokenType.UNKNOWN) return;
 
