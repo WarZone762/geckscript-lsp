@@ -29,7 +29,7 @@ export class Token {
 
 /*
 TODO: separate out wiki page name from TokenData, implement better parsing error reporting,
-get rid of tokens in nodes
+get rid of tokens in nodes, make parser continue parsing current rule on an unexpected token
 */
 export class Lexer {
   data: string;

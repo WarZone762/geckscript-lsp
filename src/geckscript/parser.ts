@@ -62,11 +62,6 @@ export class Node {
       character: 0
     }
   };
-
-  setRange(start?: Position, end?: Position): void {
-    this.range.start = start ?? { line: 0, character: 0 };
-    this.range.end = end ?? { line: 0, character: 0 };
-  }
 }
 
 export class NumberNode extends Node {
@@ -271,6 +266,7 @@ export class Parser {
   cur_pos = 0;
 
   cur_token: Token;
+  last_token: Token;
 
   diagnostics: Diagnostic[] = [];
 
@@ -278,9 +274,11 @@ export class Parser {
     this.tokens = data;
 
     this.cur_token = data[0];
+    this.last_token = data[0];
   }
 
   skipToken(): void {
+    this.last_token = this.cur_token;
     this.cur_token = this.tokens[++this.cur_pos];
   }
 
@@ -357,6 +355,8 @@ export class Parser {
       }
     }
 
+    node.range.end = this.last_token.getLastPos();
+
     return node;
   }
 
@@ -372,8 +372,6 @@ export class Parser {
         node.op_token = this.nextToken();
         node.op = node.op_token.content;
         node.rhs = parse_child();
-
-        node.setRange(lhs?.range.start, node.rhs?.range.end);
       });
 
       lhs = last_node;
@@ -384,8 +382,6 @@ export class Parser {
           node.op_token = this.nextToken();
           node.op = node.op_token.content;
           node.rhs = parse_child();
-
-          node.setRange(lhs?.range.start, node.rhs?.range.end);
         });
 
         last_node.rhs = node;
@@ -408,8 +404,6 @@ export class Parser {
         node.op_token = this.nextToken();
         node.op = node.op_token.content;
         node.rhs = parse_child();
-
-        node.setRange(lhs?.range.start, node.rhs?.range.end);
       });
     }
 
@@ -420,8 +414,6 @@ export class Parser {
     return this.tryParse(new CommentNode(), node => {
       node.token = this.nextTokenExpectType(TokenType.COMMENT);
       node.value = node.token.content.substring(1);
-
-      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
@@ -431,8 +423,6 @@ export class Parser {
       node.value = node.token.subtype === TokenSubtype.HEX ?
         parseInt(node.token.content) :
         parseFloat(node.token.content);
-
-      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
@@ -447,8 +437,6 @@ export class Parser {
     return this.tryParse(new IdentifierNode(), node => {
       node.token = this.nextTokenExpectType(TokenType.ID);
       node.value = node.token.content;
-
-      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
@@ -456,8 +444,6 @@ export class Parser {
     return this.tryParse(new KeywordNode(), node => {
       node.token = this.nextTokenExpectType(TokenType.KEYWORD);
       node.value = node.token.content;
-
-      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
@@ -482,11 +468,6 @@ export class Parser {
         else
           break;
       }
-
-      node.setRange(
-        node.token.position,
-        node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos()
-      );
     });
   }
 
@@ -508,8 +489,6 @@ export class Parser {
       node.rbracket_token = this.nextTokenExpectSubtype(TokenSubtype.RBRACKET);
       node.arrow_token = this.nextTokenExpectSubtype(TokenSubtype.EQUALS_GREATER);
       node.expression = this.parseExpression();
-
-      node.setRange(node.lbracket_token.position, node.expression?.range.end);
     });
   }
 
@@ -534,8 +513,6 @@ export class Parser {
       node.rbracket_token = this.nextTokenExpectSubtype(TokenSubtype.RBRACKET);
       node.compound_statement = this.parseCompoundStatement();
       node.end_token = this.nextTokenExpectSubtype(TokenSubtype.END);
-
-      node.setRange(node.begin_token.position, node.end_token.getLastPos());
     });
   }
 
@@ -581,8 +558,6 @@ export class Parser {
       node.op = "[]";
       node.rhs = this.parseExpression();
       node.right_op_token = this.nextTokenExpectSubtype(TokenSubtype.RSQ_BRACKET);
-
-      node.setRange(node.lhs?.range.start, node.right_op_token.getLastPos());
     }));
   }
 
@@ -604,8 +579,6 @@ export class Parser {
       } else {
         node.rhs = this.parsePrimaryExpression();
       }
-
-      node.setRange(lhs?.range.start, node.rhs?.range.end);
     }));
   }
 
@@ -622,8 +595,6 @@ export class Parser {
       } else {
         node.rhs = this.parsePrimaryExpression();
       }
-
-      node.setRange(lhs?.range.start, node.rhs?.range.end);
     }));
   }
 
@@ -653,8 +624,6 @@ export class Parser {
       node.op_token = this.nextToken();
       node.op = node.op_token.content;
       node.operand = this.parseLogicalNot();
-
-      node.setRange(node.op_token.position, node.operand?.range.end);
     });
   }
 
@@ -674,8 +643,6 @@ export class Parser {
       node.op_token = this.nextToken();
       node.op = node.op_token.content;
       node.operand = this.parseUnary();
-
-      node.setRange(node.op_token.position, node.operand?.range.end);
     });
   }
 
@@ -806,8 +773,6 @@ export class Parser {
       node.type_token = this.nextTokenExpectType(TokenType.TYPENAME);
       node.variable_type = node.type_token.content;
       node.value = this.parseAssignment();
-
-      node.setRange(node.type_token.position, node.value?.range.end);
     });
   }
 
@@ -817,8 +782,6 @@ export class Parser {
       node.identifier = this.parseIdentifier();
       node.to_token = this.nextTokenExpectSubtype(TokenSubtype.TO);
       node.value = this.parseLogicalOr();
-
-      node.setRange(node.set_token.position, node.value?.range.end);
     });
   }
 
@@ -828,8 +791,6 @@ export class Parser {
       node.value = this.cur_token.type === TokenType.TYPENAME ?
         this.parseVariableDeclaration() :
         this.parseExpression();
-
-      node.setRange(node.let_token.position, node.value?.range.end);
     });
   }
 
@@ -848,11 +809,6 @@ export class Parser {
         if (statement != undefined)
           node.children.push(statement);
       }
-
-      node.setRange(
-        node.children[0]?.range.start,
-        node.children[node.children.length - 1]?.range.end
-      );
     });
   }
 
@@ -869,11 +825,6 @@ export class Parser {
         else
           break;
       }
-
-      node.setRange(
-        node.token.position,
-        node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos()
-      );
     });
   }
 
@@ -886,8 +837,6 @@ export class Parser {
       node.compound_statement = this.parseCompoundStatement();
 
       node.end_token = this.nextTokenExpectSubtype(TokenSubtype.END);
-
-      node.setRange(node.begin_token.position, node.end_token.getLastPos());
     });
   }
 
@@ -906,8 +855,6 @@ export class Parser {
       node.statements = this.parseCompoundStatement();
 
       node.loop_token = this.nextTokenExpectSubtype(TokenSubtype.LOOP);
-
-      node.setRange(node.foreach_token.position, node.loop_token.getLastPos());
     });
   }
 
@@ -918,8 +865,6 @@ export class Parser {
       this.nextTokenExpectType(TokenType.NEWLINE);
 
       node.statements = this.parseCompoundStatement();
-
-      node.setRange(node.token.position, node.statements.range.end);
     });
   }
 
@@ -928,8 +873,6 @@ export class Parser {
       node.while_node = this.parseBranch(TokenSubtype.WHILE);
 
       node.loop_token = this.nextTokenExpectSubtype(TokenSubtype.LOOP);
-
-      node.setRange(node.while_node.range.start, node.loop_token.getLastPos());
     });
   }
 
@@ -948,8 +891,6 @@ export class Parser {
       }
 
       node.endif_token = this.nextTokenExpectSubtype(TokenSubtype.ENDIF);
-
-      node.setRange(node.branches[0].range.start, node.endif_token.getLastPos());
     });
   }
 
@@ -997,8 +938,6 @@ export class Parser {
       node.name = this.parseIdentifier();
       this.nextTokenExpectType(TokenType.NEWLINE);
       node.statements = this.parseCompoundStatement();
-
-      node.setRange(node.scriptname_token.position, node.statements.range.end);
     });
   }
 
