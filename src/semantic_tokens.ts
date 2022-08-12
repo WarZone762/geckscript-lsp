@@ -44,19 +44,17 @@ export function OnSemanticTokenRequestFull(
 
   const tokens = Lexer.Lexer.Lex(document.getText());
 
-  tokens.forEach((line_tokens: Lexer.Token[]) => {
-    line_tokens.forEach((token: Lexer.Token) => {
-      if (token.type == TokenType.UNKNOWN) return;
+  for (const token of tokens) {
+    if (token.type == TokenType.UNKNOWN) continue;
 
-      tokensBuilder.push(
-        token.position.line,
-        token.position.column,
-        token.length,
-        TokenTypeMap[token.type],
-        Legend.tokenModifiers.indexOf("declaration")
-      );
-    });
-  });
+    tokensBuilder.push(
+      token.position.line,
+      token.position.character,
+      token.length,
+      TokenTypeMap[token.type],
+      Legend.tokenModifiers.indexOf("declaration")
+    );
+  }
 
   return tokensBuilder.build();
 }

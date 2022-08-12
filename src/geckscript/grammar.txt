@@ -1,139 +1,139 @@
 GRAMMAR
 
-  literal:
-    NUMBER | STRING
+literal:
+  NUMBER | STRING
 
-  variable:
-    ID
+variable:
+  ID
 
-  keyword:
-    KEYWORD
+keyword:
+  KEYWORD
 
-  function:
-    FUNCTION (slice_make_pair_expression COMMA?)*
+function:
+  FUNCTION (slice_make_pair_expression COMMA?)*
 
-  lambda:
-    LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |
-    BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET
-      compound_statement
-    END
-
-  primary_expression:
-    literal | variable | function | (LPAREN | LBRACKET) expression (RPAREN | RBRACKET)
-
-  member_expression:
-    primary_expression |
-    member_expression LSQ_BRACKET expression RSQ_BRACKET |
-    member_expression RARROW (ID | STRING | NUMBER | FUNCTION) |
-    member_expression DOT (ID | FUNCTION)
-
-  logical_not_expression:
-    member_expression |
-    EXCLAMATION logical_not_expression
-
-  unary_expression:
-    logical_not_expression |
-    (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) unary_expression
-
-  exponential_expression:
-    unary_expression (CIRCUMFLEX unary_expression)*
-
-  multiplicative_expression:
-    exponential_expression ((ASTERISK | SLASH | PERCENT) exponential_expression)*
-
-  additive_expression:
-    multiplicative_expression ((PLUS | MINUS) multiplicative_expression)*
-
-  shift_expression:
-    additive_expression ((DOUBLE_LESS | DOUBLE_GREATER) additive_expression)*
-
-  and_expression:
-    shift_expression (AMPERSAND shift_expression)*
-
-  or_expression:
-    and_expression (VBAR and_expression)*
-
-  relational_expression:
-    or_expression ((GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) or_expression)*
-
-  equality_expression:
-    relational_expression ((DOUBLE_EQUALS | EXCLAMATION_EQUALS) relational_expression)*
-
-  slice_make_pair_expression:
-    equality_expression ((COLON | DOUBLE_COLON) equality_expression)*
-
-  logical_and_compound_assignment_expression:
-    slice_make_pair_expression ((
-      DOUBLE_AMPERSAND |
-      PLUS_EQUALS |
-      MINUS_EQUALS |
-      ASTERISK_EQUALS |
-      SLASH_EQUALS |
-      CIRCUMFLEX_EQUALS |
-      VBAR_EQUALS |
-      AMPERSAND_EQUALS |
-      PERCENT_EQULAS
-    ) slice_make_pair_expression)*
-
-  logical_or_expression:
-    logical_and_compound_assignment_expression (DOUBLE_VBAR logical_and_compound_assignment_expression)*
-
-  assignment_expression:
-    logical_or_expression ((EQUALS | COLON_EQUALS) | logical_or_expression)*
-
-  expression:
-     assignment_expression
-
-  variable_declaration:
-    TYPE assignment_expression
-
-  assignment_set:
-    SET variable TO logical_or_expression
-
-  assignment_let:
-    let (variable_declaration | assignment_expression)
-
-  statement:
-    COMMENT |
-    assignment_set |
-    assignment_let |
-    begin_block |
-    while_block |
-    foreach_block |
-    if_block |
-    variable_declaration |
-    expression
-
-  compound_statement:
-    statement*
-
-  block_type:
-    BLOCK_TYPE primary_expression*
-
-  begin_block:
-    BEGIN block_type
-      compound_statement
-    END
-
-  if_block:
-    IF expression
-      compound_statement
-    (ELSEIF expression
-        compound_statement)*
-    (ELSE
-      compound_statement)?
-    ENDIF
-
-  while_block:
-    WHILE expression
-      compound_statement
-    LOOP
-
-  foreach_block:
-    FOREACH (variable | variable_declaration) LARROW expression
-      compound_statement
-    LOOP
-
-  script:
-    SCRIPTNAME ID
+lambda:
+  LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |
+  BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET
     compound_statement
+  END
+
+primary_expression:
+  literal | variable | function | LPAREN expression RPAREN
+
+member_expression:
+  primary_expression |
+  member_expression LSQ_BRACKET expression RSQ_BRACKET |
+  member_expression RARROW (ID | STRING | NUMBER | FUNCTION) |
+  member_expression DOT (ID | FUNCTION)
+
+logical_not_expression:
+  member_expression |
+  EXCLAMATION logical_not_expression
+
+unary_expression:
+  logical_not_expression |
+  (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) unary_expression
+
+exponential_expression:
+  unary_expression (CIRCUMFLEX unary_expression)*
+
+multiplicative_expression:
+  exponential_expression ((ASTERISK | SLASH | PERCENT) exponential_expression)*
+
+additive_expression:
+  multiplicative_expression ((PLUS | MINUS) multiplicative_expression)*
+
+shift_expression:
+  additive_expression ((DOUBLE_LESS | DOUBLE_GREATER) additive_expression)*
+
+and_expression:
+  shift_expression (AMPERSAND shift_expression)*
+
+or_expression:
+  and_expression (VBAR and_expression)*
+
+relational_expression:
+  or_expression ((GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) or_expression)*
+
+equality_expression:
+  relational_expression ((DOUBLE_EQUALS | EXCLAMATION_EQUALS) relational_expression)*
+
+slice_make_pair_expression:
+  equality_expression ((COLON | DOUBLE_COLON) equality_expression)*
+
+logical_and_compound_assignment_expression:
+  slice_make_pair_expression ((
+    DOUBLE_AMPERSAND |
+    PLUS_EQUALS |
+    MINUS_EQUALS |
+    ASTERISK_EQUALS |
+    SLASH_EQUALS |
+    CIRCUMFLEX_EQUALS |
+    VBAR_EQUALS |
+    AMPERSAND_EQUALS |
+    PERCENT_EQULAS
+  ) slice_make_pair_expression)*
+
+logical_or_expression:
+  logical_and_compound_assignment_expression (DOUBLE_VBAR logical_and_compound_assignment_expression)*
+
+assignment_expression:
+  logical_or_expression ((EQUALS | COLON_EQUALS) | logical_or_expression)*
+
+expression:
+   assignment_expression
+
+variable_declaration:
+  TYPE assignment_expression
+
+assignment_set:
+  SET variable TO logical_or_expression
+
+assignment_let:
+  let (variable_declaration | assignment_expression)
+
+statement:
+  (COMMENT |
+   assignment_set |
+   assignment_let |
+   begin_block |
+   while_block |
+   foreach_block |
+   if_block |
+   variable_declaration |
+   expression) (NEWLINE | EOF)
+
+compound_statement:
+  statement*
+
+block_type:
+  BLOCK_TYPE primary_expression*
+
+begin_block:
+  BEGIN block_type NEWLINE
+    compound_statement
+  END
+
+if_block:
+  IF expression NEWLINE
+    compound_statement
+  (ELSEIF expression NEWLINE
+      compound_statement)*
+  (ELSE NEWLINE
+    compound_statement)?
+  ENDIF
+
+while_block:
+  WHILE expression NEWLINE
+    compound_statement
+  LOOP
+
+foreach_block:
+  FOREACH (variable | variable_declaration) LARROW expression NEWLINE
+    compound_statement
+  LOOP
+
+script:
+  SCRIPTNAME ID NEWLINE
+  compound_statement

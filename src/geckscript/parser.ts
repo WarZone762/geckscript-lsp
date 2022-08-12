@@ -1,5 +1,6 @@
-import { Diagnostic } from "vscode-languageserver";
-import { Token, TokenPosition, Lexer } from "./lexer";
+import { Diagnostic, Range } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
+import { Token, Lexer } from "./lexer";
 import { TokenData, TokenSubtype } from "./token_data";
 import { TokenType } from "./token_data";
 
@@ -49,14 +50,23 @@ export class TreeData {
   }
 }
 
-export type Range = {
-  start?: TokenPosition,
-  end?: TokenPosition
-}
-
 export class Node {
   readonly type: NodeType = NodeType.unknown;
-  range: Range = {};
+  range: Range = {
+    start: {
+      line: 0,
+      character: 0
+    },
+    end: {
+      line: 0,
+      character: 0
+    }
+  };
+
+  setRange(start?: Position, end?: Position): void {
+    this.range.start = start ?? { line: 0, character: 0 };
+    this.range.end = end ?? { line: 0, character: 0 };
+  }
 }
 
 export class NumberNode extends Node {
@@ -207,7 +217,7 @@ export class ForeachBlockNode extends Node {
   loop_token?: Token;
 }
 
-export class ConditionalNode extends Node {
+export class BranchNode extends Node {
   readonly type = NodeType.conditional;
 
   token?: Token;
@@ -218,16 +228,16 @@ export class ConditionalNode extends Node {
 export class WhileBlockNode extends Node {
   readonly type = NodeType.while_block;
 
-  while_node?: ConditionalNode;
+  while_node?: BranchNode;
   loop_token?: Token;
 }
 
 export class IfBlockNode extends Node {
   readonly type = NodeType.if_block;
 
-  branches: ConditionalNode[] = [];
+  branches: BranchNode[] = [];
   else_token?: Token;
-  else_branch?: CompoundStatementNode;
+  else_statements?: CompoundStatementNode;
   endif_token?: Token;
 }
 
@@ -256,94 +266,93 @@ export class UnexpectedTokenTypeError extends UnexpectedTokenError<TokenType> { 
 export class UnexpectedTokenSubtypeError extends UnexpectedTokenError<TokenSubtype> { }
 
 export class Parser {
-  data: Token[][];
+  tokens: Token[];
 
-  cur_x = 0;
-  cur_ln = 0;
+  cur_pos = 0;
 
-  cur_token: Token | undefined;
+  cur_token: Token;
 
   diagnostics: Diagnostic[] = [];
 
-  constructor(data: Token[][]) {
-    this.data = data;
+  constructor(data: Token[]) {
+    this.tokens = data;
 
-    this.cur_token = data[0][0];
-
-    while (this.cur_token == undefined) {
-      this.skipToken();
-    }
-  }
-
-  skipLine(): void {
-    this.cur_x = 0;
-    this.cur_token = this.data?.[++this.cur_ln]?.[0];
-  }
-
-  skipTokenOnLine(): void {
-    this.cur_token = this.data?.[this.cur_ln]?.[++this.cur_x];
+    this.cur_token = data[0];
   }
 
   skipToken(): void {
-    this.skipTokenOnLine();
-    if (this.cur_token == undefined) this.skipLine();
+    this.cur_token = this.tokens[++this.cur_pos];
   }
 
-  nextToken(): Token | undefined {
+  nextToken(): Token {
     const token = this.cur_token;
     this.skipToken();
 
     return token;
   }
 
-  nextTokenOfType(type: TokenType): Token {
+  nextTokenExpectType(type: TokenType): Token {
     const token = this.cur_token;
 
-    if (token?.type !== type)
-      throw new UnexpectedTokenTypeError(type, token?.type, token);
+    if (token.type !== type)
+      throw new UnexpectedTokenTypeError(type, token.type, token);
     this.skipToken();
 
     return token;
   }
 
-  nextTokenOfSubtype(subtype: TokenSubtype): Token {
+  nextTokenExpectSubtype(subtype: TokenSubtype): Token {
     const token = this.cur_token;
 
-    if (token?.subtype !== subtype)
-      throw new UnexpectedTokenSubtypeError(subtype, token?.subtype, token);
+    if (token.subtype !== subtype)
+      throw new UnexpectedTokenSubtypeError(subtype, token.subtype, token);
     this.skipToken();
 
     return token;
   }
 
-  peekTokenOnLine(offset: number): Token | undefined {
-    return this.data[this.cur_ln][this.cur_x + offset];
+  moreData(): boolean {
+    return this.cur_token.type !== TokenType.EOF;
   }
 
-  tryParse<T>(node: T, parse_function: (node: T) => void): T {
+  lookBehind(offset: number): Token | undefined {
+    return this.tokens[this.cur_pos + offset];
+  }
+
+  lookAhead(offset: number): Token | undefined {
+    return this.tokens[this.cur_pos - offset];
+  }
+
+  reportParsingError(message: string): void {
+    const token = this.cur_token;
+
+    this.diagnostics.push({
+      message: `Parsing error: ${message}`,
+      range: {
+        start: {
+          line: token.position.line,
+          character: token.position.character,
+        },
+        end: {
+          line: token.getLastPos().line,
+          character: token.getLastPos().character + 1,
+        }
+      },
+    });
+  }
+
+  tryParse<T extends Node>(node: T, parse_function: (node: T) => void): T {
     try {
+      node.range.start = this.cur_token.position;
       parse_function(node);
     } catch (e) {
       if (!(e instanceof UnexpectedTokenError)) {
         throw e;
       } else {
-        this.diagnostics.push(
-          {
-            message:
-              `Parsing error: expected "` +
-              `${TokenData.subtype_index[e.expected]?.[1] ?? e.expected}` +
-              `", got ${e.parsed_token?.content}`,
-            range: {
-              start: {
-                character: this.cur_token?.position.column ?? 0,
-                line: this.cur_token?.position.line ?? 0
-              },
-              end: {
-                character: this.cur_token?.getLastPos().column ?? 1,
-                line: this.cur_token?.getLastPos().line ?? 0
-              }
-            }
-          }
+        this.reportParsingError(
+          "expected " +
+          `"${TokenData.subtype_index[e.expected]?.[1] ?? e.expected}", ` +
+          `got "${e.parsed_token?.content}"`
         );
       }
     }
@@ -357,28 +366,26 @@ export class Parser {
   ): Node | undefined {
     let lhs = parse_child();
 
-    if ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+    if ((this.cur_token.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
       let last_node = this.tryParse(new BinOpNode(), node => {
         node.lhs = lhs;
         node.op_token = this.nextToken();
-        node.op = node.op_token?.content;
+        node.op = node.op_token.content;
         node.rhs = parse_child();
 
-        node.range.start = lhs?.range.start;
-        node.range.end = node.rhs?.range.end;
+        node.setRange(lhs?.range.start, node.rhs?.range.end);
       });
 
       lhs = last_node;
 
-      while ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+      while ((this.cur_token.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
         const node = this.tryParse(new BinOpNode(), node => {
           node.lhs = last_node.rhs;
           node.op_token = this.nextToken();
-          node.op = node.op_token?.content;
+          node.op = node.op_token.content;
           node.rhs = parse_child();
 
-          node.range.start = lhs?.range.start;
-          node.range.end = node.rhs?.range.end;
+          node.setRange(lhs?.range.start, node.rhs?.range.end);
         });
 
         last_node.rhs = node;
@@ -395,15 +402,14 @@ export class Parser {
   ): Node | undefined {
     let lhs = parse_child();
 
-    while ((this.cur_token?.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
+    while ((this.cur_token.subtype ?? TokenSubtype.UNKNOWN) in valid_tokens) {
       lhs = this.tryParse(new BinOpNode(), node => {
         node.lhs = lhs;
         node.op_token = this.nextToken();
-        node.op = node.op_token?.content;
+        node.op = node.op_token.content;
         node.rhs = parse_child();
 
-        node.range.start = lhs?.range.start;
-        node.range.end = node.rhs?.range.end;
+        node.setRange(lhs?.range.start, node.rhs?.range.end);
       });
     }
 
@@ -412,67 +418,60 @@ export class Parser {
 
   parseComment(): CommentNode {
     return this.tryParse(new CommentNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.COMMENT);
+      node.token = this.nextTokenExpectType(TokenType.COMMENT);
       node.value = node.token.content.substring(1);
 
-      node.range.start = node.token.position;
-      node.range.end = node.token.getLastPos();
+      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
   parseNumber(): NumberNode {
     return this.tryParse(new NumberNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.NUMBER);
+      node.token = this.nextTokenExpectType(TokenType.NUMBER);
       node.value = node.token.subtype === TokenSubtype.HEX ?
         parseInt(node.token.content) :
         parseFloat(node.token.content);
 
-      node.range.start = node.token.position;
-      node.range.end = node.token.getLastPos();
+      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
   parseString(): StringNode {
     return this.tryParse(new StringNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.STRING);
+      node.token = this.nextTokenExpectType(TokenType.STRING);
       node.value = node.token.content.substring(1, node.token.length - 1);
     });
   }
 
   parseIdentifier(): IdentifierNode {
     return this.tryParse(new IdentifierNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.ID);
+      node.token = this.nextTokenExpectType(TokenType.ID);
       node.value = node.token.content;
 
-      node.range.start = node.token.position;
-      node.range.end = node.token.getLastPos();
+      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
   parseKeyword(): KeywordNode {
     return this.tryParse(new KeywordNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.KEYWORD);
+      node.token = this.nextTokenExpectType(TokenType.KEYWORD);
       node.value = node.token.content;
 
-      node.range.start = node.token.position;
-      node.range.end = node.token.getLastPos();
+      node.setRange(node.token.position, node.token.getLastPos());
     });
   }
 
   parseFunction(): FunctionNode {
     return this.tryParse(new FunctionNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.FUNCTION)!;
+      node.token = this.nextTokenExpectType(TokenType.FUNCTION)!;
       node.name = node.token.content;
 
-      while (this.cur_token != undefined && this.cur_x !== 0) {
+      while (this.moreData() && this.cur_token.type !== TokenType.NEWLINE) {
         if (this.cur_token.type === TokenType.OPERATOR) {
           if (this.cur_token.subtype === TokenSubtype.COMMA) {
             this.skipToken();
             continue;
-          } else if (
-            this.cur_token.subtype !== TokenSubtype.LPAREN &&
-            this.cur_token.subtype !== TokenSubtype.LBRACKET
-          ) {
+          } else if (this.cur_token.subtype !== TokenSubtype.LPAREN) {
             break;
           }
         }
@@ -484,18 +483,19 @@ export class Parser {
           break;
       }
 
-      node.range.start = node.token.position;
-      node.range.end = node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos();
+      node.setRange(
+        node.token.position,
+        node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos()
+      );
     });
   }
 
   parseLambdaInline(): LambdaInlineNode {
     return this.tryParse(new LambdaInlineNode(), node => {
-      node.lbracket_token = this.nextTokenOfSubtype(TokenSubtype.LBRACKET);
+      node.lbracket_token = this.nextTokenExpectSubtype(TokenSubtype.LBRACKET);
 
       while (
-        this.cur_token != undefined &&
-        this.cur_token.subtype !== TokenSubtype.RBRACKET
+        this.moreData() && this.cur_token.subtype !== TokenSubtype.RBRACKET
       ) {
         if (this.cur_token.type === TokenType.TYPENAME)
           node.params.push(this.parseVariableDeclaration());
@@ -505,23 +505,22 @@ export class Parser {
           this.skipToken();
       }
 
-      node.rbracket_token = this.nextTokenOfSubtype(TokenSubtype.RBRACKET);
-      node.arrow_token = this.nextTokenOfSubtype(TokenSubtype.EQUALS_GREATER);
+      node.rbracket_token = this.nextTokenExpectSubtype(TokenSubtype.RBRACKET);
+      node.arrow_token = this.nextTokenExpectSubtype(TokenSubtype.EQUALS_GREATER);
       node.expression = this.parseExpression();
 
-      node.range.start = node.lbracket_token.position;
-      node.range.end = node.expression?.range.end;
+      node.setRange(node.lbracket_token.position, node.expression?.range.end);
     });
   }
 
   parseLambda(): LambdaNode {
     return this.tryParse(new LambdaNode(), node => {
-      node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
-      node.function_token = this.nextTokenOfSubtype(TokenSubtype.FUNCTION);
-      node.lbracket_token = this.nextTokenOfSubtype(TokenSubtype.LBRACKET);
+      node.begin_token = this.nextTokenExpectSubtype(TokenSubtype.BEGIN);
+      node.function_token = this.nextTokenExpectSubtype(TokenSubtype.FUNCTION);
+      node.lbracket_token = this.nextTokenExpectSubtype(TokenSubtype.LBRACKET);
 
       while (
-        this.cur_token != undefined &&
+        this.moreData() &&
         this.cur_token.subtype !== TokenSubtype.RBRACKET
       ) {
         if (this.cur_token.type === TokenType.TYPENAME)
@@ -532,55 +531,44 @@ export class Parser {
           this.skipToken();
       }
 
-      node.rbracket_token = this.nextTokenOfSubtype(TokenSubtype.RBRACKET);
-      node.compound_statement = this.parseCompoundStatement(
-        t => t.subtype === TokenSubtype.END
-      );
-      node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+      node.rbracket_token = this.nextTokenExpectSubtype(TokenSubtype.RBRACKET);
+      node.compound_statement = this.parseCompoundStatement();
+      node.end_token = this.nextTokenExpectSubtype(TokenSubtype.END);
 
-      node.range.start = node.begin_token.position;
-      node.range.end = node.end_token.getLastPos();
+      node.setRange(node.begin_token.position, node.end_token.getLastPos());
     });
   }
 
   parsePrimaryExpression(): Node | undefined {
-    if (this.cur_token?.type === TokenType.STRING) {
+    if (this.cur_token.type === TokenType.STRING) {
       return this.parseString();
-    } else if (this.cur_token?.type === TokenType.NUMBER) {
+    } else if (this.cur_token.type === TokenType.NUMBER) {
       return this.parseNumber();
-    } else if (this.cur_token?.type === TokenType.ID) {
+    } else if (this.cur_token.type === TokenType.ID) {
       return this.parseIdentifier();
-    } else if (this.cur_token?.type === TokenType.FUNCTION) {
+    } else if (this.cur_token.type === TokenType.FUNCTION) {
       return this.parseFunction();
-    } else if (this.cur_token?.subtype === TokenSubtype.LPAREN) {
+    } else if (this.cur_token.subtype === TokenSubtype.LPAREN) {
       this.skipToken();
 
-      return this.tryParse(this.parseExpression(), node => {
-        this.nextTokenOfSubtype(TokenSubtype.RPAREN);
-      });
-    } else if (this.cur_token?.subtype === TokenSubtype.LBRACKET) {
+      const expression = this.parseExpression();
+      if (expression != undefined) {
+        return this.tryParse(expression, node => {
+          this.nextTokenExpectSubtype(TokenSubtype.RPAREN);
+        });
+      } else {
+        return undefined;
+      }
+    } else if (this.cur_token.subtype === TokenSubtype.LBRACKET) {
       return this.parseLambdaInline();
-    } else if (this.cur_token?.subtype === TokenSubtype.BEGIN) {
+    } else if (this.cur_token.subtype === TokenSubtype.BEGIN) {
       return this.parseLambda();
-    } else if (this.cur_token?.type === TokenType.COMMENT) {
+    } else if (this.cur_token.type === TokenType.COMMENT) {
       this.skipToken();
       return undefined;
     } else {
-      this.diagnostics.push(
-        {
-          message: "Parsing error: expected expression",
-          range: {
-            start: {
-              character: this.cur_token?.position.column ?? 0,
-              line: this.cur_token?.position.line ?? 0
-            },
-            end: {
-              character: this.cur_token?.getLastPos().column ?? 1,
-              line: this.cur_token?.getLastPos().line ?? 0
-            }
-          }
-        }
-      );
+      this.reportParsingError("expected expression");
+
       this.skipToken();
       return undefined;
     }
@@ -592,10 +580,9 @@ export class Parser {
       node.left_op_token = this.nextToken();
       node.op = "[]";
       node.rhs = this.parseExpression();
-      node.right_op_token = this.nextTokenOfSubtype(TokenSubtype.RSQ_BRACKET);
+      node.right_op_token = this.nextTokenExpectSubtype(TokenSubtype.RSQ_BRACKET);
 
-      node.range.start = node.lhs?.range.start;
-      node.range.end = node.right_op_token.getLastPos();
+      node.setRange(node.lhs?.range.start, node.right_op_token.getLastPos());
     }));
   }
 
@@ -603,9 +590,9 @@ export class Parser {
     return this.parseMember(this.tryParse(new BinOpNode(), node => {
       node.lhs = lhs;
       node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
+      node.op = node.op_token.content;
 
-      const type = this.cur_token?.type;
+      const type = this.cur_token.type;
       if (
         type !== TokenType.STRING &&
         type !== TokenType.NUMBER &&
@@ -618,8 +605,7 @@ export class Parser {
         node.rhs = this.parsePrimaryExpression();
       }
 
-      node.range.start = lhs?.range.start;
-      node.range.end = node.rhs?.range.end;
+      node.setRange(lhs?.range.start, node.rhs?.range.end);
     }));
   }
 
@@ -627,9 +613,9 @@ export class Parser {
     return this.parseMember(this.tryParse(new BinOpNode(), node => {
       node.lhs = lhs;
       node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
+      node.op = node.op_token.content;
 
-      const type = this.cur_token?.type;
+      const type = this.cur_token.type;
       if (type !== TokenType.ID && type !== TokenType.FUNCTION) {
         node.rhs = undefined;
         this.skipToken();
@@ -637,15 +623,14 @@ export class Parser {
         node.rhs = this.parsePrimaryExpression();
       }
 
-      node.range.start = lhs?.range.start;
-      node.range.end = node.rhs?.range.end;
+      node.setRange(lhs?.range.start, node.rhs?.range.end);
     }));
   }
 
   parseMember(lhs?: Node): Node | undefined {
     lhs = lhs ?? this.parsePrimaryExpression();
 
-    if (this.cur_token?.type !== TokenType.OPERATOR) return lhs;
+    if (this.cur_token.type !== TokenType.OPERATOR) return lhs;
 
     const subtype = this.cur_token.subtype;
 
@@ -661,23 +646,22 @@ export class Parser {
   }
 
   parseLogicalNot(): Node | undefined {
-    if (this.cur_token?.subtype !== TokenSubtype.EXCLAMATION)
+    if (this.cur_token.subtype !== TokenSubtype.EXCLAMATION)
       return this.parseMember();
 
     return this.tryParse(new UnaryOpNode(), node => {
       node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
+      node.op = node.op_token.content;
       node.operand = this.parseLogicalNot();
 
-      node.range.start = node.op_token?.position;
-      node.range.end = node.operand?.range.end;
+      node.setRange(node.op_token.position, node.operand?.range.end);
     });
   }
 
   parseUnary(): Node | undefined {
-    if (this.cur_token?.type !== TokenType.OPERATOR) return this.parseLogicalNot();
+    if (this.cur_token.type !== TokenType.OPERATOR) return this.parseLogicalNot();
 
-    const subtype = this.cur_token?.subtype;
+    const subtype = this.cur_token.subtype;
     if (
       subtype !== TokenSubtype.MINUS &&
       subtype !== TokenSubtype.DOLLAR &&
@@ -688,11 +672,10 @@ export class Parser {
 
     return this.tryParse(new UnaryOpNode(), node => {
       node.op_token = this.nextToken();
-      node.op = node.op_token?.content;
+      node.op = node.op_token.content;
       node.operand = this.parseUnary();
 
-      node.range.start = node.op_token?.position;
-      node.range.end = node.operand?.range.end;
+      node.setRange(node.op_token.position, node.operand?.range.end);
     });
   }
 
@@ -820,46 +803,45 @@ export class Parser {
 
   parseVariableDeclaration(): VariableDeclarationNode {
     return this.tryParse(new VariableDeclarationNode(), node => {
-      node.type_token = this.nextTokenOfType(TokenType.TYPENAME);
+      node.type_token = this.nextTokenExpectType(TokenType.TYPENAME);
       node.variable_type = node.type_token.content;
       node.value = this.parseAssignment();
 
-      node.range.start = node.type_token.position;
-      node.range.end = node.value?.range.end;
+      node.setRange(node.type_token.position, node.value?.range.end);
     });
   }
 
   parseSet(): SetNode {
     return this.tryParse(new SetNode(), node => {
-      node.set_token = this.nextTokenOfSubtype(TokenSubtype.SET);
+      node.set_token = this.nextTokenExpectSubtype(TokenSubtype.SET);
       node.identifier = this.parseIdentifier();
-      node.to_token = this.nextTokenOfSubtype(TokenSubtype.TO);
+      node.to_token = this.nextTokenExpectSubtype(TokenSubtype.TO);
       node.value = this.parseLogicalOr();
 
-      node.range.start = node.set_token.position;
-      node.range.end = node.value?.range.end;
+      node.setRange(node.set_token.position, node.value?.range.end);
     });
   }
 
   parseLet(): LetNode {
     return this.tryParse(new LetNode(), node => {
       node.let_token = this.nextToken();
-      node.value = this.cur_token?.type === TokenType.TYPENAME ?
+      node.value = this.cur_token.type === TokenType.TYPENAME ?
         this.parseVariableDeclaration() :
         this.parseExpression();
 
-      node.range.start = node.let_token?.position;
-      node.range.end = node.value?.range.end;
+      node.setRange(node.let_token.position, node.value?.range.end);
     });
   }
 
-  parseCompoundStatement(
-    terminator_predicate: (token: Token) => boolean = () => false
-  ): CompoundStatementNode {
+  parseCompoundStatement(): CompoundStatementNode {
     return this.tryParse(new CompoundStatementNode(), node => {
       while (
-        this.cur_token != undefined &&
-        !terminator_predicate(this.cur_token)
+        this.moreData() &&
+        this.cur_token.subtype !== TokenSubtype.END &&
+        this.cur_token.subtype !== TokenSubtype.ELSEIF &&
+        this.cur_token.subtype !== TokenSubtype.ELSE &&
+        this.cur_token.subtype !== TokenSubtype.ENDIF &&
+        this.cur_token.subtype !== TokenSubtype.LOOP
       ) {
         const statement = this.parseStatement();
 
@@ -867,17 +849,19 @@ export class Parser {
           node.children.push(statement);
       }
 
-      node.range.start = node.children[0]?.range.start;
-      node.range.start = node.children[node.children.length - 1]?.range.end;
+      node.setRange(
+        node.children[0]?.range.start,
+        node.children[node.children.length - 1]?.range.end
+      );
     });
   }
 
   parseBlockType(): FunctionNode {
     return this.tryParse(new FunctionNode(), node => {
-      node.token = this.nextTokenOfType(TokenType.BLOCK_TYPE);
+      node.token = this.nextTokenExpectType(TokenType.BLOCK_TYPE);
       node.name = node.token.content;
 
-      while (this.cur_token != undefined && this.cur_x !== 0) {
+      while (this.moreData() && this.cur_token.type !== TokenType.NEWLINE) {
         const arg = this.parsePrimaryExpression();
 
         if (arg != undefined)
@@ -886,142 +870,135 @@ export class Parser {
           break;
       }
 
-      node.range.start = node.token.position;
-      node.range.end = node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos();
+      node.setRange(
+        node.token.position,
+        node.args[node.args.length - 1]?.range.end ?? node.token.getLastPos()
+      );
     });
   }
 
   parseBeginBlock(): BeginBlockNode {
     return this.tryParse(new BeginBlockNode(), node => {
-      node.begin_token = this.nextTokenOfSubtype(TokenSubtype.BEGIN);
+      node.begin_token = this.nextTokenExpectSubtype(TokenSubtype.BEGIN);
       node.expression = this.parseBlockType();
+      this.nextTokenExpectType(TokenType.NEWLINE);
 
-      node.compound_statement = this.parseCompoundStatement(t =>
-        t.subtype === TokenSubtype.END
-      );
+      node.compound_statement = this.parseCompoundStatement();
 
-      node.end_token = this.nextTokenOfSubtype(TokenSubtype.END);
+      node.end_token = this.nextTokenExpectSubtype(TokenSubtype.END);
 
-      node.range.start = node.begin_token.position;
-      node.range.end = node.end_token.getLastPos();
+      node.setRange(node.begin_token.position, node.end_token.getLastPos());
     });
   }
 
   parseForeachBlock(): ForeachBlockNode {
     return this.tryParse(new ForeachBlockNode(), node => {
-      node.foreach_token = this.nextTokenOfSubtype(TokenSubtype.FOREACH);
+      node.foreach_token = this.nextTokenExpectSubtype(TokenSubtype.FOREACH);
 
-      node.idetifier = this.cur_token?.type === TokenType.TYPENAME ?
+      node.idetifier = this.cur_token.type === TokenType.TYPENAME ?
         this.parseVariableDeclaration() :
         this.parseIdentifier();
 
-      node.larrow_token = this.nextTokenOfSubtype(TokenSubtype.LARROW);
+      node.larrow_token = this.nextTokenExpectSubtype(TokenSubtype.LARROW);
       node.iterable = this.parseExpression();
+      this.nextTokenExpectType(TokenType.NEWLINE);
 
-      node.statements = this.parseCompoundStatement(
-        t => t.subtype === TokenSubtype.LOOP
-      );
+      node.statements = this.parseCompoundStatement();
 
-      node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+      node.loop_token = this.nextTokenExpectSubtype(TokenSubtype.LOOP);
 
-      node.range.start = node.foreach_token.position;
-      node.range.end = node.loop_token.getLastPos();
+      node.setRange(node.foreach_token.position, node.loop_token.getLastPos());
     });
   }
 
-  parseConditional(
-    type: TokenSubtype,
-    terminator_predicate: (t: Token) => boolean = () => false
-  ): ConditionalNode {
-    return this.tryParse(new ConditionalNode(), node => {
-      node.token = this.nextTokenOfSubtype(type);
+  parseBranch(type: TokenSubtype): BranchNode {
+    return this.tryParse(new BranchNode(), node => {
+      node.token = this.nextTokenExpectSubtype(type);
       node.condition = this.parseExpression();
-      node.statements = this.parseCompoundStatement(terminator_predicate);
+      this.nextTokenExpectType(TokenType.NEWLINE);
 
-      node.range.start = node.token.position;
-      node.range.end = node.statements.range.end;
+      node.statements = this.parseCompoundStatement();
+
+      node.setRange(node.token.position, node.statements.range.end);
     });
   }
 
   parseWhileBlock(): WhileBlockNode {
     return this.tryParse(new WhileBlockNode(), node => {
-      node.while_node = this.parseConditional(
-        TokenSubtype.WHILE, t => t.subtype === TokenSubtype.LOOP
-      );
+      node.while_node = this.parseBranch(TokenSubtype.WHILE);
 
-      node.loop_token = this.nextTokenOfSubtype(TokenSubtype.LOOP);
+      node.loop_token = this.nextTokenExpectSubtype(TokenSubtype.LOOP);
 
-      node.range.start = node.while_node.range.start;
-      node.range.end = node.loop_token.getLastPos();
+      node.setRange(node.while_node.range.start, node.loop_token.getLastPos());
     });
   }
 
   parseIfBlock(): IfBlockNode {
     return this.tryParse(new IfBlockNode(), node => {
-      node.branches[0] = this.parseConditional(TokenSubtype.IF, t =>
-        t.subtype === TokenSubtype.ELSEIF ||
-        t.subtype === TokenSubtype.ELSE ||
-        t.subtype === TokenSubtype.ENDIF
-      );
+      node.branches[0] = this.parseBranch(TokenSubtype.IF);
 
-      while (this.cur_token?.subtype === TokenSubtype.ELSEIF) {
-        node.branches.push(this.parseConditional(TokenSubtype.ELSEIF, t =>
-          t.subtype === TokenSubtype.ELSEIF ||
-          t.subtype === TokenSubtype.ELSE ||
-          t.subtype === TokenSubtype.ENDIF
-        ));
+      while (this.cur_token.subtype === TokenSubtype.ELSEIF) {
+        node.branches.push(this.parseBranch(TokenSubtype.ELSEIF));
       }
 
-      if (this.cur_token?.subtype === TokenSubtype.ELSE) {
+      if (this.cur_token.subtype === TokenSubtype.ELSE) {
         node.else_token = this.nextToken();
-        node.else_branch = this.parseCompoundStatement(t => t.subtype === TokenSubtype.ENDIF);
+        this.nextTokenExpectType(TokenType.NEWLINE);
+        node.else_statements = this.parseCompoundStatement();
       }
 
-      node.endif_token = this.nextTokenOfSubtype(TokenSubtype.ENDIF);
+      node.endif_token = this.nextTokenExpectSubtype(TokenSubtype.ENDIF);
 
-      node.range.start = node.branches[0].range.start;
-      node.range.end = node.endif_token.getLastPos();
+      node.setRange(node.branches[0].range.start, node.endif_token.getLastPos());
     });
   }
 
   parseStatement(): Node | undefined {
-    const subtype = this.cur_token?.subtype;
+    let node: Node | undefined;
+
+    const subtype = this.cur_token.subtype;
+    const type = this.cur_token.type;
 
     if (subtype === TokenSubtype.SET) {
-      return this.parseSet();
+      node = this.parseSet();
     } else if (subtype === TokenSubtype.LET) {
-      return this.parseLet();
+      node = this.parseLet();
     } else if (subtype === TokenSubtype.BEGIN) {
-      return this.parseBeginBlock();
+      node = this.parseBeginBlock();
     } else if (subtype === TokenSubtype.WHILE) {
-      return this.parseWhileBlock();
+      node = this.parseWhileBlock();
     } else if (subtype === TokenSubtype.FOREACH) {
-      return this.parseForeachBlock();
+      node = this.parseForeachBlock();
     } else if (subtype === TokenSubtype.IF) {
-      return this.parseIfBlock();
-    }
-
-    const type = this.cur_token?.type;
-
-    if (type === TokenType.COMMENT) {
-      return this.parseComment();
+      node = this.parseIfBlock();
+    } else if (type === TokenType.COMMENT) {
+      node = this.parseComment();
     } else if (type === TokenType.TYPENAME) {
-      return this.parseVariableDeclaration();
+      node = this.parseVariableDeclaration();
     } else if (type === TokenType.KEYWORD) {
-      return this.parseKeyword();
+      node = this.parseKeyword();
     } else {
-      return this.parseExpression();
+      node = this.parseExpression();
     }
+
+    if (this.cur_token.type !== TokenType.EOF) {
+      if (this.cur_token.type !== TokenType.NEWLINE)
+        this.reportParsingError("expected a new line");
+
+      this.skipToken();
+    }
+
+    return node;
   }
 
   parseScript(): ScriptNode {
     return this.tryParse(new ScriptNode(), node => {
-      node.scriptname_token = this.nextTokenOfSubtype(TokenSubtype.SCN);
+      node.scriptname_token = this.nextTokenExpectSubtype(TokenSubtype.SCN);
       node.name = this.parseIdentifier();
+      this.nextTokenExpectType(TokenType.NEWLINE);
       node.statements = this.parseCompoundStatement();
 
-      node.range.start = node.scriptname_token.position;
-      node.range.end = node.statements.range.end;
+      node.setRange(node.scriptname_token.position, node.statements.range.end);
     });
   }
 
@@ -1157,7 +1134,7 @@ export class AST {
 
       return tree;
     },
-    [NodeType.conditional]: (node: ConditionalNode) => {
+    [NodeType.conditional]: (node: BranchNode) => {
       const tree = new TreeData("Conditional");
 
       tree.append(AST.ToTree(node.condition));
@@ -1176,7 +1153,7 @@ export class AST {
       const tree = new TreeData("if");
 
       tree.concat(node.branches.map(AST.ToTree) as TreeData[]);
-      tree.append(AST.ToTree(node.else_branch));
+      tree.append(AST.ToTree(node.else_statements));
 
       return tree;
     },

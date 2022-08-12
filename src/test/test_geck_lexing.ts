@@ -8,10 +8,11 @@ const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toStri
 
 const tokens = Lexer.Lexer.Lex(data);
 
-tokens.forEach((line_tokens: Lexer.Token[]) => {
-  line_tokens.forEach((token: Lexer.Token) => {
-    process.stdout.write(`{${token.content}}(${token.type})`);
+for (const token of tokens) {
+  if (token.type === TokenType.NEWLINE) process.stdout.write("NEWLINE\n");
+  else if (token.type === TokenType.EOF) process.stdout.write("EOF\n");
+  else {
+    process.stdout.write(`{${token.content}}(${token.type})[${token.position.line}, ${token.position.character}, ${token.length}]`);
     process.stdout.write(" ");
-  });
-  process.stdout.write("\n");
-});
+  }
+}

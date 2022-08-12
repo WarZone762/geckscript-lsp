@@ -2,19 +2,14 @@ import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
 import { TokenType, TokenSubtype, TokenData } from "./token_data";
 
-export type TokenPosition = {
-  line: number;
-  column: number;
-}
-
 export class Token {
   type: TokenType;
   subtype?: TokenSubtype;
-  position: TokenPosition;
+  position: Position;
   content: string;
   length: number;
 
-  constructor(type: TokenType, subtype: TokenSubtype | undefined, position: TokenPosition, content: string) {
+  constructor(type: TokenType, subtype: TokenSubtype | undefined, position: Position, content: string) {
     this.type = type;
     this.subtype = subtype;
     this.position = position;
@@ -22,9 +17,9 @@ export class Token {
     this.length = content.length;
   }
 
-  getLastPos(): TokenPosition {
-    const pos: TokenPosition = {
-      column: this.position.column + this.length - 1,
+  getLastPos(): Position {
+    const pos: Position = {
+      character: this.position.character + this.length - 1,
       line: this.position.line
     };
 
@@ -32,35 +27,47 @@ export class Token {
   }
 }
 
+/*
+TODO: separate out wiki page name from TokenData, implement better parsing error reporting,
+get rid of tokens in nodes
+*/
 export class Lexer {
-  data: string[];
-  cur_ln: number;
-  cur_col: number;
-  cur_char: string | undefined;
+  data: string;
+  data_last_idx: number;
+
+  cur_pos = 0;
+  cur_ln = 0;
+  cur_col = 0;
+
+  cur_char: string;
 
   prev_token: Token | undefined;
 
   buf: StringBuffer;
 
   constructor(data: string) {
-    this.data = data.split(/\r?\n/);
-    this.cur_ln = 0;
-    this.cur_col = 0;
-    this.cur_char = data[0][0];
+    this.data = data;
+    this.data_last_idx = data.length - 1;
+    this.cur_char = data[0];
     this.buf = new StringBuffer(512);
   }
 
   nextChar(): void {
-    this.cur_char = this.data[this.cur_ln][++this.cur_col];
+    this.cur_char = this.data[++this.cur_pos];
+    ++this.cur_col;
   }
 
   nextCharToBuf(): void {
-    this.buf.append(this.cur_char as string);
+    this.buf.append(this.cur_char);
     this.nextChar();
   }
 
-  peekCharOnLine(offset: number): string | undefined {
-    return this.data[this.cur_ln][this.cur_col + offset];
+  lookAhead(offset: number): string | undefined {
+    return this.data[this.cur_pos + offset];
+  }
+
+  moreData(): boolean {
+    return this.cur_pos < this.data_last_idx;
   }
 
   determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
@@ -87,17 +94,35 @@ export class Lexer {
   constructCurrentToken(type: TokenType, subtype?: TokenSubtype): Token {
     const content = this.buf.flush();
 
-    return new Token(type, subtype, { line: this.cur_ln, column: this.cur_col - content.length }, content);
+    return new Token(type, subtype, { line: this.cur_ln, character: this.cur_col - content.length }, content);
   }
 
-  consumeWhitespace(): void {
-    while (this.cur_char !== undefined && /\s/.test(this.cur_char)) {
+  skipWhitespace(): void {
+    while (this.moreData() && /[^\S\n]/.test(this.cur_char)) {
       this.nextChar();
     }
   }
 
+  consumeNewline(): Token {
+    this.nextCharToBuf();
+    const token = this.constructCurrentToken(TokenType.NEWLINE);
+    this.cur_col = 0;
+    ++this.cur_ln;
+    this.skipWhitespace();
+
+    while (this.moreData() && this.cur_char === "\n") {
+      this.nextChar();
+      this.cur_col = 0;
+      ++this.cur_ln;
+      this.skipWhitespace();
+    }
+
+    return token;
+  }
+
   consumeComment(): Token {
-    while (this.cur_char !== undefined) {
+    while (this.moreData() && this.cur_char !== "\n") {
+      if (this.cur_char === "\r" && this.lookAhead(1) === "\n") break;
       this.nextCharToBuf();
     }
 
@@ -105,11 +130,11 @@ export class Lexer {
   }
 
   consumeString(): Token {
-    const quote: string = this.cur_char as string;
+    const quote: string = this.cur_char;
 
     this.nextCharToBuf();
 
-    while (this.cur_char !== undefined) {
+    while (this.moreData()) {
       if (this.cur_char === quote) {
         this.nextCharToBuf();
         break;
@@ -123,12 +148,12 @@ export class Lexer {
   consumeNumber(): Token {
     if (
       this.cur_char === "0" &&
-      this.data[this.cur_ln][this.cur_col + 1]?.toLowerCase() === "x"
+      this.lookAhead(1)?.toLowerCase() === "x"
     ) {
       this.nextCharToBuf();
       this.nextCharToBuf();
 
-      while (this.cur_char !== undefined) {
+      while (this.moreData()) {
         if (/[0-9a-fA-F]/.test(this.cur_char))
           this.nextCharToBuf();
         else
@@ -137,9 +162,10 @@ export class Lexer {
 
       return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.HEX);
     }
+
     this.nextCharToBuf();
 
-    while (this.cur_char !== undefined) {
+    while (this.moreData()) {
       if (/\d/.test(this.cur_char)) {
         this.nextCharToBuf();
       } else if (this.cur_char === ".") {
@@ -150,7 +176,7 @@ export class Lexer {
       }
     }
 
-    while (this.cur_char !== undefined && /\d/.test(this.cur_char)) {
+    while (this.moreData() && /\d/.test(this.cur_char)) {
       this.nextCharToBuf();
     }
 
@@ -158,7 +184,7 @@ export class Lexer {
   }
 
   consumeOperator(): Token {
-    const next_char = this.peekCharOnLine(1);
+    const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
       if (TokenData.operator.containsToken(operator)) {
@@ -169,7 +195,7 @@ export class Lexer {
       }
     }
 
-    if (TokenData.operator.containsToken(this.cur_char!)) {
+    if (TokenData.operator.containsToken(this.cur_char)) {
       this.nextCharToBuf();
 
       return this.constructCurrentToken(TokenType.OPERATOR, TokenData.operator.getTokenSubtype(this.buf.toString()));
@@ -181,23 +207,22 @@ export class Lexer {
   }
 
   consumeWord(): Token {
-    while (this.cur_char !== undefined) {
-      if (/\W/.test(this.cur_char)) break;
+    while (this.moreData() && /[0-9a-zA-Z_]/.test(this.cur_char)) {
       this.nextCharToBuf();
     }
 
     return this.constructCurrentToken(...this.determineTokenType(this.buf.toString()));
   }
 
-  lexLine(): Token[] | undefined {
-    if (this.data[this.cur_ln] === undefined) return undefined;
-
+  lex(): Token[] {
     const tokens: Token[] = [];
     let token: Token;
 
-    this.consumeWhitespace();
-    while (this.cur_char !== undefined) {
-      if (this.cur_char === ";") {
+    this.skipWhitespace();
+    while (this.moreData()) {
+      if (this.cur_char === "\n") {
+        token = this.consumeNewline();
+      } else if (this.cur_char === ";") {
         token = this.consumeComment();
       } else if (/["']/.test(this.cur_char)) {
         token = this.consumeString();
@@ -205,10 +230,10 @@ export class Lexer {
         token = this.consumeNumber();
       } else if (
         /\./.test(this.cur_char) &&
-        (char => char != undefined && /\d/.test(char))(this.peekCharOnLine(1))
+        (char => char != undefined && /\d/.test(char))(this.lookAhead(1))
       ) {
         token = this.consumeNumber();
-      } else if (/\w/.test(this.cur_char)) {
+      } else if (/[a-zA-Z_]/.test(this.cur_char)) {
         token = this.consumeWord();
       } else if (/\S/.test(this.cur_char)) {
         token = this.consumeOperator();
@@ -223,25 +248,19 @@ export class Lexer {
       tokens.push(token);
       this.prev_token = token;
 
-      this.consumeWhitespace();
+      this.skipWhitespace();
     }
 
-    this.cur_char = this.data[++this.cur_ln]?.[0];
-    this.cur_col = 0;
+    tokens.push(new Token(
+      TokenType.EOF, undefined, { line: this.cur_ln + 1, character: 0 }, ""
+    ));
 
     return tokens;
   }
 
-  static Lex(text: string): Token[][] {
+  static Lex(text: string): Token[] {
     const lexer = new Lexer(text);
-    const tokens: Token[][] = [];
-    let line_tokens: Token[] | undefined;
 
-    while ((line_tokens = lexer.lexLine()) !== undefined) {
-      if (line_tokens.length === 0) continue;
-      tokens.push(line_tokens);
-    }
-
-    return tokens;
+    return lexer.lex();
   }
 }

@@ -3,15 +3,19 @@ import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 
 export const enum TokenType {
   UNKNOWN,
-  BLOCK_TYPE,
+
+  NEWLINE,
+  EOF,
   COMMENT,
-  FUNCTION,
-  ID,
-  KEYWORD,
+
   NUMBER,
-  OPERATOR,
   STRING,
+  ID,
   TYPENAME,
+  KEYWORD,
+  OPERATOR,
+  BLOCK_TYPE,
+  FUNCTION,
 }
 
 export const enum TokenSubtype {
