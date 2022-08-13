@@ -1,31 +1,8 @@
-import { Position } from "vscode-languageserver-textdocument";
 import { StringBuffer } from "../common";
-import { TokenType, TokenSubtype, TokenData } from "./token_data";
+import { TokenData } from "./token_data";
 
-export class Token {
-  type: TokenType;
-  subtype?: TokenSubtype;
-  position: Position;
-  content: string;
-  length: number;
+import { SyntaxType, SyntaxSubtype, Token } from "./types";
 
-  constructor(type: TokenType, subtype: TokenSubtype | undefined, position: Position, content: string) {
-    this.type = type;
-    this.subtype = subtype;
-    this.position = position;
-    this.content = content;
-    this.length = content.length;
-  }
-
-  getLastPos(): Position {
-    const pos: Position = {
-      character: this.position.character + this.length - 1,
-      line: this.position.line
-    };
-
-    return pos;
-  }
-}
 
 /*
 TODO: separate out wiki page name from TokenData, implement better parsing error reporting,
@@ -70,42 +47,40 @@ export class Lexer {
     return this.cur_pos < this.data_last_idx;
   }
 
-  determineTokenType(data: string): [TokenType, TokenSubtype | undefined] {
-    data = data.toLowerCase();
-
-    if (TokenData.typename.containsToken(data)) {
-      return [TokenType.TYPENAME, TokenData.typename.getTokenSubtype(data)];
-    } else if (TokenData.keyword.containsToken(data)) {
-      return [TokenType.KEYWORD, TokenData.keyword.getTokenSubtype(data)];
-    } else if (
-      TokenData.block_type.containsToken(data) &&
-      this.prev_token?.subtype === TokenSubtype.BEGIN
-    ) {
-      return [TokenType.BLOCK_TYPE, TokenData.block_type.getTokenSubtype(data)];
-    } else if (TokenData.operator.containsToken(data)) {
-      return [TokenType.OPERATOR, TokenData.operator.getTokenSubtype(data)];
-    } else if (TokenData.function.containsToken(data)) {
-      return [TokenType.FUNCTION, undefined];
-    } else {
-      return [TokenType.ID, undefined];
-    }
-  }
-
-  constructCurrentToken(type: TokenType, subtype?: TokenSubtype): Token {
-    const content = this.buf.flush();
-
-    return new Token(type, subtype, { line: this.cur_ln, character: this.cur_col - content.length }, content);
-  }
-
   skipWhitespace(): void {
     while (this.moreData() && /[^\S\n]/.test(this.cur_char)) {
       this.nextChar();
     }
   }
 
-  consumeNewline(): Token {
+  createToken<
+    T extends SyntaxType = SyntaxType.Unknown,
+    ST extends SyntaxSubtype = SyntaxSubtype.Unknown
+  >(type?: T, subtype?: ST): Token<T, ST> {
+    const token = {
+      type: type ?? SyntaxType.Unknown,
+      subtype: subtype ?? SyntaxSubtype.Unknown,
+      range: {
+        start: { line: this.cur_ln, character: this.cur_col },
+        end: { line: this.cur_ln, character: this.cur_col }
+      }
+    } as Token<T, ST>;
+
+    return token;
+  }
+
+  finishToken<T extends Token>(token: T): T {
+    token.content = this.buf.flush();
+
+    token.range.end.character = this.cur_col;
+
+    return token;
+  }
+
+  consumeNewline(): Token<SyntaxType.Newline> {
+    const token = this.createToken(SyntaxType.Newline);
+
     this.nextCharToBuf();
-    const token = this.constructCurrentToken(TokenType.NEWLINE);
     this.cur_col = 0;
     ++this.cur_ln;
     this.skipWhitespace();
@@ -117,19 +92,25 @@ export class Lexer {
       this.skipWhitespace();
     }
 
-    return token;
+    return this.finishToken(token);
   }
 
-  consumeComment(): Token {
+  consumeComment(): Token<SyntaxType.Comment> {
+    const token = this.createToken(SyntaxType.Comment);
+
     while (this.moreData() && this.cur_char !== "\n") {
       if (this.cur_char === "\r" && this.lookAhead(1) === "\n") break;
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.COMMENT);
+    this.finishToken(token);
+
+    return token;
   }
 
-  consumeString(): Token {
+  consumeString(): Token<SyntaxType.Literal, SyntaxSubtype.String> {
+    const token = this.createToken(SyntaxType.Literal, SyntaxSubtype.String);
+
     const quote: string = this.cur_char;
 
     this.nextCharToBuf();
@@ -142,10 +123,12 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.STRING);
+    return this.finishToken(token);
   }
 
-  consumeNumber(): Token {
+  consumeNumber(): Token<SyntaxType.Literal, SyntaxSubtype.Number> {
+    const token = this.createToken(SyntaxType.Literal, SyntaxSubtype.Number);
+
     if (
       this.cur_char === "0" &&
       this.lookAhead(1)?.toLowerCase() === "x"
@@ -157,10 +140,10 @@ export class Lexer {
         if (/[0-9a-fA-F]/.test(this.cur_char))
           this.nextCharToBuf();
         else
-          return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.HEX);
+          break;
       }
 
-      return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.HEX);
+      return this.finishToken(token);
     }
 
     this.nextCharToBuf();
@@ -172,7 +155,8 @@ export class Lexer {
         this.nextCharToBuf();
         break;
       } else {
-        return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.DECIMAL);
+
+        return this.finishToken(token);
       }
     }
 
@@ -180,38 +164,70 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(TokenType.NUMBER, TokenSubtype.DECIMAL);
+    return this.finishToken(token);
   }
 
-  consumeOperator(): Token {
+  consumeOperator(): Token<SyntaxType.Operator | SyntaxType.Unknown> {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
-      if (TokenData.operator.containsToken(operator)) {
+      if (operator in TokenData.Operators) {
+        const token = this.createToken(SyntaxType.Operator, TokenData.Operators[operator]);
+
         this.nextCharToBuf();
         this.nextCharToBuf();
 
-        return this.constructCurrentToken(TokenType.OPERATOR, TokenData.operator.getTokenSubtype(operator));
+        return this.finishToken(token);
       }
     }
 
-    if (TokenData.operator.containsToken(this.cur_char)) {
+    if (this.cur_char in TokenData.Operators) {
+      const token = this.createToken(SyntaxType.Operator, TokenData.Operators[this.cur_char]);
       this.nextCharToBuf();
 
-      return this.constructCurrentToken(TokenType.OPERATOR, TokenData.operator.getTokenSubtype(this.buf.toString()));
+      return this.finishToken(token);
     }
+
+    const token = this.createToken();
 
     this.nextCharToBuf();
 
-    return this.constructCurrentToken(TokenType.UNKNOWN, TokenSubtype.UNKNOWN);
+    return this.finishToken(token);
   }
 
   consumeWord(): Token {
+    const token = this.createToken() as Token;
+
     while (this.moreData() && /[0-9a-zA-Z_]/.test(this.cur_char)) {
       this.nextCharToBuf();
     }
 
-    return this.constructCurrentToken(...this.determineTokenType(this.buf.toString()));
+    const word = this.buf.toString();
+
+    if (word in TokenData.Typenames) {
+      token.type = SyntaxType.Typename;
+      token.subtype = TokenData.Typenames[word];
+    } else if (word in TokenData.Keywords) {
+      token.type = SyntaxType.Keyword;
+      token.subtype = TokenData.Keywords[word];
+    } else if (
+      word in TokenData.BlockTypes &&
+      this.prev_token?.subtype === SyntaxSubtype.Begin
+    ) {
+      token.type = SyntaxType.BlockType;
+      token.subtype = TokenData.BlockTypes[word];
+    } else if (word in TokenData.Operators) {
+      token.type = SyntaxType.Operator;
+      token.subtype = TokenData.Operators[word];
+    } else if (word in TokenData.Functions) {
+      token.type = SyntaxType.Identifier;
+      token.subtype = SyntaxSubtype.FunctionIdentifier;
+    } else {
+      token.type = SyntaxType.Identifier;
+      token.subtype = SyntaxSubtype.FunctionIdentifier;
+    }
+
+    return this.finishToken(token);
   }
 
   lex(): Token[] {
@@ -251,9 +267,14 @@ export class Lexer {
       this.skipWhitespace();
     }
 
-    tokens.push(new Token(
-      TokenType.EOF, undefined, { line: this.cur_ln + 1, character: 0 }, ""
-    ));
+    tokens.push({
+      type: SyntaxType.EOF,
+      subtype: SyntaxSubtype.Unknown,
+      range: {
+        start: { line: this.cur_ln + 1, character: 0 },
+        end: { line: this.cur_ln + 1, character: 1 }
+      }
+    });
 
     return tokens;
   }

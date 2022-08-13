@@ -1,4 +1,4 @@
-import { Position, Range } from "vscode-languageserver-textdocument";
+import { Range } from "vscode-languageserver-textdocument";
 
 
 export const enum SyntaxType {
@@ -38,7 +38,7 @@ export const enum SyntaxSubtype {
   Int,
   Long,
   Float,
-  Ref,
+  Reference,
   StringVar,
   ArrayVar,
 
@@ -86,7 +86,7 @@ export const enum SyntaxSubtype {
   Slash,
   Percent,
   Circumflex,
-  Vbar,
+  VBar,
   Ampersand,
   DoubleLess,
   DoubleGreater,
@@ -100,7 +100,7 @@ export const enum SyntaxSubtype {
   RBracket,
   Colon,
   LArrow,
-  Rarrow,
+  RArrow,
   Dot,
   DoubleColon,
   Comma,
@@ -129,11 +129,11 @@ export interface Node {
   range: Range;
 }
 
-export interface Token<T extends SyntaxType, ST extends SyntaxSubtype = SyntaxSubtype> extends Node {
+export interface Token<T extends SyntaxType = SyntaxType, ST extends SyntaxSubtype = SyntaxSubtype> extends Node {
   type: T;
   subtype: ST;
 
-  content: string;
+  content?: string;
 }
 
 export interface CommentNode extends Node {
@@ -143,19 +143,19 @@ export interface CommentNode extends Node {
   text: string;
 }
 
-export interface NumberNode extends Node {
+export interface Literal<T> extends Node {
   type: SyntaxType.Literal;
-  subtype: SyntaxSubtype.Number;
 
-  value: number;
+  value: T;
+  text: string;
 }
 
-export interface StringNode extends Node {
-  type: SyntaxType.Literal;
-  subtype: SyntaxSubtype.String;
+export interface NumberNode extends Literal<number> {
+  subtype: SyntaxSubtype.Number;
+}
 
-  value: string;
-  text: string;
+export interface StringNode extends Literal<string> {
+  subtype: SyntaxSubtype.String;
 }
 
 export interface VariableDeclarationNode extends Node {
