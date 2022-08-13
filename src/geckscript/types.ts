@@ -123,185 +123,195 @@ export const enum SyntaxSubtype {
   ForeachStatement,
 }
 
-export interface Node {
-  type: SyntaxType;
-  subtype: SyntaxSubtype;
-  range: Range;
+export class Node {
+  type: SyntaxType = SyntaxType.Unknown;
+  subtype: SyntaxSubtype = SyntaxSubtype.Unknown;
+  range!: Range;
 }
 
-export interface Token<T extends SyntaxType = SyntaxType, ST extends SyntaxSubtype = SyntaxSubtype> extends Node {
-  type: T;
-  subtype: ST;
+export class Token<
+  T extends SyntaxType = SyntaxType.Unknown,
+  ST extends SyntaxSubtype = SyntaxSubtype.Unknown
+  > extends Node {
+  declare type: T;
+  declare subtype: ST;
 
   content?: string;
+
+  constructor(type?: T, subtype?: ST) {
+    super();
+
+    this.type = type ?? SyntaxType.Unknown as T;
+    this.subtype = subtype ?? SyntaxSubtype.Unknown as ST;
+  }
 }
 
-export interface CommentNode extends Node {
-  type: SyntaxType.Comment;
+export class CommentNode extends Node {
+  type = SyntaxType.Comment;
 
-  value: string;
-  text: string;
+  value!: string;
+  text!: string;
 }
 
-export interface Literal<T> extends Node {
-  type: SyntaxType.Literal;
+export class Literal<T> extends Node {
+  type = SyntaxType.Literal;
 
-  value: T;
-  text: string;
+  value!: T;
+  text!: string;
 }
 
-export interface NumberNode extends Literal<number> {
-  subtype: SyntaxSubtype.Number;
+export class NumberNode extends Literal<number> {
+  subtype = SyntaxSubtype.Number;
 }
 
-export interface StringNode extends Literal<string> {
-  subtype: SyntaxSubtype.String;
+export class StringNode extends Literal<string> {
+  subtype = SyntaxSubtype.String;
 }
 
-export interface VariableDeclarationNode extends Node {
-  type: SyntaxType.VariableDeclaration;
+export class VariableDeclarationNode extends Node {
+  type = SyntaxType.VariableDeclaration;
 
-  variable_type: Token<SyntaxType.Typename>;
-  value: ExpressionNode;
+  variable_type!: Token<SyntaxType.Typename>;
+  value!: ExpressionNode;
 }
 
-export interface ExpressionNode extends Node {
-  type: SyntaxType.Expression;
+export class ExpressionNode extends Node {
+  type = SyntaxType.Expression;
 }
 
-export interface UnaryOpNode extends ExpressionNode {
-  subtype: SyntaxSubtype.UnaryOp;
+export class UnaryOpNode extends ExpressionNode {
+  subtype = SyntaxSubtype.UnaryOp;
 
-  op: Token<SyntaxType.Operator>;
-  operand: ExpressionNode;
+  op!: Token<SyntaxType.Operator>;
+  operand!: ExpressionNode;
 }
 
-export interface BinOpNode extends ExpressionNode {
-  subtype: SyntaxSubtype.BinOp;
+export class BinOpNode extends ExpressionNode {
+  subtype = SyntaxSubtype.BinOp;
 
-  lhs: ExpressionNode;
-  op: Token<SyntaxType.Operator>;
-  rhs: ExpressionNode;
+  lhs!: ExpressionNode;
+  op!: Token<SyntaxType.Operator>;
+  rhs!: ExpressionNode;
 }
 
-export interface BinOpPairedNode extends ExpressionNode {
-  subtype: SyntaxSubtype.BinOpPaired;
+export class BinOpPairedNode extends ExpressionNode {
+  subtype = SyntaxSubtype.BinOpPaired;
 
-  lhs: ExpressionNode;
-  left_op: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
-  rhs: ExpressionNode;
-  right_op: Token<SyntaxType.Operator, SyntaxSubtype.RSQBracket>;
+  lhs!: ExpressionNode;
+  left_op!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
+  rhs!: ExpressionNode;
+  right_op!: Token<SyntaxType.Operator, SyntaxSubtype.RSQBracket>;
 }
 
-export interface FunctionNode extends ExpressionNode {
-  subtype: SyntaxSubtype.Function;
+export class FunctionNode extends ExpressionNode {
+  subtype = SyntaxSubtype.Function;
 
-  name: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
-  args: ExpressionNode[];
+  name!: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
+  args!: ExpressionNode[];
 }
 
-export interface LambdaInlineNode extends ExpressionNode {
-  subtype: SyntaxSubtype.LambdaInline;
+export class LambdaInlineNode extends ExpressionNode {
+  subtype = SyntaxSubtype.LambdaInline;
 
-  lbracket: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
-  params: ExpressionNode[];
-  rbracket: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
-  arrow_token: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
+  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
+  params!: ExpressionNode[];
+  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
+  arrow_token!: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
 
-  expression: ExpressionNode;
+  expression!: ExpressionNode;
 }
 
-export interface LambdaNode extends ExpressionNode {
-  subtype: SyntaxSubtype.Lambda;
+export class LambdaNode extends ExpressionNode {
+  subtype = SyntaxSubtype.Lambda;
 
-  begin: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
-  function: Token<SyntaxType.BlockType, SyntaxSubtype.Function>;
-  lbracket: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
-  params: ExpressionNode[];
-  rbracket: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
+  begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
+  function!: Token<SyntaxType.BlockType, SyntaxSubtype.Function>;
+  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
+  params!: ExpressionNode[];
+  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
 
-  compound_statement: CompoundStatementNode;
+  compound_statement!: CompoundStatementNode;
 
-  end: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
+  end!: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
 }
 
-export interface StatementNode extends Node {
-  type: SyntaxType.Statement;
+export class StatementNode extends Node {
+  type = SyntaxType.Statement;
 }
 
-export interface SetNode extends StatementNode {
-  subtype: SyntaxSubtype.SetStatement;
+export class SetNode extends StatementNode {
+  subtype = SyntaxSubtype.SetStatement;
 
-  set: Token<SyntaxType.Keyword, SyntaxSubtype.Set>;
-  identifier: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>;
-  to: Token<SyntaxType.Keyword, SyntaxSubtype.To>;
-  value: ExpressionNode;
+  set!: Token<SyntaxType.Keyword, SyntaxSubtype.Set>;
+  identifier!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>;
+  to!: Token<SyntaxType.Keyword, SyntaxSubtype.To>;
+  value!: ExpressionNode;
 }
 
-export interface LetNode extends StatementNode {
-  subtype: SyntaxSubtype.LetStatement;
+export class LetNode extends StatementNode {
+  subtype = SyntaxSubtype.LetStatement;
 
-  let: Token<SyntaxType.Keyword, SyntaxSubtype.Let>;
-  value: ExpressionNode;
+  let!: Token<SyntaxType.Keyword, SyntaxSubtype.Let>;
+  value!: ExpressionNode;
 }
 
-export interface CompoundStatementNode extends Node {
-  type: SyntaxType.CompoundStatement;
+export class CompoundStatementNode extends Node {
+  type = SyntaxType.CompoundStatement;
 
-  children: StatementNode[];
-  symbol_table: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>[];
+  children!: StatementNode[];
+  symbol_table!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>[];
 }
 
-export interface BeginBlockNode extends StatementNode {
-  subtype: SyntaxSubtype.BeginStatement;
+export class BeginBlockNode extends StatementNode {
+  subtype = SyntaxSubtype.BeginStatement;
 
-  begin: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
-  expression: ExpressionNode;
-  compound_statement: CompoundStatementNode;
-  end: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
+  begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
+  expression!: ExpressionNode;
+  compound_statement!: CompoundStatementNode;
+  end!: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
 }
 
-export interface ForeachBlockNode extends StatementNode {
-  subtype: SyntaxSubtype.Foreach;
+export class ForeachBlockNode extends StatementNode {
+  subtype = SyntaxSubtype.Foreach;
 
-  foreach: Token<SyntaxType.Keyword, SyntaxSubtype.Foreach>;
-  idetifier: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier> | VariableDeclarationNode;
-  larrow: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
-  iterable: ExpressionNode;
+  foreach!: Token<SyntaxType.Keyword, SyntaxSubtype.Foreach>;
+  idetifier!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier> | VariableDeclarationNode;
+  larrow!: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
+  iterable!: ExpressionNode;
 
-  statements: CompoundStatementNode;
+  statements!: CompoundStatementNode;
 
-  loop: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
+  loop!: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
 }
 
-export interface BranchNode<T extends SyntaxSubtype> extends Node {
-  type: SyntaxType.Branch;
+export class BranchNode<T extends SyntaxSubtype> extends Node {
+  type = SyntaxType.Branch;
 
-  keyword: Token<SyntaxType.Keyword, T>;
-  condition: ExpressionNode;
-  statements: CompoundStatementNode;
+  keyword!: Token<SyntaxType.Keyword, T>;
+  condition!: ExpressionNode;
+  statements!: CompoundStatementNode;
 }
 
-export interface WhileBlockNode extends StatementNode {
-  subtype: SyntaxSubtype.WhileStatement;
+export class WhileBlockNode extends StatementNode {
+  subtype = SyntaxSubtype.WhileStatement;
 
-  branch: BranchNode<SyntaxSubtype.While>;
-  loop: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
+  branch!: BranchNode<SyntaxSubtype.While>;
+  loop!: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
 }
 
-export interface IfBlockNode extends StatementNode {
-  subtype: SyntaxSubtype.IfStatement;
+export class IfBlockNode extends StatementNode {
+  subtype = SyntaxSubtype.IfStatement;
 
-  branches: BranchNode<SyntaxSubtype.If | SyntaxSubtype.Elseif>[];
-  else: Token<SyntaxType.Keyword, SyntaxSubtype.Else>;
-  else_statements: CompoundStatementNode;
-  endif: Token<SyntaxType.Keyword, SyntaxSubtype.Endif>;
+  branches!: BranchNode<SyntaxSubtype.If | SyntaxSubtype.Elseif>[];
+  else?: Token<SyntaxType.Keyword, SyntaxSubtype.Else>;
+  else_statements?: CompoundStatementNode;
+  endif!: Token<SyntaxType.Keyword, SyntaxSubtype.Endif>;
 }
 
-export interface ScriptNode extends Node {
-  type: SyntaxType.Script;
+export class ScriptNode extends Node {
+  type = SyntaxType.Script;
 
-  scriptname: Token<SyntaxType.Keyword, SyntaxSubtype.ScriptName>;
-  name: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
-  statements: CompoundStatementNode;
+  scriptname!: Token<SyntaxType.Keyword, SyntaxSubtype.ScriptName>;
+  name!: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
+  statements!: CompoundStatementNode;
 }
