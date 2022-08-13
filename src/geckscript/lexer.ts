@@ -1,7 +1,7 @@
 import { StringBuffer } from "../common";
 import { TokenData } from "./token_data";
 
-import { SyntaxType, SyntaxSubtype, Token } from "./types";
+import { SyntaxType, SyntaxSubtype, Token, AnyToken } from "./types";
 
 
 /*
@@ -18,7 +18,7 @@ export class Lexer {
 
   cur_char: string;
 
-  prev_token: Token | undefined;
+  prev_token: AnyToken | undefined;
 
   buf: StringBuffer;
 
@@ -57,19 +57,16 @@ export class Lexer {
     T extends SyntaxType = SyntaxType.Unknown,
     ST extends SyntaxSubtype = SyntaxSubtype.Unknown
   >(type?: T, subtype?: ST): Token<T, ST> {
-    const token = {
-      type: type ?? SyntaxType.Unknown,
-      subtype: subtype ?? SyntaxSubtype.Unknown,
-      range: {
-        start: { line: this.cur_ln, character: this.cur_col },
-        end: { line: this.cur_ln, character: this.cur_col }
-      }
-    } as Token<T, ST>;
+    const token = new Token(type, subtype);
+    token.range = {
+      start: { line: this.cur_ln, character: this.cur_col },
+      end: { line: this.cur_ln, character: this.cur_col }
+    };
 
     return token;
   }
 
-  finishToken<T extends Token>(token: T): T {
+  finishToken<T extends AnyToken>(token: T): T {
     token.content = this.buf.flush();
 
     token.range.end.character = this.cur_col;
@@ -167,7 +164,7 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeOperator(): Token<SyntaxType.Operator | SyntaxType.Unknown> {
+  consumeOperator(): Token<SyntaxType.Operator | SyntaxType.Unknown, SyntaxSubtype> {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
@@ -195,8 +192,8 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeWord(): Token {
-    const token = this.createToken() as Token;
+  consumeWord(): AnyToken {
+    const token = this.createToken() as AnyToken;
 
     while (this.moreData() && /[0-9a-zA-Z_]/.test(this.cur_char)) {
       this.nextCharToBuf();
@@ -230,9 +227,9 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  lex(): Token[] {
-    const tokens: Token[] = [];
-    let token: Token;
+  lex(): AnyToken[] {
+    const tokens: AnyToken[] = [];
+    let token: AnyToken;
 
     this.skipWhitespace();
     while (this.moreData()) {
@@ -279,7 +276,7 @@ export class Lexer {
     return tokens;
   }
 
-  static Lex(text: string): Token[] {
+  static Lex(text: string): AnyToken[] {
     const lexer = new Lexer(text);
 
     return lexer.lex();

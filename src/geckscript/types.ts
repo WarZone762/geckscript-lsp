@@ -146,6 +146,8 @@ export class Token<
   }
 }
 
+export type AnyToken = Token<SyntaxType, SyntaxSubtype>;
+
 export class CommentNode extends Node {
   type = SyntaxType.Comment;
 
