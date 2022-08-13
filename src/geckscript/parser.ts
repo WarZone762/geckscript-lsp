@@ -59,7 +59,7 @@ export class Node {
     },
     end: {
       line: 0,
-      character: 0
+      character: 1
     }
   };
 }
