@@ -4,8 +4,8 @@ import { Range } from "vscode-languageserver-textdocument";
 export const enum SyntaxType {
   Unknown,
 
-  Newline,
   EOF,
+  Newline,
   Comment,
 
   Literal,
@@ -69,10 +69,10 @@ export const enum SyntaxSubtype {
   SlashEquals,
   PercentEquals,
   CircumflexEquals,
-  VbarEquals,
+  VBarEquals,
   AmpersandEquals,
   Exclamation,
-  DoubleVbar,
+  DoubleVBar,
   DoubleAmpersand,
   DoubleEquals,
   ExclamationEquals,
@@ -123,6 +123,25 @@ export const enum SyntaxSubtype {
   ForeachStatement,
 }
 
+export class TreeData {
+  name: string;
+  children: TreeData[];
+
+  constructor(name: string, children: TreeData[] = []) {
+    this.name = name;
+    this.children = children;
+  }
+
+  append(child: TreeData | undefined): void {
+    if (child != undefined) this.children.push(child);
+  }
+
+  concat(children: TreeData[] | undefined): void {
+    if (children != undefined)
+      this.children = this.children.concat(children);
+  }
+}
+
 export class Node {
   type: SyntaxType = SyntaxType.Unknown;
   subtype: SyntaxSubtype = SyntaxSubtype.Unknown;
@@ -130,8 +149,8 @@ export class Node {
 }
 
 export class Token<
-  T extends SyntaxType = SyntaxType.Unknown,
-  ST extends SyntaxSubtype = SyntaxSubtype.Unknown
+  T extends SyntaxType = SyntaxType,
+  ST extends SyntaxSubtype = SyntaxSubtype
   > extends Node {
   declare type: T;
   declare subtype: ST;
@@ -145,8 +164,6 @@ export class Token<
     this.subtype = subtype ?? SyntaxSubtype.Unknown as ST;
   }
 }
-
-export type AnyToken = Token<SyntaxType, SyntaxSubtype>;
 
 export class CommentNode extends Node {
   type = SyntaxType.Comment;
@@ -209,16 +226,16 @@ export class FunctionNode extends ExpressionNode {
   subtype = SyntaxSubtype.Function;
 
   name!: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
-  args!: ExpressionNode[];
+  args: ExpressionNode[] = [];
 }
 
 export class LambdaInlineNode extends ExpressionNode {
   subtype = SyntaxSubtype.LambdaInline;
 
-  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
-  params!: ExpressionNode[];
-  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
-  arrow_token!: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
+  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
+  params: ExpressionNode[] = [];
+  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
+  arrow!: Token<SyntaxType.Operator, SyntaxSubtype.EqualsGreater>;
 
   expression!: ExpressionNode;
 }
@@ -229,7 +246,7 @@ export class LambdaNode extends ExpressionNode {
   begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
   function!: Token<SyntaxType.BlockType, SyntaxSubtype.Function>;
   lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
-  params!: ExpressionNode[];
+  params: ExpressionNode[] = [];
   rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
 
   compound_statement!: CompoundStatementNode;
@@ -260,15 +277,22 @@ export class LetNode extends StatementNode {
 export class CompoundStatementNode extends Node {
   type = SyntaxType.CompoundStatement;
 
-  children!: StatementNode[];
-  symbol_table!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>[];
+  children: StatementNode[] = [];
+  symbol_table: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>[] = [];
+}
+
+export class BlockTypeNode extends Node {
+  type = SyntaxType.BlockType;
+
+  block_type!: Token<SyntaxType.BlockType>;
+  args: Token[] = [];
 }
 
 export class BeginBlockNode extends StatementNode {
   subtype = SyntaxSubtype.BeginStatement;
 
   begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
-  expression!: ExpressionNode;
+  block_type!: BlockTypeNode;
   compound_statement!: CompoundStatementNode;
   end!: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
 }
@@ -304,7 +328,7 @@ export class WhileBlockNode extends StatementNode {
 export class IfBlockNode extends StatementNode {
   subtype = SyntaxSubtype.IfStatement;
 
-  branches!: BranchNode<SyntaxSubtype.If | SyntaxSubtype.Elseif>[];
+  branches: BranchNode<SyntaxSubtype.If | SyntaxSubtype.Elseif>[] = [];
   else?: Token<SyntaxType.Keyword, SyntaxSubtype.Else>;
   else_statements?: CompoundStatementNode;
   endif!: Token<SyntaxType.Keyword, SyntaxSubtype.Endif>;

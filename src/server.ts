@@ -1,4 +1,3 @@
-// TODO: better debug view
 import {
   createConnection,
   TextDocuments,
@@ -18,12 +17,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as TreeViewServer from "./tree_view/server";
 
-import { TokenData, TokenType } from "./geckscript/token_data";
 import * as Wiki from "./wiki";
 import * as ST from "./semantic_tokens";
 
-import * as Lexer from "./geckscript/lexer";
-import { AST, Parser } from "./geckscript/parser";
+import { Parser } from "./geckscript/parser";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
