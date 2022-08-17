@@ -1,3 +1,4 @@
+import { Diagnostic } from "vscode-languageserver";
 import { Range } from "vscode-languageserver-textdocument";
 
 
@@ -129,13 +130,12 @@ export class TreeData {
     this.children = children;
   }
 
-  append(child: TreeData | undefined): void {
-    if (child != undefined) this.children.push(child);
+  append(child: TreeData): void {
+    this.children.push(child);
   }
 
-  concat(children: TreeData[] | undefined): void {
-    if (children != undefined)
-      this.children = this.children.concat(children);
+  concat(children: TreeData[]): void {
+    this.children = this.children.concat(children);
   }
 }
 
@@ -275,14 +275,13 @@ export class CompoundStatementNode extends Node {
   type = SyntaxType.CompoundStatement;
 
   children: StatementNode[] = [];
-  symbol_table: Token<SyntaxType.Identifier>[] = [];
 }
 
 export class BlockTypeNode extends Node {
   type = SyntaxType.BlockType;
 
   block_type!: Token<SyntaxType.BlockTypeIdentifier>;
-  args: Token[] = [];
+  args: Node[] = [];
 }
 
 export class BeginBlockNode extends StatementNode {
@@ -337,4 +336,8 @@ export class ScriptNode extends Node {
   scriptname!: Token<SyntaxType.Keyword, SyntaxSubtype.ScriptName>;
   name!: Token<SyntaxType.Identifier>;
   statements!: CompoundStatementNode;
+
+  comments: CommentNode[] = [];
+
+  diagnostics: Diagnostic[] = [];
 }

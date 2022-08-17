@@ -64,7 +64,7 @@ documents.onDidChangeContent(
 
     const ast = Parser.Parse(doc.getText());
     tree_view_server?.write_message(JSON.stringify(ast.toTree()));
-    connection.sendDiagnostics({ uri: doc.uri, diagnostics: ast.diagnostics });
+    connection.sendDiagnostics({ uri: doc.uri, diagnostics: ast.root.diagnostics });
   }
 );
 

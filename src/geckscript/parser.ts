@@ -1,4 +1,3 @@
-import { Diagnostic } from "vscode-languageserver";
 import { Lexer } from "./lexer";
 import { TokenData, TokenTypeMap, TokenSubtypeMap } from "./token_data";
 
@@ -21,7 +20,6 @@ import {
   LambdaInlineNode,
   LambdaNode,
   LetNode,
-  Literal,
   ScriptNode,
   SetNode,
   StatementNode,
@@ -41,32 +39,23 @@ export class Parser {
   cur_token: Token;
   last_token: Token;
 
-  diagnostics: Diagnostic[] = [];
+  script: ScriptNode;
 
   constructor(data: Token[]) {
     this.tokens = data;
 
     this.cur_token = data[0];
     this.last_token = data[0];
+
+    this.script = new ScriptNode();
   }
 
   skipToken(): void {
     this.last_token = this.cur_token;
     this.cur_token = this.tokens[++this.cur_pos];
-
-    while (this.cur_token.type === SyntaxType.Comment) this.skipToken();
   }
 
-  // nextToken(): Token {
-  //   const token = this.cur_token;
-  //   this.skipToken();
-
-  //   return token;
-  // }
-
-  nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {
-    while (this.cur_token.type === SyntaxType.Comment) this.skipToken();  // TODO: handle comments
-
+  nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {  // TODO: combine Node.type and Node.subtype?
     const token = this.cur_token;
 
     if (token.type !== type) {
@@ -77,12 +66,12 @@ export class Parser {
     if (this.cur_token.type !== SyntaxType.EOF)
       this.skipToken();
 
+    while (this.cur_token.type === SyntaxType.Comment) this.parseComment();
+
     return token as Token<T>;
   }
 
   nextTokenExpectSubtype<T extends SyntaxType, ST extends SyntaxSubtype>(type: T, subtype: ST): Token<T, ST> {
-    while (this.cur_token.type === SyntaxType.Comment) this.skipToken();
-
     const token = this.cur_token;
 
     if (token.type !== type || token.subtype !== subtype) {
@@ -93,19 +82,13 @@ export class Parser {
     if (this.cur_token.type !== SyntaxType.EOF)
       this.skipToken();
 
+    while (this.cur_token.type === SyntaxType.Comment) this.parseComment();
+
     return token as Token<T, ST>;
   }
 
   moreData(): boolean {
     return this.cur_token.type !== SyntaxType.EOF;
-  }
-
-  lookBehind(offset: number): Token | undefined {
-    return this.tokens[this.cur_pos + offset];
-  }
-
-  lookAhead(offset: number): Token | undefined {
-    return this.tokens[this.cur_pos - offset];
   }
 
   createMissingNode<T extends Node>(node: T): T {
@@ -125,7 +108,7 @@ export class Parser {
   reportParsingError(message: string): void {
     const token = this.cur_token;
 
-    this.diagnostics.push({
+    this.script.diagnostics.push({
       message: `Parsing error: ${message}`,
       range: {
         start: {
@@ -140,8 +123,7 @@ export class Parser {
     });
   }
 
-  parseNode<T extends Node>(node/*_class*/: T/*{ new(): T }*/, parse_function: (node: T) => void): T {
-    // const node = new node_class;
+  parseNode<T extends Node>(node: T, parse_function: (node: T) => void): T {
     node.range = {
       start: this.cur_token.range.start,
       end: this.cur_token.range.start,
@@ -199,11 +181,14 @@ export class Parser {
     return lhs;
   }
 
-  parseComment(): CommentNode {
-    return this.parseNode(new CommentNode(), node => {
-      node.text = this.nextTokenExpectType(SyntaxType.Comment).content;
+  parseComment(): void {
+    const node = this.parseNode(new CommentNode(), node => {
+      node.text = this.cur_token.content;
       node.value = node.text.substring(1);
+      this.skipToken();
     });
+
+    this.script.comments[node.range.start.line] = node;
   }
 
   parseNumber(): NumberNode {
@@ -309,7 +294,7 @@ export class Parser {
         return this.parseFunction();
       else
         return this.parseIdentifier();
-    } else if (this.cur_token.subtype === SyntaxSubtype.LParen) {
+    } else if (this.cur_token.subtype === SyntaxSubtype.LParen) {  // TODO: implement proper parenthesized expression parsing
       this.skipToken();
 
       return this.parseNode(this.parseExpression(), node => {
@@ -625,7 +610,7 @@ export class Parser {
       ) {
         const arg = this.parsePrimaryExpression();
 
-        node.args.push(arg as Token);
+        node.args.push(arg);
       }
     });
   }
@@ -697,7 +682,13 @@ export class Parser {
   }
 
   parseScript(): ScriptNode {
-    return this.parseNode(new ScriptNode(), node => {
+    return this.parseNode(this.script, node => {
+      while (this.moreData()) {
+        if (this.cur_token.type === SyntaxType.Comment) this.parseComment();
+        else if (this.cur_token.type === SyntaxType.Newline) this.skipToken();
+        else break;
+      }
+
       node.scriptname = this.nextTokenExpectSubtype(SyntaxType.Keyword, SyntaxSubtype.ScriptName);
       node.name = this.parseIdentifier();
       this.nextTokenExpectType(SyntaxType.Newline);
@@ -709,22 +700,20 @@ export class Parser {
     const parser = new Parser(Lexer.Lex(text));
 
     const ast = new AST(parser.parseScript());
-    ast.diagnostics = parser.diagnostics;
 
     return ast;
   }
 }
 
 export class AST {
-  root: Node;
-  diagnostics: Diagnostic[] = [];
+  root: ScriptNode;
 
   static ToTreeFunctionsType: { [key in SyntaxType]?: (node: any) => TreeData } = {
     [SyntaxType.Unknown]: (node: Token) => {
       return new TreeData(`Node "${node.content}" (${node.type}, ${node.subtype})`);
     },
     [SyntaxType.Comment]: (node: CommentNode) => {
-      return new TreeData(`;${node.value}`);
+      return new TreeData(`${node.range.start.line}: ;${node.value}`);
     },
     [SyntaxType.Identifier]: (node: Token) => {
       return new TreeData(`${node.content}`);
@@ -736,16 +725,14 @@ export class AST {
       return new TreeData(`${node.content}`);
     },
     [SyntaxType.BlockType]: (node: BlockTypeNode) => {
-      const tree = new TreeData("Block Type");
+      const tree = new TreeData(`${node.block_type.content}`);
 
-      tree.append(AST.ToTree(node.block_type));
-
-      tree.concat(node.args.map(AST.ToTree) as TreeData[]);
+      tree.concat(node.args.map(AST.ToTree));
 
       return tree;
     },
     [SyntaxType.VariableDeclaration]: (node: VariableDeclarationNode) => {
-      const tree = new TreeData(`Type: ${node.variable_type.content}`);
+      const tree = new TreeData(`${node.variable_type.content}`);
 
       tree.append(AST.ToTree(node.value));
 
@@ -754,13 +741,8 @@ export class AST {
     [SyntaxType.CompoundStatement]: (node: CompoundStatementNode) => {
       const tree = new TreeData(
         "Compound Statement",
-        node.children.map(AST.ToTree) as TreeData[]
+        node.children.map(AST.ToTree)
       );
-
-      tree.append(new TreeData(
-        "Symbol Table",
-        node.symbol_table.map(AST.ToTree) as TreeData[]
-      ));
 
       return tree;
     },
@@ -777,6 +759,9 @@ export class AST {
 
       tree.append(AST.ToTree(node.name));
       tree.append(AST.ToTree(node.statements));
+      tree.append(new TreeData("Comments", Object.values(node.comments).map(AST.ToTree)));
+
+      console.log(tree);
 
       return tree;
     }
@@ -793,7 +778,6 @@ export class AST {
       const tree = new TreeData("set");
 
       tree.append(AST.ToTree(node.identifier));
-      tree.append(new TreeData("to"));
       tree.append(AST.ToTree(node.value));
 
       return tree;
@@ -831,14 +815,14 @@ export class AST {
     [SyntaxSubtype.Function]: (node: FunctionNode) => {
       const tree = new TreeData(`${node.name.content}`);
 
-      tree.concat(node.args.map(AST.ToTree) as TreeData[]);
+      tree.concat(node.args.map(AST.ToTree));
 
       return tree;
     },
     [SyntaxSubtype.LambdaInline]: (node: LambdaInlineNode) => {
       const tree = new TreeData("Inline Lambda");
 
-      tree.concat(node.params.map(AST.ToTree) as TreeData[]);
+      tree.concat(node.params.map(AST.ToTree));
       tree.append(AST.ToTree(node.expression));
 
       return tree;
@@ -846,7 +830,7 @@ export class AST {
     [SyntaxSubtype.Lambda]: (node: LambdaNode) => {
       const tree = new TreeData("Lambda");
 
-      tree.concat(node.params.map(AST.ToTree) as TreeData[]);
+      tree.concat(node.params.map(AST.ToTree));
       tree.append(AST.ToTree(node.compound_statement));
 
       return tree;
@@ -878,7 +862,7 @@ export class AST {
     [SyntaxSubtype.IfStatement]: (node: IfBlockNode) => {
       const tree = new TreeData("if");
 
-      tree.concat(node.branches.map(AST.ToTree) as TreeData[]);
+      tree.concat(node.branches.map(AST.ToTree));
       if (node.else_statements != undefined)
         tree.append(AST.ToTree(node.else_statements));
 
@@ -886,11 +870,11 @@ export class AST {
     },
   };
 
-  constructor(root: Node) {
+  constructor(root: ScriptNode) {
     this.root = root;
   }
 
-  toTree(): TreeData | undefined {
+  toTree(): TreeData {
     let func;
     func = AST.ToTreeFunctionsSubtype[this.root.subtype];
     if (func == undefined)
@@ -901,9 +885,7 @@ export class AST {
     return func(this.root);
   }
 
-  validate(): Diagnostic[] { return []; }
-
-  static ToTree(node: Node): TreeData | undefined {
+  static ToTree(node: Node): TreeData {
     let func;
     func = AST.ToTreeFunctionsSubtype[node.subtype];
     if (func == undefined)
