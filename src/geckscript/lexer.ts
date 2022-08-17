@@ -193,13 +193,13 @@ export class Lexer {
   }
 
   consumeWord(): Token {
-    const token = this.createToken() as Token;
+    const token = this.createToken();
 
     while (this.moreData() && /[0-9a-zA-Z_]/.test(this.cur_char)) {
       this.nextCharToBuf();
     }
 
-    const word = this.buf.toString();
+    const word = this.buf.toString().toLowerCase();
 
     if (word in TokenData.Typenames) {
       token.type = SyntaxType.Typename;
@@ -216,12 +216,8 @@ export class Lexer {
     } else if (word in TokenData.Operators) {
       token.type = SyntaxType.Operator;
       token.subtype = TokenData.Operators[word];
-    } else if (word in TokenData.Functions) {
-      token.type = SyntaxType.Identifier;
-      token.subtype = SyntaxSubtype.FunctionIdentifier;
     } else {
       token.type = SyntaxType.Identifier;
-      token.subtype = SyntaxSubtype.FunctionIdentifier;
     }
 
     return this.finishToken(token);
@@ -269,7 +265,6 @@ export class Lexer {
       start: { line: this.cur_ln + 1, character: 0 },
       end: { line: this.cur_ln + 1, character: 1 }
     };
-    eof.content = "";
     tokens.push(eof);
 
     return tokens;

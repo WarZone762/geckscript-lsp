@@ -14,6 +14,7 @@ export const enum SyntaxType {
   Keyword,
   Operator,
   BlockType,
+  BlockTypeNode,
   VariableDeclaration,
   Branch,
   Expression,
@@ -28,10 +29,6 @@ export const enum SyntaxSubtype {
   // Literal
   Number,
   String,
-
-  // Identifier
-  VariableIdentifier,
-  FunctionIdentifier,
 
   // Typename
   Short,
@@ -155,7 +152,7 @@ export class Token<
   declare type: T;
   declare subtype: ST;
 
-  content?: string;
+  content = "";
 
   constructor(type?: T, subtype?: ST) {
     super();
@@ -225,7 +222,7 @@ export class BinOpPairedNode extends ExpressionNode {
 export class FunctionNode extends ExpressionNode {
   subtype = SyntaxSubtype.Function;
 
-  name!: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
+  name!: Token<SyntaxType.Identifier>;
   args: ExpressionNode[] = [];
 }
 
@@ -262,7 +259,7 @@ export class SetNode extends StatementNode {
   subtype = SyntaxSubtype.SetStatement;
 
   set!: Token<SyntaxType.Keyword, SyntaxSubtype.Set>;
-  identifier!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>;
+  identifier!: Token<SyntaxType.Identifier>;
   to!: Token<SyntaxType.Keyword, SyntaxSubtype.To>;
   value!: ExpressionNode;
 }
@@ -278,11 +275,11 @@ export class CompoundStatementNode extends Node {
   type = SyntaxType.CompoundStatement;
 
   children: StatementNode[] = [];
-  symbol_table: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier>[] = [];
+  symbol_table: Token<SyntaxType.Identifier>[] = [];
 }
 
 export class BlockTypeNode extends Node {
-  type = SyntaxType.BlockType;
+  type = SyntaxType.BlockTypeNode;
 
   block_type!: Token<SyntaxType.BlockType>;
   args: Token[] = [];
@@ -301,7 +298,7 @@ export class ForeachBlockNode extends StatementNode {
   subtype = SyntaxSubtype.Foreach;
 
   foreach!: Token<SyntaxType.Keyword, SyntaxSubtype.Foreach>;
-  idetifier!: Token<SyntaxType.Identifier, SyntaxSubtype.VariableIdentifier> | VariableDeclarationNode;
+  idetifier!: Token<SyntaxType.Identifier> | VariableDeclarationNode;
   larrow!: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
   iterable!: ExpressionNode;
 
@@ -338,6 +335,6 @@ export class ScriptNode extends Node {
   type = SyntaxType.Script;
 
   scriptname!: Token<SyntaxType.Keyword, SyntaxSubtype.ScriptName>;
-  name!: Token<SyntaxType.Identifier, SyntaxSubtype.FunctionIdentifier>;
+  name!: Token<SyntaxType.Identifier>;
   statements!: CompoundStatementNode;
 }
