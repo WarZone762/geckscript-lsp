@@ -208,11 +208,11 @@ export class Lexer {
       token.type = SyntaxType.Keyword;
       token.subtype = TokenData.Keywords[word];
     } else if (
-      word in TokenData.BlockTypes &&
+      word in TokenData.Blocktypes &&
       this.prev_token?.subtype === SyntaxSubtype.Begin
     ) {
-      token.type = SyntaxType.BlockType;
-      token.subtype = TokenData.BlockTypes[word];
+      token.type = SyntaxType.BlockTypeIdentifier;
+      token.subtype = TokenData.Blocktypes[word];
     } else if (word in TokenData.Operators) {
       token.type = SyntaxType.Operator;
       token.subtype = TokenData.Operators[word];

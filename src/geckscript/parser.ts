@@ -1,6 +1,6 @@
 import { Diagnostic } from "vscode-languageserver";
 import { Lexer } from "./lexer";
-import { TokenData } from "./token_data";
+import { TokenData, TokenTypeMap, TokenSubtypeMap } from "./token_data";
 
 import {
   TreeData,
@@ -69,8 +69,10 @@ export class Parser {
 
     const token = this.cur_token;
 
-    if (token.type !== type)
-      this.reportParsingError(`expected ${type}, got ${token.type}`);
+    if (token.type !== type) {
+      this.reportParsingError(`expected "${TokenTypeMap[type]}", got "${TokenTypeMap[token.type]}"`);
+      if (this.cur_token.type === SyntaxType.Newline) return token as Token<T>;
+    }
 
     if (this.cur_token.type !== SyntaxType.EOF)
       this.skipToken();
@@ -83,8 +85,10 @@ export class Parser {
 
     const token = this.cur_token;
 
-    if (token.type !== type || token.subtype !== subtype)
-      this.reportParsingError(`expected (${type}, ${subtype}), got (${token.type}, ${token.subtype})`);
+    if (token.type !== type || token.subtype !== subtype) {
+      this.reportParsingError(`expected "${TokenSubtypeMap[subtype]}", got "${TokenSubtypeMap[token.subtype]}"`);
+      if (this.cur_token.type === SyntaxType.Newline) return token as Token<T, ST>;
+    }
 
     if (this.cur_token.type !== SyntaxType.EOF)
       this.skipToken();
@@ -109,7 +113,10 @@ export class Parser {
       start: this.cur_token.range.start,
       end: this.cur_token.range.start
     };
-    if (this.cur_token.type !== SyntaxType.EOF)
+    if (
+      this.cur_token.type !== SyntaxType.EOF &&
+      this.cur_token.type !== SyntaxType.Newline
+    )
       this.skipToken();
 
     return node;
@@ -271,7 +278,7 @@ export class Parser {
   parseLambda(): LambdaNode {
     return this.parseNode(new LambdaNode(), node => {
       node.begin = this.nextTokenExpectSubtype(SyntaxType.Keyword, SyntaxSubtype.Begin);
-      node.function = this.nextTokenExpectSubtype(SyntaxType.BlockType, SyntaxSubtype.Function);
+      node.function = this.nextTokenExpectSubtype(SyntaxType.BlockTypeIdentifier, SyntaxSubtype.Function);
       node.lbracket = this.nextTokenExpectSubtype(SyntaxType.Operator, SyntaxSubtype.LBracket);
 
       while (
@@ -298,7 +305,7 @@ export class Parser {
     } else if (this.cur_token.subtype === SyntaxSubtype.Number) {
       return this.parseNumber();
     } else if (this.cur_token.type === SyntaxType.Identifier) {
-      if (this.cur_token.content.toLowerCase() in TokenData.Functions)  // TODO: implement via reverse token_data
+      if (this.cur_token.content.toLowerCase() in TokenData.Functions)
         return this.parseFunction();
       else
         return this.parseIdentifier();
@@ -606,9 +613,16 @@ export class Parser {
 
   parseBlockType(): BlockTypeNode {
     return this.parseNode(new BlockTypeNode(), node => {
-      node.block_type = this.nextTokenExpectType(SyntaxType.BlockType);
+      node.block_type = this.nextTokenExpectType(SyntaxType.BlockTypeIdentifier);
 
-      while (this.moreData() && this.cur_token.type !== SyntaxType.Newline) {
+      while (
+        this.moreData() &&
+        this.cur_token.type !== SyntaxType.Newline &&
+        (
+          this.cur_token.type === SyntaxType.Identifier ||
+          this.cur_token.subtype === SyntaxSubtype.Number
+        )
+      ) {
         const arg = this.parsePrimaryExpression();
 
         node.args.push(arg as Token);
@@ -718,10 +732,10 @@ export class AST {
     [SyntaxType.Keyword]: (node: Token) => {
       return new TreeData(`Keyword: ${node.content}`);
     },
-    [SyntaxType.BlockType]: (node: Token) => {
+    [SyntaxType.BlockTypeIdentifier]: (node: Token) => {
       return new TreeData(`${node.content}`);
     },
-    [SyntaxType.BlockTypeNode]: (node: BlockTypeNode) => {
+    [SyntaxType.BlockType]: (node: BlockTypeNode) => {
       const tree = new TreeData("Block Type");
 
       tree.append(AST.ToTree(node.block_type));

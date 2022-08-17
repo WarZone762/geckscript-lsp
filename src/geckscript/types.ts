@@ -13,8 +13,8 @@ export const enum SyntaxType {
   Typename,
   Keyword,
   Operator,
+  BlockTypeIdentifier,
   BlockType,
-  BlockTypeNode,
   VariableDeclaration,
   Branch,
   Expression,
@@ -241,7 +241,7 @@ export class LambdaNode extends ExpressionNode {
   subtype = SyntaxSubtype.Lambda;
 
   begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
-  function!: Token<SyntaxType.BlockType, SyntaxSubtype.Function>;
+  function!: Token<SyntaxType.BlockTypeIdentifier, SyntaxSubtype.Function>;
   lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
   params: ExpressionNode[] = [];
   rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
@@ -279,9 +279,9 @@ export class CompoundStatementNode extends Node {
 }
 
 export class BlockTypeNode extends Node {
-  type = SyntaxType.BlockTypeNode;
+  type = SyntaxType.BlockType;
 
-  block_type!: Token<SyntaxType.BlockType>;
+  block_type!: Token<SyntaxType.BlockTypeIdentifier>;
   args: Token[] = [];
 }
 

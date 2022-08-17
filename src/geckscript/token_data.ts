@@ -1,5 +1,5 @@
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { SyntaxSubtype } from "./types";
+import { SyntaxSubtype, SyntaxType } from "./types";
 
 
 export type TokenMap = { [key: string]: SyntaxSubtype };
@@ -7,7 +7,7 @@ export type TokenMap = { [key: string]: SyntaxSubtype };
 export const TokenData: {
   Typenames: TokenMap,
   Keywords: TokenMap,
-  BlockTypes: TokenMap,
+  Blocktypes: TokenMap,
   Operators: TokenMap,
   Functions: TokenMap,
 } = {
@@ -42,7 +42,7 @@ export const TokenData: {
     "let": SyntaxSubtype.Let,
   },
 
-  BlockTypes: {
+  Blocktypes: {
     "function": SyntaxSubtype.Function,
     "gamemode": SyntaxSubtype.Unknown,
     "menumode": SyntaxSubtype.Unknown,
@@ -3509,6 +3509,46 @@ export const TokenData: {
   },
 };
 
+export type TypeMap = { [key in SyntaxType]: string };
+export type SubtypeMap = { [key in SyntaxSubtype]?: string };
+
+export const TokenTypeMap: TypeMap = {
+  [SyntaxType.Unknown]: "unknown",
+  [SyntaxType.EOF]: "end of file",
+  [SyntaxType.Newline]: "new line",
+  [SyntaxType.Comment]: "comment",
+  [SyntaxType.Literal]: "literal",
+  [SyntaxType.Identifier]: "identifier",
+  [SyntaxType.Typename]: "typename",
+  [SyntaxType.Keyword]: "keyword",
+  [SyntaxType.Operator]: "operator",
+  [SyntaxType.BlockTypeIdentifier]: "block type identifier",
+  [SyntaxType.BlockType]: "block type",
+  [SyntaxType.VariableDeclaration]: "variable declaration",
+  [SyntaxType.Branch]: "branch",
+  [SyntaxType.Expression]: "expression",
+  [SyntaxType.Statement]: "statement",
+  [SyntaxType.CompoundStatement]: "compound statement",
+  [SyntaxType.Script]: "script",
+};
+
+export const TokenSubtypeMap: SubtypeMap = {};
+
+function AddToSubtypeMap(map: TokenMap): SubtypeMap {
+  for (const [k, v] of Object.entries(map)) {
+    TokenSubtypeMap[v] = k;
+  }
+
+  return TokenSubtypeMap;
+}
+
+AddToSubtypeMap(TokenData.Typenames);
+AddToSubtypeMap(TokenData.Keywords);
+AddToSubtypeMap(TokenData.Blocktypes);
+AddToSubtypeMap(TokenData.Operators);
+
+TokenSubtypeMap[SyntaxSubtype.Unknown] = "unknown";
+
 export const CompletionItems: { [key: string]: CompletionItem[] } = {};
 
 function GetCompletionItems(name: keyof typeof TokenData, kind: CompletionItemKind) {
@@ -3526,7 +3566,7 @@ function GetCompletionItems(name: keyof typeof TokenData, kind: CompletionItemKi
 GetCompletionItems("Typenames", CompletionItemKind.TypeParameter);
 GetCompletionItems("Keywords", CompletionItemKind.Keyword);
 GetCompletionItems("Operators", CompletionItemKind.Operator);
-GetCompletionItems("BlockTypes", CompletionItemKind.Constant);
+GetCompletionItems("Blocktypes", CompletionItemKind.Constant);
 GetCompletionItems("Functions", CompletionItemKind.Function);
 
 // type TokenInfo = [TokenSubtype | undefined, string, string]
