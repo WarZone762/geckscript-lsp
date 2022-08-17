@@ -106,20 +106,9 @@ export class Parser {
   }
 
   reportParsingError(message: string): void {
-    const token = this.cur_token;
-
     this.script.diagnostics.push({
       message: `Parsing error: ${message}`,
-      range: {
-        start: {
-          line: token.range.start.line,
-          character: token.range.start.character
-        },
-        end: {
-          line: token.range.end.line,
-          character: token.range.end.character
-        }
-      },
+      range: this.cur_token.range,
     });
   }
 
@@ -760,8 +749,6 @@ export class AST {
       tree.append(AST.ToTree(node.name));
       tree.append(AST.ToTree(node.statements));
       tree.append(new TreeData("Comments", Object.values(node.comments).map(AST.ToTree)));
-
-      console.log(tree);
 
       return tree;
     }

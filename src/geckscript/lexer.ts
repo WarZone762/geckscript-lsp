@@ -75,9 +75,10 @@ export class Lexer {
   }
 
   consumeNewline(): Token<SyntaxType.Newline> {
-    const token = this.createToken(SyntaxType.Newline);
+    let token = this.createToken(SyntaxType.Newline);
 
     this.nextCharToBuf();
+    token = this.finishToken(token);
     this.cur_col = 0;
     ++this.cur_ln;
     this.skipWhitespace();
@@ -89,7 +90,7 @@ export class Lexer {
       this.skipWhitespace();
     }
 
-    return this.finishToken(token);
+    return token;
   }
 
   consumeComment(): Token<SyntaxType.Comment> {
