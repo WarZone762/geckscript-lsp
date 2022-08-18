@@ -1,5 +1,6 @@
+import { Range } from "vscode-languageserver-textdocument";
 import { Lexer } from "./lexer";
-import { TokenData, TokenTypeMap, TokenSubtypeMap } from "./token_data";
+import { TokenData, TokenTypeMap, TokenSyntaxTypeMap } from "./token_data";
 
 import {
   TreeData,
@@ -83,7 +84,7 @@ export class Parser {
     let skip_token = true;
 
     if (token.type !== type) {
-      this.reportParsingError(`expected "${TokenSubtypeMap[type]}", got "${TokenSubtypeMap[token.type]}"`);
+      this.reportParsingError(`expected "${TokenSyntaxTypeMap.All[type]}", got "${TokenSyntaxTypeMap.All[token.type]}"`);
       skip_token = this.cur_token.type !== SyntaxType.Newline;
     }
 
@@ -120,10 +121,10 @@ export class Parser {
     return node;
   }
 
-  reportParsingError(message: string): void {
+  reportParsingError(message: string, range?: Range): void {
     this.script.diagnostics.push({
       message: `Parsing error: ${message}`,
-      range: this.cur_token.range,
+      range: range ?? this.cur_token.range,
     });
   }
 
@@ -267,7 +268,7 @@ export class Parser {
   parseLambda(): LambdaNode {
     return this.parseNode(new LambdaNode(), node => {
       node.begin = this.nextTokenExpectSyntaxType(SyntaxType.Begin);
-      node.function = this.nextTokenExpectSyntaxType(SyntaxType.Function);
+      node.function = this.nextTokenExpectSyntaxType(SyntaxType.BlocktypeTokenFunction);
       node.lbracket = this.nextTokenExpectSyntaxType(SyntaxType.LBracket);
 
       while (
@@ -284,7 +285,9 @@ export class Parser {
 
       node.rbracket = this.nextTokenExpectSyntaxType(SyntaxType.RBracket);
       this.nextTokenExpectSyntaxType(SyntaxType.Newline);
-      node.compound_statement = this.parseCompoundStatement();
+      node.compound_statement = this.parseCompoundStatement({
+        [SyntaxType.End]: true
+      });
       node.end = this.nextTokenExpectSyntaxType(SyntaxType.End);
     });
   }
@@ -302,7 +305,9 @@ export class Parser {
     } else if (this.cur_token.type === SyntaxType.LParen) {
       this.skipToken();
       if (this.cur_token.type as unknown === SyntaxType.Begin) {
-        return this.parseLambda();
+        return this.parseNode(this.parseLambda(), node => {
+          this.nextTokenExpectSyntaxType(SyntaxType.RParen);
+        });
       } else {
         ++this.paren_level;
 
@@ -563,6 +568,13 @@ export class Parser {
       node = this.parseLet();
     } else if (type === SyntaxType.Begin) {
       node = this.parseBeginBlock();
+
+      this.reportParsingError(
+        "nested begin blocks not allowed",
+        node.range
+      );
+
+      node.type = SyntaxType.Unknown;
     } else if (type === SyntaxType.While) {
       node = this.parseWhileBlock();
     } else if (type === SyntaxType.Foreach) {
@@ -587,26 +599,20 @@ export class Parser {
     return node;
   }
 
-  parseCompoundStatement(): CompoundStatementNode {
+  parseCompoundStatement(terminator_tokens: { [key in SyntaxType]?: boolean }): CompoundStatementNode {
     return this.parseNode(new CompoundStatementNode(), node => {
-      while (
-        this.moreData() &&
-        this.cur_token.type !== SyntaxType.End &&
-        this.cur_token.type !== SyntaxType.Elseif &&
-        this.cur_token.type !== SyntaxType.Else &&
-        this.cur_token.type !== SyntaxType.Endif &&
-        this.cur_token.type !== SyntaxType.Loop
-      ) {
+      while (this.moreData() && !(this.cur_token.type in terminator_tokens)) {
         const statement = this.parseStatement();
 
-        node.children.push(statement);
+        if (statement.type !== SyntaxType.Unknown)
+          node.children.push(statement);
       }
     });
   }
 
   parseBlockType(): BlockTypeNode {
     return this.parseNode(new BlockTypeNode(), node => {
-      node.block_type = this.nextTokenExpectTokenType(TokenType.Blocktype);
+      node.block_type = this.nextTokenExpectSyntaxType(SyntaxType.BlocktypeToken);
 
       while (
         this.moreData() &&
@@ -629,7 +635,9 @@ export class Parser {
       node.block_type = this.parseBlockType();
       this.nextTokenExpectSyntaxType(SyntaxType.Newline);
 
-      node.compound_statement = this.parseCompoundStatement();
+      node.compound_statement = this.parseCompoundStatement({
+        [SyntaxType.End]: true
+      });
 
       node.end = this.nextTokenExpectSyntaxType(SyntaxType.End);
     });
@@ -647,25 +655,32 @@ export class Parser {
       node.iterable = this.parseExpression();
       this.nextTokenExpectSyntaxType(SyntaxType.Newline);
 
-      node.statements = this.parseCompoundStatement();
+      node.statements = this.parseCompoundStatement({
+        [SyntaxType.Loop]: true
+      });
 
       node.loop = this.nextTokenExpectSyntaxType(SyntaxType.Loop);
     });
   }
 
-  parseBranch<T extends SyntaxType>(branch_keyword: T): BranchNode<T> {
+  parseBranch<T extends SyntaxType>(
+    branch_keyword: T,
+    terminator_tokens: { [key in SyntaxType]?: boolean }
+  ): BranchNode<T> {
     return this.parseNode(new BranchNode(), node => {
       node.keyword = this.nextTokenExpectSyntaxType(branch_keyword);
       node.condition = this.parseExpression();
       this.nextTokenExpectSyntaxType(SyntaxType.Newline);
 
-      node.statements = this.parseCompoundStatement();
+      node.statements = this.parseCompoundStatement(terminator_tokens);
     });
   }
 
   parseWhileBlock(): WhileBlockNode {
     return this.parseNode(new WhileBlockNode(), node => {
-      node.branch = this.parseBranch(SyntaxType.While);
+      node.branch = this.parseBranch(SyntaxType.While, {
+        [SyntaxType.Loop]: true
+      });
 
       node.loop = this.nextTokenExpectSyntaxType(SyntaxType.Loop);
     });
@@ -673,19 +688,65 @@ export class Parser {
 
   parseIfBlock(): IfBlockNode {
     return this.parseNode(new IfBlockNode(), node => {
-      node.branches[0] = this.parseBranch(SyntaxType.If);
+      node.branches[0] = this.parseBranch(SyntaxType.If, {
+        [SyntaxType.Elseif]: true,
+        [SyntaxType.Else]: true,
+        [SyntaxType.Endif]: true,
+      });
 
       while (this.cur_token.type === SyntaxType.Elseif) {
-        node.branches.push(this.parseBranch(SyntaxType.Elseif));
+        node.branches.push(this.parseBranch(SyntaxType.Elseif, {
+          [SyntaxType.Elseif]: true,
+          [SyntaxType.Else]: true,
+          [SyntaxType.Endif]: true,
+        }));
       }
 
       if (this.cur_token.type === SyntaxType.Else) {
         node.else = this.nextTokenExpectSyntaxType(SyntaxType.Else);
         this.nextTokenExpectSyntaxType(SyntaxType.Newline);
-        node.else_statements = this.parseCompoundStatement();
+        node.else_statements = this.parseCompoundStatement({
+          [SyntaxType.Endif]: true
+        });
       }
 
       node.endif = this.nextTokenExpectSyntaxType(SyntaxType.Endif);
+    });
+  }
+
+  parseScriptCompoundStatement(): CompoundStatementNode {
+    return this.parseNode(new CompoundStatementNode(), node => {
+      while (this.moreData()) {
+        let statement: StatementNode;
+
+        const type = this.cur_token.type;
+        const token_type = this.cur_token.token_type;
+
+        if (type === SyntaxType.Set) {
+          statement = this.parseSet();
+        } else if (type === SyntaxType.Let) {
+          statement = this.parseLet();
+        } else if (type === SyntaxType.Begin) {
+          statement = this.parseBeginBlock();
+        } else if (token_type === TokenType.Typename) {
+          statement = this.parseVariableDeclaration();
+        } else if (type === SyntaxType.Newline) {
+          this.skipToken();
+          continue;
+        } else {
+          this.reportParsingError(
+            "unexpected statement in outer scope",
+            this.parseStatement().range
+          );
+          continue;
+        }
+
+        if (this.cur_token.type !== SyntaxType.EOF) {
+          this.nextTokenExpectSyntaxType(SyntaxType.Newline);
+        }
+
+        node.children.push(statement);
+      }
     });
   }
 
@@ -700,7 +761,7 @@ export class Parser {
       node.scriptname = this.nextTokenExpectSyntaxType(SyntaxType.ScriptName);
       node.name = this.parseIdentifier();
       this.nextTokenExpectSyntaxType(SyntaxType.Newline);
-      node.statements = this.parseCompoundStatement();
+      node.statements = this.parseScriptCompoundStatement();
     });
   }
 
@@ -723,26 +784,25 @@ export class AST {
     [TokenType.Keyword]: (node: Token) => {
       return new TreeData(`Keyword: ${node.content}`);
     },
-    [TokenType.Blocktype]: (node: BlockTypeNode) => {
-      const tree = new TreeData(`${node.block_type.content}`);
-
-      tree.concat(node.args.map(AST.ToTree));
-
-      return tree;
-    },
   };
 
   static ToTreeFunctionsSubtype: { [key in SyntaxType]?: (node: any) => TreeData } = {
     [SyntaxType.Comment]: (node: CommentNode) => {
       return new TreeData(`${node.range.start.line}: ;${node.value}`);
     },
+    [SyntaxType.Number]: (node: NumberNode) => {
+      return new TreeData(`${node.value}`);
+    },
+    [SyntaxType.String]: (node: StringNode) => {
+      return new TreeData(`"${node.value}"`);
+    },
     [SyntaxType.Identifier]: (node: Token) => {
       return new TreeData(`${node.content}`);
     },
-    [SyntaxType.VariableDeclaration]: (node: VariableDeclarationNode) => {
-      const tree = new TreeData(`${node.variable_type.content}`);
+    [SyntaxType.BlocktypeToken]: (node: BlockTypeNode) => {
+      const tree = new TreeData(`${node.block_type.content}`);
 
-      tree.append(AST.ToTree(node.value));
+      tree.concat(node.args.map(AST.ToTree));
 
       return tree;
     },
@@ -750,6 +810,13 @@ export class AST {
       const tree = new TreeData(`${node.block_type.content}`);
 
       tree.concat(node.args.map(AST.ToTree));
+
+      return tree;
+    },
+    [SyntaxType.VariableDeclaration]: (node: VariableDeclarationNode) => {
+      const tree = new TreeData(`${node.variable_type.content}`);
+
+      tree.append(AST.ToTree(node.value));
 
       return tree;
     },
@@ -769,12 +836,6 @@ export class AST {
       tree.append(new TreeData("Comments", Object.values(node.comments).map(AST.ToTree)));
 
       return tree;
-    },
-    [SyntaxType.Number]: (node: NumberNode) => {
-      return new TreeData(`${node.value}`);
-    },
-    [SyntaxType.String]: (node: StringNode) => {
-      return new TreeData(`"${node.value}"`);
     },
     [SyntaxType.SetStatement]: (node: SetNode) => {
       const tree = new TreeData("set");
@@ -814,7 +875,7 @@ export class AST {
 
       return tree;
     },
-    [SyntaxType.Function]: (node: FunctionNode) => {
+    [SyntaxType.FunctionExpression]: (node: FunctionNode) => {
       const tree = new TreeData(`${node.name.content}`);
 
       tree.concat(node.args.map(AST.ToTree));

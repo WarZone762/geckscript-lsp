@@ -209,7 +209,6 @@ export class Lexer {
       word in TokenData.Blocktypes &&
       this.prev_token?.type === SyntaxType.Begin
     ) {
-      token.token_type = TokenType.Blocktype;
       token.type = TokenData.Blocktypes[word];
     } else if (word in TokenData.Operators) {
       token.token_type = TokenType.Operator;

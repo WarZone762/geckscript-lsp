@@ -98,7 +98,6 @@ statement:
   (COMMENT |
    assignment_set |
    assignment_let |
-   begin_block |
    while_block |
    foreach_block |
    if_block |
@@ -135,6 +134,14 @@ foreach_block:
     compound_statement
   LOOP
 
+script_compound_statement:
+  (
+    assignment_set |
+    assignment_let |
+    variable_declaration |
+    begin_block
+  )*
+
 script:
   SCRIPTNAME ID NEWLINE
-  compound_statement
+  script_compound_statement

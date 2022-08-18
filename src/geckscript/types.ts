@@ -8,7 +8,6 @@ export const enum TokenType {
   Typename,
   Keyword,
   Operator,
-  Blocktype,
 }
 
 export const enum SyntaxType {
@@ -18,9 +17,16 @@ export const enum SyntaxType {
   Newline,
   Comment,
 
-  Identifier,
   Number,
   String,
+  Identifier,
+  BlocktypeToken,
+  BlocktypeTokenFunction,
+
+  VariableDeclaration,
+  Blocktype,
+  Branch,
+  Script,
 
   // Typename
   Short,
@@ -95,19 +101,13 @@ export const enum SyntaxType {
   Comma,
   EqualsGreater,
 
-  // Special
-  VariableDeclaration,
-  Blocktype,
-  Branch,
-  Script,
-
   // Expression
   Lambda,
   LambdaInline,
   UnaryOp,
   BinOp,
   BinOpPaired,
-  Function,
+  FunctionExpression,
 
   // Statement
   LetStatement,
@@ -216,7 +216,7 @@ export class BinOpPairedNode extends ExpressionNode {
 }
 
 export class FunctionNode extends ExpressionNode {
-  type = SyntaxType.Function;
+  type = SyntaxType.FunctionExpression;
 
   name!: Token<TokenType, SyntaxType.Identifier>;
   args: ExpressionNode[] = [];
@@ -237,7 +237,7 @@ export class LambdaNode extends ExpressionNode {
   type = SyntaxType.Lambda;
 
   begin!: Token<TokenType, SyntaxType.Begin>;
-  function!: Token<TokenType, SyntaxType.Function>;
+  function!: Token<TokenType, SyntaxType.BlocktypeTokenFunction>;
   lbracket!: Token<TokenType, SyntaxType.LBracket>;
   params: ExpressionNode[] = [];
   rbracket!: Token<TokenType, SyntaxType.RBracket>;
@@ -275,7 +275,7 @@ export class CompoundStatementNode extends Node {
 export class BlockTypeNode extends Node {
   type = SyntaxType.Blocktype;
 
-  block_type!: Token<TokenType.Blocktype>;
+  block_type!: Token<TokenType, SyntaxType.BlocktypeToken>;
   args: Node[] = [];
 }
 
