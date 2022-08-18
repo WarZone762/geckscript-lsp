@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as vsc from "vscode-languageserver/node";
 import * as Lexer from "./geckscript/lexer";
-import { SyntaxType } from "./geckscript/types";
+import { TokenType } from "./geckscript/types";
 
 export const Legend: SemanticTokensLegend = {
   tokenTypes: [
@@ -23,15 +23,15 @@ export const Legend: SemanticTokensLegend = {
 
 const TokenTypeMap: number[] = [];
 
-TokenTypeMap[SyntaxType.Unknown] = Legend.tokenTypes.indexOf("variable");
-TokenTypeMap[SyntaxType.Comment] = Legend.tokenTypes.indexOf("comment");
-TokenTypeMap[SyntaxType.Expression] = Legend.tokenTypes.indexOf("function");
-TokenTypeMap[SyntaxType.Keyword] = Legend.tokenTypes.indexOf("keyword");
-TokenTypeMap[SyntaxType.Literal] = Legend.tokenTypes.indexOf("number");
-TokenTypeMap[SyntaxType.Operator] = Legend.tokenTypes.indexOf("operator");
-TokenTypeMap[SyntaxType.Literal] = Legend.tokenTypes.indexOf("string");
-TokenTypeMap[SyntaxType.Typename] = Legend.tokenTypes.indexOf("type");
-TokenTypeMap[SyntaxType.Identifier] = Legend.tokenTypes.indexOf("variable");
+// TokenTypeMap[TokenType.Unknown] = Legend.tokenTypes.indexOf("variable");
+// TokenTypeMap[TokenType.Comment] = Legend.tokenTypes.indexOf("comment");
+// TokenTypeMap[TokenType.Expression] = Legend.tokenTypes.indexOf("function");
+// TokenTypeMap[TokenType.Keyword] = Legend.tokenTypes.indexOf("keyword");
+// TokenTypeMap[TokenType.Literal] = Legend.tokenTypes.indexOf("number");
+// TokenTypeMap[TokenType.Operator] = Legend.tokenTypes.indexOf("operator");
+// TokenTypeMap[TokenType.Literal] = Legend.tokenTypes.indexOf("string");
+// TokenTypeMap[TokenType.Typename] = Legend.tokenTypes.indexOf("type");
+// TokenTypeMap[TokenType.Identifier] = Legend.tokenTypes.indexOf("variable");
 
 
 export function OnSemanticTokenRequestFull(
@@ -45,13 +45,13 @@ export function OnSemanticTokenRequestFull(
   const tokens = Lexer.Lexer.Lex(document.getText());
 
   for (const token of tokens) {
-    if (token.type == SyntaxType.Unknown) continue;
+    if (token.token_type == TokenType.Unknown) continue;
 
     tokensBuilder.push(
       token.range.start.line,
       token.range.start.character,
       token.range.end.character - token.range.start.character,
-      TokenTypeMap[token.type],
+      TokenTypeMap[token.token_type],
       Legend.tokenModifiers.indexOf("declaration")
     );
   }

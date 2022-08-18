@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import * as Lexer from "../geckscript/lexer";
-import { SyntaxType } from "../geckscript/types";
+import { SyntaxType, TokenType } from "../geckscript/types";
 
 const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toString();
 
@@ -14,7 +14,7 @@ for (const token of tokens) {
   else {
     process.stdout.write(
       `{${token.content}}token.subtype` +
-      `(${token.type}, ${token.subtype})` +
+      `(${token.token_type}, ${token.type})` +
       `[${token.range.start.line}, ${token.range.start.character}, ` +
       `${token.range.end.line}, ${token.range.end.character}]`
     );

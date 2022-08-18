@@ -2,6 +2,15 @@ import { Diagnostic } from "vscode-languageserver";
 import { Range } from "vscode-languageserver-textdocument";
 
 
+export const enum TokenType {
+  Unknown,
+
+  Typename,
+  Keyword,
+  Operator,
+  Blocktype,
+}
+
 export const enum SyntaxType {
   Unknown,
 
@@ -9,25 +18,7 @@ export const enum SyntaxType {
   Newline,
   Comment,
 
-  Literal,
   Identifier,
-  Typename,
-  Keyword,
-  Operator,
-  BlockTypeIdentifier,
-  BlockType,
-  VariableDeclaration,
-  Branch,
-  Expression,
-  Statement,
-  CompoundStatement,
-  Script,
-}
-
-export const enum SyntaxSubtype {
-  Unknown,
-
-  // Literal
   Number,
   String,
 
@@ -104,6 +95,12 @@ export const enum SyntaxSubtype {
   Comma,
   EqualsGreater,
 
+  // Special
+  VariableDeclaration,
+  Blocktype,
+  Branch,
+  Script,
+
   // Expression
   Lambda,
   LambdaInline,
@@ -119,6 +116,7 @@ export const enum SyntaxSubtype {
   IfStatement,
   WhileStatement,
   ForeachStatement,
+  CompoundStatement,
 }
 
 export class TreeData {
@@ -139,26 +137,27 @@ export class TreeData {
   }
 }
 
-export class Node {
-  type: SyntaxType = SyntaxType.Unknown;
-  subtype: SyntaxSubtype = SyntaxSubtype.Unknown;
+export class Node<T extends SyntaxType = SyntaxType> {
+  type: T;
   range!: Range;
+
+  constructor(type?: T) {
+    this.type = type ?? SyntaxType.Unknown as T;
+  }
 }
 
 export class Token<
-  T extends SyntaxType = SyntaxType,
-  ST extends SyntaxSubtype = SyntaxSubtype
-  > extends Node {
-  declare type: T;
-  declare subtype: ST;
+  TT extends TokenType = TokenType,
+  ST extends SyntaxType = SyntaxType
+  > extends Node<ST> {
+  declare token_type: TT;
 
   content = "";
 
-  constructor(type?: T, subtype?: ST) {
-    super();
+  constructor(token_type?: TT, type?: ST) {
+    super(type);
 
-    this.type = type ?? SyntaxType.Unknown as T;
-    this.subtype = subtype ?? SyntaxSubtype.Unknown as ST;
+    this.token_type = token_type ?? TokenType.Unknown as TT;
   }
 }
 
@@ -166,108 +165,104 @@ export class CommentNode extends Node {
   type = SyntaxType.Comment;
 
   value!: string;
-  text!: string;
+  content!: string;
 }
 
 export class Literal<T> extends Node {
-  type = SyntaxType.Literal;
-
   value!: T;
-  text!: string;
+  content!: string;
 }
 
 export class NumberNode extends Literal<number> {
-  subtype = SyntaxSubtype.Number;
+  type = SyntaxType.Number;
 }
 
 export class StringNode extends Literal<string> {
-  subtype = SyntaxSubtype.String;
+  type = SyntaxType.String;
 }
 
 export class VariableDeclarationNode extends Node {
   type = SyntaxType.VariableDeclaration;
 
-  variable_type!: Token<SyntaxType.Typename>;
+  variable_type!: Token<TokenType.Typename>;
   value!: ExpressionNode;
 }
 
 export class ExpressionNode extends Node {
-  type = SyntaxType.Expression;
 }
 
 export class UnaryOpNode extends ExpressionNode {
-  subtype = SyntaxSubtype.UnaryOp;
+  type = SyntaxType.UnaryOp;
 
-  op!: Token<SyntaxType.Operator>;
+  op!: Token<TokenType.Operator>;
   operand!: ExpressionNode;
 }
 
 export class BinOpNode extends ExpressionNode {
-  subtype = SyntaxSubtype.BinOp;
+  type = SyntaxType.BinOp;
 
   lhs!: ExpressionNode;
-  op!: Token<SyntaxType.Operator>;
+  op!: Token<TokenType.Operator>;
   rhs!: ExpressionNode;
 }
 
 export class BinOpPairedNode extends ExpressionNode {
-  subtype = SyntaxSubtype.BinOpPaired;
+  type = SyntaxType.BinOpPaired;
 
   lhs!: ExpressionNode;
-  left_op!: Token<SyntaxType.Operator, SyntaxSubtype.LSQBracket>;
+  left_op!: Token<TokenType, SyntaxType.LSQBracket>;
   rhs!: ExpressionNode;
-  right_op!: Token<SyntaxType.Operator, SyntaxSubtype.RSQBracket>;
+  right_op!: Token<TokenType, SyntaxType.RSQBracket>;
 }
 
 export class FunctionNode extends ExpressionNode {
-  subtype = SyntaxSubtype.Function;
+  type = SyntaxType.Function;
 
-  name!: Token<SyntaxType.Identifier>;
+  name!: Token<TokenType, SyntaxType.Identifier>;
   args: ExpressionNode[] = [];
 }
 
 export class LambdaInlineNode extends ExpressionNode {
-  subtype = SyntaxSubtype.LambdaInline;
+  type = SyntaxType.LambdaInline;
 
-  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
+  lbracket!: Token<TokenType, SyntaxType.LBracket>;
   params: ExpressionNode[] = [];
-  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
-  arrow!: Token<SyntaxType.Operator, SyntaxSubtype.EqualsGreater>;
+  rbracket!: Token<TokenType, SyntaxType.RBracket>;
+  arrow!: Token<TokenType, SyntaxType.EqualsGreater>;
 
   expression!: ExpressionNode;
 }
 
 export class LambdaNode extends ExpressionNode {
-  subtype = SyntaxSubtype.Lambda;
+  type = SyntaxType.Lambda;
 
-  begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
-  function!: Token<SyntaxType.BlockTypeIdentifier, SyntaxSubtype.Function>;
-  lbracket!: Token<SyntaxType.Operator, SyntaxSubtype.LBracket>;
+  begin!: Token<TokenType, SyntaxType.Begin>;
+  function!: Token<TokenType, SyntaxType.Function>;
+  lbracket!: Token<TokenType, SyntaxType.LBracket>;
   params: ExpressionNode[] = [];
-  rbracket!: Token<SyntaxType.Operator, SyntaxSubtype.RBracket>;
+  rbracket!: Token<TokenType, SyntaxType.RBracket>;
 
   compound_statement!: CompoundStatementNode;
 
-  end!: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
+  end!: Token<TokenType, SyntaxType.End>;
 }
 
 export class StatementNode extends Node {
-  type = SyntaxType.Statement;
 }
 
 export class SetNode extends StatementNode {
-  subtype = SyntaxSubtype.SetStatement;
+  type = SyntaxType.SetStatement;
 
-  set!: Token<SyntaxType.Keyword, SyntaxSubtype.Set>;
-  identifier!: Token<SyntaxType.Identifier>;
-  to!: Token<SyntaxType.Keyword, SyntaxSubtype.To>;
+  set!: Token<TokenType, SyntaxType.Set>;
+  identifier!: Token<TokenType, SyntaxType.Identifier>;
+  to!: Token<TokenType, SyntaxType.To>;
   value!: ExpressionNode;
 }
 
 export class LetNode extends StatementNode {
-  subtype = SyntaxSubtype.LetStatement;
+  type = SyntaxType.LetStatement;
 
-  let!: Token<SyntaxType.Keyword, SyntaxSubtype.Let>;
+  let!: Token<TokenType, SyntaxType.Let>;
   value!: ExpressionNode;
 }
 
@@ -278,63 +273,63 @@ export class CompoundStatementNode extends Node {
 }
 
 export class BlockTypeNode extends Node {
-  type = SyntaxType.BlockType;
+  type = SyntaxType.Blocktype;
 
-  block_type!: Token<SyntaxType.BlockTypeIdentifier>;
+  block_type!: Token<TokenType.Blocktype>;
   args: Node[] = [];
 }
 
 export class BeginBlockNode extends StatementNode {
-  subtype = SyntaxSubtype.BeginStatement;
+  type = SyntaxType.BeginStatement;
 
-  begin!: Token<SyntaxType.Keyword, SyntaxSubtype.Begin>;
+  begin!: Token<TokenType, SyntaxType.Begin>;
   block_type!: BlockTypeNode;
   compound_statement!: CompoundStatementNode;
-  end!: Token<SyntaxType.Keyword, SyntaxSubtype.End>;
+  end!: Token<TokenType, SyntaxType.End>;
 }
 
 export class ForeachBlockNode extends StatementNode {
-  subtype = SyntaxSubtype.Foreach;
+  type = SyntaxType.Foreach;
 
-  foreach!: Token<SyntaxType.Keyword, SyntaxSubtype.Foreach>;
-  idetifier!: Token<SyntaxType.Identifier> | VariableDeclarationNode;
-  larrow!: Token<SyntaxType.Operator, SyntaxSubtype.LArrow>;
+  foreach!: Token<TokenType, SyntaxType.Foreach>;
+  idetifier!: Token<TokenType, SyntaxType.Identifier> | VariableDeclarationNode;
+  larrow!: Token<TokenType, SyntaxType.LArrow>;
   iterable!: ExpressionNode;
 
   statements!: CompoundStatementNode;
 
-  loop!: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
+  loop!: Token<TokenType, SyntaxType.Loop>;
 }
 
-export class BranchNode<T extends SyntaxSubtype> extends Node {
+export class BranchNode<T extends SyntaxType> extends Node {
   type = SyntaxType.Branch;
 
-  keyword!: Token<SyntaxType.Keyword, T>;
+  keyword!: Token<TokenType, T>;
   condition!: ExpressionNode;
   statements!: CompoundStatementNode;
 }
 
 export class WhileBlockNode extends StatementNode {
-  subtype = SyntaxSubtype.WhileStatement;
+  type = SyntaxType.WhileStatement;
 
-  branch!: BranchNode<SyntaxSubtype.While>;
-  loop!: Token<SyntaxType.Keyword, SyntaxSubtype.Loop>;
+  branch!: BranchNode<SyntaxType.While>;
+  loop!: Token<TokenType, SyntaxType.Loop>;
 }
 
 export class IfBlockNode extends StatementNode {
-  subtype = SyntaxSubtype.IfStatement;
+  type = SyntaxType.IfStatement;
 
-  branches: BranchNode<SyntaxSubtype.If | SyntaxSubtype.Elseif>[] = [];
-  else?: Token<SyntaxType.Keyword, SyntaxSubtype.Else>;
+  branches: BranchNode<SyntaxType.If | SyntaxType.Elseif>[] = [];
+  else?: Token<TokenType, SyntaxType.Else>;
   else_statements?: CompoundStatementNode;
-  endif!: Token<SyntaxType.Keyword, SyntaxSubtype.Endif>;
+  endif!: Token<TokenType, SyntaxType.Endif>;
 }
 
 export class ScriptNode extends Node {
   type = SyntaxType.Script;
 
-  scriptname!: Token<SyntaxType.Keyword, SyntaxSubtype.ScriptName>;
-  name!: Token<SyntaxType.Identifier>;
+  scriptname!: Token<TokenType, SyntaxType.ScriptName>;
+  name!: Token<TokenType, SyntaxType.Identifier>;
   statements!: CompoundStatementNode;
 
   comments: CommentNode[] = [];

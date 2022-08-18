@@ -1,7 +1,7 @@
 import { StringBuffer } from "../common";
 import { TokenData } from "./token_data";
 
-import { SyntaxType, SyntaxSubtype, Token } from "./types";
+import { TokenType, SyntaxType, Token } from "./types";
 
 
 // TODO: separate out wiki page name from TokenData, implement better parsing error reporting
@@ -51,8 +51,8 @@ export class Lexer {
   }
 
   createToken<
-    T extends SyntaxType = SyntaxType,
-    ST extends SyntaxSubtype = SyntaxSubtype
+    T extends TokenType = TokenType,
+    ST extends SyntaxType = SyntaxType
   >(type?: T, subtype?: ST): Token<T, ST> {
     const token = new Token(type, subtype);
     token.range = {
@@ -71,8 +71,8 @@ export class Lexer {
     return token;
   }
 
-  consumeNewline(): Token<SyntaxType.Newline> {
-    let token = this.createToken(SyntaxType.Newline);
+  consumeNewline(): Token<TokenType.Unknown, SyntaxType.Newline> {
+    let token = this.createToken(TokenType.Unknown, SyntaxType.Newline);
 
     this.nextCharToBuf();
     token = this.finishToken(token);
@@ -90,8 +90,8 @@ export class Lexer {
     return token;
   }
 
-  consumeComment(): Token<SyntaxType.Comment> {
-    const token = this.createToken(SyntaxType.Comment);
+  consumeComment(): Token<TokenType.Unknown, SyntaxType.Comment> {
+    const token = this.createToken(TokenType.Unknown, SyntaxType.Comment);
 
     while (this.moreData() && this.cur_char !== "\n") {
       if (this.cur_char === "\r" && this.lookAhead(1) === "\n") break;
@@ -103,8 +103,8 @@ export class Lexer {
     return token;
   }
 
-  consumeString(): Token<SyntaxType.Literal, SyntaxSubtype.String> {
-    const token = this.createToken(SyntaxType.Literal, SyntaxSubtype.String);
+  consumeString(): Token<TokenType.Unknown, SyntaxType.String> {
+    const token = this.createToken(TokenType.Unknown, SyntaxType.String);
 
     const quote: string = this.cur_char;
 
@@ -121,8 +121,8 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeNumber(): Token<SyntaxType.Literal, SyntaxSubtype.Number> {
-    const token = this.createToken(SyntaxType.Literal, SyntaxSubtype.Number);
+  consumeNumber(): Token<TokenType.Unknown, SyntaxType.Number> {
+    const token = this.createToken(TokenType.Unknown, SyntaxType.Number);
 
     if (
       this.cur_char === "0" &&
@@ -162,12 +162,12 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeOperator(): Token<SyntaxType.Operator | SyntaxType.Unknown> {
+  consumeOperator(): Token<TokenType.Operator | TokenType.Unknown> {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
       if (operator in TokenData.Operators) {
-        const token = this.createToken(SyntaxType.Operator, TokenData.Operators[operator]);
+        const token = this.createToken(TokenType.Operator, TokenData.Operators[operator]);
 
         this.nextCharToBuf();
         this.nextCharToBuf();
@@ -177,13 +177,13 @@ export class Lexer {
     }
 
     if (this.cur_char in TokenData.Operators) {
-      const token = this.createToken(SyntaxType.Operator, TokenData.Operators[this.cur_char]);
+      const token = this.createToken(TokenType.Operator, TokenData.Operators[this.cur_char]);
       this.nextCharToBuf();
 
       return this.finishToken(token);
     }
 
-    const token = this.createToken(SyntaxType.Unknown);
+    const token = this.createToken(TokenType.Unknown);
 
     this.nextCharToBuf();
 
@@ -200,20 +200,20 @@ export class Lexer {
     const word = this.buf.toString().toLowerCase();
 
     if (word in TokenData.Typenames) {
-      token.type = SyntaxType.Typename;
-      token.subtype = TokenData.Typenames[word];
+      token.token_type = TokenType.Typename;
+      token.type = TokenData.Typenames[word];
     } else if (word in TokenData.Keywords) {
-      token.type = SyntaxType.Keyword;
-      token.subtype = TokenData.Keywords[word];
+      token.token_type = TokenType.Keyword;
+      token.type = TokenData.Keywords[word];
     } else if (
       word in TokenData.Blocktypes &&
-      this.prev_token?.subtype === SyntaxSubtype.Begin
+      this.prev_token?.type === SyntaxType.Begin
     ) {
-      token.type = SyntaxType.BlockTypeIdentifier;
-      token.subtype = TokenData.Blocktypes[word];
+      token.token_type = TokenType.Blocktype;
+      token.type = TokenData.Blocktypes[word];
     } else if (word in TokenData.Operators) {
-      token.type = SyntaxType.Operator;
-      token.subtype = TokenData.Operators[word];
+      token.token_type = TokenType.Operator;
+      token.type = TokenData.Operators[word];
     } else {
       token.type = SyntaxType.Identifier;
     }
@@ -258,7 +258,7 @@ export class Lexer {
       this.skipWhitespace();
     }
 
-    const eof = new Token(SyntaxType.EOF);
+    const eof = new Token(TokenType.Unknown, SyntaxType.EOF);
     eof.range = {
       start: { line: this.cur_ln + 1, character: 0 },
       end: { line: this.cur_ln + 1, character: 1 }
