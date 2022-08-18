@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as vsc from "vscode-languageserver/node";
 import * as Lexer from "./geckscript/lexer";
-import { TokenType } from "./geckscript/types";
+import { SyntaxType } from "./geckscript/types";
 
 export const Legend: SemanticTokensLegend = {
   tokenTypes: [
@@ -45,13 +45,13 @@ export function OnSemanticTokenRequestFull(
   const tokens = Lexer.Lexer.Lex(document.getText());
 
   for (const token of tokens) {
-    if (token.token_type == TokenType.Unknown) continue;
+    if (token.type == SyntaxType.Unknown) continue;
 
     tokensBuilder.push(
       token.range.start.line,
       token.range.start.character,
       token.range.end.character - token.range.start.character,
-      TokenTypeMap[token.token_type],
+      TokenTypeMap[token.type],
       Legend.tokenModifiers.indexOf("declaration")
     );
   }

@@ -2,14 +2,6 @@ import { Diagnostic } from "vscode-languageserver";
 import { Range } from "vscode-languageserver-textdocument";
 
 
-export const enum TokenType {
-  Unknown,
-
-  Typename,
-  Keyword,
-  Operator,
-}
-
 export const enum SyntaxType {
   Unknown,
 
@@ -29,6 +21,7 @@ export const enum SyntaxType {
   Script,
 
   // Typename
+  TYPENAME_START,
   Short,
   Int,
   Long,
@@ -36,8 +29,10 @@ export const enum SyntaxType {
   Reference,
   StringVar,
   ArrayVar,
+  TYPENAME_END,
 
   // Keyword
+  KEYWORD_START,
   ScriptName,
   Begin,
   End,
@@ -54,8 +49,10 @@ export const enum SyntaxType {
   Set,
   To,
   Let,
+  KEYWORD_END,
 
   // Operator
+  OPERATOR_START,
   Equals,
   ColonEquals,
   PlusEquals,
@@ -100,6 +97,7 @@ export const enum SyntaxType {
   DoubleColon,
   Comma,
   EqualsGreater,
+  OPERATOR_END,
 
   // Expression
   Lambda,
@@ -117,6 +115,89 @@ export const enum SyntaxType {
   WhileStatement,
   ForeachStatement,
   CompoundStatement,
+}
+
+export type Typename = SyntaxType.Short |
+  SyntaxType.Int |
+  SyntaxType.Long |
+  SyntaxType.Float |
+  SyntaxType.Reference |
+  SyntaxType.StringVar |
+  SyntaxType.ArrayVar;
+
+export type Keyword = SyntaxType.ScriptName |
+  SyntaxType.Begin |
+  SyntaxType.End |
+  SyntaxType.If |
+  SyntaxType.Elseif |
+  SyntaxType.Else |
+  SyntaxType.Endif |
+  SyntaxType.While |
+  SyntaxType.Foreach |
+  SyntaxType.Loop |
+  SyntaxType.Continue |
+  SyntaxType.Break |
+  SyntaxType.Return |
+  SyntaxType.Set |
+  SyntaxType.To |
+  SyntaxType.Let;
+
+
+export type Operator = SyntaxType.Equals |
+  SyntaxType.ColonEquals |
+  SyntaxType.PlusEquals |
+  SyntaxType.MinusEquals |
+  SyntaxType.AsteriskEquals |
+  SyntaxType.SlashEquals |
+  SyntaxType.PercentEquals |
+  SyntaxType.CircumflexEquals |
+  SyntaxType.VBarEquals |
+  SyntaxType.AmpersandEquals |
+  SyntaxType.Exclamation |
+  SyntaxType.DoubleVBar |
+  SyntaxType.DoubleAmpersand |
+  SyntaxType.DoubleEquals |
+  SyntaxType.ExclamationEquals |
+  SyntaxType.Greater |
+  SyntaxType.Less |
+  SyntaxType.GreaterEqulas |
+  SyntaxType.LessEqulas |
+  SyntaxType.Plus |
+  SyntaxType.Minus |
+  SyntaxType.Asterisk |
+  SyntaxType.Slash |
+  SyntaxType.Percent |
+  SyntaxType.Circumflex |
+  SyntaxType.VBar |
+  SyntaxType.Ampersand |
+  SyntaxType.DoubleLess |
+  SyntaxType.DoubleGreater |
+  SyntaxType.Dollar |
+  SyntaxType.Hash |
+  SyntaxType.LParen |
+  SyntaxType.RParen |
+  SyntaxType.LSQBracket |
+  SyntaxType.RSQBracket |
+  SyntaxType.LBracket |
+  SyntaxType.RBracket |
+  SyntaxType.Colon |
+  SyntaxType.LArrow |
+  SyntaxType.RArrow |
+  SyntaxType.Dot |
+  SyntaxType.DoubleColon |
+  SyntaxType.Comma |
+  SyntaxType.EqualsGreater;
+
+export function IsTypename(type: SyntaxType): boolean {
+  return SyntaxType.TYPENAME_START < type && type < SyntaxType.TYPENAME_END;
+}
+
+export function IsKeyword(type: SyntaxType): boolean {
+  return SyntaxType.KEYWORD_START < type && type < SyntaxType.KEYWORD_END;
+}
+
+export function IsOperator(type: SyntaxType): boolean {
+  return SyntaxType.OPERATOR_START < type && type < SyntaxType.OPERATOR_END;
 }
 
 export class TreeData {
@@ -146,19 +227,8 @@ export class Node<T extends SyntaxType = SyntaxType> {
   }
 }
 
-export class Token<
-  TT extends TokenType = TokenType,
-  ST extends SyntaxType = SyntaxType
-  > extends Node<ST> {
-  declare token_type: TT;
-
+export class Token<T extends SyntaxType = SyntaxType> extends Node<T> {
   content = "";
-
-  constructor(token_type?: TT, type?: ST) {
-    super(type);
-
-    this.token_type = token_type ?? TokenType.Unknown as TT;
-  }
 }
 
 export class CommentNode extends Node {
@@ -184,7 +254,7 @@ export class StringNode extends Literal<string> {
 export class VariableDeclarationNode extends Node {
   type = SyntaxType.VariableDeclaration;
 
-  variable_type!: Token<TokenType.Typename>;
+  variable_type!: Token<Typename>;
   value!: ExpressionNode;
 }
 
@@ -194,7 +264,7 @@ export class ExpressionNode extends Node {
 export class UnaryOpNode extends ExpressionNode {
   type = SyntaxType.UnaryOp;
 
-  op!: Token<TokenType.Operator>;
+  op!: Token<Operator>;
   operand!: ExpressionNode;
 }
 
@@ -202,7 +272,7 @@ export class BinOpNode extends ExpressionNode {
   type = SyntaxType.BinOp;
 
   lhs!: ExpressionNode;
-  op!: Token<TokenType.Operator>;
+  op!: Token<Operator>;
   rhs!: ExpressionNode;
 }
 
@@ -210,25 +280,25 @@ export class BinOpPairedNode extends ExpressionNode {
   type = SyntaxType.BinOpPaired;
 
   lhs!: ExpressionNode;
-  left_op!: Token<TokenType, SyntaxType.LSQBracket>;
+  left_op!: Token<SyntaxType.LSQBracket>;
   rhs!: ExpressionNode;
-  right_op!: Token<TokenType, SyntaxType.RSQBracket>;
+  right_op!: Token<SyntaxType.RSQBracket>;
 }
 
 export class FunctionNode extends ExpressionNode {
   type = SyntaxType.FunctionExpression;
 
-  name!: Token<TokenType, SyntaxType.Identifier>;
+  name!: Token<SyntaxType.Identifier>;
   args: ExpressionNode[] = [];
 }
 
 export class LambdaInlineNode extends ExpressionNode {
   type = SyntaxType.LambdaInline;
 
-  lbracket!: Token<TokenType, SyntaxType.LBracket>;
+  lbracket!: Token<SyntaxType.LBracket>;
   params: ExpressionNode[] = [];
-  rbracket!: Token<TokenType, SyntaxType.RBracket>;
-  arrow!: Token<TokenType, SyntaxType.EqualsGreater>;
+  rbracket!: Token<SyntaxType.RBracket>;
+  arrow!: Token<SyntaxType.EqualsGreater>;
 
   expression!: ExpressionNode;
 }
@@ -236,15 +306,15 @@ export class LambdaInlineNode extends ExpressionNode {
 export class LambdaNode extends ExpressionNode {
   type = SyntaxType.Lambda;
 
-  begin!: Token<TokenType, SyntaxType.Begin>;
-  function!: Token<TokenType, SyntaxType.BlocktypeTokenFunction>;
-  lbracket!: Token<TokenType, SyntaxType.LBracket>;
+  begin!: Token<SyntaxType.Begin>;
+  function!: Token<SyntaxType.BlocktypeTokenFunction>;
+  lbracket!: Token<SyntaxType.LBracket>;
   params: ExpressionNode[] = [];
-  rbracket!: Token<TokenType, SyntaxType.RBracket>;
+  rbracket!: Token<SyntaxType.RBracket>;
 
   compound_statement!: CompoundStatementNode;
 
-  end!: Token<TokenType, SyntaxType.End>;
+  end!: Token<SyntaxType.End>;
 }
 
 export class StatementNode extends Node {
@@ -253,16 +323,16 @@ export class StatementNode extends Node {
 export class SetNode extends StatementNode {
   type = SyntaxType.SetStatement;
 
-  set!: Token<TokenType, SyntaxType.Set>;
-  identifier!: Token<TokenType, SyntaxType.Identifier>;
-  to!: Token<TokenType, SyntaxType.To>;
+  set!: Token<SyntaxType.Set>;
+  identifier!: Token<SyntaxType.Identifier>;
+  to!: Token<SyntaxType.To>;
   value!: ExpressionNode;
 }
 
 export class LetNode extends StatementNode {
   type = SyntaxType.LetStatement;
 
-  let!: Token<TokenType, SyntaxType.Let>;
+  let!: Token<SyntaxType.Let>;
   value!: ExpressionNode;
 }
 
@@ -275,36 +345,36 @@ export class CompoundStatementNode extends Node {
 export class BlockTypeNode extends Node {
   type = SyntaxType.Blocktype;
 
-  block_type!: Token<TokenType, SyntaxType.BlocktypeToken>;
+  block_type!: Token<SyntaxType.BlocktypeToken>;
   args: Node[] = [];
 }
 
 export class BeginBlockNode extends StatementNode {
   type = SyntaxType.BeginStatement;
 
-  begin!: Token<TokenType, SyntaxType.Begin>;
+  begin!: Token<SyntaxType.Begin>;
   block_type!: BlockTypeNode;
   compound_statement!: CompoundStatementNode;
-  end!: Token<TokenType, SyntaxType.End>;
+  end!: Token<SyntaxType.End>;
 }
 
 export class ForeachBlockNode extends StatementNode {
   type = SyntaxType.Foreach;
 
-  foreach!: Token<TokenType, SyntaxType.Foreach>;
-  idetifier!: Token<TokenType, SyntaxType.Identifier> | VariableDeclarationNode;
-  larrow!: Token<TokenType, SyntaxType.LArrow>;
+  foreach!: Token<SyntaxType.Foreach>;
+  idetifier!: Token<SyntaxType.Identifier> | VariableDeclarationNode;
+  larrow!: Token<SyntaxType.LArrow>;
   iterable!: ExpressionNode;
 
   statements!: CompoundStatementNode;
 
-  loop!: Token<TokenType, SyntaxType.Loop>;
+  loop!: Token<SyntaxType.Loop>;
 }
 
-export class BranchNode<T extends SyntaxType> extends Node {
+export class BranchNode<T extends Keyword> extends Node {
   type = SyntaxType.Branch;
 
-  keyword!: Token<TokenType, T>;
+  keyword!: Token<T>;
   condition!: ExpressionNode;
   statements!: CompoundStatementNode;
 }
@@ -313,23 +383,23 @@ export class WhileBlockNode extends StatementNode {
   type = SyntaxType.WhileStatement;
 
   branch!: BranchNode<SyntaxType.While>;
-  loop!: Token<TokenType, SyntaxType.Loop>;
+  loop!: Token<SyntaxType.Loop>;
 }
 
 export class IfBlockNode extends StatementNode {
   type = SyntaxType.IfStatement;
 
   branches: BranchNode<SyntaxType.If | SyntaxType.Elseif>[] = [];
-  else?: Token<TokenType, SyntaxType.Else>;
+  else?: Token<SyntaxType.Else>;
   else_statements?: CompoundStatementNode;
-  endif!: Token<TokenType, SyntaxType.Endif>;
+  endif!: Token<SyntaxType.Endif>;
 }
 
 export class ScriptNode extends Node {
   type = SyntaxType.Script;
 
-  scriptname!: Token<TokenType, SyntaxType.ScriptName>;
-  name!: Token<TokenType, SyntaxType.Identifier>;
+  scriptname!: Token<SyntaxType.ScriptName>;
+  name!: Token<SyntaxType.Identifier>;
   statements!: CompoundStatementNode;
 
   comments: CommentNode[] = [];

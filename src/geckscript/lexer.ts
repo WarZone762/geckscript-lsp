@@ -1,7 +1,7 @@
 import { StringBuffer } from "../common";
 import { TokenData } from "./token_data";
 
-import { TokenType, SyntaxType, Token } from "./types";
+import { Operator, SyntaxType, Token } from "./types";
 
 
 // TODO: separate out wiki page name from TokenData, implement better parsing error reporting
@@ -51,10 +51,9 @@ export class Lexer {
   }
 
   createToken<
-    T extends TokenType = TokenType,
-    ST extends SyntaxType = SyntaxType
-  >(type?: T, subtype?: ST): Token<T, ST> {
-    const token = new Token(type, subtype);
+    T extends SyntaxType = SyntaxType
+  >(type?: T): Token<T> {
+    const token = new Token(type);
     token.range = {
       start: { line: this.cur_ln, character: this.cur_col },
       end: { line: this.cur_ln, character: this.cur_col }
@@ -71,8 +70,8 @@ export class Lexer {
     return token;
   }
 
-  consumeNewline(): Token<TokenType.Unknown, SyntaxType.Newline> {
-    let token = this.createToken(TokenType.Unknown, SyntaxType.Newline);
+  consumeNewline(): Token<SyntaxType.Newline> {
+    let token = this.createToken(SyntaxType.Newline);
 
     this.nextCharToBuf();
     token = this.finishToken(token);
@@ -90,8 +89,8 @@ export class Lexer {
     return token;
   }
 
-  consumeComment(): Token<TokenType.Unknown, SyntaxType.Comment> {
-    const token = this.createToken(TokenType.Unknown, SyntaxType.Comment);
+  consumeComment(): Token<SyntaxType.Comment> {
+    const token = this.createToken(SyntaxType.Comment);
 
     while (this.moreData() && this.cur_char !== "\n") {
       if (this.cur_char === "\r" && this.lookAhead(1) === "\n") break;
@@ -103,8 +102,8 @@ export class Lexer {
     return token;
   }
 
-  consumeString(): Token<TokenType.Unknown, SyntaxType.String> {
-    const token = this.createToken(TokenType.Unknown, SyntaxType.String);
+  consumeString(): Token<SyntaxType.String> {
+    const token = this.createToken(SyntaxType.String);
 
     const quote: string = this.cur_char;
 
@@ -121,8 +120,8 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeNumber(): Token<TokenType.Unknown, SyntaxType.Number> {
-    const token = this.createToken(TokenType.Unknown, SyntaxType.Number);
+  consumeNumber(): Token<SyntaxType.Number> {
+    const token = this.createToken(SyntaxType.Number);
 
     if (
       this.cur_char === "0" &&
@@ -162,12 +161,12 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeOperator(): Token<TokenType.Operator | TokenType.Unknown> {
+  consumeOperator(): Token<Operator | SyntaxType.Unknown> {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
       if (operator in TokenData.Operators) {
-        const token = this.createToken(TokenType.Operator, TokenData.Operators[operator]);
+        const token = this.createToken(TokenData.Operators[operator]);
 
         this.nextCharToBuf();
         this.nextCharToBuf();
@@ -177,13 +176,13 @@ export class Lexer {
     }
 
     if (this.cur_char in TokenData.Operators) {
-      const token = this.createToken(TokenType.Operator, TokenData.Operators[this.cur_char]);
+      const token = this.createToken(TokenData.Operators[this.cur_char]);
       this.nextCharToBuf();
 
       return this.finishToken(token);
     }
 
-    const token = this.createToken(TokenType.Unknown);
+    const token = this.createToken(SyntaxType.Unknown);
 
     this.nextCharToBuf();
 
@@ -200,10 +199,8 @@ export class Lexer {
     const word = this.buf.toString().toLowerCase();
 
     if (word in TokenData.Typenames) {
-      token.token_type = TokenType.Typename;
       token.type = TokenData.Typenames[word];
     } else if (word in TokenData.Keywords) {
-      token.token_type = TokenType.Keyword;
       token.type = TokenData.Keywords[word];
     } else if (
       word in TokenData.Blocktypes &&
@@ -211,7 +208,6 @@ export class Lexer {
     ) {
       token.type = TokenData.Blocktypes[word];
     } else if (word in TokenData.Operators) {
-      token.token_type = TokenType.Operator;
       token.type = TokenData.Operators[word];
     } else {
       token.type = SyntaxType.Identifier;
@@ -257,7 +253,7 @@ export class Lexer {
       this.skipWhitespace();
     }
 
-    const eof = new Token(TokenType.Unknown, SyntaxType.EOF);
+    const eof = new Token(SyntaxType.EOF);
     eof.range = {
       start: { line: this.cur_ln + 1, character: 0 },
       end: { line: this.cur_ln + 1, character: 1 }
