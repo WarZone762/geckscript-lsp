@@ -4,10 +4,7 @@ import { TokenData } from "./token_data";
 import { SyntaxType, SyntaxSubtype, Token } from "./types";
 
 
-/*
-TODO: separate out wiki page name from TokenData, implement better parsing error reporting,
-get rid of tokens in nodes, make parser continue parsing current rule on an unexpected token
-*/
+// TODO: separate out wiki page name from TokenData, implement better parsing error reporting
 export class Lexer {
   data: string;
   data_last_idx: number;

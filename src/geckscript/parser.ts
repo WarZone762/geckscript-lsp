@@ -39,6 +39,8 @@ export class Parser {
   cur_token: Token;
   last_token: Token;
 
+  paren_level = 0;
+
   script: ScriptNode;
 
   constructor(data: Token[]) {
@@ -58,15 +60,19 @@ export class Parser {
   nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {  // TODO: combine Node.type and Node.subtype?
     const token = this.cur_token;
 
+    let skip_token = true;
+
     if (token.type !== type) {
       this.reportParsingError(`expected "${TokenTypeMap[type]}", got "${TokenTypeMap[token.type]}"`);
-      if (this.cur_token.type === SyntaxType.Newline) return token as Token<T>;
+      skip_token = this.cur_token.type !== SyntaxType.Newline;
     }
 
-    if (this.cur_token.type !== SyntaxType.EOF)
+    if (this.cur_token.type !== SyntaxType.EOF && skip_token)
       this.skipToken();
 
     while (this.cur_token.type === SyntaxType.Comment) this.parseComment();
+    if (this.paren_level > 0)
+      while (this.cur_token.type === SyntaxType.Newline) this.skipToken();
 
     return token as Token<T>;
   }
@@ -74,15 +80,23 @@ export class Parser {
   nextTokenExpectSubtype<T extends SyntaxType, ST extends SyntaxSubtype>(type: T, subtype: ST): Token<T, ST> {
     const token = this.cur_token;
 
+    let skip_token = true;
+
     if (token.type !== type || token.subtype !== subtype) {
       this.reportParsingError(`expected "${TokenSubtypeMap[subtype]}", got "${TokenSubtypeMap[token.subtype]}"`);
-      if (this.cur_token.type === SyntaxType.Newline) return token as Token<T, ST>;
+      skip_token = this.cur_token.type !== SyntaxType.Newline;
     }
 
-    if (this.cur_token.type !== SyntaxType.EOF)
+    if (this.cur_token.type !== SyntaxType.EOF && skip_token)
       this.skipToken();
 
     while (this.cur_token.type === SyntaxType.Comment) this.parseComment();
+    if (this.paren_level > 0) {
+      if (subtype === SyntaxSubtype.RParen)
+        --this.paren_level;
+      else
+        while (this.cur_token.type === SyntaxType.Newline) this.skipToken();
+    }
 
     return token as Token<T, ST>;
   }
@@ -98,7 +112,8 @@ export class Parser {
     };
     if (
       this.cur_token.type !== SyntaxType.EOF &&
-      this.cur_token.type !== SyntaxType.Newline
+      this.cur_token.type !== SyntaxType.Newline &&
+      this.cur_token.subtype !== SyntaxSubtype.RParen
     )
       this.skipToken();
 
@@ -268,6 +283,7 @@ export class Parser {
       }
 
       node.rbracket = this.nextTokenExpectSubtype(SyntaxType.Operator, SyntaxSubtype.RBracket);
+      this.nextTokenExpectType(SyntaxType.Newline);
       node.compound_statement = this.parseCompoundStatement();
       node.end = this.nextTokenExpectSubtype(SyntaxType.Keyword, SyntaxSubtype.End);
     });
@@ -283,16 +299,19 @@ export class Parser {
         return this.parseFunction();
       else
         return this.parseIdentifier();
-    } else if (this.cur_token.subtype === SyntaxSubtype.LParen) {  // TODO: implement proper parenthesized expression parsing
+    } else if (this.cur_token.subtype === SyntaxSubtype.LParen) {
       this.skipToken();
+      if (this.cur_token.subtype as unknown === SyntaxSubtype.Begin) {
+        return this.parseLambda();
+      } else {
+        ++this.paren_level;
 
-      return this.parseNode(this.parseExpression(), node => {
-        this.nextTokenExpectSubtype(SyntaxType.Operator, SyntaxSubtype.RParen);
-      });
+        return this.parseNode(this.parseExpression(), node => {
+          this.nextTokenExpectSubtype(SyntaxType.Operator, SyntaxSubtype.RParen);
+        });
+      }
     } else if (this.cur_token.subtype === SyntaxSubtype.LBracket) {
       return this.parseLambdaInline();
-    } else if (this.cur_token.subtype === SyntaxSubtype.Begin) {
-      return this.parseLambda();
     } else {
       this.reportParsingError("expected expression");
 

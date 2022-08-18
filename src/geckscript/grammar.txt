@@ -1,4 +1,5 @@
 GRAMMAR
+// TODO: document full grammar
 
 literal:
   NUMBER | STRING
@@ -14,12 +15,12 @@ function:
 
 lambda:
   LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |
-  BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET
+  BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET NEWLINE
     compound_statement
   END
 
 primary_expression:
-  literal | variable | function | LPAREN expression RPAREN
+  literal | variable | function | LPAREN (expression | lambda) RPAREN
 
 member_expression:
   primary_expression |
