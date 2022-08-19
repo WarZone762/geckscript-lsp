@@ -18,7 +18,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import * as TreeViewServer from "./tree_view/server";
 
 import * as Wiki from "./wiki";
-import * as ST from "./semantic_tokens";
+// import * as ST from "./semantic_tokens";
 
 import { Parser } from "./geckscript/parser";
 
@@ -94,7 +94,7 @@ connection.onHover(
 connection.onRequest(SemanticTokensRequest.method, (
   params: SemanticTokensParams
 ) => {
-  return ST.OnSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
+  // return ST.OnSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
 });
 
 connection.onExit(() => {

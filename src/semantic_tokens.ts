@@ -1,27 +1,27 @@
-import { ProgressToken, SemanticTokensLegend } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
+// import { ProgressToken, SemanticTokensLegend } from "vscode-languageserver/node";
+// import { TextDocument } from "vscode-languageserver-textdocument";
 
-import * as vsc from "vscode-languageserver/node";
-import * as Lexer from "./geckscript/lexer";
-import { SyntaxType } from "./geckscript/types";
+// import * as vsc from "vscode-languageserver/node";
+// import * as Lexer from "./geckscript/lexer";
+// import { SyntaxType } from "./geckscript/types";
 
-export const Legend: SemanticTokensLegend = {
-  tokenTypes: [
-    "comment",
-    "function",
-    "keyword",
-    "number",
-    "operator",
-    "string",
-    "type",
-    "variable",
-  ],
-  tokenModifiers: [
-    "declaration",
-  ]
-};
+// export const Legend: SemanticTokensLegend = {
+//   tokenTypes: [
+//     "comment",
+//     "function",
+//     "keyword",
+//     "number",
+//     "operator",
+//     "string",
+//     "type",
+//     "variable",
+//   ],
+//   tokenModifiers: [
+//     "declaration",
+//   ]
+// };
 
-const TokenTypeMap: number[] = [];
+// const TokenTypeMap: number[] = [];
 
 // TokenTypeMap[TokenType.Unknown] = Legend.tokenTypes.indexOf("variable");
 // TokenTypeMap[TokenType.Comment] = Legend.tokenTypes.indexOf("comment");
@@ -34,27 +34,27 @@ const TokenTypeMap: number[] = [];
 // TokenTypeMap[TokenType.Identifier] = Legend.tokenTypes.indexOf("variable");
 
 
-export function OnSemanticTokenRequestFull(
-  document: TextDocument | undefined,
-  partialResultToken?: ProgressToken,
-  workDoneToken?: ProgressToken
-): vsc.SemanticTokens {
-  const tokensBuilder = new vsc.SemanticTokensBuilder();
-  if (document === undefined) return tokensBuilder.build();
+// export function OnSemanticTokenRequestFull(
+//   document: TextDocument | undefined,
+//   partialResultToken?: ProgressToken,
+//   workDoneToken?: ProgressToken
+// ): vsc.SemanticTokens {
+//   const tokensBuilder = new vsc.SemanticTokensBuilder();
+//   if (document === undefined) return tokensBuilder.build();
 
-  const tokens = Lexer.Lexer.Lex(document.getText());
+//   const tokens = Lexer.Lexer.Lex(document.getText());
 
-  for (const token of tokens) {
-    if (token.type == SyntaxType.Unknown) continue;
+//   for (const token of tokens) {
+//     if (token.type == SyntaxType.Unknown) continue;
 
-    tokensBuilder.push(
-      token.range.start.line,
-      token.range.start.character,
-      token.range.end.character - token.range.start.character,
-      TokenTypeMap[token.type],
-      Legend.tokenModifiers.indexOf("declaration")
-    );
-  }
+//     tokensBuilder.push(
+//       token.range.start.line,
+//       token.range.start.character,
+//       token.range.end.character - token.range.start.character,
+//       TokenTypeMap[token.type],
+//       Legend.tokenModifiers.indexOf("declaration")
+//     );
+//   }
 
-  return tokensBuilder.build();
-}
+//   return tokensBuilder.build();
+// }

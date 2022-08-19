@@ -19,11 +19,13 @@ export class Lexer {
 
   buf: StringBuffer;
 
-  constructor(data: string) {
-    this.data = data;
-    this.data_last_idx = data.length - 1;
-    this.cur_char = data[0];
+  constructor(text: string) {
+    this.data = text;
+    this.data_last_idx = text.length - 1;
+    this.cur_char = text[0];
     this.buf = new StringBuffer(512);
+
+    this.skipWhitespace();
   }
 
   nextChar(): void {
@@ -216,12 +218,10 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  lex(): Token[] {
-    const tokens: Token[] = [];
+  lexToken(): Token {
     let token: Token;
 
-    this.skipWhitespace();
-    while (this.moreData()) {
+    if (this.moreData()) {
       if (this.cur_char === "\n") {
         token = this.consumeNewline();
       } else if (this.cur_char === ";") {
@@ -247,25 +247,18 @@ export class Lexer {
         );
       }
 
-      tokens.push(token);
       this.prev_token = token;
-
       this.skipWhitespace();
+
+      return token;
+    } else {
+      const eof = new Token(SyntaxType.EOF);
+      eof.range = {
+        start: { line: this.cur_ln + 1, character: 0 },
+        end: { line: this.cur_ln + 1, character: 1 }
+      };
+
+      return eof;
     }
-
-    const eof = new Token(SyntaxType.EOF);
-    eof.range = {
-      start: { line: this.cur_ln + 1, character: 0 },
-      end: { line: this.cur_ln + 1, character: 1 }
-    };
-    tokens.push(eof);
-
-    return tokens;
-  }
-
-  static Lex(text: string): Token[] {
-    const lexer = new Lexer(text);
-
-    return lexer.lex();
   }
 }

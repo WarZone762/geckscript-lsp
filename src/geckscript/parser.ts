@@ -3,6 +3,7 @@ import { Lexer } from "./lexer";
 import { TokenData, TokenSyntaxTypeMap } from "./token_data";
 
 import {
+  SyntaxType,
   TreeData,
   Node,
   Token,
@@ -35,11 +36,10 @@ import {
   IsKeyword,
   IsOperator,
 } from "./types";
-import { SyntaxType } from "./types";
 
 
 export class Parser {
-  tokens: Token[];
+  lexer: Lexer;
 
   cur_pos = 0;
 
@@ -50,11 +50,11 @@ export class Parser {
 
   script: ScriptNode;
 
-  constructor(data: Token[]) {
-    this.tokens = data;
+  constructor(text: string) {
+    this.lexer = new Lexer(text);
 
-    this.cur_token = data[0];
-    this.last_token = data[0];
+    this.cur_token = this.lexer.lexToken();
+    this.last_token = this.cur_token;
 
     this.script = new ScriptNode();
   }
@@ -70,7 +70,7 @@ export class Parser {
   _skipToken(): void {
     if (this.moreData()) {
       this.last_token = this.cur_token;
-      this.cur_token = this.tokens[++this.cur_pos];
+      this.cur_token = this.lexer.lexToken();
     }
   }
 
@@ -799,7 +799,7 @@ export class Parser {
   }
 
   static Parse(text: string): AST {
-    const parser = new Parser(Lexer.Lex(text));
+    const parser = new Parser(text);
 
     const ast = new AST(parser.parseScript());
 
@@ -811,8 +811,8 @@ export class AST {
   root: ScriptNode;
 
   static ToTreeFunctions: { [key in SyntaxType]?: (node: any) => TreeData } = {
-    [SyntaxType.Unknown]: (node: Node) => {
-      return new TreeData("Node");
+    [SyntaxType.Unknown]: (node: Token) => {
+      return new TreeData(`Token: ${TokenSyntaxTypeMap.All[node.type]}`);
     },
     [SyntaxType.Comment]: (node: CommentNode) => {
       return new TreeData(`${node.range.start.line}: ;${node.value}`);
