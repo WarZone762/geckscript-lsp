@@ -15,11 +15,6 @@ export const enum SyntaxType {
   BlocktypeToken,
   BlocktypeTokenFunction,
 
-  VariableDeclaration,
-  Blocktype,
-  Branch,
-  Script,
-
   // Typename
   TYPENAME_START,
   Short,
@@ -99,6 +94,8 @@ export const enum SyntaxType {
   EqualsGreater,
   OPERATOR_END,
 
+  VariableDeclaration,
+
   // Expression
   Lambda,
   LambdaInline,
@@ -107,14 +104,19 @@ export const enum SyntaxType {
   BinOpPaired,
   FunctionExpression,
 
+  Blocktype,
+  Branch,
+
   // Statement
-  LetStatement,
   SetStatement,
+  LetStatement,
   BeginStatement,
   IfStatement,
   WhileStatement,
   ForeachStatement,
   CompoundStatement,
+
+  Script,
 }
 
 export type Typename = SyntaxType.Short |
