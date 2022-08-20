@@ -1,4 +1,5 @@
-import { TokenSyntaxTypeMap } from "./token_data";
+import { Diagnostic } from "vscode-languageserver";
+import { SyntaxTypeMap } from "./token_data";
 import {
   SyntaxType,
   Node,
@@ -162,7 +163,7 @@ export class ToTreeVisitor {
         node.type === SyntaxType.Break ||
         node.type === SyntaxType.Return
       )
-        return new TreeData(`Keyword: ${TokenSyntaxTypeMap.All[node.type]}`);
+        return new TreeData(`Keyword: ${SyntaxTypeMap.All[node.type]}`);
       else if (
         IsOperator(node.type) ||
         IsTypename(node.type) ||
@@ -170,7 +171,7 @@ export class ToTreeVisitor {
       )
         return new TreeData("NULL");
       else
-        return new TreeData(`Token: ${TokenSyntaxTypeMap.All[node.type]}`);
+        return new TreeData(`Token: ${SyntaxTypeMap.All[node.type]}`);
     },
     [SyntaxType.Comment]: (node: CommentNode) => {
       return new TreeData(`${node.range.start.line}: ${node.content}`);
@@ -250,8 +251,7 @@ export class ToTreeVisitor {
       node,
       (node) => {
         const func = ToTreeVisitor.Functions[node.type] ?? ToTreeVisitor.Functions[SyntaxType.Unknown]!;
-        const tree_data = func(node);
-        stack.push(tree_data);
+        stack.push(func(node));
       },
       () => {
         if (stack[stack.length - 1].name === "NULL")
@@ -263,5 +263,93 @@ export class ToTreeVisitor {
     );
 
     return stack.pop()!;
+  }
+}
+
+export const enum ExpressionType {
+  Unknown,
+  Any,
+  Integer,
+  Float,
+  String,
+  Reference,
+  Array,
+}
+
+export const ExpressionTypeMap = {
+  [ExpressionType.Unknown]: "unknown",
+  [ExpressionType.Any]: "any",
+  [ExpressionType.Integer]: "integer",
+  [ExpressionType.Float]: "float",
+  [ExpressionType.String]: "string",
+  [ExpressionType.Reference]: "reference",
+  [ExpressionType.Array]: "array",
+};
+
+export class ValidateVisitor {
+  static TypeFunctions: { [key in SyntaxType]?: (node: any) => ExpressionType } = {
+    [SyntaxType.Unknown]: () => ExpressionType.Unknown,
+    [SyntaxType.Number]: () => ExpressionType.Integer,
+    [SyntaxType.String]: () => ExpressionType.String,
+    [SyntaxType.Identifier]: () => ExpressionType.Any,
+    [SyntaxType.BinOp]: (node: BinOpNode) => {
+      const lhs = ValidateVisitor.GetType(node.lhs);
+      const rhs = ValidateVisitor.GetType(node.rhs);
+
+      if (lhs === ExpressionType.Any) return rhs;
+      else if (rhs === ExpressionType.Any) return lhs;
+      else if (lhs === rhs) return lhs;
+      else return ExpressionType.Unknown;
+    },
+    [SyntaxType.FunctionExpression]: () => ExpressionType.Any,
+  };
+
+  static GetType(node: Node): ExpressionType {
+    const func = ValidateVisitor.TypeFunctions[node.type] ?? ValidateVisitor.TypeFunctions[SyntaxType.Unknown]!;
+
+    return func(node);
+  }
+
+  static ValidateFunctions: { [key in SyntaxType]?: (node: any) => Diagnostic[] } = {
+    [SyntaxType.Unknown]: () => [],
+    // [SyntaxType.Unknown]: (node: Token) => {
+    //   if (node.type === SyntaxType.Unknown)
+    //     return [{
+    //       message: node.content ?? TokenSyntaxTypeMap.All[node.type] ?? "Unknown",
+    //       range: node.range
+    //     }];
+    //   else
+    //     return [];
+    // },
+    [SyntaxType.BinOp]: (node: BinOpNode) => {
+      const lhs = ValidateVisitor.GetType(node.lhs);
+      const rhs = ValidateVisitor.GetType(node.rhs);
+
+
+      if (
+        (lhs === rhs || lhs === ExpressionType.Any || rhs === ExpressionType.Any) &&
+        lhs !== ExpressionType.Unknown &&
+        rhs !== ExpressionType.Unknown
+      ) return [];
+      else return [{
+        message: `Unexpected operand types: "${ExpressionTypeMap[lhs]}" and "${ExpressionTypeMap[rhs]}"`,
+        range: node.range
+      }];
+    }
+  };
+
+  static Validate(node: Node): Diagnostic[] {
+    let diagnositcs: Diagnostic[] = [];
+
+    NodeVisitor.VisitTree(
+      node,
+      (node) => {
+        const func = ValidateVisitor.ValidateFunctions[node.type] ?? ValidateVisitor.ValidateFunctions[SyntaxType.Unknown]!;
+
+        diagnositcs = diagnositcs.concat(func(node));
+      }
+    );
+
+    return diagnositcs;
   }
 }

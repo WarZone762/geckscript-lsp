@@ -21,7 +21,7 @@ import * as Wiki from "./wiki";
 // import * as ST from "./semantic_tokens";
 
 import { Parser } from "./geckscript/parser";
-import { ToTreeVisitor } from "./geckscript/ast";
+import { ToTreeVisitor, ValidateVisitor } from "./geckscript/ast";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -65,6 +65,9 @@ documents.onDidChangeContent(
 
     const script = Parser.Parse(doc.getText());
     tree_view_server?.write_message(JSON.stringify(ToTreeVisitor.ToTree(script)));
+
+    script.diagnostics = script.diagnostics.concat(ValidateVisitor.Validate(script));
+
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
   }
 );

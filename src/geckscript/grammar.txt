@@ -11,7 +11,7 @@ keyword:
   KEYWORD
 
 function:
-  FUNCTION (slice_make_pair_expression COMMA?)*
+  FUNCTION (shift_expression COMMA?)*
 
 lambda:
   LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |

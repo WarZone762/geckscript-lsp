@@ -1,6 +1,6 @@
-import { Range } from "vscode-languageserver-textdocument";
+import { Position, Range } from "vscode-languageserver-textdocument";
 import { Lexer } from "./lexer";
-import { TokenData, TokenSyntaxTypeMap } from "./token_data";
+import { TokenData, SyntaxTypeMap } from "./token_data";
 
 import {
   SyntaxType,
@@ -131,7 +131,7 @@ export class Parser {
       --this.paren_level;
 
     if (token.type !== type) {
-      this.reportParsingError(`expected "${TokenSyntaxTypeMap.All[type]}", got "${TokenSyntaxTypeMap.All[token.type]}"`);
+      this.reportParsingError(`expected "${SyntaxTypeMap.All[type]}", got "${SyntaxTypeMap.All[token.type]}"`);
       skip_token = this.cur_token.type !== SyntaxType.Newline;
     }
 
@@ -163,9 +163,13 @@ export class Parser {
     });
   }
 
-  parseNode<T extends Node>(node: T, parse_function: (node: T) => void): T {
+  parseNode<T extends Node>(
+    node: T,
+    parse_function: (node: T) => void,
+    start?: Position,
+  ): T {
     node.range = {
-      start: this.cur_token.range.start,
+      start: start ?? this.cur_token.range.start,
       end: this.cur_token.range.start,
     };
     parse_function(node);
@@ -215,7 +219,7 @@ export class Parser {
         node.lhs = lhs;
         node.op = this.nextTokenExpectOperator();
         node.rhs = parse_child();
-      });
+      }, lhs.range.start);
     }
 
     return lhs;
@@ -273,7 +277,7 @@ export class Parser {
           }
         }
 
-        const arg = this.parseSliceMakePair();
+        const arg = this.parseOr();
         node.args.push(arg);
       }
     });

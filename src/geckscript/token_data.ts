@@ -3520,14 +3520,14 @@ Object.assign(
   TokenData.Functions
 );
 
-export type SyntaxTypeMap = { [key in SyntaxType]?: string };
+export type SyntaxTypeMap_t = { [key in SyntaxType]?: string };
 
-export const TokenSyntaxTypeMap: {
-  Typenames: SyntaxTypeMap,
-  Keywords: SyntaxTypeMap,
-  Operators: SyntaxTypeMap,
-  Blocktypes: SyntaxTypeMap,
-  All: SyntaxTypeMap,
+export const SyntaxTypeMap: {
+  Typenames: SyntaxTypeMap_t,
+  Keywords: SyntaxTypeMap_t,
+  Operators: SyntaxTypeMap_t,
+  Blocktypes: SyntaxTypeMap_t,
+  All: SyntaxTypeMap_t,
 } = {
   Typenames: {},
   Keywords: {},
@@ -3548,8 +3548,8 @@ export const TokenSyntaxTypeMap: {
 
 function AddToSyntaxTypeMap(name: "Typenames" | "Keywords" | "Operators" | "Blocktypes"): void {
   for (const [k, v] of Object.entries(TokenData[name])) {
-    TokenSyntaxTypeMap.All[v] = k;
-    TokenSyntaxTypeMap[name][v] = k;
+    SyntaxTypeMap.All[v] = k;
+    SyntaxTypeMap[name][v] = k;
   }
 }
 
