@@ -1,8 +1,8 @@
 import { Diagnostic } from "vscode-languageserver";
 import { SyntaxTypeMap } from "./token_data";
 import {
-  SyntaxType,
   Node,
+  SyntaxType,
   VariableDeclarationNode,
   UnaryOpNode,
   BinOpNode,
@@ -22,149 +22,224 @@ import {
   IfBlockNode,
   ScriptNode,
   TreeData,
+  CommentNode,
+  NumberNode,
+  StringNode,
   Token,
   IsOperator,
   IsTypename,
-  IsKeyword,
-  CommentNode,
-  NumberNode,
-  StringNode
+  IsKeyword
 } from "./types";
 
 
-export class NodeVisitor {
-  static Functions: { [key in SyntaxType]?: (node: any, func: <T extends Node>(node: T) => void) => void } = {
-    [SyntaxType.VariableDeclaration]: (node: VariableDeclarationNode, func) => {
-      func(node.variable_type);
-      func(node.value);
-    },
+export function ForEachChild(node: Node, func: (node: Node) => void): void {
+  switch (node.type) {
+    case SyntaxType.VariableDeclaration:
+      func((node as VariableDeclarationNode).variable_type);
+      func((node as VariableDeclarationNode).value);
+      break;
 
-    [SyntaxType.UnaryOp]: (node: UnaryOpNode, func) => {
-      func(node.op);
-      func(node.operand);
-    },
+    case SyntaxType.UnaryOp:
+      func((node as UnaryOpNode).op);
+      func((node as UnaryOpNode).operand);
+      break;
 
-    [SyntaxType.BinOp]: (node: BinOpNode, func) => {
-      func(node.lhs);
-      func(node.op);
-      func(node.rhs);
-    },
+    case SyntaxType.BinOp:
+      func((node as BinOpNode).lhs);
+      func((node as BinOpNode).op);
+      func((node as BinOpNode).rhs);
+      break;
 
-    [SyntaxType.BinOpPaired]: (node: BinOpPairedNode, func) => {
-      func(node.lhs);
-      func(node.left_op);
-      func(node.rhs);
-      func(node.right_op);
-    },
+    case SyntaxType.BinOpPaired:
+      func((node as BinOpPairedNode).lhs);
+      func((node as BinOpPairedNode).left_op);
+      func((node as BinOpPairedNode).rhs);
+      func((node as BinOpPairedNode).right_op);
+      break;
 
-    [SyntaxType.FunctionExpression]: (node: FunctionNode, func) => {
-      func(node.name);
-      node.args.map(func);
-    },
+    case SyntaxType.FunctionExpression:
+      func((node as FunctionNode).name);
+      (node as FunctionNode).args.map(func);
+      break;
 
-    [SyntaxType.LambdaInline]: (node: LambdaInlineNode, func) => {
-      func(node.lbracket);
-      node.params.map(func);
-      func(node.rbracket);
-      func(node.arrow);
-      func(node.expression);
-    },
+    case SyntaxType.LambdaInline:
+      func((node as LambdaInlineNode).lbracket);
+      (node as LambdaInlineNode).params.map(func);
+      func((node as LambdaInlineNode).rbracket);
+      func((node as LambdaInlineNode).arrow);
+      func((node as LambdaInlineNode).expression);
+      break;
 
-    [SyntaxType.Lambda]: (node: LambdaNode, func) => {
-      func(node.begin);
-      func(node.function);
-      func(node.lbracket);
-      node.params.map(func);
-      func(node.rbracket);
-      func(node.compound_statement);
-      func(node.end);
-    },
+    case SyntaxType.Lambda:
+      func((node as LambdaNode).begin);
+      func((node as LambdaNode).function);
+      func((node as LambdaNode).lbracket);
+      (node as LambdaNode).params.map(func);
+      func((node as LambdaNode).rbracket);
+      func((node as LambdaNode).compound_statement);
+      func((node as LambdaNode).end);
+      break;
 
-    [SyntaxType.SetStatement]: (node: SetNode, func) => {
-      func(node.set);
-      func(node.identifier);
-      func(node.to);
-      func(node.value);
-    },
+    case SyntaxType.SetStatement:
+      func((node as SetNode).set);
+      func((node as SetNode).identifier);
+      func((node as SetNode).to);
+      func((node as SetNode).value);
+      break;
 
-    [SyntaxType.LetStatement]: (node: LetNode, func) => {
-      func(node.let);
-      func(node.value);
-    },
+    case SyntaxType.LetStatement:
+      func((node as LetNode).let);
+      func((node as LetNode).value);
+      break;
 
-    [SyntaxType.CompoundStatement]: (node: CompoundStatementNode, func) => {
-      node.children.map(func);
-    },
+    case SyntaxType.CompoundStatement:
+      (node as CompoundStatementNode).children.map(func);
+      break;
 
-    [SyntaxType.Blocktype]: (node: BlockTypeNode, func) => {
-      func(node.block_type);
-      node.args.map(func);
-    },
+    case SyntaxType.Blocktype:
+      func((node as BlockTypeNode).block_type);
+      (node as BlockTypeNode).args.map(func);
+      break;
 
-    [SyntaxType.BeginStatement]: (node: BeginBlockNode, func) => {
-      func(node.begin);
-      func(node.block_type);
-      func(node.compound_statement);
-      func(node.end);
-    },
+    case SyntaxType.BeginStatement:
+      func((node as BeginBlockNode).begin);
+      func((node as BeginBlockNode).block_type);
+      func((node as BeginBlockNode).compound_statement);
+      func((node as BeginBlockNode).end);
+      break;
 
-    [SyntaxType.ForeachStatement]: (node: ForeachBlockNode, func) => {
-      func(node.foreach);
-      func(node.idetifier);
-      func(node.larrow);
-      func(node.iterable);
-      func(node.statements);
-      func(node.loop);
-    },
+    case SyntaxType.ForeachStatement:
+      func((node as ForeachBlockNode).foreach);
+      func((node as ForeachBlockNode).idetifier);
+      func((node as ForeachBlockNode).larrow);
+      func((node as ForeachBlockNode).iterable);
+      func((node as ForeachBlockNode).statements);
+      func((node as ForeachBlockNode).loop);
+      break;
 
-    [SyntaxType.Branch]: (node: BranchNode<Keyword>, func) => {
-      func(node.keyword);
-      func(node.condition);
-      func(node.statements);
-    },
+    case SyntaxType.Branch:
+      func((node as BranchNode<Keyword>).keyword);
+      func((node as BranchNode<Keyword>).condition);
+      func((node as BranchNode<Keyword>).statements);
+      break;
 
-    [SyntaxType.WhileStatement]: (node: WhileBlockNode, func) => {
-      func(node.branch);
-      func(node.loop);
-    },
+    case SyntaxType.WhileStatement:
+      func((node as WhileBlockNode).branch);
+      func((node as WhileBlockNode).loop);
+      break;
 
-    [SyntaxType.IfStatement]: (node: IfBlockNode, func) => {
-      node.branches.map(func);
-    },
+    case SyntaxType.IfStatement:
+      (node as IfBlockNode).branches.map(func);
+      break;
 
-    [SyntaxType.Script]: (node: ScriptNode, func) => {
-      func(node.name);
-      func(node.scriptname);
-      func(node.statements);
-      Object.values(node.comments).map(func);
-    },
-  };
+    case SyntaxType.Script:
+      func((node as ScriptNode).name);
+      func((node as ScriptNode).scriptname);
+      func((node as ScriptNode).statements);
+      Object.values((node as ScriptNode).comments).map(func);
+      break;
 
-  static VisitTree<T1 extends Node, T2 extends Node, T3 extends Node>(
-    root: T1,
-    pre_func: (node: T2) => void = () => undefined,
-    post_func: (node: T3) => void = () => undefined,
-  ): void {
-    pre_func(root as any);
-    if (root.type in NodeVisitor.Functions)
-      NodeVisitor.Functions[root.type]!(
-        root,
-        (node) => { NodeVisitor.VisitTree(node, pre_func, post_func); }
-      );
-    post_func(root as any);
+    default:
+      break;
   }
 }
 
-export class ToTreeVisitor {
-  static Functions: { [key in SyntaxType]?: (node: any) => TreeData } = {
-    [SyntaxType.Unknown]: (node: Token) => {
+export function VisitNode(
+  node: Node,
+  func: (node: Node) => void = () => undefined,
+  pre_func: (node: Node) => void = () => undefined,
+  post_func: (node: Node) => void = () => undefined,
+): void {
+  pre_func(node);
+  ForEachChild(node, func);
+  post_func(node);
+}
+
+export function TraverseTree(
+  root: Node,
+  pre_func: (node: Node) => void = () => undefined,
+  post_func: (node: Node) => void = () => undefined,
+): void {
+  VisitNode(
+    root,
+    (node) => TraverseTree(node, pre_func, post_func),
+    pre_func,
+    post_func,
+  );
+}
+
+export function NodeToTreeData(node: Node): TreeData {
+  switch (node.type) {
+    case SyntaxType.Comment:
+      return new TreeData(`${node.range.start.line}: ${(node as CommentNode).content}`);
+
+    case SyntaxType.Number:
+      return new TreeData(`${(node as NumberNode).value}`);
+
+    case SyntaxType.String:
+      return new TreeData(`"${(node as StringNode).value}"`);
+
+    case SyntaxType.Identifier:
+    case SyntaxType.BlocktypeToken:
+    case SyntaxType.BlocktypeTokenFunction:
+      return new TreeData(`${(node as Token).content}`);
+
+    case SyntaxType.Continue:
+    case SyntaxType.Break:
+    case SyntaxType.Return:
+      return new TreeData(`Keyword: ${SyntaxTypeMap.All[node.type]}`);
+
+    case SyntaxType.VariableDeclaration:
+      return new TreeData(`${(node as VariableDeclarationNode).variable_type.content}`);
+
+    case SyntaxType.UnaryOp:
+    case SyntaxType.BinOp:
+      return new TreeData(`${(node as UnaryOpNode).op.content}`);
+
+    case SyntaxType.BinOpPaired:
+      return new TreeData(`${(node as BinOpPairedNode).left_op}${(node as BinOpPairedNode).right_op}`);
+
+    case SyntaxType.FunctionExpression:
+      return new TreeData(`${(node as FunctionNode).name.content}`);
+
+    case SyntaxType.LambdaInline:
+      return new TreeData("Inline Lambda");
+
+    case SyntaxType.Lambda:
+      return new TreeData("Lambda");
+
+    case SyntaxType.SetStatement:
+      return new TreeData("set");
+
+    case SyntaxType.LetStatement:
+      return new TreeData("let");
+
+    case SyntaxType.CompoundStatement:
+      return new TreeData("Compound Statement");
+
+    case SyntaxType.Blocktype:
+      return new TreeData(`${(node as BlockTypeNode).block_type.content}`);
+
+    case SyntaxType.BeginStatement:
+      return new TreeData("begin");
+
+    case SyntaxType.ForeachStatement:
+      return new TreeData("foreach");
+
+    case SyntaxType.Branch:
+      return new TreeData("Branch");
+
+    case SyntaxType.WhileStatement:
+      return new TreeData("while");
+
+    case SyntaxType.IfStatement:
+      return new TreeData("if");
+
+    case SyntaxType.Script:
+      return new TreeData("Script");
+
+    default:
       if (
-        node.type === SyntaxType.Continue ||
-        node.type === SyntaxType.Break ||
-        node.type === SyntaxType.Return
-      )
-        return new TreeData(`Keyword: ${SyntaxTypeMap.All[node.type]}`);
-      else if (
         IsOperator(node.type) ||
         IsTypename(node.type) ||
         IsKeyword(node.type)
@@ -172,98 +247,27 @@ export class ToTreeVisitor {
         return new TreeData("NULL");
       else
         return new TreeData(`Token: ${SyntaxTypeMap.All[node.type]}`);
-    },
-    [SyntaxType.Comment]: (node: CommentNode) => {
-      return new TreeData(`${node.range.start.line}: ${node.content}`);
-    },
-    [SyntaxType.Number]: (node: NumberNode) => {
-      return new TreeData(`${node.value}`);
-    },
-    [SyntaxType.String]: (node: StringNode) => {
-      return new TreeData(`"${node.value}"`);
-    },
-    [SyntaxType.Identifier]: (node: Token) => {
-      return new TreeData(`${node.content}`);
-    },
-    [SyntaxType.BlocktypeToken]: (node: Token) => {
-      return new TreeData(`${node.content}`);
-    },
-    [SyntaxType.BlocktypeTokenFunction]: (node: Token) => {
-      return new TreeData(`${node.content}`);
-    },
-    [SyntaxType.VariableDeclaration]: (node: VariableDeclarationNode) => {
-      return new TreeData(`${node.variable_type.content}`);
-    },
-    [SyntaxType.UnaryOp]: (node: UnaryOpNode) => {
-      return new TreeData(`${node.op.content}`);
-    },
-    [SyntaxType.BinOp]: (node: BinOpNode) => {
-      return new TreeData(`${node.op.content}`);
-    },
-    [SyntaxType.BinOpPaired]: (node: BinOpPairedNode) => {
-      return new TreeData(`${node.left_op}${node.right_op}`);
-    },
-    [SyntaxType.FunctionExpression]: (node: FunctionNode) => {
-      return new TreeData(`${node.name.content}`);
-    },
-    [SyntaxType.LambdaInline]: (node: LambdaInlineNode) => {
-      return new TreeData("Inline Lambda");
-    },
-    [SyntaxType.Lambda]: (node: LambdaNode) => {
-      return new TreeData("Lambda");
-    },
-    [SyntaxType.SetStatement]: (node: SetNode) => {
-      return new TreeData("set");
-    },
-    [SyntaxType.LetStatement]: (node: LetNode) => {
-      return new TreeData("let");
-    },
-    [SyntaxType.CompoundStatement]: (node: CompoundStatementNode) => {
-      return new TreeData("Compound Statement");
-    },
-    [SyntaxType.Blocktype]: (node: BlockTypeNode) => {
-      return new TreeData(`${node.block_type.content}`);
-    },
-    [SyntaxType.BeginStatement]: (node: BeginBlockNode) => {
-      return new TreeData("begin");
-    },
-    [SyntaxType.ForeachStatement]: (node: ForeachBlockNode) => {
-      return new TreeData("foreach");
-    },
-    [SyntaxType.Branch]: (node: BranchNode<Keyword>) => {
-      return new TreeData("Branch");
-    },
-    [SyntaxType.WhileStatement]: (node: WhileBlockNode) => {
-      return new TreeData("while");
-    },
-    [SyntaxType.IfStatement]: (node: IfBlockNode) => {
-      return new TreeData("if");
-    },
-    [SyntaxType.Script]: (node: ScriptNode) => {
-      return new TreeData("Script");
-    },
-  };
-
-  static ToTree(node: Node): TreeData {
-    const stack: TreeData[] = [];
-
-    NodeVisitor.VisitTree(
-      node,
-      (node) => {
-        const func = ToTreeVisitor.Functions[node.type] ?? ToTreeVisitor.Functions[SyntaxType.Unknown]!;
-        stack.push(func(node));
-      },
-      () => {
-        if (stack[stack.length - 1].name === "NULL")
-          stack.pop();
-        else if (stack.length > 1) {
-          stack[stack.length - 2].append(stack.pop()!);
-        }
-      }
-    );
-
-    return stack.pop()!;
   }
+}
+
+export function TreeToTreeData(node: Node): TreeData {
+  const stack: TreeData[] = [];
+
+  TraverseTree(
+    node,
+    (node) => {
+      stack.push(NodeToTreeData(node));
+    },
+    () => {
+      if (stack[stack.length - 1].name === "NULL")
+        stack.pop();
+      else if (stack.length > 1) {
+        stack[stack.length - 2].append(stack.pop()!);
+      }
+    }
+  );
+
+  return stack.pop()!;
 }
 
 export const enum ExpressionType {
@@ -286,45 +290,35 @@ export const ExpressionTypeMap = {
   [ExpressionType.Array]: "array",
 };
 
-export class ValidateVisitor {
-  static TypeFunctions: { [key in SyntaxType]?: (node: any) => ExpressionType } = {
-    [SyntaxType.Unknown]: () => ExpressionType.Unknown,
-    [SyntaxType.Number]: () => ExpressionType.Integer,
-    [SyntaxType.String]: () => ExpressionType.String,
-    [SyntaxType.Identifier]: () => ExpressionType.Any,
-    [SyntaxType.BinOp]: (node: BinOpNode) => {
-      const lhs = ValidateVisitor.GetType(node.lhs);
-      const rhs = ValidateVisitor.GetType(node.rhs);
+export function GetExpressionType(node: Node): ExpressionType {
+
+  switch (node.type) {
+    case SyntaxType.Number: return ExpressionType.Integer;
+    case SyntaxType.String: return ExpressionType.String;
+
+    case SyntaxType.BinOp: {
+      const lhs = GetExpressionType((node as BinOpNode).lhs);
+      const rhs = GetExpressionType((node as BinOpNode).rhs);
 
       if (lhs === ExpressionType.Any) return rhs;
       else if (rhs === ExpressionType.Any) return lhs;
       else if (lhs === rhs) return lhs;
       else return ExpressionType.Unknown;
-    },
-    [SyntaxType.FunctionExpression]: () => ExpressionType.Any,
-  };
+    }
 
-  static GetType(node: Node): ExpressionType {
-    const func = ValidateVisitor.TypeFunctions[node.type] ?? ValidateVisitor.TypeFunctions[SyntaxType.Unknown]!;
+    case SyntaxType.Identifier:
+    case SyntaxType.FunctionExpression:
+      return ExpressionType.Any;
 
-    return func(node);
+    default: return ExpressionType.Unknown;
   }
+}
 
-  static ValidateFunctions: { [key in SyntaxType]?: (node: any) => Diagnostic[] } = {
-    [SyntaxType.Unknown]: () => [],
-    // [SyntaxType.Unknown]: (node: Token) => {
-    //   if (node.type === SyntaxType.Unknown)
-    //     return [{
-    //       message: node.content ?? TokenSyntaxTypeMap.All[node.type] ?? "Unknown",
-    //       range: node.range
-    //     }];
-    //   else
-    //     return [];
-    // },
-    [SyntaxType.BinOp]: (node: BinOpNode) => {
-      const lhs = ValidateVisitor.GetType(node.lhs);
-      const rhs = ValidateVisitor.GetType(node.rhs);
-
+export function ValidateNode(node: Node): Diagnostic[] {
+  switch (node.type) {
+    case SyntaxType.BinOp: {
+      const lhs = GetExpressionType((node as BinOpNode).lhs);
+      const rhs = GetExpressionType((node as BinOpNode).rhs);
 
       if (
         (lhs === rhs || lhs === ExpressionType.Any || rhs === ExpressionType.Any) &&
@@ -336,20 +330,28 @@ export class ValidateVisitor {
         range: node.range
       }];
     }
-  };
 
-  static Validate(node: Node): Diagnostic[] {
-    let diagnositcs: Diagnostic[] = [];
-
-    NodeVisitor.VisitTree(
-      node,
-      (node) => {
-        const func = ValidateVisitor.ValidateFunctions[node.type] ?? ValidateVisitor.ValidateFunctions[SyntaxType.Unknown]!;
-
-        diagnositcs = diagnositcs.concat(func(node));
-      }
-    );
-
-    return diagnositcs;
+    default:
+      return [];
+    // if (node.type === SyntaxType.Unknown)
+    //   return [{
+    //     message: node.content ?? TokenSyntaxTypeMap.All[node.type] ?? "Unknown",
+    //     range: node.range
+    //   }];
+    // else
+    //   return [];
   }
+}
+
+export function ValidateTree(node: Node): Diagnostic[] {
+  let diagnositcs: Diagnostic[] = [];
+
+  TraverseTree(
+    node,
+    (node) => {
+      diagnositcs = diagnositcs.concat(ValidateNode(node));
+    }
+  );
+
+  return diagnositcs;
 }

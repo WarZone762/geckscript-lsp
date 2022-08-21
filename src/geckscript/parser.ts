@@ -4,7 +4,6 @@ import { TokenData, SyntaxTypeMap } from "./token_data";
 
 import {
   SyntaxType,
-  TreeData,
   Node,
   Token,
   NumberNode,
@@ -344,13 +343,13 @@ export class Parser {
     } else if (this.cur_token.type === SyntaxType.LParen) {
       this.skipToken();
       if (this.cur_token.type as unknown === SyntaxType.Begin) {
-        return this.parseNode(this.parseLambda(), node => {
+        return this.parseNode(this.parseLambda(), () => {
           this.nextTokenExpectType(SyntaxType.RParen);
         });
       } else {
         ++this.paren_level;
 
-        return this.parseNode(this.parseExpression(), node => {
+        return this.parseNode(this.parseExpression(), () => {
           this.nextTokenExpectType(SyntaxType.RParen);
         });
       }

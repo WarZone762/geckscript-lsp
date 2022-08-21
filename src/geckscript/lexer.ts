@@ -1,7 +1,8 @@
 import { StringBuffer } from "../common";
 import { TokenData } from "./token_data";
-
-import { Operator, SyntaxType, Token } from "./types";
+import {
+  SyntaxType, Token, Operator
+} from "./types";
 
 
 // TODO: separate out wiki page name from TokenData, implement better parsing error reporting
