@@ -4,6 +4,15 @@ import { TokenData, SyntaxTypeMap } from "./token_data";
 
 import {
   SyntaxType,
+  BranchKeywordSyntaxType,
+  Typename,
+  Keyword,
+  Operator,
+  Expression,
+  Statement,
+  IsTypename,
+  IsKeyword,
+  IsOperator,
   Node,
   Token,
   NumberNode,
@@ -14,7 +23,6 @@ import {
   BranchNode,
   CommentNode,
   CompoundStatementNode,
-  ExpressionNode,
   ForeachBlockNode,
   FunctionNode,
   IfBlockNode,
@@ -23,17 +31,10 @@ import {
   LetNode,
   ScriptNode,
   SetNode,
-  StatementNode,
   UnaryOpNode,
   VariableDeclarationNode,
   WhileBlockNode,
   BlockTypeNode,
-  Typename,
-  Keyword,
-  Operator,
-  IsTypename,
-  IsKeyword,
-  IsOperator,
 } from "./types";
 
 
@@ -91,34 +92,34 @@ export class Parser {
     return token as Token<T>;
   }
 
-  nextTokenExpectTypename(): Token<Typename> {
+  nextTokenExpectTypename(): Typename {
     const token = this.cur_token;
 
     if (!this.isTypename()) this.reportParsingError("expected a typename");
 
     this.skipToken();
 
-    return token as Token<Typename>;
+    return token as Typename;
   }
 
-  nextTokenExpectKeyword(): Token<Keyword> {
+  nextTokenExpectKeyword(): Keyword {
     const token = this.cur_token;
 
     if (!this.isKeyword()) this.reportParsingError("expected a keyword");
 
     this.skipToken();
 
-    return token as Token<Keyword>;
+    return token as Keyword;
   }
 
-  nextTokenExpectOperator(): Token<Operator> {
+  nextTokenExpectOperator(): Operator {
     const token = this.cur_token;
 
     if (!this.isOperator()) this.reportParsingError("expected an operator");
 
     this.skipToken();
 
-    return token as Token<Operator>;
+    return token as Operator;
   }
 
   nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {
@@ -178,15 +179,15 @@ export class Parser {
   }
 
   parseBinOpRight(
-    parse_child: () => ExpressionNode,
+    parse_child: () => Expression,
     valid_tokens: { [key in SyntaxType]?: boolean }
-  ): ExpressionNode {
+  ): Expression {
     let lhs = parse_child();
 
     if (this.cur_token.type in valid_tokens) {
       let last_node = this.parseNode(new BinOpNode(), node => {
         node.lhs = lhs;
-        node.op = this.nextToken();
+        node.op = this.nextTokenExpectOperator();
         node.rhs = parse_child();
       });
 
@@ -208,9 +209,9 @@ export class Parser {
   }
 
   parseBinOpLeft(
-    parse_child: () => ExpressionNode,
+    parse_child: () => Expression,
     valid_tokens: { [key in SyntaxType]?: boolean }
-  ): ExpressionNode {
+  ): Expression {
     let lhs = parse_child();
 
     while (this.cur_token.type in valid_tokens) {
@@ -258,7 +259,7 @@ export class Parser {
     return this.nextTokenExpectType(SyntaxType.Identifier);
   }
 
-  parseKeyword(): Token<Keyword> {
+  parseKeyword(): Keyword {
     return this.nextTokenExpectKeyword();
   }
 
@@ -330,7 +331,7 @@ export class Parser {
     });
   }
 
-  parsePrimaryExpression(): ExpressionNode {
+  parsePrimaryExpression(): Expression {
     if (this.cur_token.type === SyntaxType.String) {
       return this.parseString();
     } else if (this.cur_token.type === SyntaxType.Number) {
@@ -358,11 +359,11 @@ export class Parser {
     } else {
       this.reportParsingError("expected expression");
 
-      return this.createMissingNode(new ExpressionNode());
+      return this.createMissingNode(new Node()) as Expression;
     }
   }
 
-  parseMemeberSquareBrackets(lhs: ExpressionNode): ExpressionNode {
+  parseMemeberSquareBrackets(lhs: Expression): Expression {
     return this.parseMember(this.parseNode(new BinOpPairedNode(), node => {
       node.lhs = lhs;
       node.left_op = this.nextTokenExpectType(SyntaxType.LSQBracket);
@@ -371,7 +372,7 @@ export class Parser {
     }));
   }
 
-  parseMemberRArrow(lhs: ExpressionNode): ExpressionNode {
+  parseMemberRArrow(lhs: Expression): Expression {
     return this.parseMember(this.parseNode(new BinOpNode(), node => {
       node.lhs = lhs;
       node.op = this.nextTokenExpectType(SyntaxType.LArrow);
@@ -381,27 +382,27 @@ export class Parser {
         this.cur_token.type !== SyntaxType.Number &&
         this.cur_token.type !== SyntaxType.Identifier
       ) {
-        node.rhs = this.createMissingNode(new ExpressionNode());
+        node.rhs = this.createMissingNode(new Node()) as Expression;
       } else {
         node.rhs = this.parsePrimaryExpression();
       }
     }));
   }
 
-  parseMemberDot(lhs: ExpressionNode): ExpressionNode {
+  parseMemberDot(lhs: Expression): Expression {
     return this.parseMember(this.parseNode(new BinOpNode(), node => {
       node.lhs = lhs;
       node.op = this.nextTokenExpectType(SyntaxType.Dot);
 
       if (this.cur_token.type !== SyntaxType.Identifier) {
-        node.rhs = this.createMissingNode(new ExpressionNode());
+        node.rhs = this.createMissingNode(new Node()) as Expression;
       } else {
         node.rhs = this.parsePrimaryExpression();
       }
     }));
   }
 
-  parseMember(lhs?: ExpressionNode): ExpressionNode {
+  parseMember(lhs?: Expression): Expression {
     lhs = lhs ?? this.parsePrimaryExpression();
 
     if (this.isOperator()) return lhs;
@@ -419,7 +420,7 @@ export class Parser {
     }
   }
 
-  parseLogicalNot(): ExpressionNode {
+  parseLogicalNot(): Expression {
     if (this.cur_token.type !== SyntaxType.Exclamation)
       return this.parseMember();
 
@@ -429,7 +430,7 @@ export class Parser {
     });
   }
 
-  parseUnary(): ExpressionNode {
+  parseUnary(): Expression {
     if (this.isOperator()) return this.parseLogicalNot();
 
     const subtype = this.cur_token.type;
@@ -447,14 +448,14 @@ export class Parser {
     });
   }
 
-  parseExponential(): ExpressionNode {
+  parseExponential(): Expression {
     return this.parseBinOpLeft(
       () => this.parseUnary(),
       { [SyntaxType.Circumflex]: true }
     );
   }
 
-  parseMultiplicative(): ExpressionNode {
+  parseMultiplicative(): Expression {
     return this.parseBinOpLeft(
       () => this.parseExponential(),
       {
@@ -465,7 +466,7 @@ export class Parser {
     );
   }
 
-  parseAdditive(): ExpressionNode {
+  parseAdditive(): Expression {
     return this.parseBinOpLeft(
       () => this.parseMultiplicative(),
       {
@@ -475,7 +476,7 @@ export class Parser {
     );
   }
 
-  parseShift(): ExpressionNode {
+  parseShift(): Expression {
     return this.parseBinOpLeft(
       () => this.parseAdditive(),
       {
@@ -485,21 +486,21 @@ export class Parser {
     );
   }
 
-  parseAnd(): ExpressionNode {
+  parseAnd(): Expression {
     return this.parseBinOpLeft(
       () => this.parseShift(),
       { [SyntaxType.Ampersand]: true }
     );
   }
 
-  parseOr(): ExpressionNode {
+  parseOr(): Expression {
     return this.parseBinOpLeft(
       () => this.parseAnd(),
       { [SyntaxType.VBar]: true }
     );
   }
 
-  parseRelational(): ExpressionNode {
+  parseRelational(): Expression {
     return this.parseBinOpLeft(
       () => this.parseOr(),
       {
@@ -511,7 +512,7 @@ export class Parser {
     );
   }
 
-  parseEquality(): ExpressionNode {
+  parseEquality(): Expression {
     return this.parseBinOpLeft(
       () => this.parseRelational(),
       {
@@ -521,7 +522,7 @@ export class Parser {
     );
   }
 
-  parseSliceMakePair(): ExpressionNode {
+  parseSliceMakePair(): Expression {
     return this.parseBinOpLeft(
       () => this.parseEquality(),
       {
@@ -531,7 +532,7 @@ export class Parser {
     );
   }
 
-  parseLogicalAndCompoundAssignment(): ExpressionNode {
+  parseLogicalAndCompoundAssignment(): Expression {
     return this.parseBinOpLeft(
       () => this.parseSliceMakePair(),
       {
@@ -548,14 +549,14 @@ export class Parser {
     );
   }
 
-  parseLogicalOr(): ExpressionNode {
+  parseLogicalOr(): Expression {
     return this.parseBinOpLeft(
       () => this.parseLogicalAndCompoundAssignment(),
       { [SyntaxType.DoubleVBar]: true }
     );
   }
 
-  parseAssignment(): ExpressionNode {
+  parseAssignment(): Expression {
     return this.parseBinOpRight(
       () => this.parseLogicalOr(),
       {
@@ -565,7 +566,7 @@ export class Parser {
     );
   }
 
-  parseExpression(): ExpressionNode {
+  parseExpression(): Expression {
     return this.parseAssignment();
   }
 
@@ -594,8 +595,8 @@ export class Parser {
     });
   }
 
-  parseStatement(): StatementNode {
-    let node: StatementNode;
+  parseStatement(): Statement {
+    let node: Statement;
 
     const type = this.cur_token.type;
 
@@ -700,10 +701,10 @@ export class Parser {
     });
   }
 
-  parseBranch<T extends Keyword>(
+  parseBranch<T extends BranchKeywordSyntaxType>(
     branch_keyword: T,
     terminator_tokens: { [key in SyntaxType]?: boolean }
-  ): BranchNode<T> {
+  ): BranchNode<Token<T>> {
     return this.parseNode(new BranchNode(), node => {
       node.keyword = this.nextTokenExpectType(branch_keyword);
       node.condition = this.parseExpression();
@@ -754,7 +755,7 @@ export class Parser {
   parseScriptCompoundStatement(): CompoundStatementNode {
     return this.parseNode(new CompoundStatementNode(), node => {
       while (this.moreData()) {
-        let statement: StatementNode;
+        let statement: Statement;
 
         const type = this.cur_token.type;
 

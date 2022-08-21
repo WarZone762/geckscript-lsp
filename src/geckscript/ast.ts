@@ -1,8 +1,15 @@
 import { Diagnostic } from "vscode-languageserver";
 import { SyntaxTypeMap } from "./token_data";
 import {
-  Node,
   SyntaxType,
+  IsOperator,
+  IsTypename,
+  IsKeyword,
+  BranchKeyword,
+  Node,
+  Token,
+  CommentNode,
+  StringNode,
   VariableDeclarationNode,
   UnaryOpNode,
   BinOpNode,
@@ -17,18 +24,10 @@ import {
   BeginBlockNode,
   ForeachBlockNode,
   BranchNode,
-  Keyword,
   WhileBlockNode,
   IfBlockNode,
   ScriptNode,
   TreeData,
-  CommentNode,
-  NumberNode,
-  StringNode,
-  Token,
-  IsOperator,
-  IsTypename,
-  IsKeyword
 } from "./types";
 
 
@@ -118,9 +117,9 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       break;
 
     case SyntaxType.Branch:
-      func((node as BranchNode<Keyword>).keyword);
-      func((node as BranchNode<Keyword>).condition);
-      func((node as BranchNode<Keyword>).statements);
+      func((node as BranchNode<BranchKeyword>).keyword);
+      func((node as BranchNode<BranchKeyword>).condition);
+      func((node as BranchNode<BranchKeyword>).statements);
       break;
 
     case SyntaxType.WhileStatement:
@@ -173,12 +172,10 @@ export function NodeToTreeData(node: Node): TreeData {
     case SyntaxType.Comment:
       return new TreeData(`${node.range.start.line}: ${(node as CommentNode).content}`);
 
-    case SyntaxType.Number:
-      return new TreeData(`${(node as NumberNode).value}`);
-
     case SyntaxType.String:
       return new TreeData(`"${(node as StringNode).value}"`);
 
+    case SyntaxType.Number:
     case SyntaxType.Identifier:
     case SyntaxType.BlocktypeToken:
     case SyntaxType.BlocktypeTokenFunction:

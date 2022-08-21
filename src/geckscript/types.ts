@@ -119,7 +119,8 @@ export const enum SyntaxType {
   Script,
 }
 
-export type Typename = SyntaxType.Short |
+export type TypenameSyntaxType =
+  SyntaxType.Short |
   SyntaxType.Int |
   SyntaxType.Long |
   SyntaxType.Float |
@@ -127,7 +128,8 @@ export type Typename = SyntaxType.Short |
   SyntaxType.StringVar |
   SyntaxType.ArrayVar;
 
-export type Keyword = SyntaxType.ScriptName |
+export type KeywordSyntaxType =
+  SyntaxType.ScriptName |
   SyntaxType.Begin |
   SyntaxType.End |
   SyntaxType.If |
@@ -144,8 +146,10 @@ export type Keyword = SyntaxType.ScriptName |
   SyntaxType.To |
   SyntaxType.Let;
 
+export type BranchKeywordSyntaxType = SyntaxType.While | SyntaxType.If | SyntaxType.Elseif;
 
-export type Operator = SyntaxType.Equals |
+export type OperatorSyntaxType =
+  SyntaxType.Equals |
   SyntaxType.ColonEquals |
   SyntaxType.PlusEquals |
   SyntaxType.MinusEquals |
@@ -190,6 +194,38 @@ export type Operator = SyntaxType.Equals |
   SyntaxType.Comma |
   SyntaxType.EqualsGreater;
 
+export type Operator = Token<OperatorSyntaxType>;
+export type Keyword = Token<KeywordSyntaxType>
+export type BranchKeyword = Token<BranchKeywordSyntaxType>;
+export type Typename = Token<TypenameSyntaxType>
+
+export type PrimaryExpression =
+  StringNode |
+  NumberNode |
+  Token<SyntaxType.Identifier> |
+  FunctionNode |
+  LambdaNode |
+  LambdaInlineNode;
+
+export type Expression =
+  PrimaryExpression |
+  UnaryOpNode |
+  BinOpNode |
+  BinOpPairedNode;
+
+export type Statement =
+  Keyword |
+  VariableDeclarationNode |
+  SetNode |
+  LetNode |
+  CompoundStatementNode |
+  BeginBlockNode |
+  ForeachBlockNode |
+  WhileBlockNode |
+  IfBlockNode |
+  Expression;
+
+
 export function IsTypename(type: SyntaxType): boolean {
   return SyntaxType.TYPENAME_START < type && type < SyntaxType.TYPENAME_END;
 }
@@ -233,85 +269,78 @@ export class Token<T extends SyntaxType = SyntaxType> extends Node<T> {
   content = "";
 }
 
-export class CommentNode extends Node {
-  type = SyntaxType.Comment;
-
-  value!: string;
-  content!: string;
-}
-
-export class Literal<T> extends Node {
+export class TokenWithValue<T> extends Token {
   value!: T;
-  content!: string;
 }
 
-export class NumberNode extends Literal<number> {
+export class CommentNode extends TokenWithValue<string> {
+  type = SyntaxType.Comment;
+}
+
+export class NumberNode extends TokenWithValue<number> {
   type = SyntaxType.Number;
 }
 
-export class StringNode extends Literal<string> {
+export class StringNode extends TokenWithValue<string> {
   type = SyntaxType.String;
 }
 
 export class VariableDeclarationNode extends Node {
   type = SyntaxType.VariableDeclaration;
 
-  variable_type!: Token<Typename>;
-  value!: ExpressionNode;
+  variable_type!: Typename;
+  value!: Expression;
 }
 
-export class ExpressionNode extends Node {
-}
-
-export class UnaryOpNode extends ExpressionNode {
+export class UnaryOpNode extends Node {
   type = SyntaxType.UnaryOp;
 
-  op!: Token<Operator>;
-  operand!: ExpressionNode;
+  op!: Operator;
+  operand!: Expression;
 }
 
-export class BinOpNode extends ExpressionNode {
+export class BinOpNode extends Node {
   type = SyntaxType.BinOp;
 
-  lhs!: ExpressionNode;
-  op!: Token<Operator>;
-  rhs!: ExpressionNode;
+  lhs!: Expression;
+  op!: Operator;
+  rhs!: Expression;
 }
 
-export class BinOpPairedNode extends ExpressionNode {
+export class BinOpPairedNode extends Node {
   type = SyntaxType.BinOpPaired;
 
-  lhs!: ExpressionNode;
+  lhs!: Expression;
   left_op!: Token<SyntaxType.LSQBracket>;
-  rhs!: ExpressionNode;
+  rhs!: Expression;
   right_op!: Token<SyntaxType.RSQBracket>;
 }
 
-export class FunctionNode extends ExpressionNode {
+export class FunctionNode extends Node {
   type = SyntaxType.FunctionExpression;
 
   name!: Token<SyntaxType.Identifier>;
-  args: ExpressionNode[] = [];
+  args: Expression[] = [];
 }
 
-export class LambdaInlineNode extends ExpressionNode {
+export class LambdaInlineNode extends Node {
   type = SyntaxType.LambdaInline;
 
   lbracket!: Token<SyntaxType.LBracket>;
-  params: ExpressionNode[] = [];
+  params: (Token<SyntaxType.Identifier> | VariableDeclarationNode)[] = [];
   rbracket!: Token<SyntaxType.RBracket>;
   arrow!: Token<SyntaxType.EqualsGreater>;
 
-  expression!: ExpressionNode;
+  expression!: Expression;
 }
 
-export class LambdaNode extends ExpressionNode {
+export class LambdaNode extends Node {
   type = SyntaxType.Lambda;
 
   begin!: Token<SyntaxType.Begin>;
   function!: Token<SyntaxType.BlocktypeTokenFunction>;
   lbracket!: Token<SyntaxType.LBracket>;
-  params: ExpressionNode[] = [];
+  params: (Token<SyntaxType.Identifier> | VariableDeclarationNode)[] = [];
   rbracket!: Token<SyntaxType.RBracket>;
 
   compound_statement!: CompoundStatementNode;
@@ -319,29 +348,26 @@ export class LambdaNode extends ExpressionNode {
   end!: Token<SyntaxType.End>;
 }
 
-export class StatementNode extends Node {
-}
-
-export class SetNode extends StatementNode {
+export class SetNode extends Node {
   type = SyntaxType.SetStatement;
 
   set!: Token<SyntaxType.Set>;
   identifier!: Token<SyntaxType.Identifier>;
   to!: Token<SyntaxType.To>;
-  value!: ExpressionNode;
+  value!: Expression;
 }
 
-export class LetNode extends StatementNode {
+export class LetNode extends Node {
   type = SyntaxType.LetStatement;
 
   let!: Token<SyntaxType.Let>;
-  value!: ExpressionNode;
+  value!: Expression | VariableDeclarationNode;
 }
 
 export class CompoundStatementNode extends Node {
   type = SyntaxType.CompoundStatement;
 
-  children: StatementNode[] = [];
+  children: Statement[] = [];
 }
 
 export class BlockTypeNode extends Node {
@@ -351,7 +377,7 @@ export class BlockTypeNode extends Node {
   args: Node[] = [];
 }
 
-export class BeginBlockNode extends StatementNode {
+export class BeginBlockNode extends Node {
   type = SyntaxType.BeginStatement;
 
   begin!: Token<SyntaxType.Begin>;
@@ -360,38 +386,38 @@ export class BeginBlockNode extends StatementNode {
   end!: Token<SyntaxType.End>;
 }
 
-export class ForeachBlockNode extends StatementNode {
+export class ForeachBlockNode extends Node {
   type = SyntaxType.Foreach;
 
   foreach!: Token<SyntaxType.Foreach>;
   idetifier!: Token<SyntaxType.Identifier> | VariableDeclarationNode;
   larrow!: Token<SyntaxType.LArrow>;
-  iterable!: ExpressionNode;
+  iterable!: Expression;
 
   statements!: CompoundStatementNode;
 
   loop!: Token<SyntaxType.Loop>;
 }
 
-export class BranchNode<T extends Keyword> extends Node {
+export class BranchNode<T extends BranchKeyword> extends Node {
   type = SyntaxType.Branch;
 
-  keyword!: Token<T>;
-  condition!: ExpressionNode;
+  keyword!: T;
+  condition!: Expression;
   statements!: CompoundStatementNode;
 }
 
-export class WhileBlockNode extends StatementNode {
+export class WhileBlockNode extends Node {
   type = SyntaxType.WhileStatement;
 
-  branch!: BranchNode<SyntaxType.While>;
+  branch!: BranchNode<Token<SyntaxType.While>>;
   loop!: Token<SyntaxType.Loop>;
 }
 
-export class IfBlockNode extends StatementNode {
+export class IfBlockNode extends Node {
   type = SyntaxType.IfStatement;
 
-  branches: BranchNode<SyntaxType.If | SyntaxType.Elseif>[] = [];
+  branches: BranchNode<Token<SyntaxType.If> | Token<SyntaxType.Elseif>>[] = [];
   else?: Token<SyntaxType.Else>;
   else_statements?: CompoundStatementNode;
   endif!: Token<SyntaxType.Endif>;

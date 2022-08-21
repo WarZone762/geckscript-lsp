@@ -1,14 +1,14 @@
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { Keyword, Operator, SyntaxType, Typename } from "./types";
+import { KeywordSyntaxType, OperatorSyntaxType, SyntaxType, TypenameSyntaxType } from "./types";
 
 
 export type TokenMap<T extends SyntaxType = SyntaxType> = { [key: string]: T };
 
 export const TokenData: {
-  Typenames: TokenMap<Typename>,
-  Keywords: TokenMap<Keyword>,
+  Typenames: TokenMap<TypenameSyntaxType>,
+  Keywords: TokenMap<KeywordSyntaxType>,
   Blocktypes: TokenMap<SyntaxType.BlocktypeToken | SyntaxType.BlocktypeTokenFunction>,
-  Operators: TokenMap<Operator>,
+  Operators: TokenMap<OperatorSyntaxType>,
   Functions: TokenMap<SyntaxType.Identifier>,
   All: TokenMap,
 } = {

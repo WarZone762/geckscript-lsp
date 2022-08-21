@@ -164,7 +164,7 @@ export class Lexer {
     return this.finishToken(token);
   }
 
-  consumeOperator(): Token<Operator | SyntaxType.Unknown> {
+  consumeOperator(): Operator | Token<SyntaxType.Unknown> {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
