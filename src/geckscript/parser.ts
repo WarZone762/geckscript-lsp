@@ -17,27 +17,27 @@ import {
   IsAssignmentOperator,
   Node,
   Token,
-  NumberNode,
-  StringNode,
-  BeginBlockNode,
-  BinOpNode,
-  BinOpPairedNode,
-  BranchNode,
-  CommentNode,
-  CompoundStatementNode,
-  ForeachBlockNode,
-  FunctionNode,
-  IfBlockNode,
-  LambdaInlineNode,
-  LambdaNode,
-  VariableDeclarationStatementNode,
-  SetNode,
-  LetNode,
-  UnaryOpNode,
-  VariableDeclarationNode,
-  WhileBlockNode,
-  BlockTypeNode,
-  ScriptNode,
+  NumberLiteral,
+  StringLiteral,
+  BeginStatement,
+  BinaryExpression,
+  ElementAccessExpression,
+  Branch,
+  Comment,
+  CompoundStatement,
+  ForeachStatement,
+  FunctionExpression,
+  IfStatement,
+  LambdaInlineExpression,
+  LambdaExpression,
+  VariableDeclarationStatement,
+  SetStatement,
+  LetStatement,
+  UnaryExpression,
+  VariableDeclaration,
+  WhileStatement,
+  BlocktypeExpression,
+  Script,
 } from "./types";
 
 
@@ -48,7 +48,7 @@ let last_token: Token;
 
 let paren_level = 0;
 
-let script: ScriptNode;
+let script: Script;
 
 function moreData(): boolean {
   return cur_token.type !== SyntaxType.EOF;
@@ -147,7 +147,7 @@ function parseBinOpRight(
   let lhs = parse_child();
 
   if (cur_token.type in valid_tokens) {
-    let last_node = parseNode(new BinOpNode(), node => {
+    let last_node = parseNode(new BinaryExpression(), node => {
       node.lhs = lhs;
       node.op = parseOperator();
       node.rhs = parse_child();
@@ -156,7 +156,7 @@ function parseBinOpRight(
     lhs = last_node;
 
     while (cur_token.type in valid_tokens) {
-      const node = parseNode(new BinOpNode(), node => {
+      const node = parseNode(new BinaryExpression(), node => {
         node.lhs = last_node.rhs;
         node.op = parseOperator();
         node.rhs = parse_child();
@@ -177,7 +177,7 @@ function parseBinOpLeft(
   let lhs = parse_child();
 
   while (cur_token.type in valid_tokens) {
-    lhs = parseNode(new BinOpNode(), node => {
+    lhs = parseNode(new BinaryExpression(), node => {
       node.lhs = lhs;
       node.op = parseOperator();
       node.rhs = parse_child();
@@ -188,7 +188,7 @@ function parseBinOpLeft(
 }
 
 function parseComment(): void {
-  const node = parseNode(new CommentNode(), node => {
+  const node = parseNode(new Comment(), node => {
     node.content = cur_token.content;
     node.value = node.content.substring(1);
     _skipToken();
@@ -197,8 +197,8 @@ function parseComment(): void {
   script.comments[node.range.start.line] = node;
 }
 
-function parseNumber(): NumberNode {
-  return parseNode(new NumberNode(), node => {
+function parseNumber(): NumberLiteral {
+  return parseNode(new NumberLiteral(), node => {
     node.content = nextTokenExpectType(SyntaxType.Number).content;
     if (node.content[0] === "0" && node.content[1]?.toLowerCase() === "x") {
       node.value = parseInt(node.content, 16);
@@ -210,8 +210,8 @@ function parseNumber(): NumberNode {
   });
 }
 
-function parseString(): StringNode {
-  return parseNode(new StringNode(), node => {
+function parseString(): StringLiteral {
+  return parseNode(new StringLiteral(), node => {
     node.content = nextTokenExpectType(SyntaxType.String).content;
     node.value = node.content.substring(1, node.content.length - 1);
   });
@@ -261,7 +261,7 @@ function parseAssignmentOperator(): AssignmentOperator {
   return token as AssignmentOperator;
 }
 
-function parseVariableOrVariableDeclaration(): Token<SyntaxType.Identifier> | VariableDeclarationNode {
+function parseVariableOrVariableDeclaration(): Token<SyntaxType.Identifier> | VariableDeclaration {
   if (cur_token.type === SyntaxType.Identifier)
     return nextToken();
   else if (isTypename())
@@ -272,8 +272,8 @@ function parseVariableOrVariableDeclaration(): Token<SyntaxType.Identifier> | Va
   }
 }
 
-function parseFunction(): FunctionNode {
-  return parseNode(new FunctionNode(), node => {
+function parseFunction(): FunctionExpression {
+  return parseNode(new FunctionExpression(), node => {
     node.name = nextTokenExpectType(SyntaxType.Identifier)!;
 
     while (moreData() && cur_token.type !== SyntaxType.Newline) {
@@ -291,8 +291,8 @@ function parseFunction(): FunctionNode {
   });
 }
 
-function parseLambdaInline(): LambdaInlineNode {
-  return parseNode(new LambdaInlineNode(), node => {
+function parseLambdaInline(): LambdaInlineExpression {
+  return parseNode(new LambdaInlineExpression(), node => {
     node.lbracket = nextTokenExpectType(SyntaxType.LBracket);
 
     while (
@@ -309,8 +309,8 @@ function parseLambdaInline(): LambdaInlineNode {
   });
 }
 
-function parseLambda(): LambdaNode {
-  return parseNode(new LambdaNode(), node => {
+function parseLambda(): LambdaExpression {
+  return parseNode(new LambdaExpression(), node => {
     node.begin = nextTokenExpectType(SyntaxType.Begin);
     node.function = nextTokenExpectType(SyntaxType.BlocktypeTokenFunction);
     node.lbracket = nextTokenExpectType(SyntaxType.LBracket);
@@ -363,7 +363,7 @@ function parsePrimaryExpression(): Expression {
 }
 
 function parseMemeberSquareBrackets(lhs: Expression): Expression {
-  return parseMember(parseNode(new BinOpPairedNode(), node => {
+  return parseMember(parseNode(new ElementAccessExpression(), node => {
     node.lhs = lhs;
     node.left_op = nextTokenExpectType(SyntaxType.LSQBracket);
     node.rhs = parseExpression();
@@ -372,7 +372,7 @@ function parseMemeberSquareBrackets(lhs: Expression): Expression {
 }
 
 function parseMemberRArrow(lhs: Expression): Expression {
-  return parseMember(parseNode(new BinOpNode(), node => {
+  return parseMember(parseNode(new BinaryExpression(), node => {
     node.lhs = lhs;
     node.op = nextTokenExpectType(SyntaxType.LArrow);
 
@@ -389,7 +389,7 @@ function parseMemberRArrow(lhs: Expression): Expression {
 }
 
 function parseMemberDot(lhs: Expression): Expression {
-  return parseMember(parseNode(new BinOpNode(), node => {
+  return parseMember(parseNode(new BinaryExpression(), node => {
     node.lhs = lhs;
     node.op = nextTokenExpectType(SyntaxType.Dot);
 
@@ -423,7 +423,7 @@ function parseLogicalNot(): Expression {
   if (cur_token.type !== SyntaxType.Exclamation)
     return parseMember();
 
-  return parseNode(new UnaryOpNode(), node => {
+  return parseNode(new UnaryExpression(), node => {
     node.op = parseOperator();
     node.operand = parseLogicalNot();
   });
@@ -441,7 +441,7 @@ function parseUnary(): Expression {
     subtype !== SyntaxType.Ampersand
   ) return parseLogicalNot();
 
-  return parseNode(new UnaryOpNode(), node => {
+  return parseNode(new UnaryExpression(), node => {
     node.op = parseOperator();
     node.operand = parseUnary();
   });
@@ -584,7 +584,7 @@ function parseStatement(): Statement {
     node = parseIfBlock();
   } else if (type === SyntaxType.While) {
     node = parseWhileBlock();
-  } else if (type === SyntaxType.Foreach) {
+  } else if (type === SyntaxType.ForeachStatement) {
     node = parseForeachBlock();
   } else if (isKeyword()) {
     node = parseKeyword();
@@ -611,8 +611,8 @@ function parseStatement(): Statement {
   return node;
 }
 
-function parseCompoundStatement(terminator_tokens: { [key in SyntaxType]?: boolean }): CompoundStatementNode {
-  return parseNode(new CompoundStatementNode(), node => {
+function parseCompoundStatement(terminator_tokens: { [key in SyntaxType]?: boolean }): CompoundStatement {
+  return parseNode(new CompoundStatement(), node => {
     while (moreData() && !(cur_token.type in terminator_tokens)) {
       const statement = parseStatement();
 
@@ -622,15 +622,15 @@ function parseCompoundStatement(terminator_tokens: { [key in SyntaxType]?: boole
   });
 }
 
-function parseVariableDeclaration(): VariableDeclarationNode {
-  return parseNode(new VariableDeclarationNode(), node => {
+function parseVariableDeclaration(): VariableDeclaration {
+  return parseNode(new VariableDeclaration(), node => {
     node.variable_type = parseTypename();
     node.variable = parseIdentifier();
   });
 }
 
-function parseVariableDeclarationStatement(): VariableDeclarationStatementNode {
-  return parseNode(new VariableDeclarationStatementNode(), node => {
+function parseVariableDeclarationStatement(): VariableDeclarationStatement {
+  return parseNode(new VariableDeclarationStatement(), node => {
     node.variable = parseVariableDeclaration();
     if (isAssignmentOperator()) {
       node.op = parseOperator();
@@ -639,17 +639,17 @@ function parseVariableDeclarationStatement(): VariableDeclarationStatementNode {
   });
 }
 
-function parseSet(): SetNode {
-  return parseNode(new SetNode(), node => {
+function parseSet(): SetStatement {
+  return parseNode(new SetStatement(), node => {
     node.set = nextTokenExpectType(SyntaxType.Set);
-    node.identifier = parseIdentifier();
+    node.variable = parseIdentifier();
     node.to = nextTokenExpectType(SyntaxType.To);
-    node.value = parseLogicalOr();
+    node.expression = parseLogicalOr();
   });
 }
 
-function parseLet(): LetNode {
-  return parseNode(new LetNode(), node => {
+function parseLet(): LetStatement {
+  return parseNode(new LetStatement(), node => {
     node.let = nextTokenExpectType(SyntaxType.Let);
     node.variable = parseVariableOrVariableDeclaration();
     node.op = parseAssignmentOperator();
@@ -657,8 +657,8 @@ function parseLet(): LetNode {
   });
 }
 
-function parseBlockType(): BlockTypeNode {
-  return parseNode(new BlockTypeNode(), node => {
+function parseBlockType(): BlocktypeExpression {
+  return parseNode(new BlocktypeExpression(), node => {
     node.block_type = nextTokenExpectType(SyntaxType.BlocktypeToken);
 
     while (
@@ -676,8 +676,8 @@ function parseBlockType(): BlockTypeNode {
   });
 }
 
-function parseBeginBlock(): BeginBlockNode {
-  return parseNode(new BeginBlockNode(), node => {
+function parseBeginBlock(): BeginStatement {
+  return parseNode(new BeginStatement(), node => {
     node.begin = nextTokenExpectType(SyntaxType.Begin);
     node.block_type = parseBlockType();
     nextTokenExpectType(SyntaxType.Newline);
@@ -690,8 +690,8 @@ function parseBeginBlock(): BeginBlockNode {
   });
 }
 
-function parseForeachBlock(): ForeachBlockNode {
-  return parseNode(new ForeachBlockNode(), node => {
+function parseForeachBlock(): ForeachStatement {
+  return parseNode(new ForeachStatement(), node => {
     node.foreach = nextTokenExpectType(SyntaxType.Foreach);
 
     node.idetifier = parseVariableOrVariableDeclaration();
@@ -700,7 +700,7 @@ function parseForeachBlock(): ForeachBlockNode {
     node.iterable = parseExpression();
     nextTokenExpectType(SyntaxType.Newline);
 
-    node.statements = parseCompoundStatement({
+    node.compound_statement = parseCompoundStatement({
       [SyntaxType.Loop]: true
     });
 
@@ -711,18 +711,18 @@ function parseForeachBlock(): ForeachBlockNode {
 function parseBranch<T extends BranchKeywordSyntaxType>(
   branch_keyword: T,
   terminator_tokens: { [key in SyntaxType]?: boolean }
-): BranchNode<Token<T>> {
-  return parseNode(new BranchNode(), node => {
+): Branch<Token<T>> {
+  return parseNode(new Branch(), node => {
     node.keyword = nextTokenExpectType(branch_keyword);
     node.condition = parseExpression();
     nextTokenExpectType(SyntaxType.Newline);
 
-    node.statements = parseCompoundStatement(terminator_tokens);
+    node.compound_statement = parseCompoundStatement(terminator_tokens);
   });
 }
 
-function parseWhileBlock(): WhileBlockNode {
-  return parseNode(new WhileBlockNode(), node => {
+function parseWhileBlock(): WhileStatement {
+  return parseNode(new WhileStatement(), node => {
     node.branch = parseBranch(SyntaxType.While, {
       [SyntaxType.Loop]: true
     });
@@ -731,8 +731,8 @@ function parseWhileBlock(): WhileBlockNode {
   });
 }
 
-function parseIfBlock(): IfBlockNode {
-  return parseNode(new IfBlockNode(), node => {
+function parseIfBlock(): IfStatement {
+  return parseNode(new IfStatement(), node => {
     node.branches[0] = parseBranch(SyntaxType.If, {
       [SyntaxType.Elseif]: true,
       [SyntaxType.Else]: true,
@@ -759,8 +759,8 @@ function parseIfBlock(): IfBlockNode {
   });
 }
 
-function parseScriptCompoundStatement(): CompoundStatementNode {
-  return parseNode(new CompoundStatementNode(), node => {
+function parseScriptCompoundStatement(): CompoundStatement {
+  return parseNode(new CompoundStatement(), node => {
     while (moreData()) {
       let statement: Statement;
 
@@ -794,7 +794,7 @@ function parseScriptCompoundStatement(): CompoundStatementNode {
   });
 }
 
-function parseScript(): ScriptNode {
+function parseScript(): Script {
   return parseNode(script, node => {
     while (moreData()) {
       if (cur_token.type === SyntaxType.Comment) parseComment();
@@ -805,17 +805,17 @@ function parseScript(): ScriptNode {
     node.scriptname = nextTokenExpectType(SyntaxType.ScriptName);
     node.name = parseIdentifier();
     nextTokenExpectType(SyntaxType.Newline);
-    node.statements = parseScriptCompoundStatement();
+    node.compound_statement = parseScriptCompoundStatement();
   });
 }
 
-export function Parse(text: string): ScriptNode {
+export function Parse(text: string): Script {
   lexer = new Lexer(text);
 
   cur_token = lexer.lexToken();
   last_token = cur_token;
 
-  script = new ScriptNode();
+  script = new Script();
 
   return parseScript();
 }

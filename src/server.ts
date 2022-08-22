@@ -64,7 +64,7 @@ documents.onDidChangeContent(
     const doc = params.document;
 
     const script = Parser.Parse(doc.getText());
-    tree_view_server?.write_message(JSON.stringify(AST.TreeToTreeData(script)));
+    tree_view_server?.write_message(JSON.stringify(AST.NodeToTreeData(script)));
 
     script.diagnostics = script.diagnostics.concat(AST.ValidateTree(script));
 

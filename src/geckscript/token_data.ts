@@ -33,7 +33,7 @@ export const TokenData: {
     "else": SyntaxType.Else,
     "endif": SyntaxType.Endif,
     "while": SyntaxType.While,
-    "foreach": SyntaxType.Foreach,
+    "foreach": SyntaxType.ForeachStatement,
     "loop": SyntaxType.Loop,
     "continue": SyntaxType.Continue,
     "break": SyntaxType.Break,
