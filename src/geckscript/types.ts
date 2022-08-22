@@ -48,6 +48,7 @@ export const enum SyntaxType {
 
   // Operator
   OPERATOR_START,
+  ASSIGNMENT_OPERATOR_START,
   Equals,
   ColonEquals,
   PlusEquals,
@@ -58,6 +59,7 @@ export const enum SyntaxType {
   CircumflexEquals,
   VBarEquals,
   AmpersandEquals,
+  ASSIGNMENT_OPERATOR_END,
   Exclamation,
   DoubleVBar,
   DoubleAmpersand,
@@ -108,6 +110,7 @@ export const enum SyntaxType {
   Branch,
 
   // Statement
+  VariableDeclarationStatement,
   SetStatement,
   LetStatement,
   BeginStatement,
@@ -148,7 +151,7 @@ export type KeywordSyntaxType =
 
 export type BranchKeywordSyntaxType = SyntaxType.While | SyntaxType.If | SyntaxType.Elseif;
 
-export type OperatorSyntaxType =
+export type AssignmentOperatorSyntaxType =
   SyntaxType.Equals |
   SyntaxType.ColonEquals |
   SyntaxType.PlusEquals |
@@ -158,7 +161,11 @@ export type OperatorSyntaxType =
   SyntaxType.PercentEquals |
   SyntaxType.CircumflexEquals |
   SyntaxType.VBarEquals |
-  SyntaxType.AmpersandEquals |
+  SyntaxType.AmpersandEquals;
+
+
+export type OperatorSyntaxType =
+  AssignmentOperatorSyntaxType |
   SyntaxType.Exclamation |
   SyntaxType.DoubleVBar |
   SyntaxType.DoubleAmpersand |
@@ -194,6 +201,7 @@ export type OperatorSyntaxType =
   SyntaxType.Comma |
   SyntaxType.EqualsGreater;
 
+export type AssignmentOperator = Token<OperatorSyntaxType>;
 export type Operator = Token<OperatorSyntaxType>;
 export type Keyword = Token<KeywordSyntaxType>
 export type BranchKeyword = Token<BranchKeywordSyntaxType>;
@@ -215,7 +223,7 @@ export type Expression =
 
 export type Statement =
   Keyword |
-  VariableDeclarationNode |
+  VariableDeclarationStatementNode |
   SetNode |
   LetNode |
   CompoundStatementNode |
@@ -236,6 +244,10 @@ export function IsKeyword(type: SyntaxType): boolean {
 
 export function IsOperator(type: SyntaxType): boolean {
   return SyntaxType.OPERATOR_START < type && type < SyntaxType.OPERATOR_END;
+}
+
+export function IsAssignmentOperator(type: SyntaxType): boolean {
+  return SyntaxType.ASSIGNMENT_OPERATOR_START < type && type < SyntaxType.ASSIGNMENT_OPERATOR_END;
 }
 
 export class TreeData {
@@ -289,7 +301,7 @@ export class VariableDeclarationNode extends Node {
   type = SyntaxType.VariableDeclaration;
 
   variable_type!: Typename;
-  value!: Expression;
+  variable!: Token<SyntaxType.Identifier>;
 }
 
 export class UnaryOpNode extends Node {
@@ -348,6 +360,14 @@ export class LambdaNode extends Node {
   end!: Token<SyntaxType.End>;
 }
 
+export class VariableDeclarationStatementNode extends Node {
+  type = SyntaxType.VariableDeclarationStatement;
+
+  variable!: VariableDeclarationNode;
+  op?: Operator;
+  expression?: Expression;
+}
+
 export class SetNode extends Node {
   type = SyntaxType.SetStatement;
 
@@ -356,12 +376,13 @@ export class SetNode extends Node {
   to!: Token<SyntaxType.To>;
   value!: Expression;
 }
-
 export class LetNode extends Node {
   type = SyntaxType.LetStatement;
 
   let!: Token<SyntaxType.Let>;
-  value!: Expression | VariableDeclarationNode;
+  variable!: Token<SyntaxType.Identifier> | VariableDeclarationNode;
+  op!: Operator;
+  expression!: Expression;
 }
 
 export class CompoundStatementNode extends Node {

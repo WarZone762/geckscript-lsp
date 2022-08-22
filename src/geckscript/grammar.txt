@@ -10,12 +10,18 @@ variable:
 keyword:
   KEYWORD
 
+variable_declaration:
+  TYPE variable
+
+variable_or_variable_declaration:
+  variable | variable_declaration
+
 function:
   FUNCTION (shift_expression COMMA?)*
 
 lambda:
-  LBRACKET (variable_declaration | variable)* RBRACKET EQUALS_GREATER expression |
-  BEGIN BLOCK_TYPE_FUNCTION LBRACKET (variable_declaration | variable)* RBRACKET NEWLINE
+  LBRACKET variable_or_variable_declaration* RBRACKET EQUALS_GREATER expression |
+  BEGIN BLOCK_TYPE_FUNCTION LBRACKET variable_or_variable_declaration* RBRACKET NEWLINE
     compound_statement
   END
 
@@ -80,19 +86,16 @@ logical_or_expression:
   logical_and_compound_assignment_expression (DOUBLE_VBAR logical_and_compound_assignment_expression)*
 
 assignment_expression:
-  logical_or_expression ((EQUALS | COLON_EQUALS) | logical_or_expression)*
+  (assignment_expression (EQUALS | COLON_EQUALS))? logical_or_expression
 
 expression:
-   assignment_expression
-
-variable_declaration:
-  TYPE assignment_expression
+  assignment_expression
 
 assignment_set:
   SET variable TO logical_or_expression
 
 assignment_let:
-  let (variable_declaration | assignment_expression)
+  let assignment_expression
 
 statement:
   (COMMENT |
@@ -101,11 +104,25 @@ statement:
    while_block |
    foreach_block |
    if_block |
-   variable_declaration |
+   variable_declaration_statement |
    expression) (NEWLINE | EOF)
 
 compound_statement:
   statement*
+
+variable_declaration_statement:
+  variable_declaration ((
+    EQUALS |
+    COLON_EQUALS |
+    PLUS_EQUALS |
+    MINUS_EQUALS |
+    ASTERISK_EQUALS |
+    SLASH_EQUALS |
+    CIRCUMFLEX_EQUALS |
+    VBAR_EQUALS |
+    AMPERSAND_EQUALS |
+    PERCENT_EQULAS
+    ) expression)?
 
 block_type:
   BLOCK_TYPE primary_expression*
@@ -130,7 +147,7 @@ while_block:
   LOOP
 
 foreach_block:
-  FOREACH (variable | variable_declaration) LARROW expression NEWLINE
+  FOREACH variable_or_variable_declaration LARROW expression NEWLINE
     compound_statement
   LOOP
 
@@ -138,7 +155,7 @@ script_compound_statement:
   (
     assignment_set |
     assignment_let |
-    variable_declaration |
+    variable_declaration_statement |
     begin_block
   )*
 

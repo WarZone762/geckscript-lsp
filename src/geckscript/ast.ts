@@ -17,6 +17,7 @@ import {
   FunctionNode,
   LambdaInlineNode,
   LambdaNode,
+  VariableDeclarationStatementNode,
   SetNode,
   LetNode,
   CompoundStatementNode,
@@ -35,7 +36,7 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
   switch (node.type) {
     case SyntaxType.VariableDeclaration:
       func((node as VariableDeclarationNode).variable_type);
-      func((node as VariableDeclarationNode).value);
+      func((node as VariableDeclarationNode).variable);
       break;
 
     case SyntaxType.UnaryOp:
@@ -79,6 +80,14 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       func((node as LambdaNode).end);
       break;
 
+    case SyntaxType.VariableDeclarationStatement:
+      func((node as VariableDeclarationStatementNode).variable);
+      if ((node as VariableDeclarationStatementNode).op != undefined) {
+        func((node as VariableDeclarationStatementNode).op!);
+        func((node as VariableDeclarationStatementNode).expression!);
+      }
+      break;
+
     case SyntaxType.SetStatement:
       func((node as SetNode).set);
       func((node as SetNode).identifier);
@@ -88,7 +97,9 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
 
     case SyntaxType.LetStatement:
       func((node as LetNode).let);
-      func((node as LetNode).value);
+      func((node as LetNode).variable);
+      func((node as LetNode).op);
+      func((node as LetNode).expression);
       break;
 
     case SyntaxType.CompoundStatement:
@@ -129,6 +140,10 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
 
     case SyntaxType.IfStatement:
       (node as IfBlockNode).branches.map(func);
+      if ((node as IfBlockNode).else != undefined) {
+        func((node as IfBlockNode).else!);
+        func((node as IfBlockNode).else_statements!);
+      }
       break;
 
     case SyntaxType.Script:
@@ -204,6 +219,9 @@ export function NodeToTreeData(node: Node): TreeData {
 
     case SyntaxType.Lambda:
       return new TreeData("Lambda");
+
+    case SyntaxType.VariableDeclarationStatement:
+      return new TreeData("Variable Declaration");
 
     case SyntaxType.SetStatement:
       return new TreeData("set");
@@ -338,6 +356,19 @@ export function ValidateNode(node: Node): Diagnostic[] {
     //   return [];
   }
 }
+
+// export function AppendNodeSymbol(
+//   node: Node,
+//   symbol_table: Record<string, Token<SyntaxType.Identifier>>
+// ): { [key: string]: Token<SyntaxType.Identifier> } | void {
+//   switch (node.type) {
+//     case SyntaxType.VariableDeclaration:
+//       symbol_table[(node as VariableDeclarationNode).] = node;
+
+//     default:
+//       return;
+//   }
+// }
 
 export function ValidateTree(node: Node): Diagnostic[] {
   let diagnositcs: Diagnostic[] = [];

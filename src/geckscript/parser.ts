@@ -7,12 +7,14 @@ import {
   BranchKeywordSyntaxType,
   Typename,
   Keyword,
+  AssignmentOperator,
   Operator,
   Expression,
   Statement,
   IsTypename,
   IsKeyword,
   IsOperator,
+  IsAssignmentOperator,
   Node,
   Token,
   NumberNode,
@@ -28,13 +30,14 @@ import {
   IfBlockNode,
   LambdaInlineNode,
   LambdaNode,
-  LetNode,
-  ScriptNode,
+  VariableDeclarationStatementNode,
   SetNode,
+  LetNode,
   UnaryOpNode,
   VariableDeclarationNode,
   WhileBlockNode,
   BlockTypeNode,
+  ScriptNode,
 } from "./types";
 
 
@@ -54,6 +57,7 @@ function moreData(): boolean {
 function isTypename(): boolean { return IsTypename(cur_token.type); }
 function isKeyword(): boolean { return IsKeyword(cur_token.type); }
 function isOperator(): boolean { return IsOperator(cur_token.type); }
+function isAssignmentOperator(): boolean { return IsAssignmentOperator(cur_token.type); }
 
 function _skipToken(): void {
   if (moreData()) {
@@ -78,36 +82,6 @@ function nextToken<T extends SyntaxType>(): Token<T> {
   skipToken();
 
   return token as Token<T>;
-}
-
-function nextTokenExpectTypename(): Typename {
-  const token = cur_token;
-
-  if (!isTypename()) reportParsingError("expected a typename");
-
-  skipToken();
-
-  return token as Typename;
-}
-
-function nextTokenExpectKeyword(): Keyword {
-  const token = cur_token;
-
-  if (!isKeyword()) reportParsingError("expected a keyword");
-
-  skipToken();
-
-  return token as Keyword;
-}
-
-function nextTokenExpectOperator(): Operator {
-  const token = cur_token;
-
-  if (!isOperator()) reportParsingError("expected an operator");
-
-  skipToken();
-
-  return token as Operator;
 }
 
 function nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {
@@ -175,7 +149,7 @@ function parseBinOpRight(
   if (cur_token.type in valid_tokens) {
     let last_node = parseNode(new BinOpNode(), node => {
       node.lhs = lhs;
-      node.op = nextTokenExpectOperator();
+      node.op = parseOperator();
       node.rhs = parse_child();
     });
 
@@ -184,7 +158,7 @@ function parseBinOpRight(
     while (cur_token.type in valid_tokens) {
       const node = parseNode(new BinOpNode(), node => {
         node.lhs = last_node.rhs;
-        node.op = nextTokenExpectOperator();
+        node.op = parseOperator();
         node.rhs = parse_child();
       });
 
@@ -205,7 +179,7 @@ function parseBinOpLeft(
   while (cur_token.type in valid_tokens) {
     lhs = parseNode(new BinOpNode(), node => {
       node.lhs = lhs;
-      node.op = nextTokenExpectOperator();
+      node.op = parseOperator();
       node.rhs = parse_child();
     }, lhs.range.start);
   }
@@ -247,8 +221,55 @@ function parseIdentifier(): Token<SyntaxType.Identifier> {
   return nextTokenExpectType(SyntaxType.Identifier);
 }
 
+function parseTypename(): Typename {
+  const token = cur_token;
+
+  if (!isTypename()) reportParsingError("expected a typename");
+
+  createMissingNode(new Node());
+
+  return token as Typename;
+}
+
 function parseKeyword(): Keyword {
-  return nextTokenExpectKeyword();
+  const token = cur_token;
+
+  if (!isKeyword()) reportParsingError("expected a keyword");
+
+  createMissingNode(new Node());
+
+  return token as Keyword;
+}
+
+function parseOperator(): Operator {
+  const token = cur_token;
+
+  if (!isOperator()) reportParsingError("expected an operator");
+
+  createMissingNode(new Node());
+
+  return token as Operator;
+}
+
+function parseAssignmentOperator(): AssignmentOperator {
+  const token = cur_token;
+
+  if (!isAssignmentOperator()) reportParsingError("expected an assignment operator");
+
+  createMissingNode(new Node());
+
+  return token as AssignmentOperator;
+}
+
+function parseVariableOrVariableDeclaration(): Token<SyntaxType.Identifier> | VariableDeclarationNode {
+  if (cur_token.type === SyntaxType.Identifier)
+    return nextToken();
+  else if (isTypename())
+    return parseVariableDeclaration();
+  else {
+    reportParsingError("expected a variable or a variable declaration");
+    return createMissingNode(new Node()) as Token<SyntaxType.Identifier>;
+  }
 }
 
 function parseFunction(): FunctionNode {
@@ -265,8 +286,7 @@ function parseFunction(): FunctionNode {
         }
       }
 
-      const arg = parseOr();
-      node.args.push(arg);
+      node.args.push(parseOr());
     }
   });
 }
@@ -278,12 +298,9 @@ function parseLambdaInline(): LambdaInlineNode {
     while (
       moreData() && cur_token.type !== SyntaxType.RBracket
     ) {
-      if (isTypename())
-        node.params.push(parseVariableDeclaration());
-      else if (cur_token.type === SyntaxType.Identifier)
-        node.params.push(parseIdentifier());
-      else
-        skipToken();
+      if (cur_token.type === SyntaxType.Comma) skipToken();
+
+      node.params.push(parseVariableOrVariableDeclaration());
     }
 
     node.rbracket = nextTokenExpectType(SyntaxType.RBracket);
@@ -298,16 +315,10 @@ function parseLambda(): LambdaNode {
     node.function = nextTokenExpectType(SyntaxType.BlocktypeTokenFunction);
     node.lbracket = nextTokenExpectType(SyntaxType.LBracket);
 
-    while (
-      moreData() &&
-      cur_token.type !== SyntaxType.RBracket
-    ) {
-      if (isTypename())
-        node.params.push(parseVariableDeclaration());
-      else if (cur_token.type === SyntaxType.Identifier)
-        node.params.push(parseIdentifier());
-      else
-        skipToken();
+    while (moreData() && cur_token.type !== SyntaxType.RBracket) {
+      if (cur_token.type === SyntaxType.Comma) skipToken();
+
+      node.params.push(parseVariableOrVariableDeclaration());
     }
 
     node.rbracket = nextTokenExpectType(SyntaxType.RBracket);
@@ -413,7 +424,7 @@ function parseLogicalNot(): Expression {
     return parseMember();
 
   return parseNode(new UnaryOpNode(), node => {
-    node.op = nextTokenExpectOperator();
+    node.op = parseOperator();
     node.operand = parseLogicalNot();
   });
 }
@@ -431,7 +442,7 @@ function parseUnary(): Expression {
   ) return parseLogicalNot();
 
   return parseNode(new UnaryOpNode(), node => {
-    node.op = nextTokenExpectOperator();
+    node.op = parseOperator();
     node.operand = parseUnary();
   });
 }
@@ -544,7 +555,7 @@ function parseLogicalOr(): Expression {
   );
 }
 
-function parseAssignment(): Expression {
+function parseAssignment(): Expression {  // TODO: parse according to grammar.txt
   return parseBinOpRight(
     () => parseLogicalOr(),
     {
@@ -558,48 +569,23 @@ function parseExpression(): Expression {
   return parseAssignment();
 }
 
-function parseVariableDeclaration(): VariableDeclarationNode {
-  return parseNode(new VariableDeclarationNode(), node => {
-    node.variable_type = nextTokenExpectTypename();
-    node.value = parseAssignment();
-  });
-}
-
-function parseSet(): SetNode {
-  return parseNode(new SetNode(), node => {
-    node.set = nextTokenExpectType(SyntaxType.Set);
-    node.identifier = parseIdentifier();
-    node.to = nextTokenExpectType(SyntaxType.To);
-    node.value = parseLogicalOr();
-  });
-}
-
-function parseLet(): LetNode {
-  return parseNode(new LetNode(), node => {
-    node.let = nextTokenExpectType(SyntaxType.Let);
-    node.value = isTypename() ?
-      parseVariableDeclaration() :
-      parseExpression();
-  });
-}
-
 function parseStatement(): Statement {
   let node: Statement;
 
   const type = cur_token.type;
 
-  if (type === SyntaxType.Set) {
+  if (type === SyntaxType.Set) {  // TODO: replace with switch-case
     node = parseSet();
   } else if (type === SyntaxType.Let) {
     node = parseLet();
+  } else if (isTypename()) {
+    node = parseVariableDeclarationStatement();
   } else if (type === SyntaxType.If) {
     node = parseIfBlock();
   } else if (type === SyntaxType.While) {
     node = parseWhileBlock();
   } else if (type === SyntaxType.Foreach) {
     node = parseForeachBlock();
-  } else if (isTypename()) {
-    node = parseVariableDeclaration();
   } else if (isKeyword()) {
     node = parseKeyword();
   } else if (type === SyntaxType.Newline) {
@@ -633,6 +619,41 @@ function parseCompoundStatement(terminator_tokens: { [key in SyntaxType]?: boole
       if (statement.type !== SyntaxType.Unknown)
         node.children.push(statement);
     }
+  });
+}
+
+function parseVariableDeclaration(): VariableDeclarationNode {
+  return parseNode(new VariableDeclarationNode(), node => {
+    node.variable_type = parseTypename();
+    node.variable = parseIdentifier();
+  });
+}
+
+function parseVariableDeclarationStatement(): VariableDeclarationStatementNode {
+  return parseNode(new VariableDeclarationStatementNode(), node => {
+    node.variable = parseVariableDeclaration();
+    if (isAssignmentOperator()) {
+      node.op = parseOperator();
+      node.expression = parseExpression();
+    }
+  });
+}
+
+function parseSet(): SetNode {
+  return parseNode(new SetNode(), node => {
+    node.set = nextTokenExpectType(SyntaxType.Set);
+    node.identifier = parseIdentifier();
+    node.to = nextTokenExpectType(SyntaxType.To);
+    node.value = parseLogicalOr();
+  });
+}
+
+function parseLet(): LetNode {
+  return parseNode(new LetNode(), node => {
+    node.let = nextTokenExpectType(SyntaxType.Let);
+    node.variable = parseVariableOrVariableDeclaration();
+    node.op = parseAssignmentOperator();
+    node.expression = parseExpression();
   });
 }
 
@@ -673,9 +694,7 @@ function parseForeachBlock(): ForeachBlockNode {
   return parseNode(new ForeachBlockNode(), node => {
     node.foreach = nextTokenExpectType(SyntaxType.Foreach);
 
-    node.idetifier = isTypename() ?
-      parseVariableDeclaration() :
-      parseIdentifier();
+    node.idetifier = parseVariableOrVariableDeclaration();
 
     node.larrow = nextTokenExpectType(SyntaxType.LArrow);
     node.iterable = parseExpression();
@@ -751,10 +770,10 @@ function parseScriptCompoundStatement(): CompoundStatementNode {
         statement = parseSet();
       } else if (type === SyntaxType.Let) {
         statement = parseLet();
+      } else if (isTypename()) {
+        statement = parseVariableDeclarationStatement();
       } else if (type === SyntaxType.Begin) {
         statement = parseBeginBlock();
-      } else if (isTypename()) {
-        statement = parseVariableDeclaration();
       } else if (type === SyntaxType.Newline) {
         skipToken();
         continue;
