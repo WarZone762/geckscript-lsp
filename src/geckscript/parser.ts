@@ -1,6 +1,6 @@
 import { Position, Range } from "vscode-languageserver-textdocument";
 import { Lexer } from "./lexer";
-import { TokenData, SyntaxTypeMap } from "./token_data";
+import { TokenData, GetSyntaxTypeName } from "./token_data";
 
 import {
   SyntaxType,
@@ -93,7 +93,7 @@ function nextTokenExpectType<T extends SyntaxType>(type: T): Token<T> {
     --paren_level;
 
   if (token.type !== type) {
-    reportParsingError(`expected "${SyntaxTypeMap.All[type]}", got "${SyntaxTypeMap.All[token.type]}"`);
+    reportParsingError(`expected "${GetSyntaxTypeName(type)}", got "${GetSyntaxTypeName(token.type)}"`);
     skip_token = cur_token.type !== SyntaxType.Newline;
   }
 
@@ -111,7 +111,8 @@ function createMissingNode<T extends Node>(node: T): T {
   if (
     cur_token.type !== SyntaxType.EOF &&
     cur_token.type !== SyntaxType.Newline &&
-    cur_token.type !== SyntaxType.RParen
+    cur_token.type !== SyntaxType.RParen &&
+    cur_token.type !== SyntaxType.RBracket
   )
     skipToken();
 
@@ -296,7 +297,10 @@ function parseLambdaInline(): LambdaInlineExpression {
     node.lbracket = nextTokenExpectType(SyntaxType.LBracket);
 
     while (
-      moreData() && cur_token.type !== SyntaxType.RBracket
+      moreData() &&
+      cur_token.type !== SyntaxType.RBracket &&
+      cur_token.type !== SyntaxType.RParen &&
+      cur_token.type !== SyntaxType.Newline
     ) {
       if (cur_token.type === SyntaxType.Comma) skipToken();
 
@@ -315,7 +319,12 @@ function parseLambda(): LambdaExpression {
     node.function = nextTokenExpectType(SyntaxType.BlocktypeTokenFunction);
     node.lbracket = nextTokenExpectType(SyntaxType.LBracket);
 
-    while (moreData() && cur_token.type !== SyntaxType.RBracket) {
+    while (
+      moreData() &&
+      cur_token.type !== SyntaxType.RBracket &&
+      cur_token.type !== SyntaxType.RParen &&  // TODO: come up with a better solution (keep trach of the context?)
+      cur_token.type !== SyntaxType.Newline
+    ) {
       if (cur_token.type === SyntaxType.Comma) skipToken();
 
       node.params.push(parseVariableOrVariableDeclaration());
@@ -356,7 +365,7 @@ function parsePrimaryExpression(): Expression {
   } else if (cur_token.type === SyntaxType.LBracket) {
     return parseLambdaInline();
   } else {
-    reportParsingError("expected expression");
+    reportParsingError(`expected expression, got "${GetSyntaxTypeName(cur_token.type)}"`);
 
     return createMissingNode(new Node()) as Expression;
   }
@@ -584,10 +593,8 @@ function parseStatement(): Statement {
     node = parseIfBlock();
   } else if (type === SyntaxType.While) {
     node = parseWhileBlock();
-  } else if (type === SyntaxType.ForeachStatement) {
+  } else if (type === SyntaxType.Foreach) {
     node = parseForeachBlock();
-  } else if (isKeyword()) {
-    node = parseKeyword();
   } else if (type === SyntaxType.Newline) {
     skipToken();
     return parseStatement();
@@ -600,6 +607,19 @@ function parseStatement(): Statement {
     );
 
     node.type = SyntaxType.Unknown;
+  } else if (isKeyword()) {
+    if (
+      cur_token.type === SyntaxType.Continue ||
+      cur_token.type === SyntaxType.Break ||
+      cur_token.type === SyntaxType.Return
+    ) {
+      node = parseKeyword();
+    } else {
+      reportParsingError(`unexpected keyword "${GetSyntaxTypeName(cur_token.type)}"`);
+
+      node = createMissingNode(new Node() as Statement);
+    }
+
   } else {
     node = parseExpression();
   }
@@ -694,7 +714,7 @@ function parseForeachBlock(): ForeachStatement {
   return parseNode(new ForeachStatement(), node => {
     node.foreach = nextTokenExpectType(SyntaxType.Foreach);
 
-    node.idetifier = parseVariableOrVariableDeclaration();
+    node.identifier = parseVariableOrVariableDeclaration();
 
     node.larrow = nextTokenExpectType(SyntaxType.LArrow);
     node.iterable = parseExpression();

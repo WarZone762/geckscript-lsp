@@ -2,7 +2,7 @@ import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 import { KeywordSyntaxType, OperatorSyntaxType, SyntaxType, TypenameSyntaxType } from "./types";
 
 
-export type TokenMap<T extends SyntaxType = SyntaxType> = { [key: string]: T };
+type TokenMap<T extends SyntaxType = SyntaxType> = { [key: string]: T };
 
 export const TokenData: {
   Typenames: TokenMap<TypenameSyntaxType>,
@@ -33,7 +33,7 @@ export const TokenData: {
     "else": SyntaxType.Else,
     "endif": SyntaxType.Endif,
     "while": SyntaxType.While,
-    "foreach": SyntaxType.ForeachStatement,
+    "foreach": SyntaxType.Foreach,
     "loop": SyntaxType.Loop,
     "continue": SyntaxType.Continue,
     "break": SyntaxType.Break,
@@ -3520,9 +3520,9 @@ Object.assign(
   TokenData.Functions
 );
 
-export type SyntaxTypeMap_t = { [key in SyntaxType]?: string };
+type SyntaxTypeMap_t = { [key in SyntaxType]?: string };
 
-export const SyntaxTypeMap: {
+const SyntaxTypeMap: {
   Typenames: SyntaxTypeMap_t,
   Keywords: SyntaxTypeMap_t,
   Operators: SyntaxTypeMap_t,
@@ -3557,6 +3557,21 @@ AddToSyntaxTypeMap("Typenames");
 AddToSyntaxTypeMap("Keywords");
 AddToSyntaxTypeMap("Operators");
 AddToSyntaxTypeMap("Blocktypes");
+SyntaxTypeMap.All = Object.assign(SyntaxTypeMap.All, {
+  [SyntaxType.Unknown]: "unknown",
+  [SyntaxType.EOF]: "end of file",
+  [SyntaxType.Newline]: "new line",
+  [SyntaxType.Comment]: "comment",
+  [SyntaxType.Number]: "number",
+  [SyntaxType.String]: "string",
+  [SyntaxType.Identifier]: "identifier",
+  [SyntaxType.BlocktypeToken]: "block type",
+  [SyntaxType.BlocktypeTokenFunction]: "function",
+});
+
+export function GetSyntaxTypeName(type: SyntaxType): string {
+  return SyntaxTypeMap.All[type] ?? `unable to find SyntaxType name (${type})`;
+}
 
 export const CompletionItems: { [key: string]: CompletionItem[] } = {};
 

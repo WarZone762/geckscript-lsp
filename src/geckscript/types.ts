@@ -140,7 +140,7 @@ export type KeywordSyntaxType =
   SyntaxType.Else |
   SyntaxType.Endif |
   SyntaxType.While |
-  SyntaxType.ForeachStatement |
+  SyntaxType.Foreach |
   SyntaxType.Loop |
   SyntaxType.Continue |
   SyntaxType.Break |
@@ -411,7 +411,7 @@ export class ForeachStatement extends Node {
   type = SyntaxType.ForeachStatement;
 
   foreach!: Token<SyntaxType.Foreach>;
-  idetifier!: Token<SyntaxType.Identifier> | VariableDeclaration;
+  identifier!: Token<SyntaxType.Identifier> | VariableDeclaration;
   larrow!: Token<SyntaxType.LArrow>;
   iterable!: Expression;
 

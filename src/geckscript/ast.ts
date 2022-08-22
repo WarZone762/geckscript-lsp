@@ -1,5 +1,5 @@
 import { Diagnostic } from "vscode-languageserver";
-import { SyntaxTypeMap } from "./token_data";
+import { GetSyntaxTypeName } from "./token_data";
 import {
   SyntaxType,
   IsOperator,
@@ -120,7 +120,7 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
 
     case SyntaxType.ForeachStatement:
       func((node as ForeachStatement).foreach);
-      func((node as ForeachStatement).idetifier);
+      func((node as ForeachStatement).identifier);
       func((node as ForeachStatement).larrow);
       func((node as ForeachStatement).iterable);
       func((node as ForeachStatement).compound_statement);
@@ -254,25 +254,24 @@ export function ValidateNode(node: Node): Diagnostic[] {
   }
 }
 
-// export function AppendNodeSymbol(
-//   node: Node,
-//   symbol_table: Record<string, Token<SyntaxType.Identifier>>
-// ): { [key: string]: Token<SyntaxType.Identifier> } | void {
-//   switch (node.type) {
-//     case SyntaxType.VariableDeclaration:
-//       symbol_table[(node as VariableDeclarationNode).] = node;
-
-//     default:
-//       return;
-//   }
-// }
+export function AppendNodeSymbol(
+  node: Node,
+  symbol_table: Record<string, Token<SyntaxType.Identifier>>
+): void {
+  switch (node.type) {
+    case SyntaxType.VariableDeclaration:
+      symbol_table[(node as VariableDeclaration).variable.content] = (node as VariableDeclaration).variable;
+  }
+}
 
 export function ValidateTree(node: Node): Diagnostic[] {
   let diagnositcs: Diagnostic[] = [];
+  const symbol_table: Record<string, Token<SyntaxType.Identifier>> = {};
 
   TraverseTree(
     node,
     (node) => {
+      AppendNodeSymbol(node, symbol_table);
       diagnositcs = diagnositcs.concat(ValidateNode(node));
     }
   );
@@ -411,7 +410,7 @@ export function NodeToTreeData(node: Node): TreeData {
       return new TreeData(
         "foreach",
         [
-          NodeToTreeData((node as ForeachStatement).idetifier),
+          NodeToTreeData((node as ForeachStatement).identifier),
           NodeToTreeData((node as ForeachStatement).iterable),
           NodeToTreeData((node as ForeachStatement).compound_statement),
         ]
@@ -463,7 +462,7 @@ export function NodeToTreeData(node: Node): TreeData {
     }
 
     default:
-      return new TreeData(`Token: ${SyntaxTypeMap.All[node.type]}`);
+      return new TreeData(`Token: "${GetSyntaxTypeName(node.type)}"`);
   }
 }
 
