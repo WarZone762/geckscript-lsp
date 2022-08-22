@@ -288,7 +288,6 @@ export const ExpressionTypeMap = {
 };
 
 export function GetExpressionType(node: Node): ExpressionType {
-
   switch (node.type) {
     case SyntaxType.Number: return ExpressionType.Integer;
     case SyntaxType.String: return ExpressionType.String;

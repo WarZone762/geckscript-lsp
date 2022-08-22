@@ -20,7 +20,7 @@ import * as TreeViewServer from "./tree_view/server";
 import * as Wiki from "./wiki";
 // import * as ST from "./semantic_tokens";
 
-import { Parser } from "./geckscript/parser";
+import * as Parser from "./geckscript/parser";
 import * as AST from "./geckscript/ast";
 
 
