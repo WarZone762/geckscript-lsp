@@ -1,18 +1,15 @@
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { KeywordSyntaxType, OperatorSyntaxType, SyntaxType, TypenameSyntaxType } from "./types";
+import { SyntaxType, IsKeyword, IsOperator, IsTypename } from "./types";
 
 
 type TokenMap<T extends SyntaxType = SyntaxType> = { [key: string]: T };
 
 export const TokenData: {
-  Typenames: TokenMap<TypenameSyntaxType>,
-  Keywords: TokenMap<KeywordSyntaxType>,
-  Blocktypes: TokenMap<SyntaxType.BlocktypeToken | SyntaxType.BlocktypeTokenFunction>,
-  Operators: TokenMap<OperatorSyntaxType>,
   Functions: TokenMap<SyntaxType.Identifier>,
   All: TokenMap,
 } = {
-  Typenames: {
+  All: {
+    // Typenames
     "short": SyntaxType.Short,
     "int": SyntaxType.Int,
     "long": SyntaxType.Long,
@@ -21,9 +18,8 @@ export const TokenData: {
     "reference": SyntaxType.Reference,
     "string_var": SyntaxType.StringVar,
     "array_var": SyntaxType.ArrayVar,
-  },
 
-  Keywords: {
+    // Keywords
     "scn": SyntaxType.ScriptName,
     "scriptname": SyntaxType.ScriptName,
     "begin": SyntaxType.Begin,
@@ -41,9 +37,8 @@ export const TokenData: {
     "set": SyntaxType.Set,
     "to": SyntaxType.To,
     "let": SyntaxType.Let,
-  },
 
-  Blocktypes: {
+    // Blocktypes
     "function": SyntaxType.BlocktypeTokenFunction,
     "gamemode": SyntaxType.BlocktypeToken,
     "menumode": SyntaxType.BlocktypeToken,
@@ -81,9 +76,8 @@ export const TokenData: {
     "scripteffectfinish": SyntaxType.BlocktypeToken,
     "scripteffectstart": SyntaxType.BlocktypeToken,
     "scripteffectupdate": SyntaxType.BlocktypeToken,
-  },
 
-  Operators: {
+    // Operators
     "=": SyntaxType.Equals,
     ":=": SyntaxType.ColonEquals,
     "+=": SyntaxType.PlusEquals,
@@ -131,6 +125,7 @@ export const TokenData: {
   },
 
   Functions: {
+    // Functions
     "abs": SyntaxType.Identifier,
     "activate": SyntaxType.Identifier,
     "actorhasbaseflag": SyntaxType.Identifier,
@@ -3507,57 +3502,21 @@ export const TokenData: {
     // "unequipitem": SyntaxSubtype.Unknown,
     "unequipobject": SyntaxType.Identifier,
     "wm": SyntaxType.Identifier,
-  },
-  All: {},
-};
-
-Object.assign(
-  TokenData.All,
-  TokenData.Typenames,
-  TokenData.Keywords,
-  TokenData.Operators,
-  TokenData.Blocktypes,
-  TokenData.Functions
-);
-
-type SyntaxTypeMap_t = { [key in SyntaxType]?: string };
-
-const SyntaxTypeMap: {
-  Typenames: SyntaxTypeMap_t,
-  Keywords: SyntaxTypeMap_t,
-  Operators: SyntaxTypeMap_t,
-  Blocktypes: SyntaxTypeMap_t,
-  All: SyntaxTypeMap_t,
-} = {
-  Typenames: {},
-  Keywords: {},
-  Operators: {},
-  Blocktypes: {},
-  All: {
-    [SyntaxType.Unknown]: "unknown",
-    [SyntaxType.EOF]: "end of file",
-    [SyntaxType.Newline]: "new line",
-    [SyntaxType.Comment]: "comment",
-    [SyntaxType.Number]: "number",
-    [SyntaxType.String]: "string",
-    [SyntaxType.Identifier]: "identifier",
-    [SyntaxType.BlocktypeToken]: "block type",
-    [SyntaxType.BlocktypeTokenFunction]: "function",
-  },
-};
-
-function AddToSyntaxTypeMap(name: "Typenames" | "Keywords" | "Operators" | "Blocktypes"): void {
-  for (const [k, v] of Object.entries(TokenData[name])) {
-    SyntaxTypeMap.All[v] = k;
-    SyntaxTypeMap[name][v] = k;
   }
+};
+
+// Object.assign(
+//   TokenData.All,
+//   TokenData.Functions
+// );
+
+let SyntaxTypeMap: { [key in SyntaxType]?: string } = {};
+
+for (const [k, v] of Object.entries(TokenData.All)) {
+  SyntaxTypeMap[v] = k;
 }
 
-AddToSyntaxTypeMap("Typenames");
-AddToSyntaxTypeMap("Keywords");
-AddToSyntaxTypeMap("Operators");
-AddToSyntaxTypeMap("Blocktypes");
-SyntaxTypeMap.All = Object.assign(SyntaxTypeMap.All, {
+SyntaxTypeMap = Object.assign(SyntaxTypeMap, {
   [SyntaxType.Unknown]: "unknown",
   [SyntaxType.EOF]: "end of file",
   [SyntaxType.Newline]: "new line",
@@ -3570,28 +3529,31 @@ SyntaxTypeMap.All = Object.assign(SyntaxTypeMap.All, {
 });
 
 export function GetSyntaxTypeName(type: SyntaxType): string {
-  return SyntaxTypeMap.All[type] ?? `unable to find SyntaxType name (${type})`;
+  return SyntaxTypeMap[type] ?? `unable to find SyntaxType name (${type})`;
 }
 
-export const CompletionItems: { [key: string]: CompletionItem[] } = {};
+export const CompletionItems: CompletionItem[] = [];
 
-function GetCompletionItems(name: keyof typeof TokenData, kind: CompletionItemKind): void {
-  CompletionItems[name] = [];
+Object.entries(TokenData.All).forEach(([k, v], i) => {
+  CompletionItems[i] = {
+    label: k,
+    data: k,
+    kind:
+      IsTypename(v) ? CompletionItemKind.TypeParameter :
+        IsKeyword(v) ? CompletionItemKind.Keyword :
+          IsOperator(v) ? CompletionItemKind.Operator :
+            CompletionItemKind.Constant,
+  };
+});
 
-  Object.entries(TokenData[name]).forEach(([k, v], i) => {
-    CompletionItems[name][i] = {
-      label: k,
-      kind: kind,
-      data: k
-    };
-  });
-}
+Object.entries(TokenData.Functions).forEach(([k, v], i) => {
+  CompletionItems[i] = {
+    label: k,
+    data: k,
+    kind: CompletionItemKind.Function,
+  };
+});
 
-GetCompletionItems("Typenames", CompletionItemKind.TypeParameter);
-GetCompletionItems("Keywords", CompletionItemKind.Keyword);
-GetCompletionItems("Operators", CompletionItemKind.Operator);
-GetCompletionItems("Blocktypes", CompletionItemKind.Constant);
-GetCompletionItems("Functions", CompletionItemKind.Function);
 
 // type TokenInfo = [TokenSubtype | undefined, string, string]
 // type TokenIndex = {

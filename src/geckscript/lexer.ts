@@ -1,7 +1,7 @@
 import { StringBuffer } from "../common";
 import { TokenData } from "./token_data";
 import {
-  SyntaxType, Token, Operator
+  SyntaxType, Token, Operator, IsTypename, IsOperator
 } from "./types";
 
 
@@ -168,21 +168,21 @@ export class Lexer {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
-      if (operator in TokenData.Operators) {
-        const token = this.createToken(TokenData.Operators[operator]);
+      if (IsOperator(TokenData.All[operator])) {
+        const token = this.createToken(TokenData.All[operator]);
 
         this.nextCharToBuf();
         this.nextCharToBuf();
 
-        return this.finishToken(token);
+        return this.finishToken(token) as Operator;
       }
     }
 
-    if (this.cur_char in TokenData.Operators) {
-      const token = this.createToken(TokenData.Operators[this.cur_char]);
+    if (IsOperator(TokenData.All[this.cur_char])) {
+      const token = this.createToken(TokenData.All[this.cur_char]);
       this.nextCharToBuf();
 
-      return this.finishToken(token);
+      return this.finishToken(token) as Operator;
     }
 
     const token = this.createToken(SyntaxType.Unknown);
@@ -199,22 +199,9 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    const word = this.buf.toString().toLowerCase();
+    const type = TokenData.All[this.buf.toString().toLowerCase()];
 
-    if (word in TokenData.Typenames) {
-      token.type = TokenData.Typenames[word];
-    } else if (word in TokenData.Keywords) {
-      token.type = TokenData.Keywords[word];
-    } else if (
-      word in TokenData.Blocktypes &&
-      this.prev_token?.type === SyntaxType.Begin
-    ) {
-      token.type = TokenData.Blocktypes[word];
-    } else if (word in TokenData.Operators) {
-      token.type = TokenData.Operators[word];
-    } else {
-      token.type = SyntaxType.Identifier;
-    }
+    token.type = type ?? SyntaxType.Identifier;
 
     return this.finishToken(token);
   }
