@@ -16,7 +16,6 @@ export const enum SyntaxType {
   BlocktypeTokenFunction,
 
   // Typename
-  TYPENAME_START,
   Short,
   Int,
   Long,
@@ -24,10 +23,8 @@ export const enum SyntaxType {
   Reference,
   StringVar,
   ArrayVar,
-  TYPENAME_END,
 
   // Keyword
-  KEYWORD_START,
   ScriptName,
   Begin,
   End,
@@ -44,11 +41,8 @@ export const enum SyntaxType {
   Set,
   To,
   Let,
-  KEYWORD_END,
 
   // Operator
-  OPERATOR_START,
-  ASSIGNMENT_OPERATOR_START,
   Equals,
   ColonEquals,
   PlusEquals,
@@ -59,7 +53,6 @@ export const enum SyntaxType {
   CircumflexEquals,
   VBarEquals,
   AmpersandEquals,
-  ASSIGNMENT_OPERATOR_END,
   Exclamation,
   DoubleVBar,
   DoubleAmpersand,
@@ -94,7 +87,6 @@ export const enum SyntaxType {
   DoubleColon,
   Comma,
   EqualsGreater,
-  OPERATOR_END,
 
   VariableDeclaration,
 
@@ -120,6 +112,19 @@ export const enum SyntaxType {
   CompoundStatement,
 
   Script,
+
+  // Markers
+  TYPENAME_FIRST = Short,
+  TYPENAME_LAST = ArrayVar,
+
+  KEYWORD_FIRST = ScriptName,
+  KEYWORD_LAST = Let,
+
+  OPERATOR_FIRST = Equals,
+  OPERATOR_LAST = EqualsGreater,
+
+  ASSIGNMENT_OPERATOR_FIRST = Equals,
+  ASSIGNMENT_OPERATOR_LAST = AmpersandEquals,
 }
 
 export type TypenameSyntaxType =
@@ -235,19 +240,19 @@ export type Statement =
 
 
 export function IsTypename(type: SyntaxType): boolean {
-  return SyntaxType.TYPENAME_START < type && type < SyntaxType.TYPENAME_END;
+  return SyntaxType.TYPENAME_FIRST <= type && type <= SyntaxType.TYPENAME_LAST;
 }
 
 export function IsKeyword(type: SyntaxType): boolean {
-  return SyntaxType.KEYWORD_START < type && type < SyntaxType.KEYWORD_END;
+  return SyntaxType.KEYWORD_FIRST <= type && type <= SyntaxType.KEYWORD_LAST;
 }
 
 export function IsOperator(type: SyntaxType): boolean {
-  return SyntaxType.OPERATOR_START < type && type < SyntaxType.OPERATOR_END;
+  return SyntaxType.OPERATOR_FIRST <= type && type <= SyntaxType.OPERATOR_LAST;
 }
 
 export function IsAssignmentOperator(type: SyntaxType): boolean {
-  return SyntaxType.ASSIGNMENT_OPERATOR_START < type && type < SyntaxType.ASSIGNMENT_OPERATOR_END;
+  return SyntaxType.ASSIGNMENT_OPERATOR_FIRST <= type && type <= SyntaxType.ASSIGNMENT_OPERATOR_LAST;
 }
 
 export class TreeData {
@@ -271,6 +276,7 @@ export class TreeData {
 export class Node<T extends SyntaxType = SyntaxType> {
   type: T;
   range!: Range;
+  parent?: Node = undefined;
 
   constructor(type?: T) {
     this.type = type ?? SyntaxType.Unknown as T;

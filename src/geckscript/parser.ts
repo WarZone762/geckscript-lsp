@@ -45,6 +45,7 @@ let lexer: Lexer;
 
 let cur_token: Token;
 let last_token: Token;
+let last_node: Node | undefined;
 
 let paren_level = 0;
 
@@ -131,12 +132,20 @@ function parseNode<T extends Node>(
   parse_function: (node: T) => void,
   start?: Position,
 ): T {
+  const last_node_saved = last_node;
+  node.parent = last_node;
+  last_node = node;
+
   node.range = {
     start: start ?? cur_token.range.start,
     end: cur_token.range.start,
   };
+
   parse_function(node);
+
   node.range.end = last_token.range.end;
+
+  last_node = last_node_saved;
 
   return node;
 }

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { inspect } from "util";
+import { TraverseTree } from "../geckscript/ast";
 
 import * as Parser from "../geckscript/parser";
 
@@ -9,4 +10,4 @@ const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toStri
 
 const script = Parser.Parse(data);
 
-console.log(inspect(script, false, null, true));
+console.log(script);
