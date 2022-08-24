@@ -46,7 +46,7 @@ export const enum SyntaxKind {
   Let,
 
   // Operator
-  Equals,
+  Equals,            // assignment
   ColonEquals,
   PlusEquals,
   MinusEquals,
@@ -55,39 +55,39 @@ export const enum SyntaxKind {
   PercentEquals,
   CircumflexEquals,
   VBarEquals,
-  AmpersandEquals,
+  AmpersandEquals,   // assignment last
   Exclamation,
-  DoubleVBar,
-  DoubleAmpersand,
-  DoubleEquals,
-  ExclamationEquals,
-  Greater,
-  Less,
-  GreaterEqulas,
-  LessEqulas,
-  Plus,
-  Minus,
-  Asterisk,
-  Slash,
-  Percent,
   Circumflex,
-  VBar,
-  Ampersand,
-  DoubleLess,
-  DoubleGreater,
+  Plus,              // additive
+  Minus,             // additive last, unary
   Dollar,
   Hash,
+  Ampersand,
+  Asterisk,          // unary last, multiplicative
+  Slash,
+  Percent,           // multiplicative last
+  DoubleLess,        // shift
+  DoubleGreater,     // shift last
+  VBar,
+  Greater,           // relational
+  Less,
+  GreaterEqulas,
+  LessEqulas,        // relational last
+  DoubleEquals,      // equality
+  ExclamationEquals, // equality last
+  Colon,             // slice and make pair
+  DoubleColon,       // slice and make pair last
+  DoubleAmpersand,
+  DoubleVBar,
   LParen,
   RParen,
   LSQBracket,
   RSQBracket,
   LBracket,
   RBracket,
-  Colon,
   LArrow,
   RArrow,
   Dot,
-  DoubleColon,
   Comma,
   EqualsGreater,
 
@@ -125,6 +125,27 @@ export const enum SyntaxKind {
 
   OPERATOR_FIRST = Equals,
   OPERATOR_LAST = EqualsGreater,
+
+  UNARY_OPERATOR_FIRST = Minus,
+  UNARY_OPERATOR_LAST = Asterisk,
+
+  MULTIPLICATIVE_OPERATOR_FIRST = Asterisk,
+  MULTIPLICATIVE_OPERATOR_LAST = Percent,
+
+  ADDITIVE_OPERATOR_FIRST = Plus,
+  ADDITIVE_OPERATOR_LAST = Minus,
+
+  SHIFT_OPERATOR_FIRST = DoubleLess,
+  SHIFT_OPERATOR_LAST = DoubleGreater,
+
+  RELATIONAL_OPERATOR_FIRST = Greater,
+  RELATIONAL_OPERATOR_LAST = LessEqulas,
+
+  EQUALITY_OPERATOR_FIRST = DoubleEquals,
+  EQUALITY_OPERATOR_LAST = ExclamationEquals,
+
+  SLICE_MAKE_PAIR_OPERATOR_FIRST = Colon,
+  SLICE_MAKE_PAIR_OPERATOR_LAST = DoubleColon,
 
   ASSIGNMENT_OPERATOR_FIRST = Equals,
   ASSIGNMENT_OPERATOR_LAST = AmpersandEquals,
@@ -274,6 +295,34 @@ export function IsKeyword(kin: SyntaxKind): boolean {
 
 export function IsOperator(kind: SyntaxKind): boolean {
   return SyntaxKind.OPERATOR_FIRST <= kind && kind <= SyntaxKind.OPERATOR_LAST;
+}
+
+export function IsUnaryOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.UNARY_OPERATOR_FIRST <= kind && kind <= SyntaxKind.UNARY_OPERATOR_LAST;
+}
+
+export function IsMultiplicativeOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.MULTIPLICATIVE_OPERATOR_FIRST <= kind && kind <= SyntaxKind.MULTIPLICATIVE_OPERATOR_LAST;
+}
+
+export function IsAdditiveOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.ADDITIVE_OPERATOR_FIRST <= kind && kind <= SyntaxKind.ADDITIVE_OPERATOR_LAST;
+}
+
+export function IsShiftOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.SHIFT_OPERATOR_FIRST <= kind && kind <= SyntaxKind.SHIFT_OPERATOR_LAST;
+}
+
+export function IsRelationalOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.RELATIONAL_OPERATOR_FIRST <= kind && kind <= SyntaxKind.RELATIONAL_OPERATOR_LAST;
+}
+
+export function IsEqualityOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.EQUALITY_OPERATOR_FIRST <= kind && kind <= SyntaxKind.EQUALITY_OPERATOR_LAST;
+}
+
+export function IsSliceMakePairOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.SLICE_MAKE_PAIR_OPERATOR_FIRST <= kind && kind <= SyntaxKind.SLICE_MAKE_PAIR_OPERATOR_LAST;
 }
 
 export function IsAssignmentOperator(kind: SyntaxKind): boolean {

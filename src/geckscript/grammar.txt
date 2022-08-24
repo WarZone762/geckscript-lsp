@@ -69,24 +69,16 @@ equality_expression:
 slice_make_pair_expression:
   equality_expression ((COLON | DOUBLE_COLON) equality_expression)*
 
-logical_and_compound_assignment_expression:
+logical_and_expression:
   slice_make_pair_expression ((
-    DOUBLE_AMPERSAND |
-    PLUS_EQUALS |
-    MINUS_EQUALS |
-    ASTERISK_EQUALS |
-    SLASH_EQUALS |
-    CIRCUMFLEX_EQUALS |
-    VBAR_EQUALS |
-    AMPERSAND_EQUALS |
-    PERCENT_EQULAS
+    DOUBLE_AMPERSAND
   ) slice_make_pair_expression)*
 
 logical_or_expression:
-  logical_and_compound_assignment_expression (DOUBLE_VBAR logical_and_compound_assignment_expression)*
+  logical_and_expression (DOUBLE_VBAR logical_and_expression)*
 
 assignment_expression:
-  (assignment_expression (EQUALS | COLON_EQUALS))? logical_or_expression
+  ((member_expression (EQUALS | COLON_EQUALS)) | assignment_expression)? logical_or_expression
 
 expression:
   assignment_expression

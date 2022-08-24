@@ -14,6 +14,13 @@ import {
   IsTypename,
   IsKeyword,
   IsOperator,
+  IsUnaryOperator,
+  IsAdditiveOperator,
+  IsEqualityOperator,
+  IsMultiplicativeOperator,
+  IsRelationalOperator,
+  IsShiftOperator,
+  IsSliceMakePairOperator,
   IsAssignmentOperator,
   Node,
   Token,
@@ -62,6 +69,13 @@ function moreData(): boolean {
 function isTypename(): boolean { return IsTypename(cur_token.kind); }
 function isKeyword(): boolean { return IsKeyword(cur_token.kind); }
 function isOperator(): boolean { return IsOperator(cur_token.kind); }
+function isUnaryOperator(): boolean { return IsUnaryOperator(cur_token.kind); }
+function isMultiplicativeOperator(): boolean { return IsMultiplicativeOperator(cur_token.kind); }
+function isAdditiveOperator(): boolean { return IsAdditiveOperator(cur_token.kind); }
+function isShiftOperator(): boolean { return IsShiftOperator(cur_token.kind); }
+function isRelationalOperator(): boolean { return IsRelationalOperator(cur_token.kind); }
+function isEqualityOperator(): boolean { return IsEqualityOperator(cur_token.kind); }
+function isSliceMakePairOperator(): boolean { return IsSliceMakePairOperator(cur_token.kind); }
 function isAssignmentOperator(): boolean { return IsAssignmentOperator(cur_token.kind); }
 
 function _skipToken(): void {
@@ -192,11 +206,11 @@ function parseBinOpRight(
 
 function parseBinOpLeft(
   parse_child: () => Expression,
-  valid_tokens: { [key in SyntaxKind]?: boolean }
+  predicate: () => boolean
 ): Expression {
   let lhs = parse_child();
 
-  while (cur_token.kind in valid_tokens) {
+  while (predicate()) {
     lhs = parseNode(new BinaryExpression(), node => {
       node.lhs = lhs;
       node.op = parseOperator();
@@ -453,16 +467,7 @@ function parseLogicalNot(): Expression {
 }
 
 function parseUnary(): Expression {
-  if (isOperator()) return parseLogicalNot();
-
-  const kind = cur_token.kind;
-  if (
-    kind !== SyntaxKind.Minus &&
-    kind !== SyntaxKind.Dollar &&
-    kind !== SyntaxKind.Hash &&
-    kind !== SyntaxKind.Asterisk &&
-    kind !== SyntaxKind.Ampersand
-  ) return parseLogicalNot();
+  if (isOperator() || !isUnaryOperator()) return parseLogicalNot();  //FIXME: isBinaryOperator maybe?
 
   return parseNode(new UnaryExpression(), node => {
     node.op = parseOperator();
@@ -473,108 +478,77 @@ function parseUnary(): Expression {
 function parseExponential(): Expression {
   return parseBinOpLeft(
     () => parseUnary(),
-    { [SyntaxKind.Circumflex]: true }
+    () => cur_token.kind === SyntaxKind.Circumflex
   );
 }
 
 function parseMultiplicative(): Expression {
   return parseBinOpLeft(
     () => parseExponential(),
-    {
-      [SyntaxKind.Asterisk]: true,
-      [SyntaxKind.Slash]: true,
-      [SyntaxKind.Percent]: true,
-    }
+    isMultiplicativeOperator
   );
 }
 
 function parseAdditive(): Expression {
   return parseBinOpLeft(
     () => parseMultiplicative(),
-    {
-      [SyntaxKind.Plus]: true,
-      [SyntaxKind.Minus]: true,
-    }
+    isAdditiveOperator
   );
 }
 
 function parseShift(): Expression {
   return parseBinOpLeft(
     () => parseAdditive(),
-    {
-      [SyntaxKind.DoubleLess]: true,
-      [SyntaxKind.DoubleGreater]: true,
-    }
+    isShiftOperator
   );
 }
 
 function parseAnd(): Expression {
   return parseBinOpLeft(
     () => parseShift(),
-    { [SyntaxKind.Ampersand]: true }
+    () => cur_token.kind === SyntaxKind.Ampersand
   );
 }
 
 function parseOr(): Expression {
   return parseBinOpLeft(
     () => parseAnd(),
-    { [SyntaxKind.VBar]: true }
+    () => cur_token.kind === SyntaxKind.VBar
   );
 }
 
 function parseRelational(): Expression {
   return parseBinOpLeft(
     () => parseOr(),
-    {
-      [SyntaxKind.Greater]: true,
-      [SyntaxKind.GreaterEqulas]: true,
-      [SyntaxKind.Less]: true,
-      [SyntaxKind.LessEqulas]: true,
-    }
+    isRelationalOperator
   );
 }
 
 function parseEquality(): Expression {
   return parseBinOpLeft(
     () => parseRelational(),
-    {
-      [SyntaxKind.DoubleEquals]: true,
-      [SyntaxKind.ExclamationEquals]: true,
-    }
+    isEqualityOperator
   );
 }
 
 function parseSliceMakePair(): Expression {
   return parseBinOpLeft(
     () => parseEquality(),
-    {
-      [SyntaxKind.Colon]: true,
-      [SyntaxKind.DoubleColon]: true,
-    }
+    isSliceMakePairOperator
   );
 }
 
-function parseLogicalAndCompoundAssignment(): Expression {
+function parseLogicalAnd(): Expression {
   return parseBinOpLeft(
     () => parseSliceMakePair(),
-    {
-      [SyntaxKind.DoubleAmpersand]: true,
-      [SyntaxKind.PlusEquals]: true,
-      [SyntaxKind.MinusEquals]: true,
-      [SyntaxKind.AsteriskEquals]: true,
-      [SyntaxKind.SlashEquals]: true,
-      [SyntaxKind.CircumflexEquals]: true,
-      [SyntaxKind.VBarEquals]: true,
-      [SyntaxKind.AmpersandEquals]: true,
-      [SyntaxKind.PercentEquals]: true,
-    }
+    () => cur_token.kind === SyntaxKind.DoubleAmpersand
   );
 }
 
 function parseLogicalOr(): Expression {
   return parseBinOpLeft(
-    () => parseLogicalAndCompoundAssignment(),
-    { [SyntaxKind.DoubleVBar]: true }
+    () => parseLogicalAnd(),
+    () => cur_token.kind === SyntaxKind.DoubleVBar
   );
 }
 
@@ -595,52 +569,64 @@ function parseExpression(): Expression {
 function parseStatement(): Statement {
   let node: Statement;
 
-  const kind = cur_token.kind;
+  switch (cur_token.kind) {
+    case SyntaxKind.Set:
+      node = parseSet();
+      break;
 
-  if (kind === SyntaxKind.Set) {  // TODO: replace with switch-case
-    node = parseSet();
-  } else if (kind === SyntaxKind.Let) {
-    node = parseLet();
-  } else if (isTypename()) {
-    node = parseVariableDeclarationStatement();
-  } else if (kind === SyntaxKind.If) {
-    node = parseIfBlock();
-  } else if (kind === SyntaxKind.While) {
-    node = parseWhileBlock();
-  } else if (kind === SyntaxKind.Foreach) {
-    node = parseForeachBlock();
-  } else if (kind === SyntaxKind.Newline) {
-    skipToken();
-    return parseStatement();
-  } else if (kind === SyntaxKind.Begin) {
-    node = parseBeginBlock();
+    case SyntaxKind.Let:
+      node = parseLet();
+      break;
 
-    reportParsingError(
-      "nested begin blocks not allowed",
-      node.range
-    );
+    case SyntaxKind.If:
+      node = parseIfBlock();
+      break;
 
-    node.kind = SyntaxKind.Unknown;
-  } else if (isKeyword()) {
-    if (
-      cur_token.kind === SyntaxKind.Continue ||
-      cur_token.kind === SyntaxKind.Break ||
-      cur_token.kind === SyntaxKind.Return
-    ) {
-      node = parseKeyword();
-    } else {
-      reportParsingError(`unexpected keyword "${GetSyntaxKindName(cur_token.kind)}"`);
+    case SyntaxKind.While:
+      node = parseWhileBlock();
+      break;
 
-      node = createMissingNode(new Node() as Statement);
-    }
+    case SyntaxKind.Foreach:
+      node = parseForeachBlock();
+      break;
 
-  } else {
-    node = parseExpression();
+    case SyntaxKind.Newline:
+      skipToken();
+      return parseStatement();
+
+    case SyntaxKind.Begin:
+      node = parseBeginBlock();
+
+      reportParsingError(
+        "nested begin blocks not allowed",
+        node.range
+      );
+
+      node.kind = SyntaxKind.Unknown;
+      break;
+
+    default:
+      if (isKeyword()) {
+        if (
+          cur_token.kind === SyntaxKind.Continue ||
+          cur_token.kind === SyntaxKind.Break ||
+          cur_token.kind === SyntaxKind.Return
+        ) {
+          node = parseKeyword();
+        } else {
+          reportParsingError(`unexpected keyword "${GetSyntaxKindName(cur_token.kind)}"`);
+
+          node = createMissingNode(new Node() as Statement);
+        }
+      } else if (isTypename()) {
+        node = parseVariableDeclarationStatement();
+      } else {
+        node = parseExpression();
+      }
   }
 
-  if (cur_token.kind !== SyntaxKind.EOF) {
+  if (cur_token.kind !== SyntaxKind.EOF)
     nextTokenExpectType(SyntaxKind.Newline);
-  }
 
   return node;
 }
@@ -795,33 +781,40 @@ function parseIfBlock(): IfStatement {
 
 function parseScriptCompoundStatement(): Block {
   return parseNode(new Block(), node => {
+    let statement: Statement;
+
     while (moreData()) {
-      let statement: Statement;
+      switch (cur_token.kind) {
+        case SyntaxKind.Set:
+          statement = parseSet();
+          break;
 
-      const kind = cur_token.kind;
+        case SyntaxKind.Let:
+          statement = parseLet();
+          break;
 
-      if (kind === SyntaxKind.Set) {
-        statement = parseSet();
-      } else if (kind === SyntaxKind.Let) {
-        statement = parseLet();
-      } else if (isTypename()) {
-        statement = parseVariableDeclarationStatement();
-      } else if (kind === SyntaxKind.Begin) {
-        statement = parseBeginBlock();
-      } else if (kind === SyntaxKind.Newline) {
-        skipToken();
-        continue;
-      } else {
-        reportParsingError(
-          "unexpected statement in outer scope",
-          parseStatement().range
-        );
-        continue;
+        case SyntaxKind.Begin:
+          statement = parseBeginBlock();
+          break;
+
+        case SyntaxKind.Newline:
+          skipToken();
+          continue;
+
+        default:
+          if (isTypename()) {
+            statement = parseVariableDeclarationStatement();
+          } else {
+            reportParsingError(
+              "unexpected statement in outer scope",
+              parseStatement().range
+            );
+            continue;
+          }
       }
 
-      if (cur_token.kind !== SyntaxKind.EOF) {
+      if (cur_token.kind !== SyntaxKind.EOF)
         nextTokenExpectType(SyntaxKind.Newline);
-      }
 
       node.children.push(statement);
     }
@@ -831,9 +824,10 @@ function parseScriptCompoundStatement(): Block {
 function parseScript(): Script {
   return parseNode(script, node => {
     while (moreData()) {
-      if (cur_token.kind === SyntaxKind.Comment) parseComment();
-      else if (cur_token.kind === SyntaxKind.Newline) skipToken();
-      else break;
+      switch (cur_token.kind) {
+        case SyntaxKind.Comment: parseComment(); break;
+        case SyntaxKind.Newline: skipToken(); break;
+      }
     }
 
     node.scriptname = nextTokenExpectType(SyntaxKind.ScriptName);

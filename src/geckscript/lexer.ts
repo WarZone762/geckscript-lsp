@@ -3,7 +3,7 @@ import { TokenData } from "./token_data";
 import { SyntaxKind, Token, Operator, IsOperator } from "./types";
 
 
-// TODO: separate out wiki page name from TokenData, implement better parsing error reporting
+// TODO: separate out wiki page name from TokenData
 export class Lexer {
   data: string;
   data_last_idx: number;
