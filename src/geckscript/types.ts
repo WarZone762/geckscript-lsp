@@ -1,8 +1,11 @@
-import { Diagnostic } from "vscode-languageserver";
-import { Range } from "vscode-languageserver-textdocument";
+import { CompletionItem, CompletionItemKind, Diagnostic } from "vscode-languageserver";
+import { Range, TextDocument } from "vscode-languageserver-textdocument";
+import * as AST from "./ast";
+import * as Parser from "./parser";
+import { TokenData } from "./token_data";
 
 
-export const enum SyntaxType {
+export const enum SyntaxKind {
   Unknown,
 
   EOF,
@@ -109,7 +112,7 @@ export const enum SyntaxType {
   IfStatement,
   WhileStatement,
   ForeachStatement,
-  CompoundStatement,
+  Block,
 
   Script,
 
@@ -127,95 +130,117 @@ export const enum SyntaxType {
   ASSIGNMENT_OPERATOR_LAST = AmpersandEquals,
 }
 
-export type TypenameSyntaxType =
-  SyntaxType.Short |
-  SyntaxType.Int |
-  SyntaxType.Long |
-  SyntaxType.Float |
-  SyntaxType.Reference |
-  SyntaxType.StringVar |
-  SyntaxType.ArrayVar;
+let SyntaxKindNames: { [key in SyntaxKind]?: string } = {};
 
-export type KeywordSyntaxType =
-  SyntaxType.ScriptName |
-  SyntaxType.Begin |
-  SyntaxType.End |
-  SyntaxType.If |
-  SyntaxType.Elseif |
-  SyntaxType.Else |
-  SyntaxType.Endif |
-  SyntaxType.While |
-  SyntaxType.Foreach |
-  SyntaxType.Loop |
-  SyntaxType.Continue |
-  SyntaxType.Break |
-  SyntaxType.Return |
-  SyntaxType.Set |
-  SyntaxType.To |
-  SyntaxType.Let;
+for (const [k, v] of Object.entries(TokenData.All)) {
+  SyntaxKindNames[v] = k;
+}
 
-export type BranchKeywordSyntaxType = SyntaxType.While | SyntaxType.If | SyntaxType.Elseif;
+SyntaxKindNames = Object.assign(SyntaxKindNames, {
+  [SyntaxKind.Unknown]: "unknown",
+  [SyntaxKind.EOF]: "end of file",
+  [SyntaxKind.Newline]: "new line",
+  [SyntaxKind.Comment]: "comment",
+  [SyntaxKind.Number]: "number",
+  [SyntaxKind.String]: "string",
+  [SyntaxKind.Identifier]: "identifier",
+  [SyntaxKind.BlocktypeToken]: "block type",
+  [SyntaxKind.BlocktypeTokenFunction]: "function",
+});
 
-export type AssignmentOperatorSyntaxType =
-  SyntaxType.Equals |
-  SyntaxType.ColonEquals |
-  SyntaxType.PlusEquals |
-  SyntaxType.MinusEquals |
-  SyntaxType.AsteriskEquals |
-  SyntaxType.SlashEquals |
-  SyntaxType.PercentEquals |
-  SyntaxType.CircumflexEquals |
-  SyntaxType.VBarEquals |
-  SyntaxType.AmpersandEquals;
+export function GetSyntaxKindName(kind: SyntaxKind): string {
+  return SyntaxKindNames[kind] ?? `unable to find SyntaxType name (${kind})`;
+}
+
+export type TypenameSyntaxKind =
+  SyntaxKind.Short |
+  SyntaxKind.Int |
+  SyntaxKind.Long |
+  SyntaxKind.Float |
+  SyntaxKind.Reference |
+  SyntaxKind.StringVar |
+  SyntaxKind.ArrayVar;
+
+export type KeywordSynaxKind =
+  SyntaxKind.ScriptName |
+  SyntaxKind.Begin |
+  SyntaxKind.End |
+  SyntaxKind.If |
+  SyntaxKind.Elseif |
+  SyntaxKind.Else |
+  SyntaxKind.Endif |
+  SyntaxKind.While |
+  SyntaxKind.Foreach |
+  SyntaxKind.Loop |
+  SyntaxKind.Continue |
+  SyntaxKind.Break |
+  SyntaxKind.Return |
+  SyntaxKind.Set |
+  SyntaxKind.To |
+  SyntaxKind.Let;
+
+export type BranchKeywordSyntaxKind = SyntaxKind.While | SyntaxKind.If | SyntaxKind.Elseif;
+
+export type AssignmentOperatorSyntaxKind =
+  SyntaxKind.Equals |
+  SyntaxKind.ColonEquals |
+  SyntaxKind.PlusEquals |
+  SyntaxKind.MinusEquals |
+  SyntaxKind.AsteriskEquals |
+  SyntaxKind.SlashEquals |
+  SyntaxKind.PercentEquals |
+  SyntaxKind.CircumflexEquals |
+  SyntaxKind.VBarEquals |
+  SyntaxKind.AmpersandEquals;
 
 
 export type OperatorSyntaxType =
-  AssignmentOperatorSyntaxType |
-  SyntaxType.Exclamation |
-  SyntaxType.DoubleVBar |
-  SyntaxType.DoubleAmpersand |
-  SyntaxType.DoubleEquals |
-  SyntaxType.ExclamationEquals |
-  SyntaxType.Greater |
-  SyntaxType.Less |
-  SyntaxType.GreaterEqulas |
-  SyntaxType.LessEqulas |
-  SyntaxType.Plus |
-  SyntaxType.Minus |
-  SyntaxType.Asterisk |
-  SyntaxType.Slash |
-  SyntaxType.Percent |
-  SyntaxType.Circumflex |
-  SyntaxType.VBar |
-  SyntaxType.Ampersand |
-  SyntaxType.DoubleLess |
-  SyntaxType.DoubleGreater |
-  SyntaxType.Dollar |
-  SyntaxType.Hash |
-  SyntaxType.LParen |
-  SyntaxType.RParen |
-  SyntaxType.LSQBracket |
-  SyntaxType.RSQBracket |
-  SyntaxType.LBracket |
-  SyntaxType.RBracket |
-  SyntaxType.Colon |
-  SyntaxType.LArrow |
-  SyntaxType.RArrow |
-  SyntaxType.Dot |
-  SyntaxType.DoubleColon |
-  SyntaxType.Comma |
-  SyntaxType.EqualsGreater;
+  AssignmentOperatorSyntaxKind |
+  SyntaxKind.Exclamation |
+  SyntaxKind.DoubleVBar |
+  SyntaxKind.DoubleAmpersand |
+  SyntaxKind.DoubleEquals |
+  SyntaxKind.ExclamationEquals |
+  SyntaxKind.Greater |
+  SyntaxKind.Less |
+  SyntaxKind.GreaterEqulas |
+  SyntaxKind.LessEqulas |
+  SyntaxKind.Plus |
+  SyntaxKind.Minus |
+  SyntaxKind.Asterisk |
+  SyntaxKind.Slash |
+  SyntaxKind.Percent |
+  SyntaxKind.Circumflex |
+  SyntaxKind.VBar |
+  SyntaxKind.Ampersand |
+  SyntaxKind.DoubleLess |
+  SyntaxKind.DoubleGreater |
+  SyntaxKind.Dollar |
+  SyntaxKind.Hash |
+  SyntaxKind.LParen |
+  SyntaxKind.RParen |
+  SyntaxKind.LSQBracket |
+  SyntaxKind.RSQBracket |
+  SyntaxKind.LBracket |
+  SyntaxKind.RBracket |
+  SyntaxKind.Colon |
+  SyntaxKind.LArrow |
+  SyntaxKind.RArrow |
+  SyntaxKind.Dot |
+  SyntaxKind.DoubleColon |
+  SyntaxKind.Comma |
+  SyntaxKind.EqualsGreater;
 
 export type AssignmentOperator = Token<OperatorSyntaxType>;
 export type Operator = Token<OperatorSyntaxType>;
-export type Keyword = Token<KeywordSyntaxType>
-export type BranchKeyword = Token<BranchKeywordSyntaxType>;
-export type Typename = Token<TypenameSyntaxType>
+export type Keyword = Token<KeywordSynaxKind>
+export type BranchKeyword = Token<BranchKeywordSyntaxKind>;
+export type Typename = Token<TypenameSyntaxKind>
 
 export type PrimaryExpression =
   StringLiteral |
   NumberLiteral |
-  Token<SyntaxType.Identifier> |
+  Identifier |
   FunctionExpression |
   LambdaExpression |
   LambdaInlineExpression;
@@ -231,7 +256,7 @@ export type Statement =
   VariableDeclarationStatement |
   SetStatement |
   LetStatement |
-  CompoundStatement |
+  Block |
   BeginStatement |
   ForeachStatement |
   WhileStatement |
@@ -239,20 +264,20 @@ export type Statement =
   Expression;
 
 
-export function IsTypename(type: SyntaxType): boolean {
-  return SyntaxType.TYPENAME_FIRST <= type && type <= SyntaxType.TYPENAME_LAST;
+export function IsTypename(kind: SyntaxKind): boolean {
+  return SyntaxKind.TYPENAME_FIRST <= kind && kind <= SyntaxKind.TYPENAME_LAST;
 }
 
-export function IsKeyword(type: SyntaxType): boolean {
-  return SyntaxType.KEYWORD_FIRST <= type && type <= SyntaxType.KEYWORD_LAST;
+export function IsKeyword(kin: SyntaxKind): boolean {
+  return SyntaxKind.KEYWORD_FIRST <= kin && kin <= SyntaxKind.KEYWORD_LAST;
 }
 
-export function IsOperator(type: SyntaxType): boolean {
-  return SyntaxType.OPERATOR_FIRST <= type && type <= SyntaxType.OPERATOR_LAST;
+export function IsOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.OPERATOR_FIRST <= kind && kind <= SyntaxKind.OPERATOR_LAST;
 }
 
-export function IsAssignmentOperator(type: SyntaxType): boolean {
-  return SyntaxType.ASSIGNMENT_OPERATOR_FIRST <= type && type <= SyntaxType.ASSIGNMENT_OPERATOR_LAST;
+export function IsAssignmentOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.ASSIGNMENT_OPERATOR_FIRST <= kind && kind <= SyntaxKind.ASSIGNMENT_OPERATOR_LAST;
 }
 
 export class TreeData {
@@ -273,17 +298,62 @@ export class TreeData {
   }
 }
 
-export class Node<T extends SyntaxType = SyntaxType> {
-  type: T;
+export const enum Type {
+  Unknown,
+  Ambiguous,
+  Integer,
+  Float,
+  Form,
+  Reference,
+  String,
+  Array,
+}
+
+const TypeNames: { [key in Type]?: string } = {
+  [Type.Unknown]: "unknown",
+  [Type.Ambiguous]: "ambiguous",
+  [Type.Integer]: "integer",
+  [Type.Float]: "float",
+  [Type.Form]: "form",
+  [Type.Reference]: "reference",
+  [Type.String]: "string",
+  [Type.Array]: "array",
+};
+
+export function GetTypeName(type: Type): string {
+  return TypeNames[type] ?? "unable to find Type name";
+}
+
+export const enum SymbolKind {
+  Unknown,
+
+  Variable,
+  Function,
+  Script,
+}
+
+export interface Symbol {
+  name: string;
+  kind: SymbolKind;
+  declaration: Node;
+  type: Type;
+}
+
+export type SymbolTable = { [key: string]: Symbol };
+
+export class Node<T extends SyntaxKind = SyntaxKind> {
+  kind: T;
   range!: Range;
   parent?: Node = undefined;
 
-  constructor(type?: T) {
-    this.type = type ?? SyntaxType.Unknown as T;
+  expression_type?: Type;
+
+  constructor(kind?: T) {
+    this.kind = kind ?? SyntaxKind.Unknown as T;
   }
 }
 
-export class Token<T extends SyntaxType = SyntaxType> extends Node<T> {
+export class Token<T extends SyntaxKind = SyntaxKind> extends Node<T> {
   content = "";
 }
 
@@ -292,33 +362,39 @@ export class TokenWithValue<T> extends Token {
 }
 
 export class Comment extends TokenWithValue<string> {
-  type = SyntaxType.Comment;
+  kind = SyntaxKind.Comment;
 }
 
 export class NumberLiteral extends TokenWithValue<number> {
-  type = SyntaxType.Number;
+  kind = SyntaxKind.Number;
 }
 
 export class StringLiteral extends TokenWithValue<string> {
-  type = SyntaxType.String;
+  kind = SyntaxKind.String;
+}
+
+export class Identifier extends Token {
+  kind = SyntaxKind.Identifier;
+
+  symbol?: Symbol;
 }
 
 export class VariableDeclaration extends Node {
-  type = SyntaxType.VariableDeclaration;
+  kind = SyntaxKind.VariableDeclaration;
 
-  variable_type!: Typename;
-  variable!: Token<SyntaxType.Identifier>;
+  type!: Typename;
+  variable!: Identifier;
 }
 
 export class UnaryExpression extends Node {
-  type = SyntaxType.UnaryExpression;
+  kind = SyntaxKind.UnaryExpression;
 
   op!: Operator;
   operand!: Expression;
 }
 
 export class BinaryExpression extends Node {
-  type = SyntaxType.BinaryExpresison;
+  kind = SyntaxKind.BinaryExpresison;
 
   lhs!: Expression;
   op!: Operator;
@@ -326,48 +402,48 @@ export class BinaryExpression extends Node {
 }
 
 export class ElementAccessExpression extends Node {
-  type = SyntaxType.ElementAccessExpression;
+  kind = SyntaxKind.ElementAccessExpression;
 
   lhs!: Expression;
-  left_op!: Token<SyntaxType.LSQBracket>;
+  left_op!: Token<SyntaxKind.LSQBracket>;
   rhs!: Expression;
-  right_op!: Token<SyntaxType.RSQBracket>;
+  right_op!: Token<SyntaxKind.RSQBracket>;
 }
 
 export class FunctionExpression extends Node {
-  type = SyntaxType.FunctionExpression;
+  kind = SyntaxKind.FunctionExpression;
 
-  name!: Token<SyntaxType.Identifier>;
+  name!: Identifier;
   args: Expression[] = [];
 }
 
 export class LambdaInlineExpression extends Node {
-  type = SyntaxType.LambdaInlineExpression;
+  kind = SyntaxKind.LambdaInlineExpression;
 
-  lbracket!: Token<SyntaxType.LBracket>;
-  params: (Token<SyntaxType.Identifier> | VariableDeclaration)[] = [];
-  rbracket!: Token<SyntaxType.RBracket>;
-  arrow!: Token<SyntaxType.EqualsGreater>;
+  lbracket!: Token<SyntaxKind.LBracket>;
+  params: (Identifier | VariableDeclaration)[] = [];
+  rbracket!: Token<SyntaxKind.RBracket>;
+  arrow!: Token<SyntaxKind.EqualsGreater>;
 
   expression!: Expression;
 }
 
 export class LambdaExpression extends Node {
-  type = SyntaxType.LambdaExpression;
+  kind = SyntaxKind.LambdaExpression;
 
-  begin!: Token<SyntaxType.Begin>;
-  function!: Token<SyntaxType.BlocktypeTokenFunction>;
-  lbracket!: Token<SyntaxType.LBracket>;
-  params: (Token<SyntaxType.Identifier> | VariableDeclaration)[] = [];
-  rbracket!: Token<SyntaxType.RBracket>;
+  begin!: Token<SyntaxKind.Begin>;
+  function!: Token<SyntaxKind.BlocktypeTokenFunction>;
+  lbracket!: Token<SyntaxKind.LBracket>;
+  params: (Identifier | VariableDeclaration)[] = [];
+  rbracket!: Token<SyntaxKind.RBracket>;
 
-  compound_statement!: CompoundStatement;
+  body!: Block;
 
-  end!: Token<SyntaxType.End>;
+  end!: Token<SyntaxKind.End>;
 }
 
 export class VariableDeclarationStatement extends Node {
-  type = SyntaxType.VariableDeclarationStatement;
+  kind = SyntaxKind.VariableDeclarationStatement;
 
   variable!: VariableDeclaration;
   op?: Operator;
@@ -375,89 +451,136 @@ export class VariableDeclarationStatement extends Node {
 }
 
 export class SetStatement extends Node {
-  type = SyntaxType.SetStatement;
+  kind = SyntaxKind.SetStatement;
 
-  set!: Token<SyntaxType.Set>;
-  variable!: Token<SyntaxType.Identifier>;
-  to!: Token<SyntaxType.To>;
+  set!: Token<SyntaxKind.Set>;
+  variable!: Identifier;
+  to!: Token<SyntaxKind.To>;
   expression!: Expression;
 }
 export class LetStatement extends Node {
-  type = SyntaxType.LetStatement;
+  kind = SyntaxKind.LetStatement;
 
-  let!: Token<SyntaxType.Let>;
-  variable!: Token<SyntaxType.Identifier> | VariableDeclaration;
+  let!: Token<SyntaxKind.Let>;
+  variable!: Identifier | VariableDeclaration;
   op!: Operator;
   expression!: Expression;
 }
 
-export class CompoundStatement extends Node {
-  type = SyntaxType.CompoundStatement;
+export class Block extends Node {
+  kind = SyntaxKind.Block;
 
   children: Statement[] = [];
+  symbol_table: SymbolTable = {};
 }
 
 export class BlocktypeExpression extends Node {
-  type = SyntaxType.BlocktypeExpression;
+  kind = SyntaxKind.BlocktypeExpression;
 
-  block_type!: Token<SyntaxType.BlocktypeToken>;
+  block_type!: Token<SyntaxKind.BlocktypeToken | SyntaxKind.BlocktypeTokenFunction>;
   args: Node[] = [];
 }
 
 export class BeginStatement extends Node {
-  type = SyntaxType.BeginStatement;
+  kind = SyntaxKind.BeginStatement;
 
-  begin!: Token<SyntaxType.Begin>;
+  begin!: Token<SyntaxKind.Begin>;
   block_type!: BlocktypeExpression;
-  compound_statement!: CompoundStatement;
-  end!: Token<SyntaxType.End>;
+  body!: Block;
+  end!: Token<SyntaxKind.End>;
 }
 
 export class ForeachStatement extends Node {
-  type = SyntaxType.ForeachStatement;
+  kind = SyntaxKind.ForeachStatement;
 
-  foreach!: Token<SyntaxType.Foreach>;
-  identifier!: Token<SyntaxType.Identifier> | VariableDeclaration;
-  larrow!: Token<SyntaxType.LArrow>;
+  foreach!: Token<SyntaxKind.Foreach>;
+  identifier!: Identifier | VariableDeclaration;
+  larrow!: Token<SyntaxKind.LArrow>;
   iterable!: Expression;
 
-  compound_statement!: CompoundStatement;
+  body!: Block;
 
-  loop!: Token<SyntaxType.Loop>;
+  loop!: Token<SyntaxKind.Loop>;
 }
 
 export class Branch<T extends BranchKeyword> extends Node {
-  type = SyntaxType.Branch;
+  kind = SyntaxKind.Branch;
 
   keyword!: T;
   condition!: Expression;
-  compound_statement!: CompoundStatement;
+  body!: Block;
 }
 
 export class WhileStatement extends Node {
-  type = SyntaxType.WhileStatement;
+  kind = SyntaxKind.WhileStatement;
 
-  branch!: Branch<Token<SyntaxType.While>>;
-  loop!: Token<SyntaxType.Loop>;
+  branch!: Branch<Token<SyntaxKind.While>>;
+  loop!: Token<SyntaxKind.Loop>;
 }
 
 export class IfStatement extends Node {
-  type = SyntaxType.IfStatement;
+  kind = SyntaxKind.IfStatement;
 
-  branches: Branch<Token<SyntaxType.If> | Token<SyntaxType.Elseif>>[] = [];
-  else?: Token<SyntaxType.Else>;
-  else_statements?: CompoundStatement;
-  endif!: Token<SyntaxType.Endif>;
+  branches: Branch<Token<SyntaxKind.If> | Token<SyntaxKind.Elseif>>[] = [];
+  else?: Token<SyntaxKind.Else>;
+  else_statements?: Block;
+  endif!: Token<SyntaxKind.Endif>;
 }
 
 export class Script extends Node {
-  type = SyntaxType.Script;
+  kind = SyntaxKind.Script;
 
-  scriptname!: Token<SyntaxType.ScriptName>;
-  name!: Token<SyntaxType.Identifier>;
-  compound_statement!: CompoundStatement;
+  scriptname!: Token<SyntaxKind.ScriptName>;
+  name!: Identifier;
+  body!: Block;
 
   comments: Comment[] = [];
 
   diagnostics: Diagnostic[] = [];
+
+  environment!: Environment;
 }
+
+export class Environment {
+  map: { [key: string]: Script } = {};
+  global_symbol_table: SymbolTable = {};
+
+  processDocument(document: TextDocument): Script {
+    return this.processScript(document.uri, document.getText());
+  }
+
+  processScript(name: string, text: string): Script {
+    const script = Parser.Parse(text);
+
+    script.environment = this;
+
+    AST.BuildScriptSymbolTables(script);
+    AST.ValidateScript(script);
+
+    this.map[name] = script;
+
+    return script;
+  }
+}
+
+export const CompletionItems: CompletionItem[] = [];
+
+Object.entries(TokenData.All).forEach(([k, v], i) => {
+  CompletionItems[i] = {
+    label: k,
+    data: k,
+    kind:
+      IsTypename(v) ? CompletionItemKind.TypeParameter :
+        IsKeyword(v) ? CompletionItemKind.Keyword :
+          IsOperator(v) ? CompletionItemKind.Operator :
+            CompletionItemKind.Constant,
+  };
+});
+
+Object.entries(TokenData.Functions).forEach(([k, v], i) => {
+  CompletionItems.push({
+    label: k,
+    data: k,
+    kind: CompletionItemKind.Function,
+  });
+});

@@ -18,10 +18,8 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import * as TreeViewServer from "./tree_view/server";
 
 import * as Wiki from "./wiki";
+import { Environment } from "./geckscript/types";
 // import * as ST from "./semantic_tokens";
-
-import * as Parser from "./geckscript/parser";
-import * as AST from "./geckscript/ast";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -33,6 +31,8 @@ if (process.argv.find(e => e === "--tree-view-server") !== undefined) {
 const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+const scripts: Environment = new Environment();
 
 connection.onInitialize((params: InitializeParams) => {
   const result: InitializeResult = {
@@ -63,10 +63,8 @@ documents.onDidChangeContent(
   (params) => {
     const doc = params.document;
 
-    const script = Parser.Parse(doc.getText());
-    tree_view_server?.write_message(JSON.stringify(AST.NodeToTreeData(script)));
-
-    script.diagnostics = script.diagnostics.concat(AST.ValidateTree(script));
+    const script = scripts.processDocument(doc);
+    console.log(scripts);
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
   }

@@ -22,7 +22,7 @@ function:
 lambda:
   LBRACKET variable_or_variable_declaration* RBRACKET EQUALS_GREATER expression |
   BEGIN BLOCK_TYPE_FUNCTION LBRACKET variable_or_variable_declaration* RBRACKET NEWLINE
-    compound_statement
+    block
   END
 
 primary_expression:
@@ -107,7 +107,7 @@ statement:
    variable_declaration_statement |
    expression) (NEWLINE | EOF)
 
-compound_statement:
+block:
   statement*
 
 variable_declaration_statement:
@@ -129,26 +129,26 @@ block_type:
 
 begin_block:
   BEGIN block_type NEWLINE
-    compound_statement
+    block
   END
 
 if_block:
   IF expression NEWLINE
-    compound_statement
+    block
   (ELSEIF expression NEWLINE
-      compound_statement)*
+      block)*
   (ELSE NEWLINE
-    compound_statement)?
+    block)?
   ENDIF
 
 while_block:
   WHILE expression NEWLINE
-    compound_statement
+    block
   LOOP
 
 foreach_block:
   FOREACH variable_or_variable_declaration LARROW expression NEWLINE
-    compound_statement
+    block
   LOOP
 
 script_compound_statement:

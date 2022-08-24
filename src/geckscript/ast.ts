@@ -1,10 +1,6 @@
 import { Diagnostic } from "vscode-languageserver";
-import { GetSyntaxTypeName } from "./token_data";
 import {
-  SyntaxType,
-  IsOperator,
-  IsTypename,
-  IsKeyword,
+  SyntaxKind,
   BranchKeyword,
   Node,
   Token,
@@ -20,7 +16,7 @@ import {
   VariableDeclarationStatement,
   SetStatement,
   LetStatement,
-  CompoundStatement,
+  Block,
   BlocktypeExpression,
   BeginStatement,
   ForeachStatement,
@@ -29,40 +25,48 @@ import {
   IfStatement,
   Script,
   TreeData,
+  GetSyntaxKindName,
+  Type,
+  GetTypeName,
+  Symbol,
+  SymbolTable,
+  SymbolKind,
+  NumberLiteral,
+  Identifier,
 } from "./types";
 
 
 export function ForEachChild(node: Node, func: (node: Node) => void): void {
-  switch (node.type) {
-    case SyntaxType.VariableDeclaration:
-      func((node as VariableDeclaration).variable_type);
+  switch (node.kind) {
+    case SyntaxKind.VariableDeclaration:
+      func((node as VariableDeclaration).type);
       func((node as VariableDeclaration).variable);
       break;
 
-    case SyntaxType.UnaryExpression:
+    case SyntaxKind.UnaryExpression:
       func((node as UnaryExpression).op);
       func((node as UnaryExpression).operand);
       break;
 
-    case SyntaxType.BinaryExpresison:
+    case SyntaxKind.BinaryExpresison:
       func((node as BinaryExpression).lhs);
       func((node as BinaryExpression).op);
       func((node as BinaryExpression).rhs);
       break;
 
-    case SyntaxType.ElementAccessExpression:
+    case SyntaxKind.ElementAccessExpression:
       func((node as ElementAccessExpression).lhs);
       func((node as ElementAccessExpression).left_op);
       func((node as ElementAccessExpression).rhs);
       func((node as ElementAccessExpression).right_op);
       break;
 
-    case SyntaxType.FunctionExpression:
+    case SyntaxKind.FunctionExpression:
       func((node as FunctionExpression).name);
       (node as FunctionExpression).args.map(func);
       break;
 
-    case SyntaxType.LambdaInlineExpression:
+    case SyntaxKind.LambdaInlineExpression:
       func((node as LambdaInlineExpression).lbracket);
       (node as LambdaInlineExpression).params.map(func);
       func((node as LambdaInlineExpression).rbracket);
@@ -70,17 +74,17 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       func((node as LambdaInlineExpression).expression);
       break;
 
-    case SyntaxType.LambdaExpression:
+    case SyntaxKind.LambdaExpression:
       func((node as LambdaExpression).begin);
       func((node as LambdaExpression).function);
       func((node as LambdaExpression).lbracket);
       (node as LambdaExpression).params.map(func);
       func((node as LambdaExpression).rbracket);
-      func((node as LambdaExpression).compound_statement);
+      func((node as LambdaExpression).body);
       func((node as LambdaExpression).end);
       break;
 
-    case SyntaxType.VariableDeclarationStatement:
+    case SyntaxKind.VariableDeclarationStatement:
       func((node as VariableDeclarationStatement).variable);
       if ((node as VariableDeclarationStatement).op != undefined) {
         func((node as VariableDeclarationStatement).op!);
@@ -88,57 +92,57 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       }
       break;
 
-    case SyntaxType.SetStatement:
+    case SyntaxKind.SetStatement:
       func((node as SetStatement).set);
       func((node as SetStatement).variable);
       func((node as SetStatement).to);
       func((node as SetStatement).expression);
       break;
 
-    case SyntaxType.LetStatement:
+    case SyntaxKind.LetStatement:
       func((node as LetStatement).let);
       func((node as LetStatement).variable);
       func((node as LetStatement).op);
       func((node as LetStatement).expression);
       break;
 
-    case SyntaxType.CompoundStatement:
-      (node as CompoundStatement).children.map(func);
+    case SyntaxKind.Block:
+      (node as Block).children.map(func);
       break;
 
-    case SyntaxType.BlocktypeExpression:
+    case SyntaxKind.BlocktypeExpression:
       func((node as BlocktypeExpression).block_type);
       (node as BlocktypeExpression).args.map(func);
       break;
 
-    case SyntaxType.BeginStatement:
+    case SyntaxKind.BeginStatement:
       func((node as BeginStatement).begin);
       func((node as BeginStatement).block_type);
-      func((node as BeginStatement).compound_statement);
+      func((node as BeginStatement).body);
       func((node as BeginStatement).end);
       break;
 
-    case SyntaxType.ForeachStatement:
+    case SyntaxKind.ForeachStatement:
       func((node as ForeachStatement).foreach);
       func((node as ForeachStatement).identifier);
       func((node as ForeachStatement).larrow);
       func((node as ForeachStatement).iterable);
-      func((node as ForeachStatement).compound_statement);
+      func((node as ForeachStatement).body);
       func((node as ForeachStatement).loop);
       break;
 
-    case SyntaxType.Branch:
+    case SyntaxKind.Branch:
       func((node as Branch<BranchKeyword>).keyword);
       func((node as Branch<BranchKeyword>).condition);
-      func((node as Branch<BranchKeyword>).compound_statement);
+      func((node as Branch<BranchKeyword>).body);
       break;
 
-    case SyntaxType.WhileStatement:
+    case SyntaxKind.WhileStatement:
       func((node as WhileStatement).branch);
       func((node as WhileStatement).loop);
       break;
 
-    case SyntaxType.IfStatement:
+    case SyntaxKind.IfStatement:
       (node as IfStatement).branches.map(func);
       if ((node as IfStatement).else != undefined) {
         func((node as IfStatement).else!);
@@ -146,15 +150,44 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       }
       break;
 
-    case SyntaxType.Script:
+    case SyntaxKind.Script:
       func((node as Script).name);
       func((node as Script).scriptname);
-      func((node as Script).compound_statement);
+      func((node as Script).body);
       Object.values((node as Script).comments).map(func);
       break;
 
     default:
       break;
+  }
+}
+
+export function findAncestor(
+  node: Node | undefined,
+  callback: (node: Node) => boolean
+): Node | undefined {
+  while (node != undefined) {
+    if (callback(node)) return node;
+    node = node.parent;
+  }
+
+  return undefined;
+}
+
+export function resolveSymbol(
+  node: Node,
+  name: string
+): Symbol | undefined {
+  while (true) {
+    const parent = findAncestor(node, node => node.kind === SyntaxKind.Block);
+    if (parent != undefined) {
+      if ((parent as Block).symbol_table[name] != undefined)
+        return (parent as Block).symbol_table[name];
+      node = parent.parent!;
+    } else {
+      node = findAncestor(node, node => node.kind === SyntaxKind.Script)!;
+      return (node as Script).environment.global_symbol_table[name];
+    }
   }
 }
 
@@ -182,65 +215,138 @@ export function TraverseTree(
   );
 }
 
-export const enum ExpressionType {
-  Unknown,
-  Any,
-  Integer,
-  Float,
-  String,
-  Reference,
-  Array,
-}
+export function GetExpressionType(node: Node): Type {
+  if (node.expression_type != undefined) return node.expression_type;
 
-export const ExpressionTypeMap = {
-  [ExpressionType.Unknown]: "unknown",
-  [ExpressionType.Any]: "any",
-  [ExpressionType.Integer]: "integer",
-  [ExpressionType.Float]: "float",
-  [ExpressionType.String]: "string",
-  [ExpressionType.Reference]: "reference",
-  [ExpressionType.Array]: "array",
-};
+  switch (node.kind) {
+    case SyntaxKind.Number:
+      if ((node as NumberLiteral).content.includes("."))
+        node.expression_type = Type.Float;
+      else
+        node.expression_type = Type.Integer;
 
-export function GetExpressionType(node: Node): ExpressionType {
-  switch (node.type) {
-    case SyntaxType.Number: return ExpressionType.Integer;
-    case SyntaxType.String: return ExpressionType.String;
+      return (node as NumberLiteral).expression_type!;
 
-    case SyntaxType.BinaryExpresison: {
+    case SyntaxKind.String:
+      node.expression_type = Type.String;
+      return Type.String;
+
+    case SyntaxKind.BinaryExpresison: {
       const lhs = GetExpressionType((node as BinaryExpression).lhs);
       const rhs = GetExpressionType((node as BinaryExpression).rhs);
 
-      if (lhs === ExpressionType.Any) return rhs;
-      else if (rhs === ExpressionType.Any) return lhs;
-      else if (lhs === rhs) return lhs;
-      else return ExpressionType.Unknown;
+      node.expression_type =
+        lhs === Type.Ambiguous ? rhs :
+          rhs === Type.Ambiguous ? lhs :
+            lhs === rhs ? lhs :
+              Type.Unknown;
+
+      return node.expression_type!;
     }
 
-    case SyntaxType.Identifier:
-    case SyntaxType.FunctionExpression:
-      return ExpressionType.Any;
+    case SyntaxKind.Identifier:
+    case SyntaxKind.FunctionExpression:
+      node.expression_type = Type.Ambiguous;
+      return Type.Ambiguous;
 
-    default: return ExpressionType.Unknown;
+    default: return Type.Unknown;
   }
 }
 
+export function AssignNodeSymbol(
+  node: Node,
+  symbol_table: SymbolTable,
+  global_symbol_table: SymbolTable,
+): void {
+  switch (node.kind) {
+    case SyntaxKind.VariableDeclaration:
+      symbol_table[(node as VariableDeclaration).variable.content] = {
+        name: (node as VariableDeclaration).variable.content,
+        kind: SymbolKind.Variable,
+        declaration: node,
+        type: Type.Ambiguous,
+      };
+      break;
+
+    case SyntaxKind.Script:
+      symbol_table[(node as Script).name.content] = {
+        name: (node as Script).name.content,
+        kind: SymbolKind.Script,
+        declaration: node,
+        type: Type.Ambiguous,
+      };
+      break;
+
+    case SyntaxKind.BlocktypeTokenFunction: {
+      const parent = (node as Token).parent;
+      if (parent?.kind === SyntaxKind.BlocktypeExpression) {
+        const script = parent.parent?.parent;
+        if (script?.kind === SyntaxKind.Script)
+          global_symbol_table[(script as Script).name.content] = {
+            name: (script as Script).name.content,
+            kind: SymbolKind.Function,
+            declaration: script,
+            type: Type.Ambiguous,
+          };
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+export function BuildScriptSymbolTables(script: Script) {
+  let last_symbol_table: SymbolTable = script.environment.global_symbol_table;
+  let last_symbol_table_saved: SymbolTable;
+
+  TraverseTree(
+    script,
+    node => {
+      last_symbol_table_saved = last_symbol_table;
+
+      if (node.kind === SyntaxKind.Block)
+        last_symbol_table = (node as Block).symbol_table;
+      else
+        AssignNodeSymbol(
+          node,
+          last_symbol_table,
+          script.environment.global_symbol_table
+        );
+    },
+    () => { last_symbol_table = last_symbol_table_saved; }
+  );
+}
+
 export function ValidateNode(node: Node): Diagnostic[] {
-  switch (node.type) {
-    case SyntaxType.BinaryExpresison: {
+  switch (node.kind) {
+    case SyntaxKind.BinaryExpresison: {
       const lhs = GetExpressionType((node as BinaryExpression).lhs);
       const rhs = GetExpressionType((node as BinaryExpression).rhs);
 
       if (
-        (lhs === rhs || lhs === ExpressionType.Any || rhs === ExpressionType.Any) &&
-        lhs !== ExpressionType.Unknown &&
-        rhs !== ExpressionType.Unknown
+        (lhs === rhs || lhs === Type.Ambiguous || rhs === Type.Ambiguous) &&
+        lhs !== Type.Unknown &&
+        rhs !== Type.Unknown
       ) return [];
       else return [{
-        message: `Unexpected operand types: "${ExpressionTypeMap[lhs]}" and "${ExpressionTypeMap[rhs]}"`,
+        message: `Unexpected operand types: "${GetTypeName(lhs)}" and "${GetTypeName(rhs)}"`,
         range: node.range
       }];
     }
+
+    case SyntaxKind.Identifier:
+      (node as Identifier).symbol = resolveSymbol(
+        node,
+        (node as Identifier).content
+      );
+      if ((node as Identifier).symbol == undefined)
+        return [{
+          message: `Unable to resolve symbol ${(node as Identifier).content}`,
+          range: node.range,
+        }];
+      else return [];
 
     default:
       return [];
@@ -254,63 +360,46 @@ export function ValidateNode(node: Node): Diagnostic[] {
   }
 }
 
-export function AppendNodeSymbol(
-  node: Node,
-  symbol_table: Record<string, Token<SyntaxType.Identifier>>
-): void {
-  switch (node.type) {
-    case SyntaxType.VariableDeclaration:
-      symbol_table[(node as VariableDeclaration).variable.content] = (node as VariableDeclaration).variable;
-  }
-}
-
-export function ValidateTree(node: Node): Diagnostic[] {
-  let diagnositcs: Diagnostic[] = [];
-  const symbol_table: Record<string, Token<SyntaxType.Identifier>> = {};
-
+export function ValidateScript(script: Script): void {
   TraverseTree(
-    node,
-    (node) => {
-      AppendNodeSymbol(node, symbol_table);
-      diagnositcs = diagnositcs.concat(ValidateNode(node));
-    }
+    script,
+    node => script.diagnostics.push(...ValidateNode(node))
   );
-
-  return diagnositcs;
 }
 
+// debug TreeData stuff
 export function NodeToTreeData(node: Node): TreeData {
-  switch (node.type) {
-    case SyntaxType.Comment:
+  switch (node.kind) {
+    case SyntaxKind.Comment:
       return new TreeData(`${node.range.start.line}: ${(node as Comment).content}`);
 
-    case SyntaxType.String:
+    case SyntaxKind.String:
       return new TreeData(`"${(node as StringLiteral).value}"`);
 
-    case SyntaxType.Number:
-    case SyntaxType.Identifier:
-    case SyntaxType.BlocktypeToken:
-    case SyntaxType.BlocktypeTokenFunction:
+    case SyntaxKind.Number:
+    case SyntaxKind.Identifier:
+    case SyntaxKind.BlocktypeToken:
+    case SyntaxKind.BlocktypeTokenFunction:
       return new TreeData(`${(node as Token).content}`);
 
-    case SyntaxType.Continue:
-    case SyntaxType.Break:
-    case SyntaxType.Return:
+    case SyntaxKind.Continue:
+    case SyntaxKind.Break:
+    case SyntaxKind.Return:
       return new TreeData(`Keyword: ${(node as Token).content}`);
 
-    case SyntaxType.VariableDeclaration:
+    case SyntaxKind.VariableDeclaration:
       return new TreeData(
-        `${(node as VariableDeclaration).variable_type.content}`,
+        `${(node as VariableDeclaration).type.content}`,
         [NodeToTreeData((node as VariableDeclaration).variable)]
       );
 
-    case SyntaxType.UnaryExpression:
+    case SyntaxKind.UnaryExpression:
       return new TreeData(
         `${(node as UnaryExpression).op.content}`,
         [NodeToTreeData((node as UnaryExpression).operand)]
       );
 
-    case SyntaxType.BinaryExpresison:
+    case SyntaxKind.BinaryExpresison:
       return new TreeData(
         `${(node as BinaryExpression).op.content}`,
         [
@@ -319,7 +408,7 @@ export function NodeToTreeData(node: Node): TreeData {
         ]
       );
 
-    case SyntaxType.ElementAccessExpression:
+    case SyntaxKind.ElementAccessExpression:
       return new TreeData(
         `${(node as ElementAccessExpression).left_op}${(node as ElementAccessExpression).right_op}`,
         [
@@ -328,13 +417,13 @@ export function NodeToTreeData(node: Node): TreeData {
         ]
       );
 
-    case SyntaxType.FunctionExpression:
+    case SyntaxKind.FunctionExpression:
       return new TreeData(
         `${(node as FunctionExpression).name.content}`,
         (node as FunctionExpression).args.map(NodeToTreeData)
       );
 
-    case SyntaxType.LambdaInlineExpression:
+    case SyntaxKind.LambdaInlineExpression:
       return new TreeData(
         "Inline Lambda",
         (node as LambdaInlineExpression).params.map(NodeToTreeData).concat([
@@ -342,15 +431,15 @@ export function NodeToTreeData(node: Node): TreeData {
         ])
       );
 
-    case SyntaxType.LambdaExpression:
+    case SyntaxKind.LambdaExpression:
       return new TreeData(
         "Lambda",
         (node as LambdaExpression).params.map(NodeToTreeData).concat([
-          NodeToTreeData((node as LambdaExpression).compound_statement)
+          NodeToTreeData((node as LambdaExpression).body)
         ])
       );
 
-    case SyntaxType.VariableDeclarationStatement: {
+    case SyntaxKind.VariableDeclarationStatement: {
       const tree = new TreeData(
         "Variable Declaration",
         [
@@ -367,7 +456,7 @@ export function NodeToTreeData(node: Node): TreeData {
       return tree;
     }
 
-    case SyntaxType.SetStatement:
+    case SyntaxKind.SetStatement:
       return new TreeData(
         "set",
         [
@@ -376,7 +465,7 @@ export function NodeToTreeData(node: Node): TreeData {
         ]
       );
 
-    case SyntaxType.LetStatement:
+    case SyntaxKind.LetStatement:
       return new TreeData(
         "let",
         [
@@ -385,49 +474,49 @@ export function NodeToTreeData(node: Node): TreeData {
         ]
       );
 
-    case SyntaxType.CompoundStatement:
+    case SyntaxKind.Block:
       return new TreeData(
         "Compound Statement",
-        (node as CompoundStatement).children.map(NodeToTreeData)
+        (node as Block).children.map(NodeToTreeData)
       );
 
-    case SyntaxType.BlocktypeExpression:
+    case SyntaxKind.BlocktypeExpression:
       return new TreeData(
         `${(node as BlocktypeExpression).block_type.content}`,
         (node as BlocktypeExpression).args.map(NodeToTreeData)
       );
 
-    case SyntaxType.BeginStatement:
+    case SyntaxKind.BeginStatement:
       return new TreeData(
         "begin",
         [
           NodeToTreeData((node as BeginStatement).block_type),
-          NodeToTreeData((node as BeginStatement).compound_statement),
+          NodeToTreeData((node as BeginStatement).body),
         ]
       );
 
-    case SyntaxType.ForeachStatement:
+    case SyntaxKind.ForeachStatement:
       return new TreeData(
         "foreach",
         [
           NodeToTreeData((node as ForeachStatement).identifier),
           NodeToTreeData((node as ForeachStatement).iterable),
-          NodeToTreeData((node as ForeachStatement).compound_statement),
+          NodeToTreeData((node as ForeachStatement).body),
         ]
       );
 
-    case SyntaxType.Branch:
+    case SyntaxKind.Branch:
       return new TreeData(
         `${(node as Branch<BranchKeyword>).keyword.content}`,
         [
-          NodeToTreeData((node as Branch<BranchKeyword>).compound_statement)
+          NodeToTreeData((node as Branch<BranchKeyword>).body)
         ]
       );
 
-    case SyntaxType.WhileStatement:
+    case SyntaxKind.WhileStatement:
       return NodeToTreeData((node as WhileStatement).branch);
 
-    case SyntaxType.IfStatement: {
+    case SyntaxKind.IfStatement: {
       const tree = new TreeData(
         "If Statement",
         (node as IfStatement).branches.map(NodeToTreeData)
@@ -444,12 +533,12 @@ export function NodeToTreeData(node: Node): TreeData {
       return tree;
     }
 
-    case SyntaxType.Script: {
+    case SyntaxKind.Script: {
       const tree = new TreeData(
         "Script",
         [
           NodeToTreeData((node as Script).name),
-          NodeToTreeData((node as Script).compound_statement),
+          NodeToTreeData((node as Script).body),
         ]
       );
 
@@ -462,7 +551,7 @@ export function NodeToTreeData(node: Node): TreeData {
     }
 
     default:
-      return new TreeData(`Token: "${GetSyntaxTypeName(node.type)}"`);
+      return new TreeData(`Token: "${GetSyntaxKindName(node.kind)}"`);
   }
 }
 
