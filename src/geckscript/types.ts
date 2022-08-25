@@ -593,6 +593,7 @@ export class Script extends Node {
   comments: Comment[] = [];
 
   diagnostics: Diagnostic[] = [];
+  semantic_tokens: Node[] = [];
 
   environment!: Environment;
 }

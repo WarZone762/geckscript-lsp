@@ -343,7 +343,7 @@ export function BuildScriptSymbolTables(script: Script) {
   );
 }
 
-export function ValidateNode(node: Node): Diagnostic[] {
+export function ValidateNode(node: Node, script: Script): void {
   switch (node.kind) {
     case SyntaxKind.BinaryExpresison: {
       const lhs = GetExpressionType((node as BinaryExpression).lhs);
@@ -353,11 +353,13 @@ export function ValidateNode(node: Node): Diagnostic[] {
         (lhs === rhs || lhs === Type.Ambiguous || rhs === Type.Ambiguous) &&
         lhs !== Type.Unknown &&
         rhs !== Type.Unknown
-      ) return [];
-      else return [{
+      ) return;
+      else script.diagnostics.push({
         message: `Unexpected operand types: "${GetTypeName(lhs)}" and "${GetTypeName(rhs)}"`,
         range: node.range
-      }];
+      });
+
+      break;
     }
 
     case SyntaxKind.Identifier:
@@ -366,21 +368,14 @@ export function ValidateNode(node: Node): Diagnostic[] {
         (node as Identifier).content
       );
       if ((node as Identifier).symbol == undefined)
-        return [{
-          message: `Unable to resolve symbol ${(node as Identifier).content}`,
-          range: node.range,
-        }];
-      else return [];
-
-    default:
-      return [];
+        script.semantic_tokens.push(node);
   }
 }
 
 export function ValidateScript(script: Script): void {
   ForEachChildRecursive(
     script,
-    node => script.diagnostics.push(...ValidateNode(node))
+    node => ValidateNode(node, script)
   );
 }
 

@@ -20,7 +20,7 @@ import * as TreeViewServer from "./tree_view/server";
 import * as Wiki from "./wiki";
 import { Environment, Token } from "./geckscript/types";
 import * as AST from "./geckscript/ast";
-// import * as ST from "./semantic_tokens";
+import * as ST from "./language_features/semantic_tokens";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -33,9 +33,11 @@ const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const scripts: Environment = new Environment();
+const environment: Environment = new Environment();
 
 connection.onInitialize((params: InitializeParams) => {
+  const capabilities = params.capabilities;
+
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -46,16 +48,16 @@ connection.onInitialize((params: InitializeParams) => {
     }
   };
 
-  // if (capabilities.textDocument?.semanticTokens) {
-  //   result.capabilities.semanticTokensProvider = {
-  //     documentSelector: [{
-  //       language: "GECKScript",
-  //       scheme: "file"
-  //     }],
-  //     legend: st.Legend,
-  //     full: true
-  //   };
-  // }
+  if (capabilities.textDocument?.semanticTokens) {
+    result.capabilities.semanticTokensProvider = {
+      documentSelector: [{
+        language: "GECKScript",
+        scheme: "file"
+      }],
+      legend: ST.Legend,
+      full: true
+    };
+  }
 
   return result;
 });
@@ -64,7 +66,7 @@ documents.onDidChangeContent(
   (params) => {
     const doc = params.document;
 
-    const script = scripts.processDocument(doc);
+    const script = environment.processDocument(doc);
     tree_view_server?.write_tree_data(AST.NodeToTreeData(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
@@ -90,7 +92,7 @@ connection.onCompletionResolve(
 
 connection.onHover(
   async (params: HoverParams): Promise<Hover | null> => {
-    const token = AST.GetTokenAtPosition(scripts.map[params.textDocument.uri], params.position);
+    const token = AST.GetTokenAtPosition(environment.map[params.textDocument.uri], params.position);
 
     return {
       contents: String((token as Token)?.content)
@@ -98,11 +100,13 @@ connection.onHover(
   }
 );
 
-connection.onRequest(SemanticTokensRequest.method, (
-  params: SemanticTokensParams
-) => {
-  // return ST.OnSemanticTokenRequestFull(documents.get(params.textDocument.uri), params.partialResultToken, params.workDoneToken);
-});
+connection.onRequest(
+  SemanticTokensRequest.method,
+  async (params: SemanticTokensParams) => {
+    const script = environment.map[params.textDocument.uri];
+
+    return ST.BuildSemanticTokens(script);
+  });
 
 connection.onExit(() => {
   tree_view_server?.close();
