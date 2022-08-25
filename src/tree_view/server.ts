@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import * as mime from "mime";
+import { TreeData } from "../geckscript/types";
 
 const public_path = path.join(__dirname, "../../../tree-view/dist");
 
@@ -50,6 +51,10 @@ export class TreeViewServer {
     this.last_data = data;
     for (const res of this.clients)
       res.write(`data: ${data}\n\n`);
+  }
+
+  write_tree_data(tree_data: TreeData) {
+    this.write_message(JSON.stringify(tree_data));
   }
 
   close() {

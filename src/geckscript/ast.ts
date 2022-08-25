@@ -1,4 +1,5 @@
 import { Diagnostic } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
 import {
   SyntaxKind,
   BranchKeyword,
@@ -162,57 +163,80 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
   }
 }
 
-export function findAncestor(
+export function ForEachChildRecursive(
+  root: Node,
+  pre_func: (node: Node) => void = () => undefined,
+  post_func: (node: Node) => void = () => undefined,
+): void {
+  pre_func(root);
+  ForEachChild(root, node => ForEachChildRecursive(node, pre_func, post_func));
+  post_func(root);
+}
+
+export function GetNodeChildren(node: Node): Node[] {
+  const children: Node[] = [];
+  ForEachChild(node, (node) => children.push(node));
+
+  return children;
+}
+
+export function GetNodeLeafs(node: Node): Node[] {
+  const leafs: Node[] = [];
+
+  ForEachChildRecursive(
+    node,
+    node => {
+      const children = GetNodeChildren(node);
+      if (children.length === 0) leafs.push(node);
+    }
+  );
+
+  return leafs;
+}
+
+export function FindAncestor(
   node: Node | undefined,
-  callback: (node: Node) => boolean
+  predicate: (node: Node) => boolean
 ): Node | undefined {
   while (node != undefined) {
-    if (callback(node)) return node;
+    if (predicate(node)) return node;
     node = node.parent;
   }
 
   return undefined;
 }
 
-export function resolveSymbol(
+export function GetTokenAtPosition(node: Node, position: Position): Node | undefined {
+  const leafs = GetNodeLeafs(node);
+
+  for (const leaf of leafs) {
+    if (
+      leaf.range.start.line <= position.line &&
+      position.line <= leaf.range.end.line &&
+      leaf.range.start.character <= position.character &&
+      position.character <= leaf.range.end.character
+    )
+      return leaf;
+  }
+
+  return undefined;
+}
+
+export function ResolveSymbol(
   node: Node,
   name: string
 ): Symbol | undefined {
   while (true) {
-    const parent = findAncestor(node, node => node.kind === SyntaxKind.Block);
+    const parent = FindAncestor(node, node => node.kind === SyntaxKind.Block);
     if (parent != undefined) {
       if ((parent as Block).symbol_table[name] != undefined)
         return (parent as Block).symbol_table[name];
       node = parent.parent!;
     } else {
-      node = findAncestor(node, node => node.kind === SyntaxKind.Script)!;
+      node = FindAncestor(node, node => node.kind === SyntaxKind.Script)!;
       return (node as Script).environment.global_symbol_table[name];
     }
   }
-}
-
-export function VisitNode(
-  node: Node,
-  func: (node: Node) => void = () => undefined,
-  pre_func: (node: Node) => void = () => undefined,
-  post_func: (node: Node) => void = () => undefined,
-): void {
-  pre_func(node);
-  ForEachChild(node, func);
-  post_func(node);
-}
-
-export function TraverseTree(
-  root: Node,
-  pre_func: (node: Node) => void = () => undefined,
-  post_func: (node: Node) => void = () => undefined,
-): void {
-  VisitNode(
-    root,
-    (node) => TraverseTree(node, pre_func, post_func),
-    pre_func,
-    post_func,
-  );
 }
 
 export function GetExpressionType(node: Node): Type {
@@ -301,7 +325,7 @@ export function BuildScriptSymbolTables(script: Script) {
   let last_symbol_table: SymbolTable = script.environment.global_symbol_table;
   let last_symbol_table_saved: SymbolTable;
 
-  TraverseTree(
+  ForEachChildRecursive(
     script,
     node => {
       last_symbol_table_saved = last_symbol_table;
@@ -337,7 +361,7 @@ export function ValidateNode(node: Node): Diagnostic[] {
     }
 
     case SyntaxKind.Identifier:
-      (node as Identifier).symbol = resolveSymbol(
+      (node as Identifier).symbol = ResolveSymbol(
         node,
         (node as Identifier).content
       );
@@ -350,18 +374,11 @@ export function ValidateNode(node: Node): Diagnostic[] {
 
     default:
       return [];
-    // if (node.type === SyntaxType.Unknown)
-    //   return [{
-    //     message: node.content ?? TokenSyntaxTypeMap.All[node.type] ?? "Unknown",
-    //     range: node.range
-    //   }];
-    // else
-    //   return [];
   }
 }
 
 export function ValidateScript(script: Script): void {
-  TraverseTree(
+  ForEachChildRecursive(
     script,
     node => script.diagnostics.push(...ValidateNode(node))
   );
@@ -558,7 +575,7 @@ export function NodeToTreeData(node: Node): TreeData {
 export function NodeToTreeDataFull(node: Node): TreeData {
   const stack: TreeData[] = [];
 
-  TraverseTree(
+  ForEachChildRecursive(
     node,
     (node) => {
       stack.push(new TreeData((node as Token).content ?? node.constructor.name));

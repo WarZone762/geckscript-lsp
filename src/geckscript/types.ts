@@ -46,8 +46,8 @@ export const enum SyntaxKind {
   Let,
 
   // Operator
-  Equals,            // assignment
-  ColonEquals,
+  Equals,            // assignment, simple assignment
+  ColonEquals,       // assignment last
   PlusEquals,
   MinusEquals,
   AsteriskEquals,
@@ -149,6 +149,9 @@ export const enum SyntaxKind {
 
   ASSIGNMENT_OPERATOR_FIRST = Equals,
   ASSIGNMENT_OPERATOR_LAST = AmpersandEquals,
+
+  SIMPLE_ASSIGNMENT_OPERATOR_FIRST = Equals,
+  SIMPLE_ASSIGNMENT_OPERATOR_LAST = ColonEquals,
 }
 
 let SyntaxKindNames: { [key in SyntaxKind]?: string } = {};
@@ -327,6 +330,10 @@ export function IsSliceMakePairOperator(kind: SyntaxKind): boolean {
 
 export function IsAssignmentOperator(kind: SyntaxKind): boolean {
   return SyntaxKind.ASSIGNMENT_OPERATOR_FIRST <= kind && kind <= SyntaxKind.ASSIGNMENT_OPERATOR_LAST;
+}
+
+export function IsSimpleAssignmentOperator(kind: SyntaxKind): boolean {
+  return SyntaxKind.SIMPLE_ASSIGNMENT_OPERATOR_FIRST <= kind && kind <= SyntaxKind.SIMPLE_ASSIGNMENT_OPERATOR_LAST;
 }
 
 export class TreeData {

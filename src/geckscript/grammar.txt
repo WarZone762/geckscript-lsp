@@ -17,77 +17,77 @@ variable_or_variable_declaration:
   variable | variable_declaration
 
 function:
-  FUNCTION (shift_expression COMMA?)*
+  FUNCTION (shift_expression ','?)*
 
 lambda:
-  LBRACKET variable_or_variable_declaration* RBRACKET EQUALS_GREATER expression |
-  BEGIN BLOCK_TYPE_FUNCTION LBRACKET variable_or_variable_declaration* RBRACKET NEWLINE
+  '{' variable_or_variable_declaration* '}' '=>' expression |
+  'begin' BLOCK_TYPE_FUNCTION '{' variable_or_variable_declaration* '}' '\n'
     block
-  END
+  'end'
 
 primary_expression:
-  literal | variable | function | LPAREN (expression | lambda) RPAREN
+  literal | variable | function | '(' (expression | lambda) ')'
 
 member_expression:
   primary_expression |
-  member_expression LSQ_BRACKET expression RSQ_BRACKET |
-  member_expression RARROW (ID | STRING | NUMBER | FUNCTION) |
-  member_expression DOT (ID | FUNCTION)
+  member_expression '[' expression ']' |
+  member_expression '->' (ID | STRING | NUMBER | FUNCTION) |
+  member_expression '.' (ID | FUNCTION)
 
 logical_not_expression:
   member_expression |
-  EXCLAMATION logical_not_expression
+  '!' logical_not_expression
 
 unary_expression:
   logical_not_expression |
-  (MINUS | DOLLAR | HASH | ASTERISK | AMPERSAND) unary_expression
+  ('-' | '$' | '#' | '*' | '&') unary_expression
 
 exponential_expression:
-  unary_expression (CIRCUMFLEX unary_expression)*
+  unary_expression ('^' unary_expression)*
 
 multiplicative_expression:
-  exponential_expression ((ASTERISK | SLASH | PERCENT) exponential_expression)*
+  exponential_expression (('*' | '/' | '%') exponential_expression)*
 
 additive_expression:
-  multiplicative_expression ((PLUS | MINUS) multiplicative_expression)*
+  multiplicative_expression (('+' | '-') multiplicative_expression)*
 
 shift_expression:
-  additive_expression ((DOUBLE_LESS | DOUBLE_GREATER) additive_expression)*
+  additive_expression (('<<' | '>>') additive_expression)*
 
 and_expression:
-  shift_expression (AMPERSAND shift_expression)*
+  shift_expression ('&' shift_expression)*
 
 or_expression:
-  and_expression (VBAR and_expression)*
+  and_expression ('|' and_expression)*
 
 relational_expression:
-  or_expression ((GREATER | GREATER_EQUALS | LESS | LESS_EQUALS) or_expression)*
+  or_expression (('>' | '>=' | '<' | '<=') or_expression)*
 
 equality_expression:
-  relational_expression ((DOUBLE_EQUALS | EXCLAMATION_EQUALS) relational_expression)*
+  relational_expression (('==' | '!=') relational_expression)*
 
 slice_make_pair_expression:
-  equality_expression ((COLON | DOUBLE_COLON) equality_expression)*
+  equality_expression ((':' | '::') equality_expression)*
 
 logical_and_expression:
   slice_make_pair_expression ((
-    DOUBLE_AMPERSAND
+    '&&'
   ) slice_make_pair_expression)*
 
 logical_or_expression:
-  logical_and_expression (DOUBLE_VBAR logical_and_expression)*
+  logical_and_expression ('||' logical_and_expression)*
 
 assignment_expression:
-  ((member_expression (EQUALS | COLON_EQUALS)) | assignment_expression)? logical_or_expression
+  logical_or_expression ((':=' | '=') logical_or_expression)*
 
 expression:
   assignment_expression
 
 assignment_set:
-  SET variable TO logical_or_expression
+  'set' variable 'to' logical_or_expression
 
 assignment_let:
-  let assignment_expression
+  'let' assignment_expression
 
 statement:
   (COMMENT |
@@ -97,51 +97,51 @@ statement:
    foreach_block |
    if_block |
    variable_declaration_statement |
-   expression) (NEWLINE | EOF)
+   expression) ('\n' | EOF)
 
 block:
   statement*
 
 variable_declaration_statement:
   variable_declaration ((
-    EQUALS |
-    COLON_EQUALS |
-    PLUS_EQUALS |
-    MINUS_EQUALS |
-    ASTERISK_EQUALS |
-    SLASH_EQUALS |
-    CIRCUMFLEX_EQUALS |
-    VBAR_EQUALS |
-    AMPERSAND_EQUALS |
-    PERCENT_EQULAS
+    '=' |
+    ':=' |
+    '+=" |
+    '-=' |
+    '*=' |
+    '/=' |
+    '^=' |
+    '|=' |
+    '&=' |
+    '%='
     ) expression)?
 
 block_type:
   BLOCK_TYPE primary_expression*
 
 begin_block:
-  BEGIN block_type NEWLINE
+  'begin' block_type '\n'
     block
-  END
+  'end'
 
 if_block:
-  IF expression NEWLINE
+  'if' expression '\n'
     block
-  (ELSEIF expression NEWLINE
+  ('elseif' expression '\n'
       block)*
-  (ELSE NEWLINE
+  ('else' '\n'
     block)?
-  ENDIF
+  'endif'
 
 while_block:
-  WHILE expression NEWLINE
+  'while' expression '\n'
     block
-  LOOP
+  'loop'
 
 foreach_block:
-  FOREACH variable_or_variable_declaration LARROW expression NEWLINE
+  'foreach' variable_or_variable_declaration '<-' expression '\n'
     block
-  LOOP
+  'loop'
 
 script_compound_statement:
   (
@@ -152,5 +152,5 @@ script_compound_statement:
   )*
 
 script:
-  SCRIPTNAME ID NEWLINE
+  ('scriptname' | 'scn') ID '\n'
   script_compound_statement

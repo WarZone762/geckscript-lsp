@@ -22,6 +22,7 @@ import {
   IsShiftOperator,
   IsSliceMakePairOperator,
   IsAssignmentOperator,
+  IsSimpleAssignmentOperator,
   Node,
   Token,
   NumberLiteral,
@@ -77,70 +78,61 @@ function isRelationalOperator(): boolean { return IsRelationalOperator(cur_token
 function isEqualityOperator(): boolean { return IsEqualityOperator(cur_token.kind); }
 function isSliceMakePairOperator(): boolean { return IsSliceMakePairOperator(cur_token.kind); }
 function isAssignmentOperator(): boolean { return IsAssignmentOperator(cur_token.kind); }
+function isSimpleAssignmentOperator(): boolean { return IsSimpleAssignmentOperator(cur_token.kind); }
 
-function _skipToken(): void {
+function skipToken(): void {
   if (moreData()) {
     last_token = cur_token;
     cur_token = lexer.lexToken();
   }
 }
 
-function skipToken(): void {
-  _skipToken();
-
-  while (cur_token.kind === SyntaxKind.Comment) parseComment();
-
-  if (paren_level > 0) {
-    while (cur_token.kind === SyntaxKind.Newline) skipToken();
-  }
-}
-
 function nextToken<T extends SyntaxKind>(): Token<T> {
   const token = cur_token;
 
+  token.parent = last_parent;
+
+  if (token.kind === SyntaxKind.RParen)
+    --paren_level;
+
   skipToken();
+
+  if (paren_level > 0) {
+    while (true) {
+      switch (cur_token.kind) {
+        case SyntaxKind.Comment: parseComment(); continue;
+        case SyntaxKind.Newline: skipToken(); continue;
+      }
+      break;
+    }
+  } else {
+    while (cur_token.kind === SyntaxKind.Comment) parseComment();
+  }
 
   return token as Token<T>;
 }
 
 function nextTokenExpectType<T extends SyntaxKind>(kind: T): Token<T> {
-  const token = cur_token;
+  if (cur_token.kind !== kind) {
+    reportParsingError(`expected "${GetSyntaxKindName(kind)}", got "${GetSyntaxKindName(cur_token.kind)}"`);
 
-  token.parent = last_parent;
-
-  let skip_token = true;
-
-  if (kind === SyntaxKind.RParen)
-    --paren_level;
-
-  if (token.kind !== kind) {
-    reportParsingError(`expected "${GetSyntaxKindName(kind)}", got "${GetSyntaxKindName(token.kind)}"`);
-    skip_token = cur_token.kind !== SyntaxKind.Newline;
+    return parseInvalidToken();
   }
 
-  if (skip_token)
-    skipToken();
-
-  return token as Token<T>;
+  return nextToken();
 }
 
-function createMissingNode<T extends Node>(node: T): T {
-  node.range = {
-    start: cur_token.range.start,
-    end: cur_token.range.start
-  };
-
-  node.parent = last_parent;
-
+function parseInvalidToken<T extends Node>(): T {
   if (
     cur_token.kind !== SyntaxKind.EOF &&
-    cur_token.kind !== SyntaxKind.Newline &&
-    cur_token.kind !== SyntaxKind.RParen &&
-    cur_token.kind !== SyntaxKind.RBracket
-  )
-    skipToken();
+    cur_token.kind !== SyntaxKind.Newline
+  ) {
+    const token = nextToken();
+    token.kind = SyntaxKind.Unknown;
+    return token as unknown as T;
+  }
 
-  return node;
+  return cur_token as unknown as T;
 }
 
 function reportParsingError(message: string, range?: Range): void {
@@ -174,36 +166,6 @@ function parseNode<T extends Node>(
   return node;
 }
 
-function parseBinOpRight(
-  parse_child: () => Expression,
-  valid_tokens: { [key in SyntaxKind]?: boolean }
-): Expression {
-  let lhs = parse_child();
-
-  if (cur_token.kind in valid_tokens) {
-    let last_node = parseNode(new BinaryExpression(), node => {
-      node.lhs = lhs;
-      node.op = parseOperator();
-      node.rhs = parse_child();
-    });
-
-    lhs = last_node;
-
-    while (cur_token.kind in valid_tokens) {
-      const node = parseNode(new BinaryExpression(), node => {
-        node.lhs = last_node.rhs;
-        node.op = parseOperator();
-        node.rhs = parse_child();
-      });
-
-      last_node.rhs = node;
-      last_node = node;
-    }
-  }
-
-  return lhs;
-}
-
 function parseBinOpLeft(
   parse_child: () => Expression,
   predicate: () => boolean
@@ -225,7 +187,7 @@ function parseComment(): void {
   const node = parseNode(new Comment(), node => {
     node.content = cur_token.content;
     node.value = node.content.substring(1);
-    _skipToken();
+    skipToken();
   });
 
   script.comments[node.range.start.line] = node;
@@ -253,51 +215,52 @@ function parseString(): StringLiteral {
 
 function parseIdentifier(): Identifier {
   return nextTokenExpectType(SyntaxKind.Identifier);
-
-  return parseNode(cur_token, node => {
-    if (node.kind != SyntaxKind.Identifier) {
-      reportParsingError("expected an identifier");
-      createMissingNode(new Node());
-    }
-  });
 }
 
 function parseTypename(): Typename {
-  return parseNode(cur_token, () => {
-    if (!isTypename()) reportParsingError("expected a typename");
-    createMissingNode(new Node());
-  }) as Typename;
+  if (isTypename()) {
+    return nextToken();
+  } else {
+    reportParsingError("expected a typename");
+    return parseInvalidToken();
+  }
 }
 
 function parseKeyword(): Keyword {
-  return parseNode(cur_token, () => {
-    if (!isKeyword()) reportParsingError("expected a keyword");
-    createMissingNode(new Node());
-  }) as Keyword;
+  if (isKeyword()) {
+    return nextToken();
+  } else {
+    reportParsingError("expected a keyword");
+    return parseInvalidToken();
+  }
 }
 
 function parseOperator(): Operator {
-  return parseNode(cur_token, () => {
-    if (!isOperator()) reportParsingError("expected an operator");
-    createMissingNode(new Node());
-  }) as Operator;
+  if (isOperator()) {
+    return nextToken();
+  } else {
+    reportParsingError("expected an operator");
+    return parseInvalidToken();
+  }
 }
 
 function parseAssignmentOperator(): AssignmentOperator {
-  return parseNode(cur_token, () => {
-    if (!isAssignmentOperator()) reportParsingError("expected an assignment operator");
-    createMissingNode(new Node());
-  }) as AssignmentOperator;
+  if (isAssignmentOperator()) {
+    return nextToken();
+  } else {
+    reportParsingError("expected an assignment operator");
+    return parseInvalidToken();
+  }
 }
 
 function parseVariableOrVariableDeclaration(): Identifier | VariableDeclaration {
   if (cur_token.kind === SyntaxKind.Identifier)
-    return parseNode(nextToken());
+    return nextToken();
   else if (isTypename())
     return parseVariableDeclaration();
   else {
     reportParsingError("expected a variable or a variable declaration");
-    return createMissingNode(new Node()) as Identifier;
+    return parseInvalidToken();
   }
 }
 
@@ -308,7 +271,7 @@ function parseFunction(): FunctionExpression {
     while (moreData() && cur_token.kind !== SyntaxKind.Newline) {
       if (isOperator()) {
         if (cur_token.kind === SyntaxKind.Comma) {
-          skipToken();
+          nextToken();
           continue;
         } else if (cur_token.kind !== SyntaxKind.LParen) {
           break;
@@ -327,10 +290,9 @@ function parseLambdaInline(): LambdaInlineExpression {
     while (
       moreData() &&
       cur_token.kind !== SyntaxKind.RBracket &&
-      cur_token.kind !== SyntaxKind.RParen &&
       cur_token.kind !== SyntaxKind.Newline
     ) {
-      if (cur_token.kind === SyntaxKind.Comma) skipToken();
+      if (cur_token.kind === SyntaxKind.Comma) nextToken();
 
       node.params.push(parseVariableOrVariableDeclaration());
     }
@@ -349,11 +311,10 @@ function parseLambda(): LambdaExpression {
 
     while (
       moreData() &&
-      cur_token.kind !== SyntaxKind.RBracket &&
-      cur_token.kind !== SyntaxKind.RParen &&  // TODO: come up with a better solution (keep trach of the context?)
+      cur_token.kind !== SyntaxKind.RBracket &&  // TODO: come up with a better solution (keep track of the context?)
       cur_token.kind !== SyntaxKind.Newline
     ) {
-      if (cur_token.kind === SyntaxKind.Comma) skipToken();
+      if (cur_token.kind === SyntaxKind.Comma) nextToken();
 
       node.params.push(parseVariableOrVariableDeclaration());
     }
@@ -368,34 +329,40 @@ function parseLambda(): LambdaExpression {
 }
 
 function parsePrimaryExpression(): Expression {
-  if (cur_token.kind === SyntaxKind.String) {
-    return parseString();
-  } else if (cur_token.kind === SyntaxKind.Number) {
-    return parseNumber();
-  } else if (cur_token.kind === SyntaxKind.Identifier) {
-    if (cur_token.content.toLowerCase() in TokenData.Functions)
-      return parseFunction();
-    else
-      return parseIdentifier();
-  } else if (cur_token.kind === SyntaxKind.LParen) {
-    skipToken();
-    if (cur_token.kind as unknown === SyntaxKind.Begin) {
-      return parseNode(parseLambda(), () => {
-        nextTokenExpectType(SyntaxKind.RParen);
-      });
-    } else {
-      ++paren_level;
+  switch (cur_token.kind) {
+    case SyntaxKind.String:
+      return parseString();
 
-      return parseNode(parseExpression(), () => {
-        nextTokenExpectType(SyntaxKind.RParen);
-      });
-    }
-  } else if (cur_token.kind === SyntaxKind.LBracket) {
-    return parseLambdaInline();
-  } else {
-    reportParsingError(`expected expression, got "${GetSyntaxKindName(cur_token.kind)}"`);
+    case SyntaxKind.Number:
+      return parseNumber();
 
-    return createMissingNode(new Node()) as Expression;
+    case SyntaxKind.Identifier:
+      if (cur_token.content.toLowerCase() in TokenData.Functions)
+        return parseFunction();
+      else
+        return parseIdentifier();
+
+    case SyntaxKind.LParen:
+      nextToken();
+      if (cur_token.kind as unknown === SyntaxKind.Begin) {
+        return parseNode(parseLambda(), () => {
+          nextTokenExpectType(SyntaxKind.RParen);
+        });
+      } else {
+        ++paren_level;
+
+        return parseNode(parseExpression(), () => {
+          nextTokenExpectType(SyntaxKind.RParen);
+        });
+      }
+
+    case SyntaxKind.LBracket:
+      return parseLambdaInline();
+
+    default:
+      reportParsingError(`expected expression, got "${GetSyntaxKindName(cur_token.kind)}"`);
+
+      return parseInvalidToken();
   }
 }
 
@@ -418,7 +385,7 @@ function parseMemberRArrow(lhs: Expression): Expression {
       cur_token.kind !== SyntaxKind.Number &&
       cur_token.kind !== SyntaxKind.Identifier
     ) {
-      node.rhs = createMissingNode(new Node()) as Expression;
+      node.rhs = parseInvalidToken();
     } else {
       node.rhs = parsePrimaryExpression();
     }
@@ -431,7 +398,7 @@ function parseMemberDot(lhs: Expression): Expression {
     node.op = nextTokenExpectType(SyntaxKind.Dot);
 
     if (cur_token.kind !== SyntaxKind.Identifier) {
-      node.rhs = createMissingNode(new Node()) as Expression;
+      node.rhs = parseInvalidToken();
     } else {
       node.rhs = parsePrimaryExpression();
     }
@@ -467,7 +434,7 @@ function parseLogicalNot(): Expression {
 }
 
 function parseUnary(): Expression {
-  if (isOperator() || !isUnaryOperator()) return parseLogicalNot();  //FIXME: isBinaryOperator maybe?
+  if (!isUnaryOperator()) return parseLogicalNot();
 
   return parseNode(new UnaryExpression(), node => {
     node.op = parseOperator();
@@ -552,14 +519,31 @@ function parseLogicalOr(): Expression {
   );
 }
 
-function parseAssignment(): Expression {  // TODO: parse according to grammar.txt
-  return parseBinOpRight(
-    () => parseLogicalOr(),
-    {
-      [SyntaxKind.Equals]: true,
-      [SyntaxKind.ColonEquals]: true
+function parseAssignment(): Expression {
+  let lhs = parseLogicalOr();
+
+  if (isSimpleAssignmentOperator()) {
+    let last_node = parseNode(new BinaryExpression(), node => {
+      node.lhs = lhs;
+      node.op = parseOperator();
+      node.rhs = parseLogicalOr();
+    });
+
+    lhs = last_node;
+
+    while (isSimpleAssignmentOperator()) {
+      const node = parseNode(new BinaryExpression(), node => {
+        node.lhs = last_node.rhs;
+        node.op = parseOperator();
+        node.rhs = parseLogicalOr();
+      });
+
+      last_node.rhs = node;
+      last_node = node;
     }
-  );
+  }
+
+  return lhs;
 }
 
 function parseExpression(): Expression {
@@ -591,7 +575,7 @@ function parseStatement(): Statement {
       break;
 
     case SyntaxKind.Newline:
-      skipToken();
+      nextToken();
       return parseStatement();
 
     case SyntaxKind.Begin:
@@ -616,7 +600,7 @@ function parseStatement(): Statement {
         } else {
           reportParsingError(`unexpected keyword "${GetSyntaxKindName(cur_token.kind)}"`);
 
-          node = createMissingNode(new Node() as Statement);
+          node = parseInvalidToken();
         }
       } else if (isTypename()) {
         node = parseVariableDeclarationStatement();
@@ -798,7 +782,7 @@ function parseScriptCompoundStatement(): Block {
           break;
 
         case SyntaxKind.Newline:
-          skipToken();
+          nextToken();
           continue;
 
         default:
@@ -825,9 +809,10 @@ function parseScript(): Script {
   return parseNode(script, node => {
     while (moreData()) {
       switch (cur_token.kind) {
-        case SyntaxKind.Comment: parseComment(); break;
-        case SyntaxKind.Newline: skipToken(); break;
+        case SyntaxKind.Comment: parseComment(); continue;
+        case SyntaxKind.Newline: nextToken(); continue;
       }
+      break;
     }
 
     node.scriptname = nextTokenExpectType(SyntaxKind.ScriptName);

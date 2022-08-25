@@ -10,15 +10,16 @@ import {
   SemanticTokensRequest,
   SemanticTokensParams,
   HoverParams,
-  Hover
+  Hover,
 } from "vscode-languageserver/node";
 
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { Range, TextDocument } from "vscode-languageserver-textdocument";
 
 import * as TreeViewServer from "./tree_view/server";
 
 import * as Wiki from "./wiki";
-import { Environment } from "./geckscript/types";
+import { Environment, Token } from "./geckscript/types";
+import * as AST from "./geckscript/ast";
 // import * as ST from "./semantic_tokens";
 
 
@@ -64,7 +65,7 @@ documents.onDidChangeContent(
     const doc = params.document;
 
     const script = scripts.processDocument(doc);
-    console.log(scripts);
+    tree_view_server?.write_tree_data(AST.NodeToTreeData(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
   }
@@ -89,7 +90,11 @@ connection.onCompletionResolve(
 
 connection.onHover(
   async (params: HoverParams): Promise<Hover | null> => {
-    return null;
+    const token = AST.GetTokenAtPosition(scripts.map[params.textDocument.uri], params.position);
+
+    return {
+      contents: String((token as Token)?.content)
+    };
   }
 );
 
