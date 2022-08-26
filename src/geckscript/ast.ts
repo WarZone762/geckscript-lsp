@@ -1,5 +1,5 @@
-import { Diagnostic } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
+import { GetSyntaxKindName } from "./token_data";
 import {
   SyntaxKind,
   BranchKeyword,
@@ -26,7 +26,6 @@ import {
   IfStatement,
   Script,
   TreeData,
-  GetSyntaxKindName,
   Type,
   GetTypeName,
   Symbol,

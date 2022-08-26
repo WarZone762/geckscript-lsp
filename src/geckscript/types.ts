@@ -2,7 +2,6 @@ import { CompletionItem, CompletionItemKind, Diagnostic } from "vscode-languages
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import * as AST from "./ast";
 import * as Parser from "./parser";
-import { TokenData } from "./token_data";
 
 
 export const enum SyntaxKind {
@@ -154,28 +153,6 @@ export const enum SyntaxKind {
   SIMPLE_ASSIGNMENT_OPERATOR_LAST = ColonEquals,
 }
 
-let SyntaxKindNames: { [key in SyntaxKind]?: string } = {};
-
-for (const [k, v] of Object.entries(TokenData.All)) {
-  SyntaxKindNames[v] = k;
-}
-
-SyntaxKindNames = Object.assign(SyntaxKindNames, {
-  [SyntaxKind.Unknown]: "unknown",
-  [SyntaxKind.EOF]: "end of file",
-  [SyntaxKind.Newline]: "new line",
-  [SyntaxKind.Comment]: "comment",
-  [SyntaxKind.Number]: "number",
-  [SyntaxKind.String]: "string",
-  [SyntaxKind.Identifier]: "identifier",
-  [SyntaxKind.BlocktypeToken]: "block type",
-  [SyntaxKind.BlocktypeTokenFunction]: "function",
-});
-
-export function GetSyntaxKindName(kind: SyntaxKind): string {
-  return SyntaxKindNames[kind] ?? `unable to find SyntaxType name (${kind})`;
-}
-
 export type TypenameSyntaxKind =
   SyntaxKind.Short |
   SyntaxKind.Int |
@@ -292,8 +269,8 @@ export function IsTypename(kind: SyntaxKind): boolean {
   return SyntaxKind.TYPENAME_FIRST <= kind && kind <= SyntaxKind.TYPENAME_LAST;
 }
 
-export function IsKeyword(kin: SyntaxKind): boolean {
-  return SyntaxKind.KEYWORD_FIRST <= kin && kin <= SyntaxKind.KEYWORD_LAST;
+export function IsKeyword(kind: SyntaxKind): boolean {
+  return SyntaxKind.KEYWORD_FIRST <= kind && kind <= SyntaxKind.KEYWORD_LAST;
 }
 
 export function IsOperator(kind: SyntaxKind): boolean {
@@ -620,24 +597,16 @@ export class Environment {
   }
 }
 
-export const CompletionItems: CompletionItem[] = [];
+// export const CompletionItems: CompletionItem[] = [];
 
-Object.entries(TokenData.All).forEach(([k, v], i) => {
-  CompletionItems[i] = {
-    label: k,
-    data: k,
-    kind:
-      IsTypename(v) ? CompletionItemKind.TypeParameter :
-        IsKeyword(v) ? CompletionItemKind.Keyword :
-          IsOperator(v) ? CompletionItemKind.Operator :
-            CompletionItemKind.Constant,
-  };
-});
-
-Object.entries(TokenData.Functions).forEach(([k, v], i) => {
-  CompletionItems.push({
-    label: k,
-    data: k,
-    kind: CompletionItemKind.Function,
-  });
-});
+// Object.values(TokenData).forEach((v, i) => {
+//   CompletionItems[i] = {
+//     label: v.canonical_name,
+//     data: v.canonical_name,
+//     kind:
+//       IsTypename(v.kind) ? CompletionItemKind.TypeParameter :
+//         IsKeyword(v.kind) ? CompletionItemKind.Keyword :
+//           IsOperator(v.kind) ? CompletionItemKind.Operator :
+//             CompletionItemKind.Constant,
+//   };
+// });

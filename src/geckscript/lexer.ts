@@ -1,5 +1,5 @@
 import { StringBuffer } from "../common";
-import { TokenData } from "./token_data";
+import { GetTokenKind } from "./token_data";
 import { SyntaxKind, Token, Operator, IsOperator } from "./types";
 
 
@@ -166,8 +166,8 @@ export class Lexer {
     const next_char = this.lookAhead(1);
     if (next_char != undefined) {
       const operator = this.cur_char + next_char;
-      if (IsOperator(TokenData.All[operator])) {
-        const token = this.createToken(TokenData.All[operator]);
+      if (IsOperator(GetTokenKind(operator))) {
+        const token = this.createToken(GetTokenKind(operator));
 
         this.nextCharToBuf();
         this.nextCharToBuf();
@@ -176,8 +176,8 @@ export class Lexer {
       }
     }
 
-    if (IsOperator(TokenData.All[this.cur_char])) {
-      const token = this.createToken(TokenData.All[this.cur_char]);
+    if (IsOperator(GetTokenKind(this.cur_char))) {
+      const token = this.createToken(GetTokenKind(this.cur_char));
       this.nextCharToBuf();
 
       return this.finishToken(token) as Operator;
@@ -197,9 +197,9 @@ export class Lexer {
       this.nextCharToBuf();
     }
 
-    const kind = TokenData.All[this.buf.toString().toLowerCase()];
+    const kind = GetTokenKind(this.buf.toString().toLowerCase());
 
-    token.kind = kind ?? SyntaxKind.Identifier;
+    token.kind = kind !== SyntaxKind.Unknown ? kind : SyntaxKind.Identifier;
 
     return this.finishToken(token);
   }

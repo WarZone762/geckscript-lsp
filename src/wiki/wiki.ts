@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as https from "https";
 
 import {
   MarkupContent,
@@ -8,6 +7,7 @@ import {
 } from "vscode-languageserver/node";
 
 import * as TurndownService from "turndown";
+import { GetWikiPage } from "./api";
 
 
 export class DataCache {
@@ -76,39 +76,6 @@ HTMLToMDConverter.addRule("GECKWiki_div#contentSub", {
   }
 });
 
-export async function GETRequest(url: string): Promise<string | undefined> {
-  console.log(`Starting request GET "${url}"`);
-
-  return new Promise<string | undefined>((resolve, reject) => {
-    https.get(url, (response) => {
-      let data = "";
-
-      response.on("data", chunk => data += chunk);
-
-      response.on("end", () => {
-        console.log(`Request GET ${url} successful`);
-
-        resolve(data);
-      });
-
-      response.on("error", (error) => {
-        console.log(`Request GET ${url} failed (${error})`);
-
-        resolve(undefined);
-      });
-    }
-    );
-  });
-}
-
-async function GetWikiPage(page_title: string): Promise<string | undefined> {
-  const response = await GETRequest(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`);
-
-  if (response == undefined) return undefined;
-
-  return JSON.parse(response)?.parse?.text?.["*"];
-}
-
 const PageMarkdownRequstsRunning: Record<string, Promise<MarkupContent>> = {};
 
 export async function GetPageMarkdown(page_title: string): Promise<MarkupContent> {
@@ -137,27 +104,4 @@ export async function GetPageMarkdown(page_title: string): Promise<MarkupContent
   PageMarkdownRequstsRunning[page_title] = promise;
 
   return promise;
-}
-
-export async function GetCategoryPages(category: string, types?: string | string[]): Promise<string[]> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  types = types != undefined ? "&cmtype=" + [].concat(types).join("|") : "";
-
-  const items: string[] = [];
-
-  let response = JSON.parse(await GETRequest(
-    `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&format=json`
-  ) ?? "");
-
-  response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));
-
-  while (response?.continue?.cmcontinue != undefined) {
-    response = JSON.parse(await GETRequest(
-      `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${types}&cmlimit=max&cmcontinue=${response?.continue?.cmcontinue}&format=json`
-    ) ?? "");
-    response?.query?.categorymembers.forEach((item: any) => items.push(item?.title));
-  }
-
-  return items;
 }

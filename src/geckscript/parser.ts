@@ -1,7 +1,7 @@
 import { Position, Range } from "vscode-languageserver-textdocument";
+import { GetFunctionInfo } from "./function_data";
 import { Lexer } from "./lexer";
-import { TokenData } from "./token_data";
-
+import { GetTokenKind, GetSyntaxKindName } from "./token_data";
 import {
   SyntaxKind,
   BranchKeywordSyntaxKind,
@@ -47,7 +47,6 @@ import {
   WhileStatement,
   BlocktypeExpression,
   Script,
-  GetSyntaxKindName,
 } from "./types";
 
 
@@ -337,7 +336,7 @@ function parsePrimaryExpression(): Expression {
       return parseNumber();
 
     case SyntaxKind.Identifier:
-      if (cur_token.content.toLowerCase() in TokenData.Functions)
+      if (GetFunctionInfo(cur_token.content.toLowerCase()) != undefined)
         return parseFunction();
       else
         return parseIdentifier();

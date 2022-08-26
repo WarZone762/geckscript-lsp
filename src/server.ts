@@ -17,7 +17,7 @@ import { Range, TextDocument } from "vscode-languageserver-textdocument";
 
 import * as TreeViewServer from "./tree_view/server";
 
-import * as Wiki from "./wiki";
+import * as Wiki from "./wiki/wiki";
 import { Environment, Token } from "./geckscript/types";
 import * as AST from "./geckscript/ast";
 import * as ST from "./language_features/semantic_tokens";
