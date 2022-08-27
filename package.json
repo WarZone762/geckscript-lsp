@@ -8,6 +8,7 @@
 	"dependencies": {
 		"vscode-languageserver": "*",
 		"vscode-languageserver-textdocument": "*",
+		"xml2js": "*",
 		"mime": "*",
 		"turndown": "*"
 	},
@@ -15,6 +16,7 @@
 		"@types/node": "*",
 		"@typescript-eslint/eslint-plugin": "*",
 		"@typescript-eslint/parser": "*",
+		"@types/xml2js": "*",
 		"@types/mime": "*",
 		"@types/turndown": "*",
 		"eslint": "*",

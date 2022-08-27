@@ -1,5 +1,7 @@
 import * as https from "https";
 
+import * as xml from "xml2js";
+
 
 export async function GETRequest(url: string): Promise<string | undefined> {
   console.log(`Starting request GET "${url}"`);
@@ -26,12 +28,10 @@ export async function GETRequest(url: string): Promise<string | undefined> {
   });
 }
 
-export async function GetWikiPage(page_title: string): Promise<string | undefined> {
-  const response = await GETRequest(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=text&disabletoc=1&format=json`);
+export async function ParsePageWikitext(page_title: string): Promise<any | undefined> {
+  const response = await GETRequest(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=parsetree&disabletoc=1&format=json`);
 
-  if (response == undefined) return undefined;
-
-  return JSON.parse(response)?.parse?.text?.["*"];
+  return response != undefined ? await xml.parseStringPromise(JSON.parse(response).parse?.parsetree?.["*"]) : undefined;
 }
 
 export async function GetCategoryPages(category: string, types?: string[]): Promise<string[]> {
@@ -53,8 +53,4 @@ export async function GetCategoryPages(category: string, types?: string[]): Prom
   }
 
   return items;
-}
-
-export async function GetFunctions(): Promise<string[]> {
-  return GetCategoryPages("Category:Functions (All)", ["page"]);
 }
