@@ -53,7 +53,7 @@ function renameFunc(name: string): string {
   return name.replace(/ \(Function\)$/, "");
 }
 
-let FunctionData: { [key: string]: FunctionInfo } = {};
+export let FunctionData: { [key: string]: FunctionInfo } = {};
 
 export async function PopulateFunctionData(update = false) {
   let functions: string[] = [];

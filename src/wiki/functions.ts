@@ -99,11 +99,40 @@ function ParseTextNodes(element: Element): string {
   for (let i = 0; i < element.childNodes.length; ++i) {
     switch ((element.childNodes[i] as Element)?.tagName) {
       case "ext":
-        text += element.childNodes[i].childNodes[2].textContent;
+        text += element.childNodes[i].childNodes[2].textContent?.replaceAll("\n", "\n\t");
         break;
 
-      default:
-        text += element.childNodes[i].textContent;
+      case "h":
+        text += element.childNodes[i].textContent
+          ?.replaceAll("=", "#")
+          .replace(/#(?=[^\s#])/, "# ")
+          .replace(/(?<=[^\s#])#/, " #");
+        break;
+
+
+      default: {
+        let str = element.childNodes[i].textContent!
+          .replaceAll(/\*(?=\S)/g, "* ")
+          .replaceAll("'''", "**")
+          .replaceAll("''", "*");
+
+        for (const m of str.match(/(?<!\[)\[[^[].*?\](?!\])/g) ?? []) {
+          const [link, label] = m.substring(1, m.length - 1).split(/ (.*)/);
+          str = str.replace(m, `[${label}](${link.replaceAll(" ", "_")})`);
+        }
+
+        for (const m of str.match(/\[\[.*?\]\]/g) ?? []) {
+          if (m.includes("Category:")) {
+            str = str.replace(m, "");
+            continue;
+          }
+          const page_name = m.substring(2, m.length - 2);
+          str = str.replace(m, `[${page_name}](https:geckwiki.com/index.php?title=${page_name.replaceAll(" ", "_")})`);
+        }
+
+        text += str;
+      }
+
     }
   }
 
@@ -154,8 +183,8 @@ export async function GetFunctions(): Promise<string[]> {
     .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
 }
 
-export async function GetFunctionDocumentation(function_name: string): Promise<FunctionDocumentation> {
-  const jsdom = new JSDOM(await GetCacheValue(function_name) ?? "", { contentType: "text/xml" });
+export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation> {
+  const jsdom = new JSDOM(await GetCacheValue(page_name) ?? "", { contentType: "text/xml" });
   const root = jsdom.window.document.children[0];
   const template = ParseTemplate(root.children[0]) as FunctionTemplate;
 
@@ -166,5 +195,3 @@ export async function GetFunctionDocumentation(function_name: string): Promise<F
     text: ParseTextNodes(root),
   };
 }
-
-GetFunctionDocumentation("ReadFromJSON");

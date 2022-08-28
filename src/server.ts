@@ -22,6 +22,7 @@ import { Environment, Token } from "./geckscript/types";
 import * as AST from "./geckscript/ast";
 import * as ST from "./language_features/semantic_tokens";
 import * as FD from "./geckscript/function_data";
+import * as completion from "./language_features/completion";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -80,19 +81,17 @@ documents.onDidChangeContent(
 );
 
 connection.onCompletion(
-  (params) => {
-    return null;
+  async (params) => {
+    return completion.GetCompletionItems(
+      environment.map[params.textDocument.uri],
+      params.position
+    );
   }
 );
 
 connection.onCompletionResolve(
-  async (item: CompletionItem): Promise<CompletionItem> => {
-    if (item.data != undefined) {
-      item.detail = item.label;
-      // item.documentation = await Wiki.GetPageMarkdown(item.data);
-    }
-
-    return item;
+  async (item) => {
+    return completion.GetCompletionItemDoc(item);
   }
 );
 

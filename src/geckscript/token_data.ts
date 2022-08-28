@@ -8,7 +8,7 @@ export interface TokenInfo {
   wiki_page_name?: string;
 }
 
-const TokenData = (() => {
+export const TokenData = (() => {
   const map: { [key: string]: TokenInfo } = {};
 
   for (const [k, v] of Object.entries({

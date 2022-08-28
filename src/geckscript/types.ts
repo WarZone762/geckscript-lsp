@@ -1,4 +1,4 @@
-import { CompletionItem, CompletionItemKind, Diagnostic } from "vscode-languageserver";
+import { Diagnostic } from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import * as AST from "./ast";
 import * as Parser from "./parser";
@@ -596,17 +596,3 @@ export class Environment {
     return script;
   }
 }
-
-// export const CompletionItems: CompletionItem[] = [];
-
-// Object.values(TokenData).forEach((v, i) => {
-//   CompletionItems[i] = {
-//     label: v.canonical_name,
-//     data: v.canonical_name,
-//     kind:
-//       IsTypename(v.kind) ? CompletionItemKind.TypeParameter :
-//         IsKeyword(v.kind) ? CompletionItemKind.Keyword :
-//           IsOperator(v.kind) ? CompletionItemKind.Operator :
-//             CompletionItemKind.Constant,
-//   };
-// });
