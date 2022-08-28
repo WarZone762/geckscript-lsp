@@ -1,7 +1,5 @@
 import * as https from "https";
 
-import * as xml from "xml2js";
-
 
 export async function GETRequest(url: string): Promise<string | undefined> {
   console.log(`Starting request GET "${url}"`);
@@ -28,10 +26,10 @@ export async function GETRequest(url: string): Promise<string | undefined> {
   });
 }
 
-export async function ParsePageWikitext(page_title: string): Promise<any | undefined> {
+export async function GetPageWikitext(page_title: string): Promise<string | undefined> {
   const response = await GETRequest(`https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=parsetree&disabletoc=1&format=json`);
 
-  return response != undefined ? await xml.parseStringPromise(JSON.parse(response).parse?.parsetree?.["*"]) : undefined;
+  return response != undefined ? await JSON.parse(response).parse?.parsetree?.["*"] : undefined;
 }
 
 export async function GetCategoryPages(category: string, types?: string[]): Promise<string[]> {

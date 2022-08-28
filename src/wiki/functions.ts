@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import { JSDOM } from "jsdom";
+
 import * as api from "./api";
 
 
@@ -15,7 +17,21 @@ const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath) ?
   {};
 
 async function SaveCache() {
-  fs.promises.writeFile(CachePath, JSON.stringify(FunctionPageCache));
+  await fs.promises.writeFile(CachePath, JSON.stringify(FunctionPageCache));
+}
+
+async function GetCacheValue(key: string): Promise<string | undefined> {
+  if (FunctionPageCache[key] != undefined) {
+    return FunctionPageCache[key];
+  } else {
+    const value = await api.GetPageWikitext(key);
+    if (value != undefined) {
+      FunctionPageCache[key] = value;
+      await SaveCache();
+    }
+
+    return value;
+  }
 }
 
 export interface Template {
@@ -73,64 +89,63 @@ export interface FunctionTemplate {
   conditionFunc?: "Condition" | "Script" | "Both"
 }
 
-export function ParseTemplate(obj: any): Template | FunctionArgumentTemplate | FunctionTemplate {
-  const title = obj.title[0].trim();
+export interface FunctionDocumentation {
+  template: FunctionTemplate;
+  text: string;
+}
+
+function ParseTextNodes(element: Element): string {
+  let text = "";
+  for (let i = 0; i < element.childNodes.length; ++i) {
+    switch ((element.childNodes[i] as Element)?.tagName) {
+      case "ext":
+        text += element.childNodes[i].childNodes[2].textContent;
+        break;
+
+      default:
+        text += element.childNodes[i].textContent;
+    }
+  }
+
+  return text.trim();
+}
+
+function ParsePart(element: Element): [string, any] {
+  const k = element.children[0].textContent!.trim();
+  const v = element.children[1];
+
+  if (v.children[0]?.tagName == "template") {
+    const args: FunctionArgumentTemplate[] = [];
+    for (let i = 0; i < v.childElementCount; ++i)
+      args.push(ParseTemplate(v.children[i]) as FunctionArgumentTemplate);
+
+    return [k, args];
+  } else {
+    return [k, ParseTextNodes(v)];
+  }
+}
+
+export function ParseTemplate(element: Element): Template | FunctionArgumentTemplate | FunctionTemplate {
+  const title = element.children[0].textContent!.trim();
+
+  const template: { [key: string]: any } = {};
+  for (let i = 1; i < element.children.length; ++i) {
+    const [k, v] = ParsePart(element.children[i]);
+
+    template[k] = v;
+  }
   switch (title) {
-    case "Function": {
-      const template: FunctionTemplate = {};
-      for (const arg of obj.part) {
-        const k = arg.name[0] as keyof FunctionTemplate;
-        const v = arg.value[0];
+    case "Function":
+      return template as FunctionTemplate;
 
-        switch (typeof v) {
-          case "string":
-            (template[k] as any) = v.trim();
-            break;
+    case "FunctionArgument":
+      return template as FunctionArgumentTemplate;
 
-          case "object":
-            if (v.template[0] != undefined)
-              (template[k] as any) = ParseTemplate(v.template[0]);
-            break;
-        }
-      }
-
-      return template;
-    }
-
-    case "FunctionArgument": {
-      const template: FunctionArgumentTemplate = {};
-      for (const arg of obj.part) {
-        (template[arg.name[0] as keyof FunctionArgumentTemplate] as any) =
-          arg.value[0].trim();
-      }
-
-      return template;
-    }
-
-    default: {
-      const args: { [key: string]: any } = {};
-
-      for (const arg of obj.part) {
-        const k = arg.name[0].trim();
-        const v = arg.value[0];
-
-        switch (typeof v) {
-          case "string":
-            args[k] = v.trim();
-            break;
-
-          case "object":
-            if (v.template[0] != undefined)
-              args[k] = ParseTemplate(v.template[0]);
-            break;
-        }
-      }
-
+    default:
       return {
         title: title,
-        arguments: args,
+        arguments: template,
       };
-    }
   }
 }
 
@@ -139,16 +154,17 @@ export async function GetFunctions(): Promise<string[]> {
     .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
 }
 
-export async function GetFunctionDocumentation(function_name: string) {
-  let xml: any;
+export async function GetFunctionDocumentation(function_name: string): Promise<FunctionDocumentation> {
+  const jsdom = new JSDOM(await GetCacheValue(function_name) ?? "", { contentType: "text/xml" });
+  const root = jsdom.window.document.children[0];
+  const template = ParseTemplate(root.children[0]) as FunctionTemplate;
 
-  if (FunctionPageCache[function_name] != undefined) {
-    xml = FunctionPageCache[function_name];
-  } else {
-    xml = await api.ParsePageWikitext(function_name);
-    FunctionPageCache[function_name] = xml;
-    SaveCache();
-  }
+  root.children[0].remove();
 
-  return ParseTemplate(xml.root.template[0]);
+  return {
+    template: template,
+    text: ParseTextNodes(root),
+  };
 }
+
+GetFunctionDocumentation("ReadFromJSON");
