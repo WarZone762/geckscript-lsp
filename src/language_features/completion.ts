@@ -36,7 +36,7 @@ export async function GetCompletionItems(
   for (const v of Object.values(FunctionData)) {
     completion_items.push({
       label: v.canonical_name,
-      data: v.wiki_page_name ?? v.canonical_name,
+      data: v.name,
       kind: CompletionItemKind.Function,
     });
   }
@@ -47,22 +47,21 @@ export async function GetCompletionItems(
 export async function GetCompletionItemDoc(item: CompletionItem): Promise<CompletionItem> {
   if (item.data == undefined) return item;
 
-  const doc = await functions.GetFunctionDocumentation(item.data);
-  const func_info = GetFunctionInfo(item.data);
-
-  item.detail =
-    "(" +
-    (doc.template.returnVal != undefined ? `${doc.template.returnVal}:` : "") +
-    `${doc.template.returnType}) ${doc.template.name ?? func_info?.canonical_name} `;
-
-  for (const arg of doc.template.arguments ?? []) {
-    if ((arg as functions.FunctionArgumentTemplate)?.Name != undefined)
-      item.detail += `${(arg as functions.FunctionArgumentTemplate).Name}:`;
-    if ((arg as functions.FunctionArgumentTemplate)?.Type != undefined)
-      item.detail += `${(arg as functions.FunctionArgumentTemplate).Type} `;
-    else
-      item.detail += arg + " ";
+  const func_info = GetFunctionInfo(item.data)!;
+  if (func_info == undefined) {
+    item.detail = item.data;
+    return item;
   }
+
+  const doc = await functions.GetFunctionDocumentation(func_info.wiki_page_name);
+  if (doc == undefined) {
+    item.detail = func_info.canonical_name;
+    item.documentation = "Unable to get documentation";
+
+    return item;
+  }
+
+  item.detail = functions.GetFunctionSignature(func_info, doc);
 
   let text = doc.template.summary ?? "";
   text += "\n\n" + doc.text;

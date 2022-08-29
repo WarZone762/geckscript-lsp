@@ -4,6 +4,7 @@ import * as path from "path";
 import { JSDOM } from "jsdom";
 
 import * as api from "./api";
+import { FunctionInfo } from "../geckscript/function_data";
 
 
 const CachePath = path.join(
@@ -99,14 +100,16 @@ function ParseTextNodes(element: Element): string {
   for (let i = 0; i < element.childNodes.length; ++i) {
     switch ((element.childNodes[i] as Element)?.tagName) {
       case "ext":
-        text += element.childNodes[i].childNodes[2].textContent?.replaceAll("\n", "\n\t");
+        text += "```\n" + element.childNodes[i].childNodes[2].textContent + "\n```\n\n";
         break;
 
       case "h":
         text += element.childNodes[i].textContent
           ?.replaceAll("=", "#")
           .replace(/#(?=[^\s#])/, "# ")
-          .replace(/(?<=[^\s#])#/, " #");
+          .replace(/(?<=[^\s#])#/, " #")
+          .replaceAll("'''", "**")
+          .replaceAll("''", "*");
         break;
 
 
@@ -129,6 +132,8 @@ function ParseTextNodes(element: Element): string {
           const page_name = m.substring(2, m.length - 2);
           str = str.replace(m, `[${page_name}](https:geckwiki.com/index.php?title=${page_name.replaceAll(" ", "_")})`);
         }
+
+        str = str.replaceAll("\n ", "\n\t");
 
         text += str;
       }
@@ -183,8 +188,11 @@ export async function GetFunctions(): Promise<string[]> {
     .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
 }
 
-export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation> {
-  const jsdom = new JSDOM(await GetCacheValue(page_name) ?? "", { contentType: "text/xml" });
+export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation | undefined> {
+  const xml = await GetCacheValue(page_name);
+  if (xml == undefined) return undefined;
+
+  const jsdom = new JSDOM(xml, { contentType: "text/xml" });
   const root = jsdom.window.document.children[0];
   const template = ParseTemplate(root.children[0]) as FunctionTemplate;
 
@@ -194,4 +202,50 @@ export async function GetFunctionDocumentation(page_name: string): Promise<Funct
     template: template,
     text: ParseTextNodes(root),
   };
+}
+
+export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation) {
+  let signature = "";
+
+  if (
+    doc.template.returnVal != undefined ||
+    doc.template.returnType != undefined
+  ) {
+    signature += "(";
+
+    if (doc.template.returnVal != undefined)
+      signature += `${doc.template.returnVal}:`;
+
+    if (doc.template.returnType != undefined)
+      signature += doc.template.returnType;
+
+    signature += ") ";
+  }
+
+
+  signature += `${doc.template.name ?? func_info.canonical_name} `;
+
+  for (const arg of doc.template.arguments ?? []) {
+    if (arg instanceof String) {
+      signature += arg;
+    } else {
+      if ((arg as FunctionArgumentTemplate)?.Name != undefined)
+        signature += `${(arg as FunctionArgumentTemplate).Name}:`;
+
+      if ((arg as FunctionArgumentTemplate)?.Type != undefined)
+        signature += `${(arg as FunctionArgumentTemplate).Type}`;
+
+      if ((arg as FunctionArgumentTemplate)?.Value != undefined)
+        signature += `{${(arg as FunctionArgumentTemplate).Value}}`;
+
+      if ((arg as FunctionArgumentTemplate)?.Optional != undefined) {
+        signature += "?";
+      }
+
+    }
+
+    signature += " ";
+  }
+
+  return signature;
 }
