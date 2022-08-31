@@ -8,17 +8,15 @@
 	"dependencies": {
 		"vscode-languageserver": "*",
 		"vscode-languageserver-textdocument": "*",
-		"jsdom": "*",
 		"mime": "*",
-		"turndown": "*"
+		"wtf_wikipedia": "*",
+		"wtf-plugin-markdown": "*"
 	},
 	"devDependencies": {
 		"@types/node": "*",
 		"@typescript-eslint/eslint-plugin": "*",
 		"@typescript-eslint/parser": "*",
-		"@types/jsdom": "*",
 		"@types/mime": "*",
-		"@types/turndown": "*",
 		"eslint": "*",
 		"typescript": "*"
 	},

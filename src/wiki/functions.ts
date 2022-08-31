@@ -1,7 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { JSDOM } from "jsdom";
+import * as wtf from "wtf_wikipedia";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+wtf.extend(require("wtf-plugin-markdown"));
 
 import * as api from "./api";
 import { FunctionInfo } from "../geckscript/function_data";
@@ -41,10 +43,10 @@ export interface Template {
 }
 
 export interface FunctionArgumentTemplate {
-  Name?: string;
-  Type?: string;
-  Optional?: string;
-  Value?: string;
+  name?: string;
+  type?: string;
+  optional?: string;
+  value?: string;
 }
 
 export const enum FunctionTemplateOrigin {
@@ -74,20 +76,20 @@ export const enum FunctionTemplateOrigin {
 }
 
 export interface FunctionTemplate {
-  CSWikiPage?: string;
+  cswikipage?: string;
   origin?: keyof FunctionArgumentTemplate;
-  originVersion?: string;
+  originversion?: string;
   summary?: string;
   name?: string
   alias?: string;
-  returnVal?: string;
-  returnType?: string;
-  referenceType?: string;
+  returnval?: string;
+  returntype?: string;
+  referencetype?: string;
   arguments?: (FunctionArgumentTemplate | string)[];
   example?: string;
-  CategoryList?: string[];
-  consoleOnly?: string;
-  conditionFunc?: "Condition" | "Script" | "Both"
+  categorylist?: string[];
+  consoleonly?: string;
+  conditionfunc?: "Condition" | "Script" | "Both"
 }
 
 export interface FunctionDocumentation {
@@ -95,129 +97,112 @@ export interface FunctionDocumentation {
   text: string;
 }
 
-function ParseTextNodes(element: Element): string {
-  let text = "";
-  for (let i = 0; i < element.childNodes.length; ++i) {
-    switch ((element.childNodes[i] as Element)?.tagName) {
-      case "ext":
-        text += "```\n" + element.childNodes[i].childNodes[2].textContent + "\n```\n\n";
-        break;
-
-      case "h":
-        text += element.childNodes[i].textContent
-          ?.replaceAll("=", "#")
-          .replace(/#(?=[^\s#])/, "# ")
-          .replace(/(?<=[^\s#])#/, " #")
-          .replaceAll("'''", "**")
-          .replaceAll("''", "*");
-        break;
-
-
-      default: {
-        let str = element.childNodes[i].textContent!
-          .replaceAll(/\*(?=\S)/g, "* ")
-          .replaceAll("'''", "**")
-          .replaceAll("''", "*");
-
-        for (const m of str.match(/(?<!\[)\[[^[].*?\](?!\])/g) ?? []) {
-          const [link, label] = m.substring(1, m.length - 1).split(/ (.*)/);
-          str = str.replace(m, `[${label}](${link.replaceAll(" ", "_")})`);
-        }
-
-        for (const m of str.match(/\[\[.*?\]\]/g) ?? []) {
-          if (m.includes("Category:")) {
-            str = str.replace(m, "");
-            continue;
-          }
-          const page_name = m.substring(2, m.length - 2);
-          str = str.replace(m, `[${page_name}](https:geckwiki.com/index.php?title=${page_name.replaceAll(" ", "_")})`);
-        }
-
-        str = str.replaceAll("\n ", "\n\t");
-
-        text += str;
-      }
-
-    }
-  }
-
-  return text.trim();
-}
-
-function ParsePart(element: Element): [string, any] {
-  const k = element.children[0].textContent!.trim();
-  const v = element.children[1];
-
-  if (v.children[0]?.tagName == "template") {
-    const args: FunctionArgumentTemplate[] = [];
-    for (let i = 0; i < v.childElementCount; ++i)
-      args.push(ParseTemplate(v.children[i]) as FunctionArgumentTemplate);
-
-    return [k, args];
-  } else {
-    return [k, ParseTextNodes(v)];
-  }
-}
-
-export function ParseTemplate(element: Element): Template | FunctionArgumentTemplate | FunctionTemplate {
-  const title = element.children[0].textContent!.trim();
-
-  const template: { [key: string]: any } = {};
-  for (let i = 1; i < element.children.length; ++i) {
-    const [k, v] = ParsePart(element.children[i]);
-
-    template[k] = v;
-  }
-  switch (title) {
-    case "Function":
-      return template as FunctionTemplate;
-
-    case "FunctionArgument":
-      return template as FunctionArgumentTemplate;
-
-    default:
-      return {
-        title: title,
-        arguments: template,
-      };
-  }
-}
-
 export async function GetFunctions(): Promise<string[]> {
   return (await api.GetCategoryPages("Category:Functions (All)", ["page"]))
     .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
 }
 
+// TODO: update types for the new parser
+export function ParseTemplate(element: any): Template | FunctionArgumentTemplate | FunctionTemplate {
+  const parameters: { [key: string]: any } = {};
+  for (const [k, v] of Object.entries(element.parameters)) {
+    parameters[k] = v;
+  }
+
+  return parameters;
+}
+
+wtf.extend((models: any, templates: any) => {
+  models.Link.prototype.markdown = function () {
+    const href = this.href().replaceAll(" ", "_");
+    const str = this.text() || this.page();
+    if (this.type() === "internal")
+      return `[${str}](https://geckwiki.com/index.php?title=${href.substring(2)})`;
+    else
+      return `[${str}](${href})`;
+  };
+
+  models.Sentence.prototype.old = {
+    markdown: models.Sentence.prototype.markdown
+  };
+
+  models.Sentence.prototype.markdown = function (options: any) {
+    let text = this.old.markdown.bind(this)(options);
+
+    if (this.wikitext()[0] === " ")
+      text = "\t" + text;
+
+    return text;
+  };
+
+  templates.pre = (tmpl: any, list: any, parse: any) => {
+    const obj = parse(tmpl);
+    list.push(obj);
+
+    obj.inner = "\n " + obj.inner.replaceAll("\n", "\n\n ") + "\n";
+    return obj.inner;
+  };
+
+  templates.functionargument = (tmpl: any, list: any, parse: any) => {
+    const obj = parse(tmpl);
+    list.push(obj);
+
+    return `${JSON.stringify(obj)},`;
+  };
+
+  templates.function = (tmpl: any, list: any, parse: any) => {
+    const obj = parse(tmpl);
+
+    if (obj.arguments != undefined)
+      obj.arguments = JSON.parse(
+        `[${obj.arguments.substring(0, obj.arguments.length - 1)}]`
+      );
+
+    list.push(obj);
+
+    return "";
+  };
+});
+
 export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation | undefined> {
-  const xml = await GetCacheValue(page_name);
-  if (xml == undefined) return undefined;
+  let text = await GetCacheValue(page_name);
+  if (text == undefined) return undefined;
 
-  const jsdom = new JSDOM(xml, { contentType: "text/xml" });
-  const root = jsdom.window.document.children[0];
-  const template = ParseTemplate(root.children[0]) as FunctionTemplate;
+  text = text
+    .replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}")
+    .replaceAll(/^\* /gm, "*");
 
-  root.children[0].remove();
+  const page = wtf(text);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const template = page.template("function")?.json() as FunctionTemplate;
 
   return {
     template: template,
-    text: ParseTextNodes(root),
+    text: (page as any).markdown().trim(),
   };
 }
+
+// GetFunctionDocumentation("WriteToJSON").then(d => {
+//   console.log(d?.text);
+//   console.log();
+// });
 
 export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation) {
   let signature = "";
 
   if (
-    doc.template.returnVal != undefined ||
-    doc.template.returnType != undefined
+    doc.template.returnval != undefined ||
+    doc.template.returntype != undefined
   ) {
     signature += "(";
 
-    if (doc.template.returnVal != undefined)
-      signature += `${doc.template.returnVal}:`;
+    if (doc.template.returnval != undefined)
+      signature += `${doc.template.returnval}:`;
 
-    if (doc.template.returnType != undefined)
-      signature += doc.template.returnType;
+    if (doc.template.returntype != undefined)
+      signature += doc.template.returntype;
 
     signature += ") ";
   }
@@ -229,16 +214,16 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
     if (arg instanceof String) {
       signature += arg;
     } else {
-      if ((arg as FunctionArgumentTemplate)?.Name != undefined)
-        signature += `${(arg as FunctionArgumentTemplate).Name}:`;
+      if ((arg as FunctionArgumentTemplate)?.name != undefined)
+        signature += `${(arg as FunctionArgumentTemplate).name}:`;
 
-      if ((arg as FunctionArgumentTemplate)?.Type != undefined)
-        signature += `${(arg as FunctionArgumentTemplate).Type}`;
+      if ((arg as FunctionArgumentTemplate)?.type != undefined)
+        signature += `${(arg as FunctionArgumentTemplate).type}`;
 
-      if ((arg as FunctionArgumentTemplate)?.Value != undefined)
-        signature += `{${(arg as FunctionArgumentTemplate).Value}}`;
+      if ((arg as FunctionArgumentTemplate)?.value != undefined)
+        signature += `{${(arg as FunctionArgumentTemplate).value}}`;
 
-      if ((arg as FunctionArgumentTemplate)?.Optional != undefined) {
+      if ((arg as FunctionArgumentTemplate)?.optional != undefined) {
         signature += "?";
       }
 
