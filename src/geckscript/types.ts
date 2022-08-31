@@ -368,7 +368,7 @@ export const enum SymbolKind {
 export interface Symbol {
   name: string;
   kind: SymbolKind;
-  declaration: Node;
+  declaration?: Node;
   type: Type;
 }
 
@@ -579,17 +579,17 @@ export class Environment {
   map: { [key: string]: Script } = {};
   global_symbol_table: SymbolTable = {};
 
-  processDocument(document: TextDocument): Script {
-    return this.processScript(document.uri, document.getText());
+  async processDocument(document: TextDocument): Promise<Script> {
+    return await this.processScript(document.uri, document.getText());
   }
 
-  processScript(name: string, text: string): Script {
+  async processScript(name: string, text: string): Promise<Script> {
     const script = Parser.Parse(text);
 
     script.environment = this;
 
     AST.BuildScriptSymbolTables(script);
-    AST.ValidateScript(script);
+    await AST.ValidateScript(script);
 
     this.map[name] = script;
 

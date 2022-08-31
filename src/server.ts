@@ -70,10 +70,10 @@ connection.onInitialize(
   });
 
 documents.onDidChangeContent(
-  (params) => {
+  async (params) => {
     const doc = params.document;
 
-    const script = environment.processDocument(doc);
+    const script = await environment.processDocument(doc);
     tree_view_server?.write_tree_data(AST.NodeToTreeData(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });

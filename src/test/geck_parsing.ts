@@ -9,8 +9,9 @@ import { Environment, TreeData } from "../geckscript/types";
 const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toString();
 
 const scripts = new Environment();
-const script = scripts.processScript("test.gek", data);
-console.log(NodeToTreeData(script));
-console.log(GetNodeLeafs(script));
+scripts.processScript("test.gek", data).then(script => {
+  console.log(NodeToTreeData(script));
+  console.log(GetNodeLeafs(script));
 
-console.log(scripts);
+  console.log(scripts);
+});

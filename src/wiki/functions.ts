@@ -3,7 +3,7 @@ import * as path from "path";
 
 import * as wtf from "wtf_wikipedia";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-wtf.extend(require("wtf-plugin-markdown"));
+wtf.plugin(require("wtf-plugin-markdown"));
 
 import * as api from "./api";
 import { FunctionInfo } from "../geckscript/function_data";
@@ -130,7 +130,8 @@ wtf.extend((models: any, templates: any) => {
     let text = this.old.markdown.bind(this)(options);
 
     if (this.wikitext()[0] === " ")
-      text = "\t" + text;
+      text = "\t" + text + "\n";
+
 
     return text;
   };
@@ -184,12 +185,12 @@ export async function GetFunctionDocumentation(page_name: string): Promise<Funct
   };
 }
 
-// GetFunctionDocumentation("WriteToJSON").then(d => {
+// GetFunctionDocumentation("StopQuest").then(d => {
 //   console.log(d?.text);
 //   console.log();
 // });
 
-export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation) {
+export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation): string {
   let signature = "";
 
   if (
@@ -207,6 +208,8 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
     signature += ") ";
   }
 
+  if (doc.template.referencetype != undefined)
+    signature += `${doc.template.referencetype}.`;
 
   signature += `${doc.template.name ?? func_info.canonical_name} `;
 

@@ -1,7 +1,8 @@
 import * as path from "path";
 import * as fs from "fs";
 
-import { GetFunctions } from "../wiki/functions";
+import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions";
+import { Symbol, SymbolKind, Type } from "./types";
 
 
 export interface FunctionInfo {
@@ -82,15 +83,26 @@ export async function PopulateFunctionData(update = false) {
   }
 }
 
+export function GetFunctionInfo(function_name: string): FunctionInfo | undefined {
+  return FunctionData[function_name];
+}
+
+export async function CreateGlobalFunctionSymbol(function_name: string): Promise<Symbol | undefined> {
+  const function_info = GetFunctionInfo(function_name);
+  if (function_info == undefined) return undefined;
+
+  return {
+    kind: SymbolKind.Function,
+    name: function_info.canonical_name,
+    type: Type.Ambiguous,
+  };
+}
+
 export async function DumpFunctionNames() {
   await fs.promises.writeFile(
     path.join(path.dirname(FilePath), "function_names.json"),
     JSON.stringify(Object.keys(FunctionData))
   );
-}
-
-export function GetFunctionInfo(function_name: string): FunctionInfo | undefined {
-  return FunctionData[function_name];
 }
 
 PopulateFunctionData(false);

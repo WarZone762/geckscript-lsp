@@ -1,4 +1,5 @@
 import { Position } from "vscode-languageserver-textdocument";
+import { CreateGlobalFunctionSymbol } from "./function_data";
 import { GetSyntaxKindName } from "./token_data";
 import {
   SyntaxKind,
@@ -36,7 +37,7 @@ import {
 } from "./types";
 
 
-export function ForEachChild(node: Node, func: (node: Node) => void): void {
+export function ForEachChild(node: Node, func: (node: Node) => any): void {
   switch (node.kind) {
     case SyntaxKind.VariableDeclaration:
       func((node as VariableDeclaration).type);
@@ -63,12 +64,12 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
 
     case SyntaxKind.FunctionExpression:
       func((node as FunctionExpression).name);
-      (node as FunctionExpression).args.map(func);
+      for (const v of (node as FunctionExpression).args) func(v);
       break;
 
     case SyntaxKind.LambdaInlineExpression:
       func((node as LambdaInlineExpression).lbracket);
-      (node as LambdaInlineExpression).params.map(func);
+      for (const v of (node as LambdaInlineExpression).params) func(v);
       func((node as LambdaInlineExpression).rbracket);
       func((node as LambdaInlineExpression).arrow);
       func((node as LambdaInlineExpression).expression);
@@ -78,7 +79,7 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       func((node as LambdaExpression).begin);
       func((node as LambdaExpression).function);
       func((node as LambdaExpression).lbracket);
-      (node as LambdaExpression).params.map(func);
+      for (const v of (node as LambdaExpression).params) func(v);
       func((node as LambdaExpression).rbracket);
       func((node as LambdaExpression).body);
       func((node as LambdaExpression).end);
@@ -107,12 +108,12 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       break;
 
     case SyntaxKind.Block:
-      (node as Block).children.map(func);
+      for (const v of (node as Block).children) func(v);
       break;
 
     case SyntaxKind.BlocktypeExpression:
       func((node as BlocktypeExpression).block_type);
-      (node as BlocktypeExpression).args.map(func);
+      for (const v of (node as BlocktypeExpression).args) func(v);
       break;
 
     case SyntaxKind.BeginStatement:
@@ -143,7 +144,7 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       break;
 
     case SyntaxKind.IfStatement:
-      (node as IfStatement).branches.map(func);
+      for (const v of (node as IfStatement).branches) func(v);
       if ((node as IfStatement).else != undefined) {
         func((node as IfStatement).else!);
         func((node as IfStatement).else_statements!);
@@ -154,7 +155,136 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
       func((node as Script).name);
       func((node as Script).scriptname);
       func((node as Script).body);
-      Object.values((node as Script).comments).map(func);
+      for (const v of Object.values((node as Script).comments)) func(v);
+      break;
+
+    default:
+      break;
+  }
+}
+
+export async function ForEachChildAsync(
+  node: Node,
+  func: (node: Node) => any
+): Promise<void> {
+  switch (node.kind) {
+    case SyntaxKind.VariableDeclaration:
+      await func((node as VariableDeclaration).type);
+      await func((node as VariableDeclaration).variable);
+      break;
+
+    case SyntaxKind.UnaryExpression:
+      await func((node as UnaryExpression).op);
+      await func((node as UnaryExpression).operand);
+      break;
+
+    case SyntaxKind.BinaryExpresison:
+      await func((node as BinaryExpression).lhs);
+      await func((node as BinaryExpression).op);
+      await func((node as BinaryExpression).rhs);
+      break;
+
+    case SyntaxKind.ElementAccessExpression:
+      await func((node as ElementAccessExpression).lhs);
+      await func((node as ElementAccessExpression).left_op);
+      await func((node as ElementAccessExpression).rhs);
+      await func((node as ElementAccessExpression).right_op);
+      break;
+
+    case SyntaxKind.FunctionExpression:
+      await func((node as FunctionExpression).name);
+      for (const v of (node as FunctionExpression).args) await func(v);
+      break;
+
+    case SyntaxKind.LambdaInlineExpression:
+      await func((node as LambdaInlineExpression).lbracket);
+      for (const v of (node as LambdaInlineExpression).params) await func(v);
+      await func((node as LambdaInlineExpression).rbracket);
+      await func((node as LambdaInlineExpression).arrow);
+      await func((node as LambdaInlineExpression).expression);
+      break;
+
+    case SyntaxKind.LambdaExpression:
+      await func((node as LambdaExpression).begin);
+      await func((node as LambdaExpression).function);
+      await func((node as LambdaExpression).lbracket);
+      for (const v of (node as LambdaExpression).params) await func(v);
+      await func((node as LambdaExpression).rbracket);
+      await func((node as LambdaExpression).body);
+      await func((node as LambdaExpression).end);
+      break;
+
+    case SyntaxKind.VariableDeclarationStatement:
+      await func((node as VariableDeclarationStatement).variable);
+      if ((node as VariableDeclarationStatement).op != undefined) {
+        await func((node as VariableDeclarationStatement).op!);
+        await func((node as VariableDeclarationStatement).expression!);
+      }
+      break;
+
+    case SyntaxKind.SetStatement:
+      await func((node as SetStatement).set);
+      await func((node as SetStatement).variable);
+      await func((node as SetStatement).to);
+      await func((node as SetStatement).expression);
+      break;
+
+    case SyntaxKind.LetStatement:
+      await func((node as LetStatement).let);
+      await func((node as LetStatement).variable);
+      await func((node as LetStatement).op);
+      await func((node as LetStatement).expression);
+      break;
+
+    case SyntaxKind.Block:
+      for (const v of (node as Block).children) await func(v);
+      break;
+
+    case SyntaxKind.BlocktypeExpression:
+      await func((node as BlocktypeExpression).block_type);
+      for (const v of (node as BlocktypeExpression).args) await func(v);
+      break;
+
+    case SyntaxKind.BeginStatement:
+      await func((node as BeginStatement).begin);
+      await func((node as BeginStatement).block_type);
+      await func((node as BeginStatement).body);
+      await func((node as BeginStatement).end);
+      break;
+
+    case SyntaxKind.ForeachStatement:
+      await func((node as ForeachStatement).foreach);
+      await func((node as ForeachStatement).identifier);
+      await func((node as ForeachStatement).larrow);
+      await func((node as ForeachStatement).iterable);
+      await func((node as ForeachStatement).body);
+      await func((node as ForeachStatement).loop);
+      break;
+
+    case SyntaxKind.Branch:
+      await func((node as Branch<BranchKeyword>).keyword);
+      await func((node as Branch<BranchKeyword>).condition);
+      await func((node as Branch<BranchKeyword>).body);
+      break;
+
+    case SyntaxKind.WhileStatement:
+      await func((node as WhileStatement).branch);
+      await func((node as WhileStatement).loop);
+      break;
+
+    case SyntaxKind.IfStatement:
+      for (const v of (node as IfStatement).branches) await func(v);
+      if ((node as IfStatement).else != undefined) {
+        await func((node as IfStatement).else!);
+        await func((node as IfStatement).else_statements!);
+      }
+      break;
+
+    case SyntaxKind.Script:
+      await func((node as Script).name);
+      await func((node as Script).scriptname);
+      await func((node as Script).body);
+      for (const v of Object.values((node as Script).comments)) await func(v);
       break;
 
     default:
@@ -164,15 +294,25 @@ export function ForEachChild(node: Node, func: (node: Node) => void): void {
 
 export function ForEachChildRecursive(
   root: Node,
-  pre_func: (node: Node) => void = () => undefined,
-  post_func: (node: Node) => void = () => undefined,
+  pre_func: (node: Node) => any = () => undefined,
+  post_func: (node: Node) => any = () => undefined,
 ): void {
   pre_func(root);
   ForEachChild(root, node => ForEachChildRecursive(node, pre_func, post_func));
   post_func(root);
 }
 
-export function GetNodeChildren(node: Node): Node[] {
+export async function ForEachChildRecursiveAsync(
+  root: Node,
+  pre_func: (node: Node) => any = () => undefined,
+  post_func: (node: Node) => any = () => undefined,
+): Promise<void> {
+  await pre_func(root);
+  await ForEachChildAsync(root, async node => await ForEachChildRecursiveAsync(node, pre_func, post_func));
+  await post_func(root);
+}
+
+export function GetNodeChildren(node: Node):Node[] {
   const children: Node[] = [];
   ForEachChild(node, (node) => children.push(node));
 
@@ -221,10 +361,10 @@ export function GetTokenAtPosition(node: Node, position: Position): Node | undef
   return undefined;
 }
 
-export function ResolveSymbol(
+export async function ResolveSymbol(
   node: Node,
   name: string
-): Symbol | undefined {
+): Promise<Symbol | undefined> {
   while (true) {
     const parent = FindAncestor(node, node => node.kind === SyntaxKind.Block);
     if (parent != undefined) {
@@ -233,7 +373,8 @@ export function ResolveSymbol(
       node = parent.parent!;
     } else {
       node = FindAncestor(node, node => node.kind === SyntaxKind.Script)!;
-      return (node as Script).environment.global_symbol_table[name];
+      return (node as Script).environment.global_symbol_table[name] ??
+        await CreateGlobalFunctionSymbol(name.toLowerCase());
     }
   }
 }
@@ -342,7 +483,7 @@ export function BuildScriptSymbolTables(script: Script) {
   );
 }
 
-export function ValidateNode(node: Node, script: Script): void {
+export async function ValidateNode(node: Node, script: Script): Promise<void> {
   switch (node.kind) {
     case SyntaxKind.BinaryExpresison: {
       const lhs = GetExpressionType((node as BinaryExpression).lhs);
@@ -362,19 +503,20 @@ export function ValidateNode(node: Node, script: Script): void {
     }
 
     case SyntaxKind.Identifier:
-      (node as Identifier).symbol = ResolveSymbol(
+      (node as Identifier).symbol = await ResolveSymbol(
         node,
         (node as Identifier).content
       );
+
       if ((node as Identifier).symbol == undefined)
         script.semantic_tokens.push(node);
   }
 }
 
-export function ValidateScript(script: Script): void {
-  ForEachChildRecursive(
+export async function ValidateScript(script: Script): Promise<void> {
+  ForEachChildRecursiveAsync(
     script,
-    node => ValidateNode(node, script)
+    async node => await ValidateNode(node, script)
   );
 }
 

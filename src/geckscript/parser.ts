@@ -1,7 +1,7 @@
 import { Position, Range } from "vscode-languageserver-textdocument";
 import { GetFunctionInfo } from "./function_data";
 import { Lexer } from "./lexer";
-import { GetTokenKind, GetSyntaxKindName } from "./token_data";
+import { GetSyntaxKindName } from "./token_data";
 import {
   SyntaxKind,
   BranchKeywordSyntaxKind,
