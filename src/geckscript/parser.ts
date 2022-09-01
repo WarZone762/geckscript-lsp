@@ -183,6 +183,8 @@ function parseBinOpLeft(
 }
 
 function parseComment(): void {
+  const last_non_comment_token = last_token;
+
   const node = parseNode(new Comment(), node => {
     node.content = cur_token.content;
     node.value = node.content.substring(1);
@@ -190,6 +192,8 @@ function parseComment(): void {
   });
 
   script.comments[node.range.start.line] = node;
+
+  last_token = last_non_comment_token;
 }
 
 function parseNumber(): NumberLiteral {
@@ -523,6 +527,7 @@ function parseAssignment(): Expression {
 
   if (isSimpleAssignmentOperator()) {
     let last_node = parseNode(new BinaryExpression(), node => {
+      lhs.parent = node;
       node.lhs = lhs;
       node.op = parseOperator();
       node.rhs = parseLogicalOr();
@@ -532,6 +537,7 @@ function parseAssignment(): Expression {
 
     while (isSimpleAssignmentOperator()) {
       const node = parseNode(new BinaryExpression(), node => {
+        lhs.parent = node;
         node.lhs = last_node.rhs;
         node.op = parseOperator();
         node.rhs = parseLogicalOr();

@@ -312,9 +312,9 @@ export async function ForEachChildRecursiveAsync(
   await post_func(root);
 }
 
-export function GetNodeChildren(node: Node):Node[] {
+export function GetNodeChildren(node: Node): Node[] {
   const children: Node[] = [];
-  ForEachChild(node, (node) => children.push(node));
+  ForEachChild(node, node => children.push(node));
 
   return children;
 }
@@ -361,22 +361,68 @@ export function GetTokenAtPosition(node: Node, position: Position): Node | undef
   return undefined;
 }
 
-export async function ResolveSymbol(
+export function FindSymbolDeclarationBlock(
   node: Node,
   name: string
-): Promise<Symbol | undefined> {
+): Block | undefined {
   while (true) {
     const parent = FindAncestor(node, node => node.kind === SyntaxKind.Block);
     if (parent != undefined) {
       if ((parent as Block).symbol_table[name] != undefined)
-        return (parent as Block).symbol_table[name];
+        return parent as Block;
       node = parent.parent!;
     } else {
-      node = FindAncestor(node, node => node.kind === SyntaxKind.Script)!;
-      return (node as Script).environment.global_symbol_table[name] ??
-        await CreateGlobalFunctionSymbol(name.toLowerCase());
+      return undefined;
     }
   }
+}
+
+export async function ResolveSymbol(
+  node: Node,
+  name: string
+): Promise<Symbol | undefined> {
+  const block = FindSymbolDeclarationBlock(node, name);
+
+  if (block != undefined) return block.symbol_table[name];
+  else {
+    const script = FindAncestor(node, node => node.kind === SyntaxKind.Script)!;
+    return (script as Script).environment.global_symbol_table[name] ??
+      await CreateGlobalFunctionSymbol(name.toLowerCase());
+  }
+}
+
+export function FindAllOccurrencesOfText(
+  node: Node,
+  text: string
+): Node[] {
+  const occurrences: Node[]= [];
+  const leafs = GetNodeLeafs(node);
+
+  for (const leaf of leafs) {
+    if ((leaf as Token).content === text) occurrences.push(leaf);
+  }
+
+  return occurrences;
+}
+
+export function FindAllReferences(
+  node: Node,
+  name: string
+): Node[] {
+  const block = FindSymbolDeclarationBlock(node, name);
+
+  if (block == undefined) return [];
+
+  const refs: Node[] = [];
+  const symbol = block.symbol_table[name];
+  const leafs = GetNodeLeafs(block);
+
+  for (const leaf of leafs) {
+    if (leaf.kind === SyntaxKind.Identifier && (leaf as Identifier).symbol === symbol)
+      refs.push(leaf);
+  }
+
+  return refs;
 }
 
 export function GetExpressionType(node: Node): Type {
@@ -714,7 +760,12 @@ export function NodeToTreeDataFull(node: Node): TreeData {
   ForEachChildRecursive(
     node,
     (node) => {
-      stack.push(new TreeData((node as Token).content ?? node.constructor.name));
+      stack.push(new TreeData(
+        (node as Token).content ?? node.constructor.name,
+        [new TreeData("Range", [new TreeData(
+          `(${node.range.start.line}; ${node.range.start.character}) - (${node.range.end.line}; ${node.range.end.character})`
+        )])]
+      ));
     },
     () => {
       if (stack.length > 1)

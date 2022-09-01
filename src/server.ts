@@ -23,6 +23,7 @@ import * as AST from "./geckscript/ast";
 import * as ST from "./language_features/semantic_tokens";
 import * as FD from "./geckscript/function_data";
 import * as completion from "./language_features/completion";
+import { GetHighlight as GetHighlights } from "./language_features/highlight";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -40,6 +41,7 @@ connection.onInitialize(
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
+        documentHighlightProvider: true,
         completionProvider: {
           resolveProvider: true
         },
@@ -74,7 +76,7 @@ documents.onDidChangeContent(
     const doc = params.document;
 
     const script = await environment.processDocument(doc);
-    tree_view_server?.write_tree_data(AST.NodeToTreeData(script));
+    tree_view_server?.write_tree_data(AST.NodeToTreeDataFull(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
   }
@@ -104,6 +106,11 @@ connection.onHover(
     };
   }
 );
+
+connection.onDocumentHighlight(
+  (params) => {
+    return GetHighlights(environment.map[params.textDocument.uri], params.position);
+  });
 
 connection.onRequest(
   SemanticTokensRequest.method,
