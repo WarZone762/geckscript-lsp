@@ -11,14 +11,22 @@ export async function GetCompletionItems(
   script: Script,
   position: Position
 ): Promise<CompletionItem[] | null> {
-  const token = ast.GetTokenAtPosition(script, position);
+  const token = ast.GetNearestToken(script, position);
 
   if (
-    token?.kind === SyntaxKind.Comment ||
-    token?.kind === SyntaxKind.String
+    token.kind === SyntaxKind.Comment ||
+    token.kind === SyntaxKind.String
   ) return null;
 
   const completion_items: CompletionItem[] = [];
+
+  for (const v of Object.values(ast.GetVisibleSymbols(token))) {
+    completion_items.push({
+      label: v.name,
+      data: v.name,
+      kind: CompletionItemKind.Variable,
+    });
+  }
 
   for (const v of Object.values(TokenData)) {
     if (IsOperator(v.kind)) continue;
@@ -54,9 +62,9 @@ export async function GetCompletionItemDoc(item: CompletionItem): Promise<Comple
   }
 
   const doc = await functions.GetFunctionDocumentation(func_info.wiki_page_name);
-  if (doc == undefined) {
+  if (doc == undefined || doc.template == undefined) {
     item.detail = func_info.canonical_name;
-    item.documentation = "Unable to get documentation";
+    item.documentation = doc?.text ?? "Unable to get documentation";
 
     return item;
   }

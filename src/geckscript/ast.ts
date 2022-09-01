@@ -152,8 +152,8 @@ export function ForEachChild(node: Node, func: (node: Node) => any): void {
       break;
 
     case SyntaxKind.Script:
-      func((node as Script).name);
       func((node as Script).scriptname);
+      func((node as Script).name);
       func((node as Script).body);
       for (const v of Object.values((node as Script).comments)) func(v);
       break;
@@ -345,6 +345,26 @@ export function FindAncestor(
   return undefined;
 }
 
+export function GetNearestToken(node: Node, position: Position): Node {
+  const leafs = GetNodeLeafs(node);
+
+  let last_leaf = leafs[0];
+  for (const leaf of leafs) {
+    if (
+      leaf.range.start.line > position.line ||
+      (
+        leaf.range.start.line === position.line &&
+        leaf.range.start.character > position.character
+      )
+    )
+      break;
+    else
+      last_leaf = leaf;
+  }
+
+  return last_leaf;
+}
+
 export function GetTokenAtPosition(node: Node, position: Position): Node | undefined {
   const leafs = GetNodeLeafs(node);
 
@@ -395,7 +415,7 @@ export function FindAllOccurrencesOfText(
   node: Node,
   text: string
 ): Node[] {
-  const occurrences: Node[]= [];
+  const occurrences: Node[] = [];
   const leafs = GetNodeLeafs(node);
 
   for (const leaf of leafs) {
@@ -423,6 +443,26 @@ export function FindAllReferences(
   }
 
   return refs;
+}
+
+export function GetVisibleSymbols(node: Node): SymbolTable {
+  const symbol_table: SymbolTable = {};
+
+  let last_node: Node | undefined = node;
+
+  while (true) {
+    const parent = FindAncestor(last_node, node => node.kind === SyntaxKind.Block);
+    if (parent == undefined) break;
+    Object.assign(symbol_table, (parent as Block).symbol_table);
+    last_node = parent.parent;
+  }
+
+  Object.assign(
+    symbol_table,
+    (last_node as Script).environment.global_symbol_table
+  );
+
+  return symbol_table;
 }
 
 export function GetExpressionType(node: Node): Type {

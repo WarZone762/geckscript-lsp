@@ -3,8 +3,6 @@ import {
   TextDocuments,
   ProposedFeatures,
   InitializeParams,
-  CompletionItem,
-  TextDocumentPositionParams,
   TextDocumentSyncKind,
   InitializeResult,
   SemanticTokensRequest,
@@ -13,13 +11,13 @@ import {
   Hover,
 } from "vscode-languageserver/node";
 
-import { Range, TextDocument } from "vscode-languageserver-textdocument";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 import * as TreeViewServer from "./tree_view/server";
 
 // import * as Wiki from "./wiki/wiki";
 import { Environment, Token } from "./geckscript/types";
-import * as AST from "./geckscript/ast";
+import * as ast from "./geckscript/ast";
 import * as ST from "./language_features/semantic_tokens";
 import * as FD from "./geckscript/function_data";
 import * as completion from "./language_features/completion";
@@ -69,14 +67,15 @@ connection.onInitialize(
       await FD.PopulateFunctionData(true);
 
     return result;
-  });
+  }
+);
 
 documents.onDidChangeContent(
   async (params) => {
     const doc = params.document;
 
     const script = await environment.processDocument(doc);
-    tree_view_server?.write_tree_data(AST.NodeToTreeDataFull(script));
+    tree_view_server?.write_tree_data(ast.NodeToTreeDataFull(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });
   }
@@ -99,7 +98,7 @@ connection.onCompletionResolve(
 
 connection.onHover(
   async (params: HoverParams): Promise<Hover | null> => {
-    const token = AST.GetTokenAtPosition(environment.map[params.textDocument.uri], params.position);
+    const token = ast.GetTokenAtPosition(environment.map[params.textDocument.uri], params.position);
 
     return {
       contents: String((token as Token)?.content)
@@ -110,7 +109,8 @@ connection.onHover(
 connection.onDocumentHighlight(
   (params) => {
     return GetHighlights(environment.map[params.textDocument.uri], params.position);
-  });
+  }
+);
 
 connection.onRequest(
   SemanticTokensRequest.method,
@@ -118,16 +118,15 @@ connection.onRequest(
     const script = environment.map[params.textDocument.uri];
 
     return ST.BuildSemanticTokens(script);
-  });
+  }
+);
 
 connection.onNotification(
   "GECKScript/updateFunctionData",
   () => FD.PopulateFunctionData(true)
 );
 
-connection.onExit(() => {
-  tree_view_server?.close();
-});
+connection.onExit(() => tree_view_server?.close());
 
 documents.listen(connection);
 

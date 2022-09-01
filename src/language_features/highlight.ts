@@ -1,6 +1,6 @@
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
-import { FindAllOccurrencesOfText, FindAllReferences, GetTokenAtPosition } from "../geckscript/ast";
+import * as ast from "../geckscript/ast";
 import { BinaryExpression, Identifier, IsAssignmentOperator, Script, SyntaxKind, Token, VariableDeclarationStatement } from "../geckscript/types";
 
 export function GetHighlight(
@@ -9,10 +9,10 @@ export function GetHighlight(
 ): DocumentHighlight[] | null {
   const highlights: DocumentHighlight[] = [];
 
-  const token = GetTokenAtPosition(script, position);
+  const token = ast.GetTokenAtPosition(script, position);
 
   if (token?.kind === SyntaxKind.Identifier) {
-    const refs = FindAllReferences(token, (token as Identifier).content);
+    const refs = ast.FindAllReferences(token, (token as Identifier).content);
     if (refs.length !== 0) {
 
       for (const ref of refs) {
@@ -38,7 +38,7 @@ export function GetHighlight(
     }
   }
 
-  for (const occurrence of FindAllOccurrencesOfText(script, (token as Token).content)) {
+  for (const occurrence of ast.FindAllOccurrencesOfText(script, (token as Token).content)) {
     highlights.push({ range: occurrence.range });
   }
 
