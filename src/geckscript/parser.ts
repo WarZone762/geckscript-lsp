@@ -50,6 +50,7 @@ import {
 } from "./types";
 
 
+// TODO: rewrite parser to treat comments and whitespace as tokens
 let lexer: Lexer;
 
 let cur_token: Token;

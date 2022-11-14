@@ -23,6 +23,9 @@ import * as FD from "./geckscript/function_data";
 import * as completion from "./language_features/completion";
 import { GetHighlight as GetHighlights } from "./language_features/highlight";
 
+import * as fs from "fs/promises";
+import * as path from "path";
+
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
 
@@ -75,6 +78,9 @@ documents.onDidChangeContent(
     const doc = params.document;
 
     const script = await environment.processDocument(doc);
+
+    fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.NodeToHTML(script, doc));
+
     tree_view_server?.write_tree_data(ast.NodeToTreeDataFull(script));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.diagnostics });

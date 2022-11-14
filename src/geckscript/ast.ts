@@ -1,4 +1,4 @@
-import { Position } from "vscode-languageserver-textdocument";
+import { Position, TextDocument } from "vscode-languageserver-textdocument";
 import { CreateGlobalFunctionSymbol } from "./function_data";
 import { GetSyntaxKindName } from "./token_data";
 import {
@@ -149,6 +149,7 @@ export function ForEachChild(node: Node, func: (node: Node) => any): void {
         func((node as IfStatement).else!);
         func((node as IfStatement).else_statements!);
       }
+      func((node as IfStatement).endif);
       break;
 
     case SyntaxKind.Script:
@@ -278,6 +279,7 @@ export async function ForEachChildAsync(
         await func((node as IfStatement).else!);
         await func((node as IfStatement).else_statements!);
       }
+      await func((node as IfStatement).endif);
       break;
 
     case SyntaxKind.Script:
@@ -794,24 +796,75 @@ export function NodeToTreeData(node: Node): TreeData {
   }
 }
 
-export function NodeToTreeDataFull(node: Node): TreeData {
-  const stack: TreeData[] = [];
+export function NodeToTreeDataFull(node: Node): TreeData {  // TODO: add drawing data to the TreeData
+  const tree_data: TreeData = new TreeData(
+    (node as Token).content ?? node.constructor.name,
+    [new TreeData("Range", [new TreeData(
+      `(${node.range.start.line}; ${node.range.start.character}) - (${node.range.end.line}; ${node.range.end.character})`
+    )])]
+  );
 
-  ForEachChildRecursive(
+  ForEachChild(
     node,
-    (node) => {
-      stack.push(new TreeData(
-        (node as Token).content ?? node.constructor.name,
-        [new TreeData("Range", [new TreeData(
-          `(${node.range.start.line}; ${node.range.start.character}) - (${node.range.end.line}; ${node.range.end.character})`
-        )])]
-      ));
-    },
-    () => {
-      if (stack.length > 1)
-        stack[stack.length - 2].append(stack.pop()!);
+    node => {
+      tree_data.append(NodeToTreeDataFull(node));
     }
   );
 
-  return stack.pop()!;
+  return tree_data;
+}
+
+export function NodeToHTML(  // TODO: Integrate this to tree-view
+  node: Node,
+  doc: TextDocument,
+): string {
+  let cur_pos = 0;
+  const text = doc.getText();
+
+  function node_to_html(node: Node): string {
+    if ((node as Token).content != undefined) {
+      cur_pos += (doc.offsetAt(node.range.end) - doc.offsetAt(node.range.start));
+
+      return `${(node as Token).content}`;
+    }
+
+    let html_buf = "";
+
+    ForEachChild(
+      node,
+      node => {
+        const start = doc.offsetAt(node.range.start);
+        if (cur_pos < start) {
+          let buf = "";
+          while (cur_pos < start) {
+            const char = text[cur_pos++];
+            if (char === "\t") {
+              buf += "";
+            } else
+              buf += char;
+          }
+          html_buf += `${buf}`;
+        }
+
+        const content = node_to_html(node);
+        if (
+          node.kind === SyntaxKind.Block &&
+          node.parent?.kind !== SyntaxKind.Script
+        ) html_buf += "\t";
+
+        let class_ = node.constructor.name;
+
+        if (class_.includes("Statement")) class_ = "Statement";
+        else if (class_.includes("Expression")) class_ = "Expression";
+
+        html_buf += `<span class="${class_}">${content}</span>`;
+      }
+    );
+
+    return html_buf;
+  }
+
+  const style = "span { display: inline-block; border: black solid; } span.Statement { border: blue solid; } span.Expression { border: green solid; } span.Block { border: purple solid; } span.Branch { border: orange solid; } span.VariableDeclaration { border: brown solid; }";
+
+  return `<style>${style}</style><pre><div>${node_to_html(node)}</div></pre>`;
 }
