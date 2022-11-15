@@ -66,8 +66,9 @@ connection.onInitialize(
       tree_view_server = new TreeViewServer.TreeViewServer();
     }
 
-    if (process.argv.find(arg => arg === "--update-functions") !== undefined)
-      await FD.PopulateFunctionData(true);
+    if (process.argv.find(arg => arg === "--update-functions") !== undefined) {
+await FD.PopulateFunctionData(true);
+}
 
     return result;
   }

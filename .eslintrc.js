@@ -15,6 +15,8 @@ module.exports = {
 		"quotes": ["error", "double"],
 		"no-inner-declarations": "off",
 		"no-constant-condition": ["error", { checkLoops: false }],
+		"curly": ["error", "all"],
+		"brace-style": ["error", "1tbs", { allowSingleLine: false }],
 		// '@typescript-eslint/no-unused-vars': "off",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-non-null-assertion": "off",

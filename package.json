@@ -23,7 +23,7 @@
 	"scripts": {
 		"tsc-compile": "tsc -b",
 		"tsc-watch": "tsc -b -w",
-		"lint": "eslint ./src --ext .js, .ts, .tsx",
+		"lint": "eslint ./src --ext .js,.ts,.tsx",
 		"clean": "rm -rf ./out"
 	}
 }

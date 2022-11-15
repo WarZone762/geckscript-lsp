@@ -33,15 +33,18 @@ export class TreeViewServer {
         return;
       }
 
-      if (req.url === undefined || req.url === "/") req.url = "/index.html";
+      if (req.url === undefined || req.url === "/") {
+req.url = "/index.html";
+}
       const file_path = path.join(public_path, req.url);
 
       res.statusCode = 200;
       res.setHeader("Content-Type", mime.getType(path.extname(req.url).toLowerCase()) ?? "text/plain");
-      if (fs.existsSync(file_path))
-        res.end(fs.readFileSync(file_path));
-      else
-        res.end();
+      if (fs.existsSync(file_path)) {
+res.end(fs.readFileSync(file_path));
+} else {
+res.end();
+}
     }).listen(8000, "localhost");
 
     console.log("TreeViewServer running");
@@ -49,8 +52,9 @@ export class TreeViewServer {
 
   write_message(data: any) {
     this.last_data = data;
-    for (const res of this.clients)
-      res.write(`data: ${data}\n\n`);
+    for (const res of this.clients) {
+res.write(`data: ${data}\n\n`);
+}
   }
 
   write_tree_data(tree_data: TreeData) {

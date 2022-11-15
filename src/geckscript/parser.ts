@@ -33,7 +33,7 @@ import {
   ElementAccessExpression,
   Branch,
   Comment,
-  Block,
+  StatementList,
   ForeachStatement,
   FunctionExpression,
   IfStatement,
@@ -47,6 +47,15 @@ import {
   WhileStatement,
   BlocktypeExpression,
   Script,
+  TokenSyntaxKind,
+  InvalidStatement,
+  ExpressionList,
+  VariableList,
+  PrimaryExpressionList,
+  PrimaryExpression,
+  BranchList,
+  NodeWithChildren,
+  NodeWithParent,
 } from "./types";
 
 
@@ -57,7 +66,7 @@ let cur_token: Token;
 
 let last_token: Token;
 
-let last_parent: Node | undefined;
+let cur_node: NodeWithChildren;
 
 let paren_level = 0;
 
@@ -67,18 +76,42 @@ function moreData(): boolean {
   return cur_token.kind !== SyntaxKind.EOF;
 }
 
-function isTypename(): boolean { return IsTypename(cur_token.kind); }
-function isKeyword(): boolean { return IsKeyword(cur_token.kind); }
-function isOperator(): boolean { return IsOperator(cur_token.kind); }
-function isUnaryOperator(): boolean { return IsUnaryOperator(cur_token.kind); }
-function isMultiplicativeOperator(): boolean { return IsMultiplicativeOperator(cur_token.kind); }
-function isAdditiveOperator(): boolean { return IsAdditiveOperator(cur_token.kind); }
-function isShiftOperator(): boolean { return IsShiftOperator(cur_token.kind); }
-function isRelationalOperator(): boolean { return IsRelationalOperator(cur_token.kind); }
-function isEqualityOperator(): boolean { return IsEqualityOperator(cur_token.kind); }
-function isSliceMakePairOperator(): boolean { return IsSliceMakePairOperator(cur_token.kind); }
-function isAssignmentOperator(): boolean { return IsAssignmentOperator(cur_token.kind); }
-function isSimpleAssignmentOperator(): boolean { return IsSimpleAssignmentOperator(cur_token.kind); }
+function isTypename(): boolean {
+  return IsTypename(cur_token.kind);
+}
+function isKeyword(): boolean {
+  return IsKeyword(cur_token.kind);
+}
+function isOperator(): boolean {
+  return IsOperator(cur_token.kind);
+}
+function isUnaryOperator(): boolean {
+  return IsUnaryOperator(cur_token.kind);
+}
+function isMultiplicativeOperator(): boolean {
+  return IsMultiplicativeOperator(cur_token.kind);
+}
+function isAdditiveOperator(): boolean {
+  return IsAdditiveOperator(cur_token.kind);
+}
+function isShiftOperator(): boolean {
+  return IsShiftOperator(cur_token.kind);
+}
+function isRelationalOperator(): boolean {
+  return IsRelationalOperator(cur_token.kind);
+}
+function isEqualityOperator(): boolean {
+  return IsEqualityOperator(cur_token.kind);
+}
+function isSliceMakePairOperator(): boolean {
+  return IsSliceMakePairOperator(cur_token.kind);
+}
+function isAssignmentOperator(): boolean {
+  return IsAssignmentOperator(cur_token.kind);
+}
+function isSimpleAssignmentOperator(): boolean {
+  return IsSimpleAssignmentOperator(cur_token.kind);
+}
 
 function skipToken(): void {
   if (moreData()) {
@@ -87,32 +120,35 @@ function skipToken(): void {
   }
 }
 
-function nextToken<T extends SyntaxKind>(): Token<T> {
+function nextToken<T extends TokenSyntaxKind>(): Token<T> {
   const token = cur_token;
 
-  token.parent = last_parent;
+  token.parent = cur_node;
 
-  if (token.kind === SyntaxKind.RParen)
+  if (token.kind === SyntaxKind.RParen) {
     --paren_level;
+  }
 
   skipToken();
 
   if (paren_level > 0) {
     while (true) {
       switch (cur_token.kind) {
-        case SyntaxKind.Comment: parseComment(); continue;
+        case SyntaxKind.CommentToken: parseComment(); continue;
         case SyntaxKind.Newline: skipToken(); continue;
       }
       break;
     }
   } else {
-    while (cur_token.kind === SyntaxKind.Comment) parseComment();
+    while (cur_token.kind === SyntaxKind.CommentToken) {
+      parseComment();
+    }
   }
 
   return token as Token<T>;
 }
 
-function nextTokenExpectType<T extends SyntaxKind>(kind: T): Token<T> {
+function nextTokenExpectType<T extends TokenSyntaxKind>(kind: T): Token<T> {
   if (cur_token.kind !== kind) {
     reportParsingError(`expected "${GetSyntaxKindName(kind)}", got "${GetSyntaxKindName(cur_token.kind)}"`);
 
@@ -128,7 +164,7 @@ function parseInvalidToken<T extends Node>(): T {
     cur_token.kind !== SyntaxKind.Newline
   ) {
     const token = nextToken();
-    token.kind = SyntaxKind.Unknown;
+    token.kind = SyntaxKind.UnknownToken;
     return token as unknown as T;
   }
 
@@ -147,10 +183,15 @@ function parseNode<T extends Node>(
   parse_function: (node: T) => void = () => undefined,
   start?: Position,
 ): T {
-  const last_parent_saved = last_parent;
+  const last_parent_saved = cur_node;
 
-  node.parent = last_parent;
-  last_parent = node;
+  if ("parent" in node) {
+    node.parent = cur_node;
+  }
+
+  if ("children" in node) {
+    cur_node = node;
+  }
 
   node.range = {
     start: start ?? cur_token.range.start,
@@ -161,7 +202,7 @@ function parseNode<T extends Node>(
 
   node.range.end = last_token.range.end;
 
-  last_parent = last_parent_saved;
+  cur_node = last_parent_saved;
 
   return node;
 }
@@ -174,9 +215,9 @@ function parseBinOpLeft(
 
   while (predicate()) {
     lhs = parseNode(new BinaryExpression(), node => {
-      node.lhs = lhs;
-      node.op = parseOperator();
-      node.rhs = parse_child();
+      node.children.lhs = lhs;
+      node.children.op = parseOperator();
+      node.children.rhs = parse_child();
     }, lhs.range.start);
   }
 
@@ -184,7 +225,7 @@ function parseBinOpLeft(
 }
 
 function parseComment(): void {
-  const last_non_comment_token = last_token;
+  // const last_non_comment_token = last_token;
 
   const node = parseNode(new Comment(), node => {
     node.content = cur_token.content;
@@ -192,9 +233,13 @@ function parseComment(): void {
     skipToken();
   });
 
-  script.comments[node.range.start.line] = node;
+  if (Array.isArray(cur_node.children)) {
+    (cur_node.children as NodeWithParent[]).push(node);
+  } else {
+    cur_node.children[`comment_${Object.values(cur_node.children).length}`] = node;
+  }
 
-  last_token = last_non_comment_token;
+  // last_token = last_non_comment_token;
 }
 
 function parseNumber(): NumberLiteral {
@@ -218,7 +263,9 @@ function parseString(): StringLiteral {
 }
 
 function parseIdentifier(): Identifier {
-  return nextTokenExpectType(SyntaxKind.Identifier);
+  const token = nextTokenExpectType(SyntaxKind.IdentifierToken);
+  (token as never as Identifier).kind = SyntaxKind.Identifier;
+  return token as never as Identifier;  // FIXME: doesn't get parent assigned?
 }
 
 function parseTypename(): Typename {
@@ -258,20 +305,18 @@ function parseAssignmentOperator(): AssignmentOperator {
 }
 
 function parseVariableOrVariableDeclaration(): Identifier | VariableDeclaration {
-  if (cur_token.kind === SyntaxKind.Identifier)
-    return nextToken();
-  else if (isTypename())
+  if (cur_token.kind === SyntaxKind.IdentifierToken) {
+    return parseIdentifier();  // FIXME: chekcing kind 2 times
+  } else if (isTypename()) {
     return parseVariableDeclaration();
-  else {
+  } else {
     reportParsingError("expected a variable or a variable declaration");
     return parseInvalidToken();
   }
 }
 
-function parseFunction(): FunctionExpression {
-  return parseNode(new FunctionExpression(), node => {
-    node.name = parseIdentifier();
-
+function parseExpressionList(): ExpressionList {
+  return parseNode(new ExpressionList(), node => {
     while (moreData() && cur_token.kind !== SyntaxKind.Newline) {
       if (isOperator()) {
         if (cur_token.kind === SyntaxKind.Comma) {
@@ -282,53 +327,60 @@ function parseFunction(): FunctionExpression {
         }
       }
 
-      node.args.push(parseOr());
+      node.children.push(parseOr());
+    }
+  });
+}
+
+function parseFunction(): FunctionExpression {
+  return parseNode(new FunctionExpression(), node => {
+    node.children.name = parseIdentifier();
+    node.children.args = parseExpressionList();
+  });
+}
+
+function parseVariableList(): VariableList {
+  return parseNode(new VariableList(), node => {
+    while (
+      moreData() &&
+      cur_token.kind !== SyntaxKind.RBracket &&  // TODO: come up with a better solution (keep track of the context?)
+      cur_token.kind !== SyntaxKind.Newline
+    ) {
+      if (cur_token.kind === SyntaxKind.Comma) {
+        nextToken();
+      }
+
+      node.children.push(parseVariableOrVariableDeclaration());
     }
   });
 }
 
 function parseLambdaInline(): LambdaInlineExpression {
   return parseNode(new LambdaInlineExpression(), node => {
-    node.lbracket = nextTokenExpectType(SyntaxKind.LBracket);
+    node.children.lbracket = nextTokenExpectType(SyntaxKind.LBracket);
 
-    while (
-      moreData() &&
-      cur_token.kind !== SyntaxKind.RBracket &&
-      cur_token.kind !== SyntaxKind.Newline
-    ) {
-      if (cur_token.kind === SyntaxKind.Comma) nextToken();
+    node.children.params = parseVariableList();
 
-      node.params.push(parseVariableOrVariableDeclaration());
-    }
-
-    node.rbracket = nextTokenExpectType(SyntaxKind.RBracket);
-    node.arrow = nextTokenExpectType(SyntaxKind.EqualsGreater);
-    node.expression = parseExpression();
+    node.children.rbracket = nextTokenExpectType(SyntaxKind.RBracket);
+    node.children.arrow = nextTokenExpectType(SyntaxKind.EqualsGreater);
+    node.children.expression = parseExpression();
   });
 }
 
 function parseLambda(): LambdaExpression {
   return parseNode(new LambdaExpression(), node => {
-    node.begin = nextTokenExpectType(SyntaxKind.Begin);
-    node.function = nextTokenExpectType(SyntaxKind.BlocktypeTokenFunction);
-    node.lbracket = nextTokenExpectType(SyntaxKind.LBracket);
+    node.children.begin = nextTokenExpectType(SyntaxKind.Begin);
+    node.children.function = nextTokenExpectType(SyntaxKind.BlocktypeFunction);
+    node.children.lbracket = nextTokenExpectType(SyntaxKind.LBracket);
 
-    while (
-      moreData() &&
-      cur_token.kind !== SyntaxKind.RBracket &&  // TODO: come up with a better solution (keep track of the context?)
-      cur_token.kind !== SyntaxKind.Newline
-    ) {
-      if (cur_token.kind === SyntaxKind.Comma) nextToken();
+    node.children.params = parseVariableList();
 
-      node.params.push(parseVariableOrVariableDeclaration());
-    }
-
-    node.rbracket = nextTokenExpectType(SyntaxKind.RBracket);
+    node.children.rbracket = nextTokenExpectType(SyntaxKind.RBracket);
     nextTokenExpectType(SyntaxKind.Newline);
-    node.body = parseCompoundStatement({
+    node.children.body = parseStatementList({
       [SyntaxKind.End]: true
     });
-    node.end = nextTokenExpectType(SyntaxKind.End);
+    node.children.end = nextTokenExpectType(SyntaxKind.End);
   });
 }
 
@@ -340,11 +392,12 @@ function parsePrimaryExpression(): Expression {
     case SyntaxKind.Number:
       return parseNumber();
 
-    case SyntaxKind.Identifier:
-      if (GetFunctionInfo(cur_token.content.toLowerCase()) != undefined)
+    case SyntaxKind.IdentifierToken:
+      if (GetFunctionInfo(cur_token.content.toLowerCase()) != undefined) {
         return parseFunction();
-      else
+      } else {
         return parseIdentifier();
+      }
 
     case SyntaxKind.LParen:
       nextToken();
@@ -372,39 +425,39 @@ function parsePrimaryExpression(): Expression {
 
 function parseMemeberSquareBrackets(lhs: Expression): Expression {
   return parseMember(parseNode(new ElementAccessExpression(), node => {
-    node.lhs = lhs;
-    node.left_op = nextTokenExpectType(SyntaxKind.LSQBracket);
-    node.rhs = parseExpression();
-    node.right_op = nextTokenExpectType(SyntaxKind.RSQBracket);
+    node.children.lhs = lhs;
+    node.children.left_op = nextTokenExpectType(SyntaxKind.LSQBracket);
+    node.children.rhs = parseExpression();
+    node.children.right_op = nextTokenExpectType(SyntaxKind.RSQBracket);
   }));
 }
 
 function parseMemberRArrow(lhs: Expression): Expression {
   return parseMember(parseNode(new BinaryExpression(), node => {
-    node.lhs = lhs;
-    node.op = nextTokenExpectType(SyntaxKind.LArrow);
+    node.children.lhs = lhs;
+    node.children.op = nextTokenExpectType(SyntaxKind.LArrow);
 
     if (
       cur_token.kind !== SyntaxKind.String &&
       cur_token.kind !== SyntaxKind.Number &&
-      cur_token.kind !== SyntaxKind.Identifier
+      cur_token.kind !== SyntaxKind.IdentifierToken
     ) {
-      node.rhs = parseInvalidToken();
+      node.children.rhs = parseInvalidToken();
     } else {
-      node.rhs = parsePrimaryExpression();
+      node.children.rhs = parsePrimaryExpression();
     }
   }));
 }
 
 function parseMemberDot(lhs: Expression): Expression {
   return parseMember(parseNode(new BinaryExpression(), node => {
-    node.lhs = lhs;
-    node.op = nextTokenExpectType(SyntaxKind.Dot);
+    node.children.lhs = lhs;
+    node.children.op = nextTokenExpectType(SyntaxKind.Dot);
 
-    if (cur_token.kind !== SyntaxKind.Identifier) {
-      node.rhs = parseInvalidToken();
+    if (cur_token.kind !== SyntaxKind.IdentifierToken) {
+      node.children.rhs = parseInvalidToken();
     } else {
-      node.rhs = parsePrimaryExpression();
+      node.children.rhs = parsePrimaryExpression();
     }
   }));
 }
@@ -412,7 +465,9 @@ function parseMemberDot(lhs: Expression): Expression {
 function parseMember(lhs?: Expression): Expression {
   lhs = lhs ?? parsePrimaryExpression();
 
-  if (isOperator()) return lhs;
+  if (isOperator()) {
+    return lhs;
+  }
 
   const kind = cur_token.kind;
 
@@ -428,21 +483,24 @@ function parseMember(lhs?: Expression): Expression {
 }
 
 function parseLogicalNot(): Expression {
-  if (cur_token.kind !== SyntaxKind.Exclamation)
+  if (cur_token.kind !== SyntaxKind.Exclamation) {
     return parseMember();
+  }
 
   return parseNode(new UnaryExpression(), node => {
-    node.op = parseOperator();
-    node.operand = parseLogicalNot();
+    node.children.op = parseOperator();
+    node.children.operand = parseLogicalNot();
   });
 }
 
 function parseUnary(): Expression {
-  if (!isUnaryOperator()) return parseLogicalNot();
+  if (!isUnaryOperator()) {
+    return parseLogicalNot();
+  }
 
   return parseNode(new UnaryExpression(), node => {
-    node.op = parseOperator();
-    node.operand = parseUnary();
+    node.children.op = parseOperator();
+    node.children.operand = parseUnary();
   });
 }
 
@@ -529,9 +587,9 @@ function parseAssignment(): Expression {
   if (isSimpleAssignmentOperator()) {
     let last_node = parseNode(new BinaryExpression(), node => {
       lhs.parent = node;
-      node.lhs = lhs;
-      node.op = parseOperator();
-      node.rhs = parseLogicalOr();
+      node.children.lhs = lhs;
+      node.children.op = parseOperator();
+      node.children.rhs = parseLogicalOr();
     });
 
     lhs = last_node;
@@ -539,12 +597,12 @@ function parseAssignment(): Expression {
     while (isSimpleAssignmentOperator()) {
       const node = parseNode(new BinaryExpression(), node => {
         lhs.parent = node;
-        node.lhs = last_node.rhs;
-        node.op = parseOperator();
-        node.rhs = parseLogicalOr();
+        node.children.lhs = last_node.children.rhs;
+        node.children.op = parseOperator();
+        node.children.rhs = parseLogicalOr();
       });
 
-      last_node.rhs = node;
+      last_node.children.rhs = node;
       last_node = node;
     }
   }
@@ -585,7 +643,7 @@ function parseStatement(): Statement {
       return parseStatement();
 
     case SyntaxKind.Begin:
-      node = parseBeginBlock();
+      node = parseBeginBlock() as BeginStatement | InvalidStatement;
 
       reportParsingError(
         "nested begin blocks not allowed",
@@ -615,162 +673,175 @@ function parseStatement(): Statement {
       }
   }
 
-  if (cur_token.kind !== SyntaxKind.EOF)
+  if (cur_token.kind !== SyntaxKind.EOF) {
     nextTokenExpectType(SyntaxKind.Newline);
+  }
 
   return node;
 }
 
-function parseCompoundStatement(terminator_tokens: { [key in SyntaxKind]?: boolean }): Block {
-  return parseNode(new Block(), node => {
+function parseStatementList(terminator_tokens: { [key in SyntaxKind]?: boolean }): StatementList {
+  return parseNode(new StatementList(), node => {
     while (moreData() && !(cur_token.kind in terminator_tokens)) {
       const statement = parseStatement();
 
-      if (statement.kind !== SyntaxKind.Unknown)
+      if (statement.kind !== SyntaxKind.Unknown) {
         node.children.push(statement);
+      }
     }
   });
 }
 
 function parseVariableDeclaration(): VariableDeclaration {
   return parseNode(new VariableDeclaration(), node => {
-    node.type = parseTypename();
-    node.variable = parseIdentifier();
+    node.children.type = parseTypename();
+    node.children.variable = parseIdentifier();
   });
 }
 
 function parseVariableDeclarationStatement(): VariableDeclarationStatement {
   return parseNode(new VariableDeclarationStatement(), node => {
-    node.variable = parseVariableDeclaration();
+    node.children.variable = parseVariableDeclaration();
     if (isAssignmentOperator()) {
-      node.op = parseOperator();
-      node.expression = parseExpression();
+      node.children.op = parseOperator();
+      node.children.expression = parseExpression();
     }
   });
 }
 
 function parseSet(): SetStatement {
   return parseNode(new SetStatement(), node => {
-    node.set = nextTokenExpectType(SyntaxKind.Set);
-    node.variable = parseIdentifier();
-    node.to = nextTokenExpectType(SyntaxKind.To);
-    node.expression = parseLogicalOr();
+    node.children.set = nextTokenExpectType(SyntaxKind.Set);
+    node.children.variable = parseIdentifier();
+    node.children.to = nextTokenExpectType(SyntaxKind.To);
+    node.children.expression = parseLogicalOr();
   });
 }
 
 function parseLet(): LetStatement {
   return parseNode(new LetStatement(), node => {
-    node.let = nextTokenExpectType(SyntaxKind.Let);
-    node.variable = parseVariableOrVariableDeclaration();
-    node.op = parseAssignmentOperator();
-    node.expression = parseExpression();
+    node.children.let = nextTokenExpectType(SyntaxKind.Let);
+    node.children.variable = parseVariableOrVariableDeclaration();
+    node.children.op = parseAssignmentOperator();
+    node.children.expression = parseExpression();
+  });
+}
+
+function parsePrimaryExpressionList(): PrimaryExpressionList {
+  return parseNode(new PrimaryExpressionList(), node => {
+    while (
+      moreData() &&
+      cur_token.kind !== SyntaxKind.Newline &&
+      (
+        cur_token.kind === SyntaxKind.IdentifierToken ||
+        cur_token.kind === SyntaxKind.Number
+      )
+    ) {
+      const arg = parsePrimaryExpression() as PrimaryExpression;
+
+      node.children.push(arg);
+    }
   });
 }
 
 function parseBlockType(): BlocktypeExpression {
   return parseNode(new BlocktypeExpression(), node => {
-    node.block_type = nextTokenExpectType(SyntaxKind.BlocktypeToken);
-
-    while (
-      moreData() &&
-      cur_token.kind !== SyntaxKind.Newline &&
-      (
-        cur_token.kind === SyntaxKind.Identifier ||
-        cur_token.kind === SyntaxKind.Number
-      )
-    ) {
-      const arg = parsePrimaryExpression();
-
-      node.args.push(arg);
-    }
+    node.children.block_type = nextTokenExpectType(SyntaxKind.Blocktype);
+    node.children.args = parsePrimaryExpressionList();
   });
 }
 
 function parseBeginBlock(): BeginStatement {
   return parseNode(new BeginStatement(), node => {
-    node.begin = nextTokenExpectType(SyntaxKind.Begin);
-    node.block_type = parseBlockType();
+    node.children.begin = nextTokenExpectType(SyntaxKind.Begin);
+    node.children.block_type = parseBlockType();
     nextTokenExpectType(SyntaxKind.Newline);
 
-    node.body = parseCompoundStatement({
+    node.children.body = parseStatementList({
       [SyntaxKind.End]: true
     });
 
-    node.end = nextTokenExpectType(SyntaxKind.End);
+    node.children.end = nextTokenExpectType(SyntaxKind.End);
   });
 }
 
 function parseForeachBlock(): ForeachStatement {
   return parseNode(new ForeachStatement(), node => {
-    node.foreach = nextTokenExpectType(SyntaxKind.Foreach);
+    node.children.foreach = nextTokenExpectType(SyntaxKind.Foreach);
 
-    node.identifier = parseVariableOrVariableDeclaration();
+    node.children.identifier = parseVariableOrVariableDeclaration();
 
-    node.larrow = nextTokenExpectType(SyntaxKind.LArrow);
-    node.iterable = parseExpression();
+    node.children.larrow = nextTokenExpectType(SyntaxKind.LArrow);
+    node.children.iterable = parseExpression();
     nextTokenExpectType(SyntaxKind.Newline);
 
-    node.body = parseCompoundStatement({
+    node.children.body = parseStatementList({
       [SyntaxKind.Loop]: true
     });
 
-    node.loop = nextTokenExpectType(SyntaxKind.Loop);
+    node.children.loop = nextTokenExpectType(SyntaxKind.Loop);
   });
 }
 
 function parseBranch<T extends BranchKeywordSyntaxKind>(
   branch_keyword: T,
-  terminator_tokens: { [key in SyntaxKind]?: boolean }
-): Branch<Token<T>> {
+  terminator_tokens: { [key in TokenSyntaxKind]?: boolean }
+): Branch<T> {
   return parseNode(new Branch(), node => {
-    node.keyword = nextTokenExpectType(branch_keyword);
-    node.condition = parseExpression();
+    node.children.keyword = nextTokenExpectType(branch_keyword);
+    node.children.condition = parseExpression();
     nextTokenExpectType(SyntaxKind.Newline);
 
-    node.body = parseCompoundStatement(terminator_tokens);
+    node.children.body = parseStatementList(terminator_tokens);
   });
 }
 
 function parseWhileBlock(): WhileStatement {
   return parseNode(new WhileStatement(), node => {
-    node.branch = parseBranch(SyntaxKind.While, {
+    node.children.branch = parseBranch(SyntaxKind.While, {
       [SyntaxKind.Loop]: true
     });
 
-    node.loop = nextTokenExpectType(SyntaxKind.Loop);
+    node.children.loop = nextTokenExpectType(SyntaxKind.Loop);
   });
 }
 
-function parseIfBlock(): IfStatement {
-  return parseNode(new IfStatement(), node => {
-    node.branches[0] = parseBranch(SyntaxKind.If, {
+function parseBranchList(): BranchList {
+  return parseNode(new BranchList(), node => {
+    node.children[0] = parseBranch(SyntaxKind.If, {
       [SyntaxKind.Elseif]: true,
       [SyntaxKind.Else]: true,
       [SyntaxKind.Endif]: true,
     });
 
     while (cur_token.kind === SyntaxKind.Elseif) {
-      node.branches.push(parseBranch(SyntaxKind.Elseif, {
+      node.children.push(parseBranch(SyntaxKind.Elseif, {
         [SyntaxKind.Elseif]: true,
         [SyntaxKind.Else]: true,
         [SyntaxKind.Endif]: true,
       }));
     }
+  });
+}
+
+function parseIfBlock(): IfStatement {
+  return parseNode(new IfStatement(), node => {
+    node.children.branches = parseBranchList();
 
     if (cur_token.kind === SyntaxKind.Else) {
-      node.else = nextTokenExpectType(SyntaxKind.Else);
+      node.children.else = nextTokenExpectType(SyntaxKind.Else);
       nextTokenExpectType(SyntaxKind.Newline);
-      node.else_statements = parseCompoundStatement({
+      node.children.else_statements = parseStatementList({
         [SyntaxKind.Endif]: true
       });
     }
 
-    node.endif = nextTokenExpectType(SyntaxKind.Endif);
+    node.children.endif = nextTokenExpectType(SyntaxKind.Endif);
   });
 }
 
-function parseScriptCompoundStatement(): Block {
-  return parseNode(new Block(), node => {
+function parseScriptCompoundStatement(): StatementList {
+  return parseNode(new StatementList(), node => {
     let statement: Statement;
 
     while (moreData()) {
@@ -803,8 +874,9 @@ function parseScriptCompoundStatement(): Block {
           }
       }
 
-      if (cur_token.kind !== SyntaxKind.EOF)
+      if (cur_token.kind !== SyntaxKind.EOF) {
         nextTokenExpectType(SyntaxKind.Newline);
+      }
 
       node.children.push(statement);
     }
@@ -815,16 +887,16 @@ function parseScript(): Script {
   return parseNode(script, node => {
     while (moreData()) {
       switch (cur_token.kind) {
-        case SyntaxKind.Comment: parseComment(); continue;
+        case SyntaxKind.CommentToken: parseComment(); continue;
         case SyntaxKind.Newline: nextToken(); continue;
       }
       break;
     }
 
-    node.scriptname = nextTokenExpectType(SyntaxKind.ScriptName);
-    node.name = parseIdentifier();
+    node.children.scriptname = nextTokenExpectType(SyntaxKind.ScriptName);
+    node.children.name = parseIdentifier();
     nextTokenExpectType(SyntaxKind.Newline);
-    node.body = parseScriptCompoundStatement();
+    node.children.body = parseScriptCompoundStatement();
   });
 }
 

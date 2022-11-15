@@ -15,8 +15,11 @@ export async function GetCompletionItems(
 
   if (
     token.kind === SyntaxKind.Comment ||
-    token.kind === SyntaxKind.String
-  ) return null;
+    token.kind === SyntaxKind.String ||
+    token.kind === SyntaxKind.Script
+  ) {
+    return null;
+  }
 
   const completion_items: CompletionItem[] = [];
 
@@ -29,7 +32,9 @@ export async function GetCompletionItems(
   }
 
   for (const v of Object.values(TokenData)) {
-    if (IsOperator(v.kind)) continue;
+    if (IsOperator(v.kind)) {
+      continue;
+    }
 
     completion_items.push({
       label: v.canonical_name,
@@ -53,7 +58,9 @@ export async function GetCompletionItems(
 }
 
 export async function GetCompletionItemDoc(item: CompletionItem): Promise<CompletionItem> {
-  if (item.data == undefined) return item;
+  if (item.data == undefined) {
+    return item;
+  }
 
   const func_info = GetFunctionInfo(item.data)!;
   if (func_info == undefined) {

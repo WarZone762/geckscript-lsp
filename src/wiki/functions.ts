@@ -116,10 +116,11 @@ wtf.extend((models: any, templates: any) => {
   models.Link.prototype.markdown = function () {
     const href = this.href().replaceAll(" ", "_");
     const str = this.text() || this.page();
-    if (this.type() === "internal")
-      return `[${str}](https://geckwiki.com/index.php?title=${href.substring(2)})`;
-    else
-      return `[${str}](${href})`;
+    if (this.type() === "internal") {
+return `[${str}](https://geckwiki.com/index.php?title=${href.substring(2)})`;
+} else {
+return `[${str}](${href})`;
+}
   };
 
   models.Sentence.prototype.old = {
@@ -129,8 +130,9 @@ wtf.extend((models: any, templates: any) => {
   models.Sentence.prototype.markdown = function (options: any) {
     let text = this.old.markdown.bind(this)(options);
 
-    if (this.wikitext()[0] === " ")
-      text = "\t" + text + "\n";
+    if (this.wikitext()[0] === " ") {
+text = "\t" + text + "\n";
+}
 
 
     return text;
@@ -154,10 +156,11 @@ wtf.extend((models: any, templates: any) => {
   templates.function = (tmpl: any, list: any, parse: any) => {
     const obj = parse(tmpl);
 
-    if (obj.arguments != undefined)
-      obj.arguments = JSON.parse(
+    if (obj.arguments != undefined) {
+obj.arguments = JSON.parse(
         `[${obj.arguments.substring(0, obj.arguments.length - 1)}]`
       );
+}
 
     list.push(obj);
 
@@ -167,7 +170,9 @@ wtf.extend((models: any, templates: any) => {
 
 export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation | undefined> {
   let text = await GetCacheValue(page_name);
-  if (text == undefined) return undefined;
+  if (text == undefined) {
+return undefined;
+}
 
   text = text
     .replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}")
@@ -199,17 +204,20 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
   ) {
     signature += "(";
 
-    if (doc.template.returnval != undefined)
-      signature += `${doc.template.returnval}:`;
+    if (doc.template.returnval != undefined) {
+signature += `${doc.template.returnval}:`;
+}
 
-    if (doc.template.returntype != undefined)
-      signature += doc.template.returntype;
+    if (doc.template.returntype != undefined) {
+signature += doc.template.returntype;
+}
 
     signature += ") ";
   }
 
-  if (doc.template.referencetype != undefined)
-    signature += `${doc.template.referencetype}.`;
+  if (doc.template.referencetype != undefined) {
+signature += `${doc.template.referencetype}.`;
+}
 
   signature += `${doc.template.name ?? func_info.canonical_name} `;
 
@@ -217,14 +225,17 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
     if (arg instanceof String) {
       signature += arg;
     } else {
-      if ((arg as FunctionArgumentTemplate)?.name != undefined)
-        signature += `${(arg as FunctionArgumentTemplate).name}:`;
+      if ((arg as FunctionArgumentTemplate)?.name != undefined) {
+signature += `${(arg as FunctionArgumentTemplate).name}:`;
+}
 
-      if ((arg as FunctionArgumentTemplate)?.type != undefined)
-        signature += `${(arg as FunctionArgumentTemplate).type}`;
+      if ((arg as FunctionArgumentTemplate)?.type != undefined) {
+signature += `${(arg as FunctionArgumentTemplate).type}`;
+}
 
-      if ((arg as FunctionArgumentTemplate)?.value != undefined)
-        signature += `{${(arg as FunctionArgumentTemplate).value}}`;
+      if ((arg as FunctionArgumentTemplate)?.value != undefined) {
+signature += `{${(arg as FunctionArgumentTemplate).value}}`;
+}
 
       if ((arg as FunctionArgumentTemplate)?.optional != undefined) {
         signature += "?";

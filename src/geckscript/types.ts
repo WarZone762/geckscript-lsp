@@ -5,17 +5,17 @@ import * as Parser from "./parser";
 
 
 export const enum SyntaxKind {
-  Unknown,
+  UnknownToken,
 
   EOF,
   Newline,
-  Comment,
+  CommentToken,
 
   Number,
   String,
-  Identifier,
-  BlocktypeToken,
-  BlocktypeTokenFunction,
+  IdentifierToken,
+  Blocktype,
+  BlocktypeFunction,
 
   // Typename
   Short,
@@ -90,7 +90,19 @@ export const enum SyntaxKind {
   Comma,
   EqualsGreater,
 
+  Unknown,
+  Comment,
+  NumberLiteral,
+  StringLiteral,
+  Identifier,
   VariableDeclaration,
+
+  // Lists
+  VariableList,
+  PrimaryExpressionList,
+  ExpressionList,
+  BranchList,
+  StatementList,
 
   // Expression
   LambdaExpression,
@@ -111,7 +123,6 @@ export const enum SyntaxKind {
   IfStatement,
   WhileStatement,
   ForeachStatement,
-  Block,
 
   Script,
 
@@ -154,126 +165,194 @@ export const enum SyntaxKind {
 }
 
 export type TypenameSyntaxKind =
-  SyntaxKind.Short |
-  SyntaxKind.Int |
-  SyntaxKind.Long |
-  SyntaxKind.Float |
-  SyntaxKind.Reference |
-  SyntaxKind.StringVar |
-  SyntaxKind.ArrayVar;
+  | SyntaxKind.Short
+  | SyntaxKind.Int
+  | SyntaxKind.Long
+  | SyntaxKind.Float
+  | SyntaxKind.Reference
+  | SyntaxKind.StringVar
+  | SyntaxKind.ArrayVar
+  ;
 
 export type KeywordSynaxKind =
-  SyntaxKind.ScriptName |
-  SyntaxKind.Begin |
-  SyntaxKind.End |
-  SyntaxKind.If |
-  SyntaxKind.Elseif |
-  SyntaxKind.Else |
-  SyntaxKind.Endif |
-  SyntaxKind.While |
-  SyntaxKind.Foreach |
-  SyntaxKind.Loop |
-  SyntaxKind.Continue |
-  SyntaxKind.Break |
-  SyntaxKind.Return |
-  SyntaxKind.Set |
-  SyntaxKind.To |
-  SyntaxKind.Let;
+  | SyntaxKind.ScriptName
+  | SyntaxKind.Begin
+  | SyntaxKind.End
+  | SyntaxKind.If
+  | SyntaxKind.Elseif
+  | SyntaxKind.Else
+  | SyntaxKind.Endif
+  | SyntaxKind.While
+  | SyntaxKind.Foreach
+  | SyntaxKind.Loop
+  | SyntaxKind.Continue
+  | SyntaxKind.Break
+  | SyntaxKind.Return
+  | SyntaxKind.Set
+  | SyntaxKind.To
+  | SyntaxKind.Let
+  ;
 
 export type BranchKeywordSyntaxKind = SyntaxKind.While | SyntaxKind.If | SyntaxKind.Elseif;
 
 export type AssignmentOperatorSyntaxKind =
-  SyntaxKind.Equals |
-  SyntaxKind.ColonEquals |
-  SyntaxKind.PlusEquals |
-  SyntaxKind.MinusEquals |
-  SyntaxKind.AsteriskEquals |
-  SyntaxKind.SlashEquals |
-  SyntaxKind.PercentEquals |
-  SyntaxKind.CircumflexEquals |
-  SyntaxKind.VBarEquals |
-  SyntaxKind.AmpersandEquals;
+  | SyntaxKind.Equals
+  | SyntaxKind.ColonEquals
+  | SyntaxKind.PlusEquals
+  | SyntaxKind.MinusEquals
+  | SyntaxKind.AsteriskEquals
+  | SyntaxKind.SlashEquals
+  | SyntaxKind.PercentEquals
+  | SyntaxKind.CircumflexEquals
+  | SyntaxKind.VBarEquals
+  | SyntaxKind.AmpersandEquals
+  ;
 
 
-export type OperatorSyntaxType =
-  AssignmentOperatorSyntaxKind |
-  SyntaxKind.Exclamation |
-  SyntaxKind.DoubleVBar |
-  SyntaxKind.DoubleAmpersand |
-  SyntaxKind.DoubleEquals |
-  SyntaxKind.ExclamationEquals |
-  SyntaxKind.Greater |
-  SyntaxKind.Less |
-  SyntaxKind.GreaterEqulas |
-  SyntaxKind.LessEqulas |
-  SyntaxKind.Plus |
-  SyntaxKind.Minus |
-  SyntaxKind.Asterisk |
-  SyntaxKind.Slash |
-  SyntaxKind.Percent |
-  SyntaxKind.Circumflex |
-  SyntaxKind.VBar |
-  SyntaxKind.Ampersand |
-  SyntaxKind.DoubleLess |
-  SyntaxKind.DoubleGreater |
-  SyntaxKind.Dollar |
-  SyntaxKind.Hash |
-  SyntaxKind.LParen |
-  SyntaxKind.RParen |
-  SyntaxKind.LSQBracket |
-  SyntaxKind.RSQBracket |
-  SyntaxKind.LBracket |
-  SyntaxKind.RBracket |
-  SyntaxKind.Colon |
-  SyntaxKind.LArrow |
-  SyntaxKind.RArrow |
-  SyntaxKind.Dot |
-  SyntaxKind.DoubleColon |
-  SyntaxKind.Comma |
-  SyntaxKind.EqualsGreater;
+export type OperatorSyntaxKind =
+  | AssignmentOperatorSyntaxKind
+  | SyntaxKind.Exclamation
+  | SyntaxKind.DoubleVBar
+  | SyntaxKind.DoubleAmpersand
+  | SyntaxKind.DoubleEquals
+  | SyntaxKind.ExclamationEquals
+  | SyntaxKind.Greater
+  | SyntaxKind.Less
+  | SyntaxKind.GreaterEqulas
+  | SyntaxKind.LessEqulas
+  | SyntaxKind.Plus
+  | SyntaxKind.Minus
+  | SyntaxKind.Asterisk
+  | SyntaxKind.Slash
+  | SyntaxKind.Percent
+  | SyntaxKind.Circumflex
+  | SyntaxKind.VBar
+  | SyntaxKind.Ampersand
+  | SyntaxKind.DoubleLess
+  | SyntaxKind.DoubleGreater
+  | SyntaxKind.Dollar
+  | SyntaxKind.Hash
+  | SyntaxKind.LParen
+  | SyntaxKind.RParen
+  | SyntaxKind.LSQBracket
+  | SyntaxKind.RSQBracket
+  | SyntaxKind.LBracket
+  | SyntaxKind.RBracket
+  | SyntaxKind.Colon
+  | SyntaxKind.LArrow
+  | SyntaxKind.RArrow
+  | SyntaxKind.Dot
+  | SyntaxKind.DoubleColon
+  | SyntaxKind.Comma
+  | SyntaxKind.EqualsGreater
+  ;
 
-export type AssignmentOperator = Token<OperatorSyntaxType>;
-export type Operator = Token<OperatorSyntaxType>;
+export type TokenSyntaxKind =
+  | SyntaxKind.UnknownToken
+  | SyntaxKind.EOF
+  | SyntaxKind.Newline
+  | SyntaxKind.CommentToken
+  | SyntaxKind.Number
+  | SyntaxKind.String
+  | SyntaxKind.IdentifierToken
+  | OperatorSyntaxKind
+  | TypenameSyntaxKind
+  | KeywordSynaxKind
+  | BranchKeywordSyntaxKind
+  | SyntaxKind.BlocktypeFunction
+  | SyntaxKind.Blocktype
+  ;
+
+export type AssignmentOperator = Token<OperatorSyntaxKind>;
+export type Operator = Token<OperatorSyntaxKind>;
 export type Keyword = Token<KeywordSynaxKind>
 export type BranchKeyword = Token<BranchKeywordSyntaxKind>;
 export type Typename = Token<TypenameSyntaxKind>
 
 export type PrimaryExpression =
-  StringLiteral |
-  NumberLiteral |
-  Identifier |
-  FunctionExpression |
-  LambdaExpression |
-  LambdaInlineExpression;
+  | StringLiteral
+  | NumberLiteral
+  | Identifier
+  | FunctionExpression
+  | LambdaExpression
+  | LambdaInlineExpression
+  ;
 
 export type Expression =
-  PrimaryExpression |
-  UnaryExpression |
-  BinaryExpression |
-  ElementAccessExpression;
+  | PrimaryExpression
+  | UnaryExpression
+  | BinaryExpression
+  | ElementAccessExpression
+  ;
 
 export type Statement =
-  Keyword |
-  VariableDeclarationStatement |
-  SetStatement |
-  LetStatement |
-  Block |
-  BeginStatement |
-  ForeachStatement |
-  WhileStatement |
-  IfStatement |
-  Expression;
+  | InvalidStatement
+  | Keyword
+  | VariableDeclarationStatement
+  | SetStatement
+  | LetStatement
+  | StatementList
+  | BeginStatement
+  | ForeachStatement
+  | WhileStatement
+  | IfStatement
+  | Expression
+  ;
 
+export type NodeList =
+  | ExpressionList
+  | VariableList
+  | StatementList
+  | PrimaryExpressionList
+  | BranchList
+  ;
 
-export function IsTypename(kind: SyntaxKind): boolean {
+export type RootNode = Script
+
+export type BranchNode =
+  | NodeList
+  | InvalidStatement
+  | VariableDeclaration
+  | UnaryExpression
+  | BinaryExpression
+  | ElementAccessExpression
+  | ExpressionList
+  | FunctionExpression
+  | LambdaExpression
+  | LambdaInlineExpression
+  | VariableDeclarationStatement
+  | SetStatement
+  | LetStatement
+  | BlocktypeExpression
+  | BeginStatement
+  | ForeachStatement
+  | Branch
+  | WhileStatement
+  | IfStatement
+  ;
+
+export type LeafNode =
+  | Token
+  | Comment
+  | NumberLiteral
+  | StringLiteral
+  | Identifier
+  ;
+
+export type NodeWithParent = BranchNode | LeafNode;
+export type NodeWithChildren = BranchNode | RootNode;
+
+export type Node = NodeWithChildren | NodeWithParent;
+
+export function IsTypename(kind: SyntaxKind): kind is TypenameSyntaxKind {
   return SyntaxKind.TYPENAME_FIRST <= kind && kind <= SyntaxKind.TYPENAME_LAST;
 }
 
-export function IsKeyword(kind: SyntaxKind): boolean {
+export function IsKeyword(kind: SyntaxKind): kind is KeywordSynaxKind {
   return SyntaxKind.KEYWORD_FIRST <= kind && kind <= SyntaxKind.KEYWORD_LAST;
 }
 
-export function IsOperator(kind: SyntaxKind): boolean {
+export function IsOperator(kind: SyntaxKind): kind is OperatorSyntaxKind {
   return SyntaxKind.OPERATOR_FIRST <= kind && kind <= SyntaxKind.OPERATOR_LAST;
 }
 
@@ -374,200 +453,317 @@ export interface Symbol {
 
 export type SymbolTable = { [key: string]: Symbol };
 
-export class Node<T extends SyntaxKind = SyntaxKind> {
-  kind: T;
-  range!: Range;
-  parent?: Node = undefined;
+export type Constructor = new (...args: any[]) => {};
 
-  expression_type?: Type;
-
-  constructor(kind?: T) {
-    this.kind = kind ?? SyntaxKind.Unknown as T;
-  }
+function MixinParent<TBase extends Constructor>(Base: TBase) {  // TODO: replace with normal classes?
+  return class _ extends Base {
+    parent!: NodeWithChildren;
+  };
 }
 
-export class Token<T extends SyntaxKind = SyntaxKind> extends Node<T> {
+function MixinChildren<TBase extends Constructor>(Base: TBase) {
+  return class _ extends Base {
+    children: { [key: string]: NodeWithParent | undefined } | NodeWithParent[] = {};
+  };
+}
+
+export class INode {
+  range!: Range;
+
+  expression_type?: Type;
+}
+
+export class ILeafNode extends MixinParent(INode) { }
+export class IRootNode extends MixinChildren(INode) { }
+export class IBranchNode extends MixinParent(IRootNode) { }
+
+export class IToken extends ILeafNode {
   content = "";
 }
 
-export class TokenWithValue<T> extends Token {
+export class Token<T extends TokenSyntaxKind = TokenSyntaxKind> extends IToken {
+  kind: T;
+
+  constructor(kind?: T) {
+    super();
+
+    this.kind = kind ?? SyntaxKind.UnknownToken as T;
+  }
+}
+
+export class TokenWithValue<T> extends IToken {
   value!: T;
 }
 
 export class Comment extends TokenWithValue<string> {
-  kind = SyntaxKind.Comment;
+  kind = SyntaxKind.Comment as const;
 }
 
 export class NumberLiteral extends TokenWithValue<number> {
-  kind = SyntaxKind.Number;
+  kind = SyntaxKind.NumberLiteral as const;
 }
 
 export class StringLiteral extends TokenWithValue<string> {
-  kind = SyntaxKind.String;
+  kind = SyntaxKind.StringLiteral as const;
 }
 
-export class Identifier extends Token {
-  kind = SyntaxKind.Identifier;
+export class Identifier extends IToken {
+  kind = SyntaxKind.Identifier as const;
 
   symbol?: Symbol;
 }
 
-export class VariableDeclaration extends Node {
-  kind = SyntaxKind.VariableDeclaration;
+export class VariableDeclaration extends IBranchNode {
+  kind = SyntaxKind.VariableDeclaration as const;
 
-  type!: Typename;
-  variable!: Identifier;
+  declare children: {
+    type: Typename,
+    variable: Identifier,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class UnaryExpression extends Node {
-  kind = SyntaxKind.UnaryExpression;
+export class UnaryExpression extends IBranchNode {
+  kind = SyntaxKind.UnaryExpression as const;
 
-  op!: Operator;
-  operand!: Expression;
+  declare children: {
+    op: Operator,
+    operand: Expression,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class BinaryExpression extends Node {
-  kind = SyntaxKind.BinaryExpresison;
+export class BinaryExpression extends IBranchNode {
+  kind = SyntaxKind.BinaryExpresison as const;
 
-  lhs!: Expression;
-  op!: Operator;
-  rhs!: Expression;
+  declare children: {
+    lhs: Expression,
+    op: Operator,
+    rhs: Expression,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class ElementAccessExpression extends Node {
-  kind = SyntaxKind.ElementAccessExpression;
+export class ElementAccessExpression extends IBranchNode {
+  kind = SyntaxKind.ElementAccessExpression as const;
 
-  lhs!: Expression;
-  left_op!: Token<SyntaxKind.LSQBracket>;
-  rhs!: Expression;
-  right_op!: Token<SyntaxKind.RSQBracket>;
+  declare children: {
+    lhs: Expression,
+    left_op: Token<SyntaxKind.LSQBracket>,
+    rhs: Expression,
+    right_op: Token<SyntaxKind.RSQBracket>,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class FunctionExpression extends Node {
-  kind = SyntaxKind.FunctionExpression;
+export class ExpressionList extends IBranchNode {
+  kind = SyntaxKind.ExpressionList as const;
 
-  name!: Identifier;
-  args: Expression[] = [];
+  children: (Expression | Comment)[] = [];
 }
 
-export class LambdaInlineExpression extends Node {
-  kind = SyntaxKind.LambdaInlineExpression;
+export class FunctionExpression extends IBranchNode {
+  kind = SyntaxKind.FunctionExpression as const;
 
-  lbracket!: Token<SyntaxKind.LBracket>;
-  params: (Identifier | VariableDeclaration)[] = [];
-  rbracket!: Token<SyntaxKind.RBracket>;
-  arrow!: Token<SyntaxKind.EqualsGreater>;
+  declare children: {
+    name: Identifier,
+    args: ExpressionList,
 
-  expression!: Expression;
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class LambdaExpression extends Node {
-  kind = SyntaxKind.LambdaExpression;
+export class VariableList extends IBranchNode {
+  kind = SyntaxKind.VariableList as const;
 
-  begin!: Token<SyntaxKind.Begin>;
-  function!: Token<SyntaxKind.BlocktypeTokenFunction>;
-  lbracket!: Token<SyntaxKind.LBracket>;
-  params: (Identifier | VariableDeclaration)[] = [];
-  rbracket!: Token<SyntaxKind.RBracket>;
-
-  body!: Block;
-
-  end!: Token<SyntaxKind.End>;
+  children: (Identifier | VariableDeclaration | Comment)[] = [];
 }
 
-export class VariableDeclarationStatement extends Node {
-  kind = SyntaxKind.VariableDeclarationStatement;
+export class LambdaInlineExpression extends IBranchNode {
+  kind = SyntaxKind.LambdaInlineExpression as const;
 
-  variable!: VariableDeclaration;
-  op?: Operator;
-  expression?: Expression;
+  declare children: {
+    lbracket: Token<SyntaxKind.LBracket>,
+    params: VariableList,
+    rbracket: Token<SyntaxKind.RBracket>,
+    arrow: Token<SyntaxKind.EqualsGreater>,
+
+    expression: Expression,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class SetStatement extends Node {
-  kind = SyntaxKind.SetStatement;
+export class LambdaExpression extends IBranchNode {
+  kind = SyntaxKind.LambdaExpression as const;
 
-  set!: Token<SyntaxKind.Set>;
-  variable!: Identifier;
-  to!: Token<SyntaxKind.To>;
-  expression!: Expression;
+  declare children: {
+    begin: Token<SyntaxKind.Begin>,
+    function: Token<SyntaxKind.BlocktypeFunction>,
+    lbracket: Token<SyntaxKind.LBracket>,
+    params: VariableList,
+    rbracket: Token<SyntaxKind.RBracket>,
+
+    body: StatementList,
+
+    end: Token<SyntaxKind.End>,
+
+    [key: string]: NodeWithParent,
+  };
 }
-export class LetStatement extends Node {
-  kind = SyntaxKind.LetStatement;
 
-  let!: Token<SyntaxKind.Let>;
-  variable!: Identifier | VariableDeclaration;
-  op!: Operator;
-  expression!: Expression;
+export class InvalidStatement extends IBranchNode {
+  kind = SyntaxKind.Unknown as const;
 }
 
-export class Block extends Node {
-  kind = SyntaxKind.Block;
+export class VariableDeclarationStatement extends IBranchNode {
+  kind = SyntaxKind.VariableDeclarationStatement as const;
 
-  children: Statement[] = [];
+  declare children: {
+    variable: VariableDeclaration,
+    op?: Operator,
+    expression?: Expression,
+
+    [key: string]: NodeWithParent | undefined,
+  };
+}
+
+export class SetStatement extends IBranchNode {
+  kind = SyntaxKind.SetStatement as const;
+
+  declare children: {
+    set: Token<SyntaxKind.Set>,
+    variable: Identifier,
+    to: Token<SyntaxKind.To>,
+    expression: Expression,
+
+    [key: string]: NodeWithParent,
+  };
+}
+export class LetStatement extends IBranchNode {
+  kind = SyntaxKind.LetStatement as const;
+
+  declare children: {
+    let: Token<SyntaxKind.Let>,
+    variable: Identifier | VariableDeclaration,
+    op: Operator,
+    expression: Expression,
+
+    [key: string]: NodeWithParent,
+  };
+}
+
+export class StatementList extends IBranchNode {
+  kind = SyntaxKind.StatementList as const;
+
+  children: (Statement | Comment)[] = [];
   symbol_table: SymbolTable = {};
 }
 
-export class BlocktypeExpression extends Node {
-  kind = SyntaxKind.BlocktypeExpression;
+export class PrimaryExpressionList extends IBranchNode {
+  kind = SyntaxKind.PrimaryExpressionList as const;
 
-  block_type!: Token<SyntaxKind.BlocktypeToken | SyntaxKind.BlocktypeTokenFunction>;
-  args: Node[] = [];
+  children: (PrimaryExpression | Comment)[] = [];
 }
 
-export class BeginStatement extends Node {
-  kind = SyntaxKind.BeginStatement;
+export class BlocktypeExpression extends IBranchNode {
+  kind = SyntaxKind.BlocktypeExpression as const;
+  declare parent: StatementList;
 
-  begin!: Token<SyntaxKind.Begin>;
-  block_type!: BlocktypeExpression;
-  body!: Block;
-  end!: Token<SyntaxKind.End>;
+  declare children: {
+    block_type: Token<SyntaxKind.Blocktype | SyntaxKind.BlocktypeFunction>,
+    args: PrimaryExpressionList,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class ForeachStatement extends Node {
-  kind = SyntaxKind.ForeachStatement;
+export class BeginStatement extends IBranchNode {
+  kind = SyntaxKind.BeginStatement as const;
 
-  foreach!: Token<SyntaxKind.Foreach>;
-  identifier!: Identifier | VariableDeclaration;
-  larrow!: Token<SyntaxKind.LArrow>;
-  iterable!: Expression;
+  declare children: {
+    begin: Token<SyntaxKind.Begin>,
+    block_type: BlocktypeExpression,
+    body: StatementList,
+    end: Token<SyntaxKind.End>,
 
-  body!: Block;
-
-  loop!: Token<SyntaxKind.Loop>;
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class Branch<T extends BranchKeyword> extends Node {
-  kind = SyntaxKind.Branch;
+export class ForeachStatement extends IBranchNode {
+  kind = SyntaxKind.ForeachStatement as const;
 
-  keyword!: T;
-  condition!: Expression;
-  body!: Block;
+  declare children: {
+    foreach: Token<SyntaxKind.Foreach>,
+    identifier: Identifier | VariableDeclaration,
+    larrow: Token<SyntaxKind.LArrow>,
+    iterable: Expression,
+
+    body: StatementList,
+
+    loop: Token<SyntaxKind.Loop>,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class WhileStatement extends Node {
-  kind = SyntaxKind.WhileStatement;
+export class Branch<T extends BranchKeywordSyntaxKind = BranchKeywordSyntaxKind> extends IBranchNode {
+  kind = SyntaxKind.Branch as const;
 
-  branch!: Branch<Token<SyntaxKind.While>>;
-  loop!: Token<SyntaxKind.Loop>;
+  declare children: {
+    keyword: Token<T>,
+    condition: Expression,
+    body: StatementList,
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class IfStatement extends Node {
-  kind = SyntaxKind.IfStatement;
+export class WhileStatement extends IBranchNode {
+  kind = SyntaxKind.WhileStatement as const;
 
-  branches: Branch<Token<SyntaxKind.If> | Token<SyntaxKind.Elseif>>[] = [];
-  else?: Token<SyntaxKind.Else>;
-  else_statements?: Block;
-  endif!: Token<SyntaxKind.Endif>;
+  declare children: {
+    branch: Branch<SyntaxKind.While>;
+    loop: Token<SyntaxKind.Loop>;
+
+    [key: string]: NodeWithParent,
+  };
 }
 
-export class Script extends Node {
-  kind = SyntaxKind.Script;
+export class BranchList extends IBranchNode {
+  kind = SyntaxKind.BranchList as const;
 
-  scriptname!: Token<SyntaxKind.ScriptName>;
-  name!: Identifier;
-  body!: Block;
+  children: (Branch<SyntaxKind.If | SyntaxKind.Elseif> | Comment)[] = [];
+}
 
-  comments: Comment[] = [];
+export class IfStatement extends IBranchNode {
+  kind = SyntaxKind.IfStatement as const;
+
+  declare children: {
+    branches: BranchList,
+    else?: Token<SyntaxKind.Else>,
+    else_statements?: StatementList,
+    endif: Token<SyntaxKind.Endif>,
+
+    [key: string]: NodeWithParent | undefined,
+  };
+}
+
+export class Script extends IRootNode {
+  kind = SyntaxKind.Script as const;
+
+  declare children: {
+    scriptname: Token<SyntaxKind.ScriptName>,
+    name: Identifier,
+    body: StatementList,
+
+    [key: string]: NodeWithParent,
+  };
 
   diagnostics: Diagnostic[] = [];
   semantic_tokens: Node[] = [];

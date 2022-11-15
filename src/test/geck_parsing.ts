@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { inspect } from "util";
-import { GetNodeLeafs, NodeToTreeData, ResolveSymbol } from "../geckscript/ast";
+import { GetNodeLeafs, NodeToTreeDataFull, ResolveSymbol } from "../geckscript/ast";
 
 import { Environment, TreeData } from "../geckscript/types";
 
@@ -10,7 +10,7 @@ const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toStri
 
 const scripts = new Environment();
 scripts.processScript("test.gek", data).then(script => {
-  console.log(NodeToTreeData(script));
+  console.log(NodeToTreeDataFull(script));
   console.log(GetNodeLeafs(script));
 
   console.log(scripts);

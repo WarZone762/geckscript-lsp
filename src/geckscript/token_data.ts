@@ -1,10 +1,10 @@
-import { SyntaxKind } from "./types";
+import { SyntaxKind, TokenSyntaxKind } from "./types";
 
 
 export interface TokenInfo {
   name: string;
   canonical_name: string;
-  kind: SyntaxKind;
+  kind: TokenSyntaxKind;
   wiki_page_name?: string;
 }
 
@@ -42,43 +42,43 @@ export const TokenData = (() => {
     "let": SyntaxKind.Let,
 
     // Blocktypes
-    "Function": SyntaxKind.BlocktypeTokenFunction,
-    "GameMode": SyntaxKind.BlocktypeToken,
-    "MenuMode": SyntaxKind.BlocktypeToken,
-    "OnActivate": SyntaxKind.BlocktypeToken,
-    "OnActorEquip": SyntaxKind.BlocktypeToken,
-    "OnActorUnequip": SyntaxKind.BlocktypeToken,
-    "OnAdd": SyntaxKind.BlocktypeToken,
-    "OnClose": SyntaxKind.BlocktypeToken,
-    "OnCombatEnd": SyntaxKind.BlocktypeToken,
-    "OnDeath": SyntaxKind.BlocktypeToken,
-    "OnDestructionStageChange": SyntaxKind.BlocktypeToken,
-    "OnDrop": SyntaxKind.BlocktypeToken,
-    "OnEquip": SyntaxKind.BlocktypeToken,
-    "OnFire": SyntaxKind.BlocktypeToken,
-    "OnGrab": SyntaxKind.BlocktypeToken,
-    "OnHit": SyntaxKind.BlocktypeToken,
-    "OnHitWith": SyntaxKind.BlocktypeToken,
-    "OnLoad": SyntaxKind.BlocktypeToken,
-    "OnMagicEffectHit": SyntaxKind.BlocktypeToken,
-    "OnMurder": SyntaxKind.BlocktypeToken,
-    "OnNPCActivate": SyntaxKind.BlocktypeToken,
-    "OnOpen": SyntaxKind.BlocktypeToken,
-    "OnPackageChange": SyntaxKind.BlocktypeToken,
-    "OnPackageDone": SyntaxKind.BlocktypeToken,
-    "OnPackageStart": SyntaxKind.BlocktypeToken,
-    "OnRelease": SyntaxKind.BlocktypeToken,
-    "OnReset": SyntaxKind.BlocktypeToken,
-    "OnSell": SyntaxKind.BlocktypeToken,
-    "OnStartCombat": SyntaxKind.BlocktypeToken,
-    "OnTrigger": SyntaxKind.BlocktypeToken,
-    "OnTriggerEnter": SyntaxKind.BlocktypeToken,
-    "OnTriggerLeave": SyntaxKind.BlocktypeToken,
-    "OnUnequip": SyntaxKind.BlocktypeToken,
-    "SayToDone": SyntaxKind.BlocktypeToken,
-    "ScriptEffectFinish": SyntaxKind.BlocktypeToken,
-    "ScriptEffectStart": SyntaxKind.BlocktypeToken,
-    "ScriptEffectUpdate": SyntaxKind.BlocktypeToken,
+    "Function": SyntaxKind.BlocktypeFunction,
+    "GameMode": SyntaxKind.Blocktype,
+    "MenuMode": SyntaxKind.Blocktype,
+    "OnActivate": SyntaxKind.Blocktype,
+    "OnActorEquip": SyntaxKind.Blocktype,
+    "OnActorUnequip": SyntaxKind.Blocktype,
+    "OnAdd": SyntaxKind.Blocktype,
+    "OnClose": SyntaxKind.Blocktype,
+    "OnCombatEnd": SyntaxKind.Blocktype,
+    "OnDeath": SyntaxKind.Blocktype,
+    "OnDestructionStageChange": SyntaxKind.Blocktype,
+    "OnDrop": SyntaxKind.Blocktype,
+    "OnEquip": SyntaxKind.Blocktype,
+    "OnFire": SyntaxKind.Blocktype,
+    "OnGrab": SyntaxKind.Blocktype,
+    "OnHit": SyntaxKind.Blocktype,
+    "OnHitWith": SyntaxKind.Blocktype,
+    "OnLoad": SyntaxKind.Blocktype,
+    "OnMagicEffectHit": SyntaxKind.Blocktype,
+    "OnMurder": SyntaxKind.Blocktype,
+    "OnNPCActivate": SyntaxKind.Blocktype,
+    "OnOpen": SyntaxKind.Blocktype,
+    "OnPackageChange": SyntaxKind.Blocktype,
+    "OnPackageDone": SyntaxKind.Blocktype,
+    "OnPackageStart": SyntaxKind.Blocktype,
+    "OnRelease": SyntaxKind.Blocktype,
+    "OnReset": SyntaxKind.Blocktype,
+    "OnSell": SyntaxKind.Blocktype,
+    "OnStartCombat": SyntaxKind.Blocktype,
+    "OnTrigger": SyntaxKind.Blocktype,
+    "OnTriggerEnter": SyntaxKind.Blocktype,
+    "OnTriggerLeave": SyntaxKind.Blocktype,
+    "OnUnequip": SyntaxKind.Blocktype,
+    "SayToDone": SyntaxKind.Blocktype,
+    "ScriptEffectFinish": SyntaxKind.Blocktype,
+    "ScriptEffectStart": SyntaxKind.Blocktype,
+    "ScriptEffectUpdate": SyntaxKind.Blocktype,
 
     // Operators
     "=": SyntaxKind.Equals,
@@ -125,7 +125,7 @@ export const TokenData = (() => {
     "::": SyntaxKind.DoubleColon,
     ",": SyntaxKind.Comma,
     "=>": SyntaxKind.EqualsGreater,
-  })) {
+  } as { [key: string]: TokenSyntaxKind })) {
     map[k.toLowerCase()] = {
       name: k.toLowerCase(),
       canonical_name: k,
@@ -136,8 +136,8 @@ export const TokenData = (() => {
   return map;
 })();
 
-export function GetTokenKind(token_name: string): SyntaxKind {
-  return TokenData[token_name]?.kind ?? SyntaxKind.Unknown;
+export function GetTokenKind(token_name: string): TokenSyntaxKind {
+  return TokenData[token_name]?.kind ?? SyntaxKind.UnknownToken;
 }
 
 const SyntaxKindNames = (data => {
@@ -153,15 +153,15 @@ const SyntaxKindNames = (data => {
 
   return names;
 })({
-  [SyntaxKind.Unknown]: "unknown",
+  [SyntaxKind.UnknownToken]: "unknown",
   [SyntaxKind.EOF]: "end of file",
   [SyntaxKind.Newline]: "new line",
   [SyntaxKind.Comment]: "comment",
   [SyntaxKind.Number]: "number",
   [SyntaxKind.String]: "string",
   [SyntaxKind.Identifier]: "identifier",
-  [SyntaxKind.BlocktypeToken]: "block type",
-  [SyntaxKind.BlocktypeTokenFunction]: "function",
+  [SyntaxKind.Blocktype]: "block type",
+  [SyntaxKind.BlocktypeFunction]: "function",
 });
 
 export function GetSyntaxKindName(kind: SyntaxKind): string {

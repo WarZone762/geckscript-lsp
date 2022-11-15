@@ -1,7 +1,7 @@
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 import * as ast from "../geckscript/ast";
-import { BinaryExpression, Identifier, IsAssignmentOperator, Script, SyntaxKind, Token, VariableDeclarationStatement } from "../geckscript/types";
+import { Identifier, IsAssignmentOperator, Script, SyntaxKind, Token, VariableDeclarationStatement } from "../geckscript/types";
 
 export function GetHighlight(
   script: Script,
@@ -18,18 +18,20 @@ export function GetHighlight(
       for (const ref of refs) {
         let kind: DocumentHighlightKind;
         if (
-          ref.parent?.kind === SyntaxKind.SetStatement ||
-          ref.parent?.kind === SyntaxKind.LetStatement ||
-          ref.parent?.parent?.kind === SyntaxKind.LetStatement ||
-          (ref.parent?.parent as VariableDeclarationStatement).expression != undefined ||
-          (
-            ref.parent?.kind === SyntaxKind.BinaryExpresison &&
-            IsAssignmentOperator((ref.parent as BinaryExpression).op.kind)
+          ref.parent.kind === SyntaxKind.SetStatement ||
+          ref.parent.kind === SyntaxKind.LetStatement ||
+          "parent" in ref.parent && (
+            ref.parent.parent.kind === SyntaxKind.LetStatement ||
+            (ref.parent.parent as VariableDeclarationStatement).children.expression != undefined
+          ) || (
+            ref.parent.kind === SyntaxKind.BinaryExpresison &&
+            IsAssignmentOperator(ref.parent.children.op.kind)
           )
-        )
+        ) {
           kind = DocumentHighlightKind.Write;
-        else
+        } else {
           kind = DocumentHighlightKind.Read;
+        }
 
         highlights.push({ range: ref.range, kind: kind });
       }

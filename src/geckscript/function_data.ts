@@ -48,7 +48,9 @@ function renameFunc(name: string): string {
     /(?<=^Pinto) /,
     /(?<=^Quat) /,
   ]) {
-    if (regex.test(name)) return name.replace(regex, "_");
+    if (regex.test(name)) {
+return name.replace(regex, "_");
+}
   }
 
   return name.replace(/ \(Function\)$/, "");
@@ -70,7 +72,9 @@ export async function PopulateFunctionData(update = false) {
 
   FunctionData = {};
   for (const func of functions) {
-    if (ignored_functions.find(v => v === func)) continue;
+    if (ignored_functions.find(v => v === func)) {
+continue;
+}
 
     const canoncial_name = renameFunc(func);
     const name = canoncial_name.toLowerCase();
@@ -89,7 +93,9 @@ export function GetFunctionInfo(function_name: string): FunctionInfo | undefined
 
 export async function CreateGlobalFunctionSymbol(function_name: string): Promise<Symbol | undefined> {
   const function_info = GetFunctionInfo(function_name);
-  if (function_info == undefined) return undefined;
+  if (function_info == undefined) {
+return undefined;
+}
 
   return {
     kind: SymbolKind.Function,
