@@ -3,7 +3,6 @@ import { GetTokenKind } from "./token_data";
 import { SyntaxKind, Token, Operator, IsOperator, TokenSyntaxKind } from "./types";
 
 
-// TODO: separate out wiki page name from TokenData
 export class Lexer {
   data: string;
   data_last_idx: number;
@@ -93,8 +92,8 @@ export class Lexer {
 
     while (this.moreData() && this.cur_char !== "\n") {
       if (this.cur_char === "\r" && this.lookAhead(1) === "\n") {
-break;
-}
+        break;
+      }
       this.nextCharToBuf();
     }
 
@@ -133,10 +132,10 @@ break;
 
       while (this.moreData()) {
         if (/[0-9a-fA-F]/.test(this.cur_char)) {
-this.nextCharToBuf();
-} else {
-break;
-}
+          this.nextCharToBuf();
+        } else {
+          break;
+        }
       }
 
       return this.finishToken(token);

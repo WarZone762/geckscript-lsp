@@ -14,8 +14,8 @@ export const enum SyntaxKind {
   Number,
   String,
   IdentifierToken,
-  Blocktype,
-  BlocktypeFunction,
+  BlockType,
+  BlockTypeFunction,
 
   // Typename
   Short,
@@ -112,7 +112,7 @@ export const enum SyntaxKind {
   ElementAccessExpression,
   FunctionExpression,
 
-  BlocktypeExpression,
+  BlockTypeExpression,
   Branch,
 
   // Statement
@@ -259,8 +259,8 @@ export type TokenSyntaxKind =
   | TypenameSyntaxKind
   | KeywordSynaxKind
   | BranchKeywordSyntaxKind
-  | SyntaxKind.BlocktypeFunction
-  | SyntaxKind.Blocktype
+  | SyntaxKind.BlockTypeFunction
+  | SyntaxKind.BlockType
   ;
 
 export type AssignmentOperator = Token<OperatorSyntaxKind>;
@@ -307,7 +307,48 @@ export type NodeList =
   | BranchList
   ;
 
-export type RootNode = Script
+// TODO: figure out vvv
+
+// export type Node =
+//   | Token<TokenSyntaxKind>
+//   | Comment
+//   | StringLiteral
+//   | NumberLiteral
+//   | Identifier
+//   | FunctionExpression
+//   | LambdaExpression
+//   | LambdaInlineExpression
+//   | PrimaryExpression
+//   | UnaryExpression
+//   | BinaryExpression
+//   | ElementAccessExpression
+//   | InvalidStatement
+//   | Keyword
+//   | VariableDeclarationStatement
+//   | SetStatement
+//   | LetStatement
+//   | StatementList
+//   | BeginStatement
+//   | ForeachStatement
+//   | WhileStatement
+//   | IfStatement
+//   | Expression
+//   | ExpressionList
+//   | VariableList
+//   | StatementList
+//   | PrimaryExpressionList
+//   | BranchList
+//   | Script
+//   ;
+
+// export type RootNode = Exclude<Node, ILeafNode>;
+// export type LeafNode = Exclude<Node, IRootNode>;
+// export type BranchNode = Extract<Node, IBranchNode>;
+
+// export type NodeWithParent = Extract<Node, IRootNode>;
+// export type NodeWithChildren = Extract<Node, ILeafNode>;
+
+export type RootNode = Script;
 
 export type BranchNode =
   | NodeList
@@ -455,7 +496,7 @@ export type SymbolTable = { [key: string]: Symbol };
 
 export type Constructor = new (...args: any[]) => {};
 
-function MixinParent<TBase extends Constructor>(Base: TBase) {  // TODO: replace with normal classes?
+function MixinParent<TBase extends Constructor>(Base: TBase) {
   return class _ extends Base {
     parent!: NodeWithChildren;
   };
@@ -463,11 +504,12 @@ function MixinParent<TBase extends Constructor>(Base: TBase) {  // TODO: replace
 
 function MixinChildren<TBase extends Constructor>(Base: TBase) {
   return class _ extends Base {
-    children: { [key: string]: NodeWithParent | undefined } | NodeWithParent[] = {};
+    children: { [key: string]: NodeWithParent } | NodeWithParent[] = {};
   };
 }
 
 export class INode {
+  kind!: SyntaxKind;
   range!: Range;
 
   expression_type?: Type;
@@ -519,8 +561,6 @@ export class VariableDeclaration extends IBranchNode {
   declare children: {
     type: Typename,
     variable: Identifier,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -530,8 +570,6 @@ export class UnaryExpression extends IBranchNode {
   declare children: {
     op: Operator,
     operand: Expression,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -542,8 +580,6 @@ export class BinaryExpression extends IBranchNode {
     lhs: Expression,
     op: Operator,
     rhs: Expression,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -555,8 +591,6 @@ export class ElementAccessExpression extends IBranchNode {
     left_op: Token<SyntaxKind.LSQBracket>,
     rhs: Expression,
     right_op: Token<SyntaxKind.RSQBracket>,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -571,9 +605,7 @@ export class FunctionExpression extends IBranchNode {
 
   declare children: {
     name: Identifier,
-    args: ExpressionList,
-
-    [key: string]: NodeWithParent,
+    args?: ExpressionList,
   };
 }
 
@@ -588,13 +620,11 @@ export class LambdaInlineExpression extends IBranchNode {
 
   declare children: {
     lbracket: Token<SyntaxKind.LBracket>,
-    params: VariableList,
+    params?: VariableList,
     rbracket: Token<SyntaxKind.RBracket>,
     arrow: Token<SyntaxKind.EqualsGreater>,
 
     expression: Expression,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -603,16 +633,14 @@ export class LambdaExpression extends IBranchNode {
 
   declare children: {
     begin: Token<SyntaxKind.Begin>,
-    function: Token<SyntaxKind.BlocktypeFunction>,
+    function: Token<SyntaxKind.BlockTypeFunction>,
     lbracket: Token<SyntaxKind.LBracket>,
-    params: VariableList,
+    params?: VariableList,
     rbracket: Token<SyntaxKind.RBracket>,
 
-    body: StatementList,
+    body?: StatementList,
 
     end: Token<SyntaxKind.End>,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -627,8 +655,6 @@ export class VariableDeclarationStatement extends IBranchNode {
     variable: VariableDeclaration,
     op?: Operator,
     expression?: Expression,
-
-    [key: string]: NodeWithParent | undefined,
   };
 }
 
@@ -640,8 +666,6 @@ export class SetStatement extends IBranchNode {
     variable: Identifier,
     to: Token<SyntaxKind.To>,
     expression: Expression,
-
-    [key: string]: NodeWithParent,
   };
 }
 export class LetStatement extends IBranchNode {
@@ -652,8 +676,6 @@ export class LetStatement extends IBranchNode {
     variable: Identifier | VariableDeclaration,
     op: Operator,
     expression: Expression,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -671,14 +693,12 @@ export class PrimaryExpressionList extends IBranchNode {
 }
 
 export class BlocktypeExpression extends IBranchNode {
-  kind = SyntaxKind.BlocktypeExpression as const;
+  kind = SyntaxKind.BlockTypeExpression as const;
   declare parent: StatementList;
 
   declare children: {
-    block_type: Token<SyntaxKind.Blocktype | SyntaxKind.BlocktypeFunction>,
-    args: PrimaryExpressionList,
-
-    [key: string]: NodeWithParent,
+    block_type: Token<SyntaxKind.BlockType | SyntaxKind.BlockTypeFunction>,
+    args?: PrimaryExpressionList,
   };
 }
 
@@ -688,10 +708,8 @@ export class BeginStatement extends IBranchNode {
   declare children: {
     begin: Token<SyntaxKind.Begin>,
     block_type: BlocktypeExpression,
-    body: StatementList,
+    body?: StatementList,
     end: Token<SyntaxKind.End>,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -704,11 +722,9 @@ export class ForeachStatement extends IBranchNode {
     larrow: Token<SyntaxKind.LArrow>,
     iterable: Expression,
 
-    body: StatementList,
+    body?: StatementList,
 
     loop: Token<SyntaxKind.Loop>,
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -718,9 +734,7 @@ export class Branch<T extends BranchKeywordSyntaxKind = BranchKeywordSyntaxKind>
   declare children: {
     keyword: Token<T>,
     condition: Expression,
-    body: StatementList,
-
-    [key: string]: NodeWithParent,
+    body?: StatementList,
   };
 }
 
@@ -730,8 +744,6 @@ export class WhileStatement extends IBranchNode {
   declare children: {
     branch: Branch<SyntaxKind.While>;
     loop: Token<SyntaxKind.Loop>;
-
-    [key: string]: NodeWithParent,
   };
 }
 
@@ -745,12 +757,10 @@ export class IfStatement extends IBranchNode {
   kind = SyntaxKind.IfStatement as const;
 
   declare children: {
-    branches: BranchList,
+    branches?: BranchList,
     else?: Token<SyntaxKind.Else>,
     else_statements?: StatementList,
     endif: Token<SyntaxKind.Endif>,
-
-    [key: string]: NodeWithParent | undefined,
   };
 }
 
@@ -760,9 +770,7 @@ export class Script extends IRootNode {
   declare children: {
     scriptname: Token<SyntaxKind.ScriptName>,
     name: Identifier,
-    body: StatementList,
-
-    [key: string]: NodeWithParent,
+    body?: StatementList,
   };
 
   diagnostics: Diagnostic[] = [];

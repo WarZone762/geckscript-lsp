@@ -71,7 +71,7 @@ export function GetNodeLeafs(node: NodeWithChildren): Node[] {
   ForEachChildRecursive(
     node,
     node => {
-      if (!("children" in node) || node.children.length === 0) {
+      if (!("children" in node) || Object.values(node.children).length === 0) {
         leafs.push(node);
       }
     }
@@ -306,9 +306,9 @@ export function AssignNodeSymbol(
       };
       break;
 
-    case SyntaxKind.BlocktypeFunction: {
+    case SyntaxKind.BlockTypeFunction: {
       const parent = node.parent;
-      if (parent.kind === SyntaxKind.BlocktypeExpression) {
+      if (parent.kind === SyntaxKind.BlockTypeExpression) {
         const script = parent.parent.parent;
         if (script.kind === SyntaxKind.Script) {
           global_symbol_table[script.children.name.content] = {
@@ -421,18 +421,22 @@ export function NodeToHTML(  // TODO: Integrate this to tree-view
   let cur_pos = 0;
   const text = doc.getText();
 
-  function node_to_html(node: Node): string {
-    if ("content" in node) {
-      cur_pos += (doc.offsetAt(node.range.end) - doc.offsetAt(node.range.start));
+  function node_to_html(node_tmp: Node): string {
+    if ("content" in node_tmp) {
+      cur_pos += (doc.offsetAt(node_tmp.range.end) - doc.offsetAt(node_tmp.range.start));
 
-      return `${node.content}`;
+      return `${node_tmp.content}`;
     }
 
     let html_buf = "";
 
     ForEachChild(
-      node,
+      node_tmp,
       node => {
+        if (node.parent !== node_tmp) {
+          console.log(node_tmp, node);
+        }
+
         const start = doc.offsetAt(node.range.start);
         if (cur_pos < start) {
           let buf = "";
