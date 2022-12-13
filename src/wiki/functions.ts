@@ -10,31 +10,31 @@ import { FunctionInfo } from "../geckscript/function_data";
 
 
 const CachePath = path.join(
-  __dirname,
-  "../../resources",
-  "function_page_cache.json"
+    __dirname,
+    "../../resources",
+    "function_page_cache.json"
 );
 
 const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath) ?
-  JSON.parse(fs.readFileSync(CachePath).toString()) :
-  {};
+    JSON.parse(fs.readFileSync(CachePath).toString()) :
+    {};
 
 async function SaveCache() {
-  await fs.promises.writeFile(CachePath, JSON.stringify(FunctionPageCache));
+    await fs.promises.writeFile(CachePath, JSON.stringify(FunctionPageCache));
 }
 
 async function GetCacheValue(key: string): Promise<string | undefined> {
-  if (FunctionPageCache[key] != undefined) {
-    return FunctionPageCache[key];
-  } else {
-    const value = await api.GetPageWikitext(key);
-    if (value != undefined) {
-      FunctionPageCache[key] = value;
-      await SaveCache();
-    }
+    if (FunctionPageCache[key] != undefined) {
+        return FunctionPageCache[key];
+    } else {
+        const value = await api.GetPageWikitext(key);
+        if (value != undefined) {
+            FunctionPageCache[key] = value;
+            await SaveCache();
+        }
 
-    return value;
-  }
+        return value;
+    }
 }
 
 export interface Template {
@@ -98,96 +98,96 @@ export interface FunctionDocumentation {
 }
 
 export async function GetFunctions(): Promise<string[]> {
-  return (await api.GetCategoryPages("Category:Functions (All)", ["page"]))
-    .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
+    return (await api.GetCategoryPages("Category:Functions (All)", ["page"]))
+        .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
 }
 
 // TODO: update types for the new parser
 export function ParseTemplate(element: any): Template | FunctionArgumentTemplate | FunctionTemplate {
-  const parameters: { [key: string]: any } = {};
-  for (const [k, v] of Object.entries(element.parameters)) {
-    parameters[k] = v;
-  }
+    const parameters: { [key: string]: any } = {};
+    for (const [k, v] of Object.entries(element.parameters)) {
+        parameters[k] = v;
+    }
 
-  return parameters;
+    return parameters;
 }
 
 wtf.extend((models: any, templates: any) => {
-  models.Link.prototype.markdown = function () {
-    const href = this.href().replaceAll(" ", "_");
-    const str = this.text() || this.page();
-    if (this.type() === "internal") {
-return `[${str}](https://geckwiki.com/index.php?title=${href.substring(2)})`;
-} else {
-return `[${str}](${href})`;
-}
-  };
+    models.Link.prototype.markdown = function () {
+        const href = this.href().replaceAll(" ", "_");
+        const str = this.text() || this.page();
+        if (this.type() === "internal") {
+            return `[${str}](https://geckwiki.com/index.php?title=${href.substring(2)})`;
+        } else {
+            return `[${str}](${href})`;
+        }
+    };
 
-  models.Sentence.prototype.old = {
-    markdown: models.Sentence.prototype.markdown
-  };
+    models.Sentence.prototype.old = {
+        markdown: models.Sentence.prototype.markdown
+    };
 
-  models.Sentence.prototype.markdown = function (options: any) {
-    let text = this.old.markdown.bind(this)(options);
+    models.Sentence.prototype.markdown = function (options: any) {
+        let text = this.old.markdown.bind(this)(options);
 
-    if (this.wikitext()[0] === " ") {
-text = "\t" + text + "\n";
-}
+        if (this.wikitext()[0] === " ") {
+            text = "\t" + text + "\n";
+        }
 
 
-    return text;
-  };
+        return text;
+    };
 
-  templates.pre = (tmpl: any, list: any, parse: any) => {
-    const obj = parse(tmpl);
-    list.push(obj);
+    templates.pre = (tmpl: any, list: any, parse: any) => {
+        const obj = parse(tmpl);
+        list.push(obj);
 
-    obj.inner = "\n " + obj.inner.replaceAll("\n", "\n\n ") + "\n";
-    return obj.inner;
-  };
+        obj.inner = "\n " + obj.inner.replaceAll("\n", "\n\n ") + "\n";
+        return obj.inner;
+    };
 
-  templates.functionargument = (tmpl: any, list: any, parse: any) => {
-    const obj = parse(tmpl);
-    list.push(obj);
+    templates.functionargument = (tmpl: any, list: any, parse: any) => {
+        const obj = parse(tmpl);
+        list.push(obj);
 
-    return `${JSON.stringify(obj)},`;
-  };
+        return `${JSON.stringify(obj)},`;
+    };
 
-  templates.function = (tmpl: any, list: any, parse: any) => {
-    const obj = parse(tmpl);
+    templates.function = (tmpl: any, list: any, parse: any) => {
+        const obj = parse(tmpl);
 
-    if (obj.arguments != undefined) {
-obj.arguments = JSON.parse(
-        `[${obj.arguments.substring(0, obj.arguments.length - 1)}]`
-      );
-}
+        if (obj.arguments != undefined) {
+            obj.arguments = JSON.parse(
+                `[${obj.arguments.substring(0, obj.arguments.length - 1)}]`
+            );
+        }
 
-    list.push(obj);
+        list.push(obj);
 
-    return "";
-  };
+        return "";
+    };
 });
 
 export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation | undefined> {
-  let text = await GetCacheValue(page_name);
-  if (text == undefined) {
-return undefined;
-}
+    let text = await GetCacheValue(page_name);
+    if (text == undefined) {
+        return undefined;
+    }
 
-  text = text
-    .replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}")
-    .replaceAll(/^\* /gm, "*");
+    text = text
+        .replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}")
+        .replaceAll(/^\* /gm, "*");
 
-  const page = wtf(text);
+    const page = wtf(text);
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const template = page.template("function")?.json() as FunctionTemplate;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const template = page.template("function")?.json() as FunctionTemplate;
 
-  return {
-    template: template,
-    text: (page as any).markdown().trim(),
-  };
+    return {
+        template: template,
+        text: (page as any).markdown().trim(),
+    };
 }
 
 // GetFunctionDocumentation("StopQuest").then(d => {
@@ -196,55 +196,55 @@ return undefined;
 // });
 
 export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation): string {
-  let signature = "";
+    let signature = "";
 
-  if (
-    doc.template.returnval != undefined ||
+    if (
+        doc.template.returnval != undefined ||
     doc.template.returntype != undefined
-  ) {
-    signature += "(";
+    ) {
+        signature += "(";
 
-    if (doc.template.returnval != undefined) {
-signature += `${doc.template.returnval}:`;
-}
+        if (doc.template.returnval != undefined) {
+            signature += `${doc.template.returnval}:`;
+        }
 
-    if (doc.template.returntype != undefined) {
-signature += doc.template.returntype;
-}
+        if (doc.template.returntype != undefined) {
+            signature += doc.template.returntype;
+        }
 
-    signature += ") ";
-  }
-
-  if (doc.template.referencetype != undefined) {
-signature += `${doc.template.referencetype}.`;
-}
-
-  signature += `${doc.template.name ?? func_info.canonical_name} `;
-
-  for (const arg of doc.template.arguments ?? []) {
-    if (arg instanceof String) {
-      signature += arg;
-    } else {
-      if ((arg as FunctionArgumentTemplate)?.name != undefined) {
-signature += `${(arg as FunctionArgumentTemplate).name}:`;
-}
-
-      if ((arg as FunctionArgumentTemplate)?.type != undefined) {
-signature += `${(arg as FunctionArgumentTemplate).type}`;
-}
-
-      if ((arg as FunctionArgumentTemplate)?.value != undefined) {
-signature += `{${(arg as FunctionArgumentTemplate).value}}`;
-}
-
-      if ((arg as FunctionArgumentTemplate)?.optional != undefined) {
-        signature += "?";
-      }
-
+        signature += ") ";
     }
 
-    signature += " ";
-  }
+    if (doc.template.referencetype != undefined) {
+        signature += `${doc.template.referencetype}.`;
+    }
 
-  return signature;
+    signature += `${doc.template.name ?? func_info.canonical_name} `;
+
+    for (const arg of doc.template.arguments ?? []) {
+        if (arg instanceof String) {
+            signature += arg;
+        } else {
+            if ((arg as FunctionArgumentTemplate)?.name != undefined) {
+                signature += `${(arg as FunctionArgumentTemplate).name}:`;
+            }
+
+            if ((arg as FunctionArgumentTemplate)?.type != undefined) {
+                signature += `${(arg as FunctionArgumentTemplate).type}`;
+            }
+
+            if ((arg as FunctionArgumentTemplate)?.value != undefined) {
+                signature += `{${(arg as FunctionArgumentTemplate).value}}`;
+            }
+
+            if ((arg as FunctionArgumentTemplate)?.optional != undefined) {
+                signature += "?";
+            }
+
+        }
+
+        signature += " ";
+    }
+
+    return signature;
 }

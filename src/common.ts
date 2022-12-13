@@ -1,24 +1,24 @@
 export class StringBuffer {
-  buf: Buffer;
-  pos: number;
+    buf: Buffer;
+    pos: number;
 
-  constructor(size: number) {
-    this.buf = Buffer.allocUnsafe(size * 4);
-    this.pos = 0;
-  }
+    constructor(size: number) {
+        this.buf = Buffer.allocUnsafe(size * 4);
+        this.pos = 0;
+    }
 
-  append(char: string): void {
-    this.pos += this.buf.write(char, this.pos);
-  }
+    append(char: string): void {
+        this.pos += this.buf.write(char, this.pos);
+    }
 
-  toString(): string {
-    return this.buf.toString(undefined, 0, this.pos);
-  }
+    toString(): string {
+        return this.buf.toString(undefined, 0, this.pos);
+    }
 
-  flush(): string {
-    const str = this.buf.toString(undefined, 0, this.pos);
-    this.pos = 0;
+    flush(): string {
+        const str = this.buf.toString(undefined, 0, this.pos);
+        this.pos = 0;
 
-    return str;
-  }
+        return str;
+    }
 }

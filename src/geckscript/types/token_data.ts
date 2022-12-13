@@ -1,171 +1,201 @@
-import { SyntaxKind, TokenSyntaxKind } from "./types";
+import { SyntaxKind, TokenSyntaxKind } from "./syntax_node";
 
 
 export interface TokenInfo {
-  name: string;
-  canonical_name: string;
-  kind: TokenSyntaxKind;
-  wiki_page_name?: string;
+    name: string;
+    canonical_name: string;
+    kind: TokenSyntaxKind;
+    wiki_page_name?: string;
 }
 
 export const TokenData = (() => {
-  const map: { [key: string]: TokenInfo } = {};
+    const map: { [key: string]: TokenInfo } = {};
 
-  for (const [k, v] of Object.entries({
-    // Typenames
-    "short": SyntaxKind.Short,
-    "int": SyntaxKind.Int,
-    "long": SyntaxKind.Long,
-    "float": SyntaxKind.Float,
-    "ref": SyntaxKind.Reference,
-    "reference": SyntaxKind.Reference,
-    "string_var": SyntaxKind.StringVar,
-    "array_var": SyntaxKind.ArrayVar,
+    for (const [k, v] of Object.entries({
+        // Typenames
+        "short": SyntaxKind.Short,
+        "int": SyntaxKind.Int,
+        "long": SyntaxKind.Long,
+        "float": SyntaxKind.Float,
+        "ref": SyntaxKind.Reference,
+        "reference": SyntaxKind.Reference,
+        "string_var": SyntaxKind.StringVar,
+        "array_var": SyntaxKind.ArrayVar,
 
-    // Keywords
-    "scn": SyntaxKind.ScriptName,
-    "scriptname": SyntaxKind.ScriptName,
-    "begin": SyntaxKind.Begin,
-    "end": SyntaxKind.End,
-    "if": SyntaxKind.If,
-    "elseif": SyntaxKind.Elseif,
-    "else": SyntaxKind.Else,
-    "endif": SyntaxKind.Endif,
-    "while": SyntaxKind.While,
-    "foreach": SyntaxKind.Foreach,
-    "loop": SyntaxKind.Loop,
-    "continue": SyntaxKind.Continue,
-    "break": SyntaxKind.Break,
-    "return": SyntaxKind.Return,
-    "set": SyntaxKind.Set,
-    "to": SyntaxKind.To,
-    "let": SyntaxKind.Let,
+        // Keywords
+        "scn": SyntaxKind.ScriptName,
+        "scriptname": SyntaxKind.ScriptName,
+        "begin": SyntaxKind.Begin,
+        "end": SyntaxKind.End,
+        "if": SyntaxKind.If,
+        "elseif": SyntaxKind.Elseif,
+        "else": SyntaxKind.Else,
+        "endif": SyntaxKind.Endif,
+        "while": SyntaxKind.While,
+        "foreach": SyntaxKind.Foreach,
+        "loop": SyntaxKind.Loop,
+        "continue": SyntaxKind.Continue,
+        "break": SyntaxKind.Break,
+        "return": SyntaxKind.Return,
+        "set": SyntaxKind.Set,
+        "to": SyntaxKind.To,
+        "let": SyntaxKind.Let,
 
-    // Blocktypes
-    "Function": SyntaxKind.BlockTypeFunction,
-    "GameMode": SyntaxKind.BlockType,
-    "MenuMode": SyntaxKind.BlockType,
-    "OnActivate": SyntaxKind.BlockType,
-    "OnActorEquip": SyntaxKind.BlockType,
-    "OnActorUnequip": SyntaxKind.BlockType,
-    "OnAdd": SyntaxKind.BlockType,
-    "OnClose": SyntaxKind.BlockType,
-    "OnCombatEnd": SyntaxKind.BlockType,
-    "OnDeath": SyntaxKind.BlockType,
-    "OnDestructionStageChange": SyntaxKind.BlockType,
-    "OnDrop": SyntaxKind.BlockType,
-    "OnEquip": SyntaxKind.BlockType,
-    "OnFire": SyntaxKind.BlockType,
-    "OnGrab": SyntaxKind.BlockType,
-    "OnHit": SyntaxKind.BlockType,
-    "OnHitWith": SyntaxKind.BlockType,
-    "OnLoad": SyntaxKind.BlockType,
-    "OnMagicEffectHit": SyntaxKind.BlockType,
-    "OnMurder": SyntaxKind.BlockType,
-    "OnNPCActivate": SyntaxKind.BlockType,
-    "OnOpen": SyntaxKind.BlockType,
-    "OnPackageChange": SyntaxKind.BlockType,
-    "OnPackageDone": SyntaxKind.BlockType,
-    "OnPackageStart": SyntaxKind.BlockType,
-    "OnRelease": SyntaxKind.BlockType,
-    "OnReset": SyntaxKind.BlockType,
-    "OnSell": SyntaxKind.BlockType,
-    "OnStartCombat": SyntaxKind.BlockType,
-    "OnTrigger": SyntaxKind.BlockType,
-    "OnTriggerEnter": SyntaxKind.BlockType,
-    "OnTriggerLeave": SyntaxKind.BlockType,
-    "OnUnequip": SyntaxKind.BlockType,
-    "SayToDone": SyntaxKind.BlockType,
-    "ScriptEffectFinish": SyntaxKind.BlockType,
-    "ScriptEffectStart": SyntaxKind.BlockType,
-    "ScriptEffectUpdate": SyntaxKind.BlockType,
+        // Blocktypes
+        "Function": SyntaxKind.BlockTypeFunction,
+        "GameMode": SyntaxKind.BlockType,
+        "MenuMode": SyntaxKind.BlockType,
+        "OnActivate": SyntaxKind.BlockType,
+        "OnActorEquip": SyntaxKind.BlockType,
+        "OnActorUnequip": SyntaxKind.BlockType,
+        "OnAdd": SyntaxKind.BlockType,
+        "OnClose": SyntaxKind.BlockType,
+        "OnCombatEnd": SyntaxKind.BlockType,
+        "OnDeath": SyntaxKind.BlockType,
+        "OnDestructionStageChange": SyntaxKind.BlockType,
+        "OnDrop": SyntaxKind.BlockType,
+        "OnEquip": SyntaxKind.BlockType,
+        "OnFire": SyntaxKind.BlockType,
+        "OnGrab": SyntaxKind.BlockType,
+        "OnHit": SyntaxKind.BlockType,
+        "OnHitWith": SyntaxKind.BlockType,
+        "OnLoad": SyntaxKind.BlockType,
+        "OnMagicEffectHit": SyntaxKind.BlockType,
+        "OnMurder": SyntaxKind.BlockType,
+        "OnNPCActivate": SyntaxKind.BlockType,
+        "OnOpen": SyntaxKind.BlockType,
+        "OnPackageChange": SyntaxKind.BlockType,
+        "OnPackageDone": SyntaxKind.BlockType,
+        "OnPackageStart": SyntaxKind.BlockType,
+        "OnRelease": SyntaxKind.BlockType,
+        "OnReset": SyntaxKind.BlockType,
+        "OnSell": SyntaxKind.BlockType,
+        "OnStartCombat": SyntaxKind.BlockType,
+        "OnTrigger": SyntaxKind.BlockType,
+        "OnTriggerEnter": SyntaxKind.BlockType,
+        "OnTriggerLeave": SyntaxKind.BlockType,
+        "OnUnequip": SyntaxKind.BlockType,
+        "SayToDone": SyntaxKind.BlockType,
+        "ScriptEffectFinish": SyntaxKind.BlockType,
+        "ScriptEffectStart": SyntaxKind.BlockType,
+        "ScriptEffectUpdate": SyntaxKind.BlockType,
 
-    // Operators
-    "=": SyntaxKind.Equals,
-    ":=": SyntaxKind.ColonEquals,
-    "+=": SyntaxKind.PlusEquals,
-    "-=": SyntaxKind.MinusEquals,
-    "*=": SyntaxKind.AsteriskEquals,
-    "/=": SyntaxKind.SlashEquals,
-    "%=": SyntaxKind.PercentEquals,
-    "^=": SyntaxKind.CircumflexEquals,
-    "|=": SyntaxKind.VBarEquals,
-    "&=": SyntaxKind.AmpersandEquals,
-    "!": SyntaxKind.Exclamation,
-    "||": SyntaxKind.DoubleVBar,
-    "&&": SyntaxKind.DoubleAmpersand,
-    "==": SyntaxKind.DoubleEquals,
-    "!=": SyntaxKind.ExclamationEquals,
-    ">": SyntaxKind.Greater,
-    "<": SyntaxKind.Less,
-    ">=": SyntaxKind.GreaterEqulas,
-    "<=": SyntaxKind.LessEqulas,
-    "+": SyntaxKind.Plus,
-    "-": SyntaxKind.Minus,
-    "*": SyntaxKind.Asterisk,
-    "/": SyntaxKind.Slash,
-    "%": SyntaxKind.Percent,
-    "^": SyntaxKind.Circumflex,
-    "|": SyntaxKind.VBar,
-    "&": SyntaxKind.Ampersand,
-    "<<": SyntaxKind.DoubleLess,
-    ">>": SyntaxKind.DoubleGreater,
-    "$": SyntaxKind.Dollar,
-    "#": SyntaxKind.Hash,
-    "(": SyntaxKind.LParen,
-    ")": SyntaxKind.RParen,
-    "[": SyntaxKind.LSQBracket,
-    "]": SyntaxKind.RSQBracket,
-    "{": SyntaxKind.LBracket,
-    "}": SyntaxKind.RBracket,
-    ":": SyntaxKind.Colon,
-    "<-": SyntaxKind.LArrow,
-    "->": SyntaxKind.RArrow,
-    ".": SyntaxKind.Dot,
-    "::": SyntaxKind.DoubleColon,
-    ",": SyntaxKind.Comma,
-    "=>": SyntaxKind.EqualsGreater,
-  } as { [key: string]: TokenSyntaxKind })) {
-    map[k.toLowerCase()] = {
-      name: k.toLowerCase(),
-      canonical_name: k,
-      kind: v,
-    };
-  }
+        // Operators
+        "=": SyntaxKind.Equals,
+        ":=": SyntaxKind.ColonEquals,
+        "+=": SyntaxKind.PlusEquals,
+        "-=": SyntaxKind.MinusEquals,
+        "*=": SyntaxKind.AsteriskEquals,
+        "/=": SyntaxKind.SlashEquals,
+        "%=": SyntaxKind.PercentEquals,
+        "^=": SyntaxKind.CircumflexEquals,
+        "|=": SyntaxKind.VBarEquals,
+        "&=": SyntaxKind.AmpersandEquals,
+        "!": SyntaxKind.Exclamation,
+        "||": SyntaxKind.DoubleVBar,
+        "&&": SyntaxKind.DoubleAmpersand,
+        "==": SyntaxKind.DoubleEquals,
+        "!=": SyntaxKind.ExclamationEquals,
+        ">": SyntaxKind.Greater,
+        "<": SyntaxKind.Less,
+        ">=": SyntaxKind.GreaterEqulas,
+        "<=": SyntaxKind.LessEqulas,
+        "+": SyntaxKind.Plus,
+        "-": SyntaxKind.Minus,
+        "*": SyntaxKind.Asterisk,
+        "/": SyntaxKind.Slash,
+        "%": SyntaxKind.Percent,
+        "^": SyntaxKind.Circumflex,
+        "|": SyntaxKind.VBar,
+        "&": SyntaxKind.Ampersand,
+        "<<": SyntaxKind.DoubleLess,
+        ">>": SyntaxKind.DoubleGreater,
+        "$": SyntaxKind.Dollar,
+        "#": SyntaxKind.Hash,
+        "(": SyntaxKind.LParen,
+        ")": SyntaxKind.RParen,
+        "[": SyntaxKind.LSQBracket,
+        "]": SyntaxKind.RSQBracket,
+        "{": SyntaxKind.LBracket,
+        "}": SyntaxKind.RBracket,
+        ":": SyntaxKind.Colon,
+        "<-": SyntaxKind.LArrow,
+        "->": SyntaxKind.RArrow,
+        ".": SyntaxKind.Dot,
+        "::": SyntaxKind.DoubleColon,
+        ",": SyntaxKind.Comma,
+        "=>": SyntaxKind.EqualsGreater,
+    } as { [key: string]: TokenSyntaxKind })) {
+        map[k.toLowerCase()] = {
+            name: k.toLowerCase(),
+            canonical_name: k,
+            kind: v,
+        };
+    }
 
-  return map;
+    return map;
 })();
 
 export function GetTokenKind(token_name: string): TokenSyntaxKind {
-  return TokenData[token_name]?.kind ?? SyntaxKind.UnknownToken;
+    return TokenData[token_name]?.kind ?? SyntaxKind.UnknownToken;
 }
 
 const SyntaxKindNames = (data => {
-  const names: { [key in SyntaxKind]?: string } = {};
+    const names: { [key in SyntaxKind]?: string } = {};
 
-  for (const token of Object.values(TokenData)) {
-    names[token.kind] = token.canonical_name;
-  }
+    for (const token of Object.values(TokenData)) {
+        names[token.kind] = token.canonical_name;
+    }
 
-  for (const [k, v] of Object.entries(data)) {
-    names[Number(k) as SyntaxKind] = v;
-  }
+    for (const [k, v] of Object.entries(data)) {
+        names[Number(k) as SyntaxKind] = v;
+    }
 
-  return names;
+    return names;
 })({
-  [SyntaxKind.UnknownToken]: "unknown",
-  [SyntaxKind.EOF]: "end of file",
-  [SyntaxKind.Newline]: "new line",
-  [SyntaxKind.Comment]: "comment",
-  [SyntaxKind.Number]: "number",
-  [SyntaxKind.String]: "string",
-  [SyntaxKind.Identifier]: "identifier",
-  [SyntaxKind.BlockType]: "block type",
-  [SyntaxKind.BlockTypeFunction]: "function",
+    [SyntaxKind.UnknownToken]: "unknown",
+    [SyntaxKind.EOF]: "end of file",
+    [SyntaxKind.Whitespace]: "whitespace",
+    [SyntaxKind.Newline]: "new line",
+    [SyntaxKind.Comment]: "comment",
+    [SyntaxKind.Number]: "number",
+    [SyntaxKind.String]: "string",
+    [SyntaxKind.Identifier]: "identifier",
+    [SyntaxKind.BlockType]: "block type designator",
+    [SyntaxKind.BlockTypeFunction]: "function block type designator",
+
+    [SyntaxKind.ErrorNode]: "error",
+    [SyntaxKind.VariableDeclaration]: "variable declaration",
+
+    [SyntaxKind.VariableList]: "variable list",
+    [SyntaxKind.PrimaryExpressionList]: "primary expression list",
+    [SyntaxKind.ExpressionList]: "expression list",
+    [SyntaxKind.BranchList]: "branch list",
+    [SyntaxKind.StatementList]: "statement list",
+
+    [SyntaxKind.LambdaExpression]: "lambda",
+    [SyntaxKind.LambdaInlineExpression]: "inline lambda",
+    [SyntaxKind.UnaryExpression]: "unary expression",
+    [SyntaxKind.BinaryExpresison]: "binary expression",
+    [SyntaxKind.ElementAccessExpression]: "element access",
+    [SyntaxKind.FunctionExpression]: "function call",
+
+    [SyntaxKind.BlockTypeExpression]: "blocktype expression",
+    [SyntaxKind.Branch]: "branch",
+
+    [SyntaxKind.VariableDeclarationStatement]: "variable declaration statement",
+    [SyntaxKind.SetStatement]: "set statement",
+    [SyntaxKind.LetStatement]: "let statement",
+    [SyntaxKind.BeginStatement]: "begin statement",
+    [SyntaxKind.IfStatement]: "if statement",
+    [SyntaxKind.WhileStatement]: "while statement",
+    [SyntaxKind.ForeachStatement]: "foreach statement",
+
+    [SyntaxKind.Script]: "script",
 });
 
 export function GetSyntaxKindName(kind: SyntaxKind): string {
-  return SyntaxKindNames[kind] ?? `unable to find SyntaxKind(${kind}) name`;
+    return SyntaxKindNames[kind] ?? `unable to find SyntaxKind(${kind}) name`;
 }
 
 
