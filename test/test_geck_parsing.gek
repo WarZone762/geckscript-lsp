@@ -1,5 +1,9 @@
 scn ScriptName
 
+begin MenuMode 1024
+
+end
+
 ; begin MenuMode 1024
 ;   fun 1 (fun 1 2) 2 3
 

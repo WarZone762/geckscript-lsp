@@ -1,17 +1,14 @@
 import { StringBuffer } from "../common";
+import { is_op, OpSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./syntax_kind/generated";
+import { Token } from "./types/syntax_node";
 import { GetTokenKind } from "./types/token_data";
-import { SyntaxKind, Token, IsOperator, TokenSyntaxKind, OperatorSyntaxKind } from "./types/syntax_node";
 
 
 export class Lexer {
     data: string;
-
     cur_pos = 0;
-
     cur_char: string;
-
     prev_token: Token | undefined;
-
     buf: StringBuffer;
 
     constructor(text: string) {
@@ -38,7 +35,7 @@ export class Lexer {
     }
 
     startToken<T extends TokenSyntaxKind = TokenSyntaxKind>(kind?: T): Token<T> {
-        const token = new Token(kind ?? SyntaxKind.UnknownToken);
+        const token = Token(kind ?? SyntaxKind.UNKNOWN);
         token.offset = this.cur_pos;
 
         return token as Token<T>;
@@ -50,8 +47,8 @@ export class Lexer {
         return token;
     }
 
-    consumeWhitespace(): Token<SyntaxKind.Whitespace> {
-        const token = this.startToken(SyntaxKind.Whitespace);
+    consumeWhitespace(): Token<SyntaxKind.WHITESPACE> {
+        const token = this.startToken(SyntaxKind.WHITESPACE);
 
         this.nextCharToBuf();
         while (this.moreData() && /[^\S\n]/.test(this.cur_char)) {
@@ -63,8 +60,8 @@ export class Lexer {
         return token;
     }
 
-    consumeNewline(): Token<SyntaxKind.Newline> {
-        let token = this.startToken(SyntaxKind.Newline);
+    consumeNewline(): Token<SyntaxKind.NEWLINE> {
+        let token = this.startToken(SyntaxKind.NEWLINE);
 
         this.nextCharToBuf();
         token = this.finishToken(token);
@@ -72,8 +69,8 @@ export class Lexer {
         return token;
     }
 
-    consumeComment(): Token<SyntaxKind.Comment> {
-        const token = this.startToken(SyntaxKind.Comment);
+    consumeComment(): Token<SyntaxKind.COMMENT> {
+        const token = this.startToken(SyntaxKind.COMMENT);
 
         while (this.moreData() && this.cur_char !== "\n") {
             if (this.cur_char === "\r" && this.lookAhead(1) === "\n") {
@@ -87,8 +84,8 @@ export class Lexer {
         return token;
     }
 
-    consumeString(): Token<SyntaxKind.String> {
-        const token = this.startToken(SyntaxKind.String);
+    consumeString(): Token<SyntaxKind.STRING> {
+        const token = this.startToken(SyntaxKind.STRING);
 
         const quote: string = this.cur_char;
 
@@ -105,8 +102,8 @@ export class Lexer {
         return this.finishToken(token);
     }
 
-    consumeNumber(): Token<SyntaxKind.Number> {
-        const token = this.startToken(SyntaxKind.Number);
+    consumeNumber(): Token<SyntaxKind.NUMBER_INT> {
+        const token = this.startToken(SyntaxKind.NUMBER_INT);
 
         if (
             this.cur_char === "0" &&
@@ -147,28 +144,28 @@ export class Lexer {
         return this.finishToken(token);
     }
 
-    consumeOperator(): Token<OperatorSyntaxKind | SyntaxKind.UnknownToken> {
+    consumeOperator(): Token<OpSyntaxKind | SyntaxKind.UNKNOWN> {
         const next_char = this.lookAhead(1);
         if (next_char != undefined) {
             const operator = this.cur_char + next_char;
-            if (IsOperator(GetTokenKind(operator))) {
+            if (is_op(GetTokenKind(operator))) {
                 const token = this.startToken(GetTokenKind(operator));
 
                 this.nextCharToBuf();
                 this.nextCharToBuf();
 
-                return this.finishToken(token) as Token<OperatorSyntaxKind>;
+                return this.finishToken(token) as Token<OpSyntaxKind>;
             }
         }
 
-        if (IsOperator(GetTokenKind(this.cur_char))) {
+        if (is_op(GetTokenKind(this.cur_char))) {
             const token = this.startToken(GetTokenKind(this.cur_char));
             this.nextCharToBuf();
 
-            return this.finishToken(token) as Token<OperatorSyntaxKind>;
+            return this.finishToken(token) as Token<OpSyntaxKind>;
         }
 
-        const token = this.startToken(SyntaxKind.UnknownToken);
+        const token = this.startToken(SyntaxKind.UNKNOWN);
 
         this.nextCharToBuf();
 
@@ -184,7 +181,7 @@ export class Lexer {
 
         const kind = GetTokenKind(this.buf.toString().toLowerCase());
 
-        token.kind = kind !== SyntaxKind.UnknownToken ? kind : SyntaxKind.Identifier;
+        token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.NAME;
 
         return this.finishToken(token);
     }
@@ -222,10 +219,17 @@ export class Lexer {
 
             return token;
         } else {
-            const eof = new Token(SyntaxKind.EOF);
+            const eof = Token(SyntaxKind.EOF);
             eof.offset = this.cur_pos;
 
             return eof;
         }
+    }
+
+    *lex(): Generator<Token> {
+        while (this.moreData()) {
+            yield this.lexToken();
+        }
+        yield this.lexToken();
     }
 }

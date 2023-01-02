@@ -17,7 +17,7 @@ import * as TreeViewServer from "./tree_view/server";
 
 // import * as Wiki from "./wiki/wiki";
 import { Token } from "./geckscript/types/syntax_node";
-import { Environment } from "./geckscript/types/ast_node";
+// import { Environment } from "./geckscript/ast/generated";
 import * as ast from "./geckscript/ast";
 // import * as ST from "./language_features/semantic_tokens";
 import * as FD from "./geckscript/function_data";
@@ -34,7 +34,7 @@ const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const environment: Environment = new Environment();
+// const environment: Environment = new Environment();
 
 connection.onInitialize(
     async (params: InitializeParams) => {
@@ -79,13 +79,13 @@ documents.onDidChangeContent(
     async (params) => {
         const doc = params.document;
 
-        const script = await environment.processDocument(doc);
+        // const script = await environment.processDocument(doc);
 
-        fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
+        // fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
 
-        tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
+        // tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
 
-        connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.parsed.diagnostics });
+        // connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.parsed.diagnostics });
     }
 );
 
@@ -104,17 +104,17 @@ documents.onDidChangeContent(
 //   }
 // );
 
-connection.onHover(
-    async (params: HoverParams): Promise<Hover | null> => {
-        const doc = documents.get(params.textDocument.uri)!;
+// connection.onHover(
+//     async (params: HoverParams): Promise<Hover | null> => {
+//         const doc = documents.get(params.textDocument.uri)!;
 
-        const token = ast.TokenAtPosition(environment.map[doc.uri].parsed.script, doc.offsetAt(params.position));
+//         const token = ast.TokenAtPosition(environment.map[doc.uri].parsed.script, doc.offsetAt(params.position));
 
-        return {
-            contents: String(token?.text)
-        };
-    }
-);
+//         return {
+//             contents: String(token?.text)
+//         };
+//     }
+// );
 
 // connection.onDocumentHighlight(
 //   (params) => {

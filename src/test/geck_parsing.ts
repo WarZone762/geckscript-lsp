@@ -1,17 +1,12 @@
-// import * as fs from "fs";
-// import * as path from "path";
-// import { inspect } from "util";
-// import { Leafs, ToTreeDataFull } from "../geckscript/ast";
+import * as fs from "fs";
+import * as path from "path";
+import { inspect } from "util";
+import { parse_string, tree_to_str } from "../geckscript/parsing";
 
-// import { Environment, TreeData } from "../geckscript/types";
-
-// const data = fs.readFileSync(path.join(__dirname, "../../test/test_geck_parsing.gek")).toString();
+const data = fs.readFileSync(path.join(__dirname, "../../test/test_geck_parsing.gek")).toString();
 // const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toString();
 
-// const scripts = new Environment();
-// scripts.processScript("test.gek", data).then(script => {
-//   console.log(NodeToTreeDataFull(script));
-//   console.log(GetNodeLeafs(script));
+const output = parse_string(data);
 
-//   console.log(scripts);
-// });
+console.log(tree_to_str(output[0]));
+console.log(output[1]);

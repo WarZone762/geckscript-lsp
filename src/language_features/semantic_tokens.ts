@@ -1,6 +1,6 @@
 import { SemanticTokens, SemanticTokensBuilder, SemanticTokensLegend } from "vscode-languageserver/node";
 
-import { Script } from "../geckscript/types/syntax_node";
+import { Script } from "../geckscript/ast/generated";
 
 export const Legend: SemanticTokensLegend = {
     tokenTypes: [

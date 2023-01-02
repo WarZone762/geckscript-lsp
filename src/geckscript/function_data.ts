@@ -2,7 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 
 import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions";
-import { Symbol, SymbolKind, Type } from "./types/syntax_node";
+import { Symbol, SymbolKind, ExprType } from "./types/hir";
 
 
 export interface FunctionInfo {
@@ -56,7 +56,7 @@ function renameFunc(name: string): string {
     return name.replace(/ \(Function\)$/, "");
 }
 
-export let FunctionData: { [key: string]: FunctionInfo } = {};
+export let FunctionData: { [key: string]: FunctionInfo; } = {};
 
 export async function PopulateFunctionData(update = false) {
     let functions: string[] = [];
@@ -100,7 +100,7 @@ export async function CreateGlobalFunctionSymbol(function_name: string): Promise
     return {
         kind: SymbolKind.Function,
         name: function_info.canonical_name,
-        type: Type.Ambiguous,
+        type: ExprType.Ambiguous,
     };
 }
 

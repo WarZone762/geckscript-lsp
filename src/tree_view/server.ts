@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import * as mime from "mime";
-import { TreeData } from "../geckscript/types/syntax_node";
+import { TreeData } from "../geckscript/types/hir";
 
 const public_path = path.join(__dirname, "../../../tree-view/dist");
 

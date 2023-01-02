@@ -1,4 +1,4 @@
-import { SyntaxKind, TokenSyntaxKind } from "./syntax_node";
+import { SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated";
 
 
 export interface TokenInfo {
@@ -9,123 +9,123 @@ export interface TokenInfo {
 }
 
 export const TokenData = (() => {
-    const map: { [key: string]: TokenInfo } = {};
+    const map: { [key: string]: TokenInfo; } = {};
 
     for (const [k, v] of Object.entries({
         // Typenames
-        "short": SyntaxKind.Short,
-        "int": SyntaxKind.Int,
-        "long": SyntaxKind.Long,
-        "float": SyntaxKind.Float,
-        "ref": SyntaxKind.Reference,
-        "reference": SyntaxKind.Reference,
-        "string_var": SyntaxKind.StringVar,
-        "array_var": SyntaxKind.ArrayVar,
+        "short": SyntaxKind.SHORT_TYPE,
+        "int": SyntaxKind.INT_TYPE,
+        "long": SyntaxKind.LONG_TYPE,
+        "float": SyntaxKind.FLOAT_TYPE,
+        "ref": SyntaxKind.REFERENCE_TYPE,
+        "reference": SyntaxKind.REFERENCE_TYPE,
+        "string_var": SyntaxKind.STRING_VAR_TYPE,
+        "array_var": SyntaxKind.ARRAY_VAR_TYPE,
 
         // Keywords
-        "scn": SyntaxKind.ScriptName,
-        "scriptname": SyntaxKind.ScriptName,
-        "begin": SyntaxKind.Begin,
-        "end": SyntaxKind.End,
-        "if": SyntaxKind.If,
-        "elseif": SyntaxKind.Elseif,
-        "else": SyntaxKind.Else,
-        "endif": SyntaxKind.Endif,
-        "while": SyntaxKind.While,
-        "foreach": SyntaxKind.Foreach,
-        "loop": SyntaxKind.Loop,
-        "continue": SyntaxKind.Continue,
-        "break": SyntaxKind.Break,
-        "return": SyntaxKind.Return,
-        "set": SyntaxKind.Set,
-        "to": SyntaxKind.To,
-        "let": SyntaxKind.Let,
+        "scn": SyntaxKind.SCRIPTNAME_KW,
+        "scriptname": SyntaxKind.SCRIPTNAME_KW,
+        "begin": SyntaxKind.BEGIN_KW,
+        "end": SyntaxKind.END_KW,
+        "if": SyntaxKind.IF_KW,
+        "elseif": SyntaxKind.ELSEIF_KW,
+        "else": SyntaxKind.ELSE_KW,
+        "endif": SyntaxKind.ENDIF_KW,
+        "while": SyntaxKind.WHILE_KW,
+        "foreach": SyntaxKind.FOREACH_KW,
+        "loop": SyntaxKind.LOOP_KW,
+        "continue": SyntaxKind.CONTINUE_KW,
+        "break": SyntaxKind.BREAK_KW,
+        "return": SyntaxKind.RETURN_KW,
+        "set": SyntaxKind.SET_KW,
+        "to": SyntaxKind.TO_KW,
+        "let": SyntaxKind.LET_KW,
 
         // Blocktypes
-        "Function": SyntaxKind.BlockTypeFunction,
-        "GameMode": SyntaxKind.BlockType,
-        "MenuMode": SyntaxKind.BlockType,
-        "OnActivate": SyntaxKind.BlockType,
-        "OnActorEquip": SyntaxKind.BlockType,
-        "OnActorUnequip": SyntaxKind.BlockType,
-        "OnAdd": SyntaxKind.BlockType,
-        "OnClose": SyntaxKind.BlockType,
-        "OnCombatEnd": SyntaxKind.BlockType,
-        "OnDeath": SyntaxKind.BlockType,
-        "OnDestructionStageChange": SyntaxKind.BlockType,
-        "OnDrop": SyntaxKind.BlockType,
-        "OnEquip": SyntaxKind.BlockType,
-        "OnFire": SyntaxKind.BlockType,
-        "OnGrab": SyntaxKind.BlockType,
-        "OnHit": SyntaxKind.BlockType,
-        "OnHitWith": SyntaxKind.BlockType,
-        "OnLoad": SyntaxKind.BlockType,
-        "OnMagicEffectHit": SyntaxKind.BlockType,
-        "OnMurder": SyntaxKind.BlockType,
-        "OnNPCActivate": SyntaxKind.BlockType,
-        "OnOpen": SyntaxKind.BlockType,
-        "OnPackageChange": SyntaxKind.BlockType,
-        "OnPackageDone": SyntaxKind.BlockType,
-        "OnPackageStart": SyntaxKind.BlockType,
-        "OnRelease": SyntaxKind.BlockType,
-        "OnReset": SyntaxKind.BlockType,
-        "OnSell": SyntaxKind.BlockType,
-        "OnStartCombat": SyntaxKind.BlockType,
-        "OnTrigger": SyntaxKind.BlockType,
-        "OnTriggerEnter": SyntaxKind.BlockType,
-        "OnTriggerLeave": SyntaxKind.BlockType,
-        "OnUnequip": SyntaxKind.BlockType,
-        "SayToDone": SyntaxKind.BlockType,
-        "ScriptEffectFinish": SyntaxKind.BlockType,
-        "ScriptEffectStart": SyntaxKind.BlockType,
-        "ScriptEffectUpdate": SyntaxKind.BlockType,
+        "Function": SyntaxKind.BLOCKTYPE_FUNCTION,
+        "GameMode": SyntaxKind.BLOCKTYPE,
+        "MenuMode": SyntaxKind.BLOCKTYPE,
+        "OnActivate": SyntaxKind.BLOCKTYPE,
+        "OnActorEquip": SyntaxKind.BLOCKTYPE,
+        "OnActorUnequip": SyntaxKind.BLOCKTYPE,
+        "OnAdd": SyntaxKind.BLOCKTYPE,
+        "OnClose": SyntaxKind.BLOCKTYPE,
+        "OnCombatEnd": SyntaxKind.BLOCKTYPE,
+        "OnDeath": SyntaxKind.BLOCKTYPE,
+        "OnDestructionStageChange": SyntaxKind.BLOCKTYPE,
+        "OnDrop": SyntaxKind.BLOCKTYPE,
+        "OnEquip": SyntaxKind.BLOCKTYPE,
+        "OnFire": SyntaxKind.BLOCKTYPE,
+        "OnGrab": SyntaxKind.BLOCKTYPE,
+        "OnHit": SyntaxKind.BLOCKTYPE,
+        "OnHitWith": SyntaxKind.BLOCKTYPE,
+        "OnLoad": SyntaxKind.BLOCKTYPE,
+        "OnMagicEffectHit": SyntaxKind.BLOCKTYPE,
+        "OnMurder": SyntaxKind.BLOCKTYPE,
+        "OnNPCActivate": SyntaxKind.BLOCKTYPE,
+        "OnOpen": SyntaxKind.BLOCKTYPE,
+        "OnPackageChange": SyntaxKind.BLOCKTYPE,
+        "OnPackageDone": SyntaxKind.BLOCKTYPE,
+        "OnPackageStart": SyntaxKind.BLOCKTYPE,
+        "OnRelease": SyntaxKind.BLOCKTYPE,
+        "OnReset": SyntaxKind.BLOCKTYPE,
+        "OnSell": SyntaxKind.BLOCKTYPE,
+        "OnStartCombat": SyntaxKind.BLOCKTYPE,
+        "OnTrigger": SyntaxKind.BLOCKTYPE,
+        "OnTriggerEnter": SyntaxKind.BLOCKTYPE,
+        "OnTriggerLeave": SyntaxKind.BLOCKTYPE,
+        "OnUnequip": SyntaxKind.BLOCKTYPE,
+        "SayToDone": SyntaxKind.BLOCKTYPE,
+        "ScriptEffectFinish": SyntaxKind.BLOCKTYPE,
+        "ScriptEffectStart": SyntaxKind.BLOCKTYPE,
+        "ScriptEffectUpdate": SyntaxKind.BLOCKTYPE,
 
         // Operators
-        "=": SyntaxKind.Equals,
-        ":=": SyntaxKind.ColonEquals,
-        "+=": SyntaxKind.PlusEquals,
-        "-=": SyntaxKind.MinusEquals,
-        "*=": SyntaxKind.AsteriskEquals,
-        "/=": SyntaxKind.SlashEquals,
-        "%=": SyntaxKind.PercentEquals,
-        "^=": SyntaxKind.CircumflexEquals,
-        "|=": SyntaxKind.VBarEquals,
-        "&=": SyntaxKind.AmpersandEquals,
-        "!": SyntaxKind.Exclamation,
-        "||": SyntaxKind.DoubleVBar,
-        "&&": SyntaxKind.DoubleAmpersand,
-        "==": SyntaxKind.DoubleEquals,
-        "!=": SyntaxKind.ExclamationEquals,
-        ">": SyntaxKind.Greater,
-        "<": SyntaxKind.Less,
-        ">=": SyntaxKind.GreaterEqulas,
-        "<=": SyntaxKind.LessEqulas,
-        "+": SyntaxKind.Plus,
-        "-": SyntaxKind.Minus,
-        "*": SyntaxKind.Asterisk,
-        "/": SyntaxKind.Slash,
-        "%": SyntaxKind.Percent,
-        "^": SyntaxKind.Circumflex,
-        "|": SyntaxKind.VBar,
-        "&": SyntaxKind.Ampersand,
-        "<<": SyntaxKind.DoubleLess,
-        ">>": SyntaxKind.DoubleGreater,
-        "$": SyntaxKind.Dollar,
-        "#": SyntaxKind.Hash,
-        "(": SyntaxKind.LParen,
-        ")": SyntaxKind.RParen,
-        "[": SyntaxKind.LSQBracket,
-        "]": SyntaxKind.RSQBracket,
-        "{": SyntaxKind.LBracket,
-        "}": SyntaxKind.RBracket,
-        ":": SyntaxKind.Colon,
-        "<-": SyntaxKind.LArrow,
-        "->": SyntaxKind.RArrow,
-        ".": SyntaxKind.Dot,
-        "::": SyntaxKind.DoubleColon,
-        ",": SyntaxKind.Comma,
-        "=>": SyntaxKind.EqualsGreater,
-    } as { [key: string]: TokenSyntaxKind })) {
+        "=": SyntaxKind.EQ,
+        ":=": SyntaxKind.COLONEQ,
+        "+=": SyntaxKind.PLUSEQ,
+        "-=": SyntaxKind.MINUSEQ,
+        "*=": SyntaxKind.ASTERISKEQ,
+        "/=": SyntaxKind.SLASHEQ,
+        "%=": SyntaxKind.PERCENTEQ,
+        "^=": SyntaxKind.CIRCUMFLEXEQ,
+        "|=": SyntaxKind.VBAREQ,
+        "&=": SyntaxKind.AMPERSANDEQ,
+        "!": SyntaxKind.EXCLAMATION,
+        "||": SyntaxKind.VBAR2,
+        "&&": SyntaxKind.AMPERSAND,
+        "==": SyntaxKind.EQ2,
+        "!=": SyntaxKind.EXCLAMATIONEQ,
+        ">": SyntaxKind.GT,
+        "<": SyntaxKind.LT,
+        ">=": SyntaxKind.GTEQ,
+        "<=": SyntaxKind.LTEQ,
+        "+": SyntaxKind.PLUS,
+        "-": SyntaxKind.MINUS,
+        "*": SyntaxKind.ASTERISK,
+        "/": SyntaxKind.SLASH,
+        "%": SyntaxKind.PERCENT,
+        "^": SyntaxKind.CIRCUMFLEX,
+        "|": SyntaxKind.VBAR,
+        "&": SyntaxKind.AMPERSAND,
+        "<<": SyntaxKind.LT2,
+        ">>": SyntaxKind.GT2,
+        "$": SyntaxKind.DOLLAR,
+        "#": SyntaxKind.HASH,
+        "(": SyntaxKind.LPAREN,
+        ")": SyntaxKind.RPAREN,
+        "[": SyntaxKind.LSQBRACK,
+        "]": SyntaxKind.RSQBRACK,
+        "{": SyntaxKind.LBRACK,
+        "}": SyntaxKind.RBRACK,
+        ":": SyntaxKind.COLON,
+        "<-": SyntaxKind.LARROW,
+        "->": SyntaxKind.RARROW,
+        ".": SyntaxKind.DOT,
+        "::": SyntaxKind.COLON2,
+        ",": SyntaxKind.COMMA,
+        "=>": SyntaxKind.EQGT,
+    } as { [key: string]: TokenSyntaxKind; })) {
         map[k.toLowerCase()] = {
             name: k.toLowerCase(),
             canonical_name: k,
@@ -137,66 +137,66 @@ export const TokenData = (() => {
 })();
 
 export function GetTokenKind(token_name: string): TokenSyntaxKind {
-    return TokenData[token_name]?.kind ?? SyntaxKind.UnknownToken;
+    return TokenData[token_name]?.kind ?? SyntaxKind.UNKNOWN;
 }
 
-const SyntaxKindNames = (data => {
-    const names: { [key in SyntaxKind]?: string } = {};
+// const SyntaxKindNames = (data => {
+//     const names: { [key in SyntaxKind]?: string } = {};
 
-    for (const token of Object.values(TokenData)) {
-        names[token.kind] = token.canonical_name;
-    }
+//     for (const token of Object.values(TokenData)) {
+//         names[token.kind] = token.canonical_name;
+//     }
 
-    for (const [k, v] of Object.entries(data)) {
-        names[Number(k) as SyntaxKind] = v;
-    }
+//     for (const [k, v] of Object.entries(data)) {
+//         names[Number(k) as SyntaxKind] = v;
+//     }
 
-    return names;
-})({
-    [SyntaxKind.UnknownToken]: "unknown",
-    [SyntaxKind.EOF]: "end of file",
-    [SyntaxKind.Whitespace]: "whitespace",
-    [SyntaxKind.Newline]: "new line",
-    [SyntaxKind.Comment]: "comment",
-    [SyntaxKind.Number]: "number",
-    [SyntaxKind.String]: "string",
-    [SyntaxKind.Identifier]: "identifier",
-    [SyntaxKind.BlockType]: "block type designator",
-    [SyntaxKind.BlockTypeFunction]: "function block type designator",
+//     return names;
+// })({
+//     [SyntaxKind.UNKNOWN]: "UNKNOWN",
+//     [SyntaxKind.EOF]: "EOF",
+//     [SyntaxKind.WHITESPACE]: "WHITESPACE",
+//     [SyntaxKind.NEWLINE]: "NEWLINE",
+//     [SyntaxKind.COMMENT]: "COMMENT",
+//     [SyntaxKind.NUMBER_INT]: "NUMBER_INT",
+//     [SyntaxKind.STRING]: "STRING",
+//     [SyntaxKind.IDENT]: "IDENT",
+//     [SyntaxKind.BLOCKTYPE]: "BLOCKTYPE",
+//     [SyntaxKind.BLOCKTYPE_FUNCTION]: "BLOCKTYPE_FUNCTION",
 
-    [SyntaxKind.ErrorNode]: "error",
-    [SyntaxKind.VariableDeclaration]: "variable declaration",
+//     [SyntaxKind.ERROR]: "ERROR",
+//     [SyntaxKind.VAR_DECL]: "VAR_DECL",
 
-    [SyntaxKind.VariableList]: "variable list",
-    [SyntaxKind.PrimaryExpressionList]: "primary expression list",
-    [SyntaxKind.ExpressionList]: "expression list",
-    [SyntaxKind.BranchList]: "branch list",
-    [SyntaxKind.StatementList]: "statement list",
+//     [SyntaxKind.VAR_LIST]: "VAR_LIST",
+//     [SyntaxKind.PRIMARY_EXPR_LIST]: "PRIMARY_EXPR_LIST",
+//     [SyntaxKind.EXPR_LIST]: "EXPR_LIST",
+//     [SyntaxKind.BRANCH_LIST]: "BRANCH_LIST",
+//     [SyntaxKind.STMT_LIST]: "STMT_LIST",
 
-    [SyntaxKind.LambdaExpression]: "lambda",
-    [SyntaxKind.LambdaInlineExpression]: "inline lambda",
-    [SyntaxKind.UnaryExpression]: "unary expression",
-    [SyntaxKind.BinaryExpresison]: "binary expression",
-    [SyntaxKind.ElementAccessExpression]: "element access",
-    [SyntaxKind.FunctionExpression]: "function call",
+//     [SyntaxKind.LAMBDA_EXPR]: "LAMBDA_EXPR",
+//     [SyntaxKind.LAMBDA_INLINE_EXPR]: "LAMBDA_INLINE_EXPR",
+//     [SyntaxKind.UNARY_EXPR]: "UNARY_EXPR",
+//     [SyntaxKind.BIN_EXPR]: "BIN_EXPR",
+//     [SyntaxKind.MEMBER_EXPR]: "MEMBER_EXPR",
+//     [SyntaxKind.FUNC_EXPR]: "FUNC_EXPR",
 
-    [SyntaxKind.BlockTypeExpression]: "blocktype expression",
-    [SyntaxKind.Branch]: "branch",
+//     [SyntaxKind.BLOCKTYPE_EXPR]: "BLOCKTYPE_EXPR",
+//     [SyntaxKind.BRANCH]: "BRANCH",
 
-    [SyntaxKind.VariableDeclarationStatement]: "variable declaration statement",
-    [SyntaxKind.SetStatement]: "set statement",
-    [SyntaxKind.LetStatement]: "let statement",
-    [SyntaxKind.BeginStatement]: "begin statement",
-    [SyntaxKind.IfStatement]: "if statement",
-    [SyntaxKind.WhileStatement]: "while statement",
-    [SyntaxKind.ForeachStatement]: "foreach statement",
+//     [SyntaxKind.VAR_DECL_STMT]: "VAR_DECL_STMT",
+//     [SyntaxKind.SET_STMT]: "SET_STMT",
+//     [SyntaxKind.LET_STMT]: "LET_STMT",
+//     [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
+//     [SyntaxKind.IF_STMT]: "IF_STMT",
+//     [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
+//     [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
 
-    [SyntaxKind.Script]: "script",
-});
+//     [SyntaxKind.SCRIPT]: "SCRIPT",
+// });
 
-export function GetSyntaxKindName(kind: SyntaxKind): string {
-    return SyntaxKindNames[kind] ?? `unable to find SyntaxKind(${kind}) name`;
-}
+// export function SyntaxKindName(kind: SyntaxKind): string {
+//     return SyntaxKindNames[kind] ?? `SyntaxKind(${kind})`;
+// }
 
 
 // type TokenInfo = [TokenSubtype | undefined, string, string]

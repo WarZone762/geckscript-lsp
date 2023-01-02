@@ -1,13 +1,6 @@
-import { GetSyntaxKindName } from "./types/token_data";
-import {
-    IsExpression,
-    IsStatement,
-    Node,
-    NodeOrToken,
-    SyntaxKind,
-    Token,
-} from "./types/syntax_node";
-import { TreeData } from "./types/ast_node";
+import { is_expr, is_stmt, SyntaxKind, syntax_kind_name } from "./syntax_kind/generated";
+import { TreeData } from "./types/hir";
+import { Node, Token, NodeOrToken } from "./types/syntax_node";
 
 
 export function ForEachChild(node: Node, func: (node: NodeOrToken) => any): void {
@@ -32,7 +25,7 @@ export function ForEachChildRecursive(
 ): void {
     ForEachChild(root, node => {
         pre_func(node);
-        if (node.isNode()) {
+        if (node.is_node()) {
             ForEachChildRecursive(node, pre_func, post_func);
         }
         post_func(node);
@@ -46,7 +39,7 @@ export async function ForEachChildRecursiveAsync(
 ): Promise<void> {
     await ForEachChildAsync(root, async node => {
         await pre_func(node);
-        if (node.isNode()) {
+        if (node.is_node()) {
             await ForEachChildRecursiveAsync(node, pre_func, post_func);
         }
         await post_func(node);
@@ -54,7 +47,7 @@ export async function ForEachChildRecursiveAsync(
 }
 
 export function* DescendantsDF(node: NodeOrToken): Generator<NodeOrToken, void, void> {
-    if (node.isNode()) {
+    if (node.is_node()) {
         yield node;
         for (const child of node.children) {
             yield* DescendantsDF(child);
@@ -65,7 +58,7 @@ export function* DescendantsDF(node: NodeOrToken): Generator<NodeOrToken, void, 
 }
 
 export function* Leafs(node: NodeOrToken): Generator<Token, void, void> {
-    if (node.isNode()) {
+    if (node.is_node()) {
         for (const child of node.children) {
             yield* Leafs(child);
         }
@@ -394,13 +387,13 @@ export function GetText(node: Node): string {
 // debug TreeData stuff
 export function ToTreeDataFull(node: NodeOrToken): TreeData {  // TODO: add drawing data to the TreeData
     const tree_data: TreeData = new TreeData(
-        (node.isNode() ? GetSyntaxKindName(node.kind) : `'${node.text}'`),
+        (node.is_node() ? syntax_kind_name(node.kind) : `'${node.text}'`),
         [new TreeData("Range", [new TreeData(
             `${node.offset} - ${node.end()}`
         )])]
     );
 
-    if (node.isNode()) {
+    if (node.is_node()) {
         ForEachChild(
             node,
             node => {
@@ -416,14 +409,14 @@ export function ToHTML(  // TODO: Integrate this to tree-view
     root: NodeOrToken,
 ): string {
     function node_to_html(node: NodeOrToken): string {
-        if (!node.isNode()) {
+        if (!node.is_node()) {
             return node.text;
         }
 
         let html = "";
 
         for (const child of node.children) {
-            if (child.kind === SyntaxKind.Newline) {
+            if (child.kind === SyntaxKind.NEWLINE) {
                 html += "\n";
                 continue;
             }
@@ -431,17 +424,17 @@ export function ToHTML(  // TODO: Integrate this to tree-view
             const content = node_to_html(child);
 
             if (
-                child.kind === SyntaxKind.StatementList &&
-                child.parent?.kind !== SyntaxKind.Script
+                child.kind === SyntaxKind.STMT_LIST &&
+                child.parent?.kind !== SyntaxKind.SCRIPT
             ) {
                 html += "\t";
             }
 
-            let class_ = GetSyntaxKindName(child.kind).replaceAll(" ", "-");
+            let class_ = syntax_kind_name(child.kind).replaceAll(" ", "-");
 
-            if (IsStatement(child.kind)) {
+            if (is_stmt(child.kind)) {
                 class_ = "statement";
-            } else if (IsExpression(child.kind)) {
+            } else if (is_expr(child.kind)) {
                 class_ = "expression";
             }
 

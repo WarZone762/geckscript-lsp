@@ -1,7 +1,7 @@
 import { TokenData } from "../geckscript/types/token_data";
 import { FunctionData, GetFunctionInfo } from "../geckscript/function_data";
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { IsTypename, IsKeyword, IsOperator, Script, SyntaxKind } from "../geckscript/types/syntax_node";
+import { Script } from "../geckscript/ast/generated";
 import { Position } from "vscode-languageserver-textdocument";
 import * as ast from "../geckscript/ast";
 import * as functions from "../wiki/functions";
