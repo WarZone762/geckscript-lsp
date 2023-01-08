@@ -52,7 +52,7 @@ export type Op = Token<OpSyntaxKind>;
 export type PrimaryExpr =
     | Token<SyntaxKind.NUMBER_INT>
     | Token<SyntaxKind.STRING>
-    | Ident
+    | NameRef
     ;
 
 export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefined): PrimaryExpr | undefined {
@@ -65,13 +65,14 @@ export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefine
             return green as Token<SyntaxKind.NUMBER_INT>;
         case SyntaxKind.STRING:
             return green as Token<SyntaxKind.STRING>;
-        case SyntaxKind.IDENT:
-            return new Ident(green as Node<SyntaxKind.IDENT>);
+        case SyntaxKind.NAME_REF:
+            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
     }
 }
 
 export type VarOrVarDecl =
-    | Ident
+    | Name
+    | NameRef
     | VarDecl
     ;
 
@@ -81,8 +82,10 @@ export function VarOrVarDecl(green: Node<VarOrVarDeclSyntaxKind> | undefined): V
     }
 
     switch (green.kind) {
-        case SyntaxKind.IDENT:
-            return new Ident(green as Node<SyntaxKind.IDENT>);
+        case SyntaxKind.NAME:
+            return new Name(green as Node<SyntaxKind.NAME>);
+        case SyntaxKind.NAME_REF:
+            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
         case SyntaxKind.VAR_DECL:
             return new VarDecl(green as Node<SyntaxKind.VAR_DECL>);
     }
@@ -178,9 +181,15 @@ export class StmtList extends AstNode<SyntaxKind.STMT_LIST> {
     }
 }
 
-export class Ident extends AstNode<SyntaxKind.IDENT> {
+export class Name extends AstNode<SyntaxKind.NAME> {
     name() {
-        return token(this, (k => k === SyntaxKind.NAME || k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME | SyntaxKind.NAME_REF);
+        return token(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT);
+    }
+}
+
+export class NameRef extends AstNode<SyntaxKind.NAME_REF> {
+    name_ref() {
+        return token(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT);
     }
 }
 
@@ -189,7 +198,7 @@ export class VarDecl extends AstNode<SyntaxKind.VAR_DECL> {
         return token(this, is_type);
     }
     ident() {
-        return Ident.from_green(child(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT));
+        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
     }
 }
 
@@ -228,7 +237,7 @@ export class MemberExpr extends AstNode<SyntaxKind.MEMBER_EXPR> {
 
 export class FuncExpr extends AstNode<SyntaxKind.FUNC_EXPR> {
     name() {
-        return Ident.from_green(child(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT));
+        return NameRef.from_green(child(this, (k => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF));
     }
     args() {
         return ExprList.from_green(child(this, (k => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST));
@@ -303,7 +312,7 @@ export class SetStmt extends AstNode<SyntaxKind.SET_STMT> {
         return token(this, (k => k === SyntaxKind.SET_KW) as (k: SyntaxKind) => k is SyntaxKind.SET_KW);
     }
     var() {
-        return Ident.from_green(child(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT));
+        return NameRef.from_green(child(this, (k => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF));
     }
     expr() {
         return Expr(child(this, is_expr));
@@ -345,7 +354,7 @@ export class ForeachStmt extends AstNode<SyntaxKind.FOREACH_STMT> {
         return token(this, (k => k === SyntaxKind.FOREACH_KW) as (k: SyntaxKind) => k is SyntaxKind.FOREACH_KW);
     }
     ident() {
-        return Ident.from_green(child(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT));
+        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
     }
     larrow() {
         return token(this, (k => k === SyntaxKind.LARROW) as (k: SyntaxKind) => k is SyntaxKind.LARROW);
@@ -411,7 +420,7 @@ export class Script extends AstNode<SyntaxKind.SCRIPT> {
         return token(this, (k => k === SyntaxKind.SCRIPTNAME_KW) as (k: SyntaxKind) => k is SyntaxKind.SCRIPTNAME_KW);
     }
     name() {
-        return Ident.from_green(child(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT));
+        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
     }
     body() {
         return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));

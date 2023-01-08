@@ -156,7 +156,7 @@ function generate(): string {
     Object.assign(NODE_INFO_MAP, parse_data(NODE_DATA));
     return `
 import { ExprSyntaxKind, is_expr, is_op, is_primary_expr, is_stmt, is_type, is_var_or_var_decl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "../syntax_node";
+import { Node, NodeOrToken, Token } from "../types/syntax_node";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
     green: Node<T>;
@@ -209,7 +209,7 @@ export type Op = Token<OpSyntaxKind>;
 export type PrimaryExpr =
     | Token<SyntaxKind.NUMBER_INT>
     | Token<SyntaxKind.STRING>
-    | Ident
+    | NameRef
     ;
 
 export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefined): PrimaryExpr | undefined {
@@ -222,8 +222,8 @@ export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefine
             return green as Token<SyntaxKind.NUMBER_INT>;
         case SyntaxKind.STRING:
             return green as Token<SyntaxKind.STRING>;
-        case SyntaxKind.IDENT:
-            return new Ident(green as Node<SyntaxKind.IDENT>);
+        case SyntaxKind.NAME_REF:
+            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
     }
 }
 
@@ -245,13 +245,17 @@ export class ${n[0]} extends AstNode<SyntaxKind.${n[1].syntax_kind}> {
 }
 
 const VAR_OR_VAR_DECL_DATA = `
-Ident: IDENT {
-    name: Token NAME NAME_REF,
+Name: NAME {
+    name: Token IDENT,
+}
+
+NameRef: NAME_REF {
+    name_ref: Token IDENT,
 }
 
 VarDecl: VAR_DECL {
     type: Type,
-    ident: Ident,
+    ident: Name,
 }
 `.trim();
 
@@ -274,7 +278,7 @@ MemberExpr: MEMBER_EXPR {
 }
 
 FuncExpr: FUNC_EXPR {
-    name: Ident,
+    name: NameRef,
     args: ExprList,
 }
 
@@ -306,7 +310,7 @@ VarDeclStmt: VAR_DECL_STMT {
 
 SetStmt: SET_STMT {
     set: Token SET_KW,
-    var: Ident,
+    var: NameRef,
     expr: Expr,
 }
 
@@ -326,7 +330,7 @@ BeginStmt: BEGIN_STMT {
 
 ForeachStmt: FOREACH_STMT {
     foreach: Token FOREACH_KW,
-    ident: Ident,
+    ident: Name,
     larrow: Token LARROW,
     iterable: Expr,
     body: StmtList,
@@ -342,14 +346,19 @@ WhileStmt: WHILE_STMT {
 
 IfStmt: IF_STMT {
     if: Token IF_KW,
-    if_cond: Expr,
-    if_body: StmtList,
-    elseif: Token ELSEIF_KW,
-    elseif_cond: Expr 1,
-    elseif_body: StmtList 1,
+    cond: Expr,
+    true_branch: StmtList,
     else: Token ELSE_KW,
-    else_body: StmtList -1,
+    false_branch: ElseifOrElse,
     endif: Token ENDIF_KW,
+}
+
+ElseifStmt: ELSEIF_STMT {
+    elseif: Token ELSEIF_KW,
+    cond: Expr,
+    true_branch: StmtList,
+    else: Token ELSE_KW,
+    false_branch: ElseifOrElse,
 }
 `.trim();
 
@@ -368,7 +377,7 @@ ${STMT_DATA}
 
 Script: SCRIPT {
     scriptname: Token SCRIPTNAME_KW,
-    name: Ident,
+    name: Name,
     body: StmtList,
 }
 `;  // FIXME: IfStmt

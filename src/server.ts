@@ -26,6 +26,7 @@ import * as FD from "./geckscript/function_data";
 
 import * as fs from "fs/promises";
 import * as path from "path";
+import { Environment } from "./geckscript/types/hir";
 
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -34,7 +35,7 @@ const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-// const environment: Environment = new Environment();
+const ENV = new Environment();
 
 connection.onInitialize(
     async (params: InitializeParams) => {
@@ -43,11 +44,11 @@ connection.onInitialize(
         const result: InitializeResult = {
             capabilities: {
                 textDocumentSync: TextDocumentSyncKind.Incremental,
-                documentHighlightProvider: true,
-                completionProvider: {
-                    resolveProvider: true
-                },
-                hoverProvider: true,
+                // documentHighlightProvider: true,
+                // completionProvider: {
+                //     resolveProvider: true
+                // },
+                // hoverProvider: true,
             }
         };
 
@@ -79,13 +80,13 @@ documents.onDidChangeContent(
     async (params) => {
         const doc = params.document;
 
-        // const script = await environment.processDocument(doc);
+        const diagnostics = ENV.parse_doc(doc)[1];
 
         // fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
 
         // tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
 
-        // connection.sendDiagnostics({ uri: doc.uri, diagnostics: script.parsed.diagnostics });
+        connection.sendDiagnostics({ uri: doc.uri, diagnostics: diagnostics });
     }
 );
 

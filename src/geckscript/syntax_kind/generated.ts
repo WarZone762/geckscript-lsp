@@ -6,14 +6,14 @@ export const enum SyntaxKind {
     NEWLINE,
     NUMBER_INT,
     STRING,
-    IDENT,
+    NAME,
+    NAME_REF,
     BLOCKTYPE,
     BLOCKTYPE_FUNCTION,
     TOMBSTONE,
     ERROR,
     LITERAL,
-    NAME,
-    NAME_REF,
+    IDENT,
     VAR_DECL,
     BLOCKTYPE_DESIG,
     BRANCH,
@@ -101,6 +101,7 @@ export const enum SyntaxKind {
     LET_STMT,
     BEGIN_STMT,
     IF_STMT,
+    ELSEIF_STMT,
     WHILE_STMT,
     FOREACH_STMT,
 }
@@ -113,14 +114,14 @@ export const syntax_kind_names = {
     [SyntaxKind.NEWLINE]: "NEWLINE",
     [SyntaxKind.NUMBER_INT]: "NUMBER_INT",
     [SyntaxKind.STRING]: "STRING",
-    [SyntaxKind.IDENT]: "IDENT",
+    [SyntaxKind.NAME]: "NAME",
+    [SyntaxKind.NAME_REF]: "NAME_REF",
     [SyntaxKind.BLOCKTYPE]: "BLOCKTYPE",
     [SyntaxKind.BLOCKTYPE_FUNCTION]: "BLOCKTYPE_FUNCTION",
     [SyntaxKind.TOMBSTONE]: "TOMBSTONE",
     [SyntaxKind.ERROR]: "ERROR",
     [SyntaxKind.LITERAL]: "LITERAL",
-    [SyntaxKind.NAME]: "NAME",
-    [SyntaxKind.NAME_REF]: "NAME_REF",
+    [SyntaxKind.IDENT]: "IDENT",
     [SyntaxKind.VAR_DECL]: "VAR_DECL",
     [SyntaxKind.BLOCKTYPE_DESIG]: "BLOCKTYPE_DESIG",
     [SyntaxKind.BRANCH]: "BRANCH",
@@ -208,6 +209,7 @@ export const syntax_kind_names = {
     [SyntaxKind.LET_STMT]: "LET_STMT",
     [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
     [SyntaxKind.IF_STMT]: "IF_STMT",
+    [SyntaxKind.ELSEIF_STMT]: "ELSEIF_STMT",
     [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
     [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
 };
@@ -429,25 +431,29 @@ export function is_op(kind: SyntaxKind): kind is OpSyntaxKind {
 export type PrimaryExprSyntaxKind =
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
-    | SyntaxKind.IDENT
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
     ;
 
 export function is_primary_expr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind {
     return (
         kind == SyntaxKind.NUMBER_INT ||
         kind == SyntaxKind.STRING ||
-        kind == SyntaxKind.IDENT
+        kind == SyntaxKind.NAME ||
+        kind == SyntaxKind.NAME_REF
     );
 }
 
 export type VarOrVarDeclSyntaxKind =
-    | SyntaxKind.IDENT
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     ;
 
 export function is_var_or_var_decl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
     return (
-        kind == SyntaxKind.IDENT ||
+        kind == SyntaxKind.NAME ||
+        kind == SyntaxKind.NAME_REF ||
         kind == SyntaxKind.VAR_DECL
     );
 }
@@ -493,6 +499,7 @@ export type StmtSyntaxKind =
     | SyntaxKind.LET_STMT
     | SyntaxKind.BEGIN_STMT
     | SyntaxKind.IF_STMT
+    | SyntaxKind.ELSEIF_STMT
     | SyntaxKind.WHILE_STMT
     | SyntaxKind.FOREACH_STMT
     ;
@@ -504,6 +511,7 @@ export function is_stmt(kind: SyntaxKind): kind is StmtSyntaxKind {
         kind == SyntaxKind.LET_STMT ||
         kind == SyntaxKind.BEGIN_STMT ||
         kind == SyntaxKind.IF_STMT ||
+        kind == SyntaxKind.ELSEIF_STMT ||
         kind == SyntaxKind.WHILE_STMT ||
         kind == SyntaxKind.FOREACH_STMT
     );
@@ -517,8 +525,7 @@ export type TokenSyntaxKind =
     | SyntaxKind.NEWLINE
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
-    | SyntaxKind.NAME
-    | SyntaxKind.NAME_REF
+    | SyntaxKind.IDENT
     | SyntaxKind.BLOCKTYPE
     | SyntaxKind.BLOCKTYPE_FUNCTION
     | TypeSyntaxKind
@@ -530,7 +537,8 @@ export type NodeSyntaxKind =
     | SyntaxKind.TOMBSTONE
     | SyntaxKind.ERROR
     | SyntaxKind.LITERAL
-    | SyntaxKind.IDENT
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
     | SyntaxKind.BRANCH

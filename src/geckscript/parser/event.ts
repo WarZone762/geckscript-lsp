@@ -1,6 +1,6 @@
 import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated";
 
-export enum EventKind {
+export const enum EventKind {
     Tombstone,
     Start,
     Finish,

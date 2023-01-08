@@ -6,230 +6,233 @@ import { GetTokenKind } from "./types/token_data";
 
 export class Lexer {
     data: string;
-    cur_pos = 0;
-    cur_char: string;
-    prev_token: Token | undefined;
+    pos = 0;
+    char: string;
+    last_token: Token | undefined;
     buf: StringBuffer;
 
     constructor(text: string) {
         this.data = text;
-        this.cur_char = text[0];
+        this.char = text[0];
         this.buf = new StringBuffer(512);
     }
 
-    nextChar(): void {
-        this.cur_char = this.data[++this.cur_pos];
+    next(): void {
+        this.char = this.data[++this.pos];
     }
 
-    nextCharToBuf(): void {
-        this.buf.append(this.cur_char);
-        this.nextChar();
+    next_to_buf(): void {
+        this.buf.append(this.char);
+        this.next();
     }
 
-    lookAhead(offset: number): string | undefined {
-        return this.data[this.cur_pos + offset];
+    nth(offset: number): string | undefined {
+        return this.data[this.pos + offset];
     }
 
-    moreData(): boolean {
-        return this.cur_pos < this.data.length;
+    more_data(): boolean {
+        return this.pos < this.data.length;
     }
 
-    startToken<T extends TokenSyntaxKind = TokenSyntaxKind>(kind?: T): Token<T> {
+    start<T extends TokenSyntaxKind = TokenSyntaxKind>(kind?: T): Token<T> {
         const token = Token(kind ?? SyntaxKind.UNKNOWN);
-        token.offset = this.cur_pos;
+        token.offset = this.pos;
 
         return token as Token<T>;
     }
 
-    finishToken<T extends Token>(token: T): T {
+    finish<T extends Token>(token: T): T {
         token.text = this.buf.flush();
 
         return token;
     }
 
-    consumeWhitespace(): Token<SyntaxKind.WHITESPACE> {
-        const token = this.startToken(SyntaxKind.WHITESPACE);
+    whitespace(): Token<SyntaxKind.WHITESPACE> {
+        const token = this.start(SyntaxKind.WHITESPACE);
 
-        this.nextCharToBuf();
-        while (this.moreData() && /[^\S\n]/.test(this.cur_char)) {
-            this.nextCharToBuf();
+        this.next_to_buf();
+        while (this.more_data() && /[^\S\n]/.test(this.char)) {
+            this.next_to_buf();
         }
 
-        this.finishToken(token);
+        this.finish(token);
 
         return token;
     }
 
-    consumeNewline(): Token<SyntaxKind.NEWLINE> {
-        let token = this.startToken(SyntaxKind.NEWLINE);
+    newline(): Token<SyntaxKind.NEWLINE> {
+        let token = this.start(SyntaxKind.NEWLINE);
 
-        this.nextCharToBuf();
-        token = this.finishToken(token);
+        this.next_to_buf();
+        while (this.more_data() && this.char === "\n") {
+            this.next_to_buf();
+        }
+        token = this.finish(token);
 
         return token;
     }
 
-    consumeComment(): Token<SyntaxKind.COMMENT> {
-        const token = this.startToken(SyntaxKind.COMMENT);
+    comment(): Token<SyntaxKind.COMMENT> {
+        const token = this.start(SyntaxKind.COMMENT);
 
-        while (this.moreData() && this.cur_char !== "\n") {
-            if (this.cur_char === "\r" && this.lookAhead(1) === "\n") {
+        while (this.more_data() && this.char !== "\n") {
+            if (this.char === "\r" && this.nth(1) === "\n") {
                 break;
             }
-            this.nextCharToBuf();
+            this.next_to_buf();
         }
 
-        this.finishToken(token);
+        this.finish(token);
 
         return token;
     }
 
-    consumeString(): Token<SyntaxKind.STRING> {
-        const token = this.startToken(SyntaxKind.STRING);
+    str(): Token<SyntaxKind.STRING> {
+        const token = this.start(SyntaxKind.STRING);
 
-        const quote: string = this.cur_char;
+        const quote: string = this.char;
 
-        this.nextCharToBuf();
+        this.next_to_buf();
 
-        while (this.moreData()) {
-            if (this.cur_char === quote) {
-                this.nextCharToBuf();
+        while (this.more_data()) {
+            if (this.char === quote) {
+                this.next_to_buf();
                 break;
             }
-            this.nextCharToBuf();
+            this.next_to_buf();
         }
 
-        return this.finishToken(token);
+        return this.finish(token);
     }
 
-    consumeNumber(): Token<SyntaxKind.NUMBER_INT> {
-        const token = this.startToken(SyntaxKind.NUMBER_INT);
+    number_int(): Token<SyntaxKind.NUMBER_INT> {
+        const token = this.start(SyntaxKind.NUMBER_INT);
 
         if (
-            this.cur_char === "0" &&
-            this.lookAhead(1)?.toLowerCase() === "x"
+            this.char === "0" &&
+            this.nth(1)?.toLowerCase() === "x"
         ) {
-            this.nextCharToBuf();
-            this.nextCharToBuf();
+            this.next_to_buf();
+            this.next_to_buf();
 
-            while (this.moreData()) {
-                if (/[0-9a-fA-F]/.test(this.cur_char)) {
-                    this.nextCharToBuf();
+            while (this.more_data()) {
+                if (/[0-9a-fA-F]/.test(this.char)) {
+                    this.next_to_buf();
                 } else {
                     break;
                 }
             }
 
-            return this.finishToken(token);
+            return this.finish(token);
         }
 
-        this.nextCharToBuf();
+        this.next_to_buf();
 
-        while (this.moreData()) {
-            if (/\d/.test(this.cur_char)) {
-                this.nextCharToBuf();
-            } else if (this.cur_char === ".") {
-                this.nextCharToBuf();
+        while (this.more_data()) {
+            if (/\d/.test(this.char)) {
+                this.next_to_buf();
+            } else if (this.char === ".") {
+                this.next_to_buf();
                 break;
             } else {
 
-                return this.finishToken(token);
+                return this.finish(token);
             }
         }
 
-        while (this.moreData() && /\d/.test(this.cur_char)) {
-            this.nextCharToBuf();
+        while (this.more_data() && /\d/.test(this.char)) {
+            this.next_to_buf();
         }
 
-        return this.finishToken(token);
+        return this.finish(token);
     }
 
-    consumeOperator(): Token<OpSyntaxKind | SyntaxKind.UNKNOWN> {
-        const next_char = this.lookAhead(1);
+    op(): Token<OpSyntaxKind | SyntaxKind.UNKNOWN> {
+        const next_char = this.nth(1);
         if (next_char != undefined) {
-            const operator = this.cur_char + next_char;
+            const operator = this.char + next_char;
             if (is_op(GetTokenKind(operator))) {
-                const token = this.startToken(GetTokenKind(operator));
+                const token = this.start(GetTokenKind(operator));
 
-                this.nextCharToBuf();
-                this.nextCharToBuf();
+                this.next_to_buf();
+                this.next_to_buf();
 
-                return this.finishToken(token) as Token<OpSyntaxKind>;
+                return this.finish(token) as Token<OpSyntaxKind>;
             }
         }
 
-        if (is_op(GetTokenKind(this.cur_char))) {
-            const token = this.startToken(GetTokenKind(this.cur_char));
-            this.nextCharToBuf();
+        if (is_op(GetTokenKind(this.char))) {
+            const token = this.start(GetTokenKind(this.char));
+            this.next_to_buf();
 
-            return this.finishToken(token) as Token<OpSyntaxKind>;
+            return this.finish(token) as Token<OpSyntaxKind>;
         }
 
-        const token = this.startToken(SyntaxKind.UNKNOWN);
+        const token = this.start(SyntaxKind.UNKNOWN);
 
-        this.nextCharToBuf();
+        this.next_to_buf();
 
-        return this.finishToken(token);
+        return this.finish(token);
     }
 
-    consumeWord(): Token {
-        const token = this.startToken();
+    word(): Token {
+        const token = this.start();
 
-        while (this.moreData() && /[0-9a-zA-Z_]/.test(this.cur_char)) {
-            this.nextCharToBuf();
+        while (this.more_data() && /[0-9a-zA-Z_]/.test(this.char)) {
+            this.next_to_buf();
         }
 
         const kind = GetTokenKind(this.buf.toString().toLowerCase());
 
-        token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.NAME;
+        token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.IDENT;
 
-        return this.finishToken(token);
+        return this.finish(token);
     }
 
-    lexToken(): Token {
+    lex_token(): Token {
         let token: Token;
 
-        if (this.moreData()) {
-            if (/[^\S\n]/.test(this.cur_char)) {
-                token = this.consumeWhitespace();
-            } else if (this.cur_char === "\n") {
-                token = this.consumeNewline();
-            } else if (this.cur_char === ";") {
-                token = this.consumeComment();
-            } else if (/["']/.test(this.cur_char)) {
-                token = this.consumeString();
-            } else if (/\d/.test(this.cur_char)) {
-                token = this.consumeNumber();
+        if (this.more_data()) {
+            if (/[^\S\n]/.test(this.char)) {
+                token = this.whitespace();
+            } else if (this.char === "\n") {
+                token = this.newline();
+            } else if (this.char === ";") {
+                token = this.comment();
+            } else if (/["']/.test(this.char)) {
+                token = this.str();
+            } else if (/\d/.test(this.char)) {
+                token = this.number_int();
             } else if (
-                /\./.test(this.cur_char) &&
-                (char => char != undefined && /\d/.test(char))(this.lookAhead(1))
+                /\./.test(this.char) &&
+                (char => char != undefined && /\d/.test(char))(this.nth(1))
             ) {
-                token = this.consumeNumber();
-            } else if (/[a-zA-Z_]/.test(this.cur_char)) {
-                token = this.consumeWord();
-            } else if (/\S/.test(this.cur_char)) {
-                token = this.consumeOperator();
+                token = this.number_int();
+            } else if (/[a-zA-Z_]/.test(this.char)) {
+                token = this.word();
+            } else if (/\S/.test(this.char)) {
+                token = this.op();
             } else {
                 throw new Error(
-                    `Unknown character "${this.cur_char}" at offset ${this.cur_pos}`
+                    `Unknown character "${this.char}" at offset ${this.pos}`
                 );
             }
 
-            this.prev_token = token;
+            this.last_token = token;
 
             return token;
         } else {
             const eof = Token(SyntaxKind.EOF);
-            eof.offset = this.cur_pos;
+            eof.offset = this.pos;
 
             return eof;
         }
     }
 
     *lex(): Generator<Token> {
-        while (this.moreData()) {
-            yield this.lexToken();
+        while (this.more_data()) {
+            yield this.lex_token();
         }
-        yield this.lexToken();
+        yield this.lex_token();
     }
 }

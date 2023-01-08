@@ -6,25 +6,25 @@ import { is_type, SyntaxKind } from "../../syntax_kind/generated";
 export function name(p: Parser): CompletedMarker {
     const m = p.start();
 
-    if (p.at(SyntaxKind.NAME)) {
-        p.next(SyntaxKind.NAME);  // FIXME: add next_remap
+    if (p.at(SyntaxKind.IDENT)) {
+        p.next(SyntaxKind.IDENT);
     } else {
         p.err_and_next("expected an identifier");
     }
 
-    return m.complete(p, SyntaxKind.IDENT);
+    return m.complete(p, SyntaxKind.NAME);
 }
 
 export function name_ref(p: Parser): CompletedMarker {
     const m = p.start();
 
-    if (p.at(SyntaxKind.NAME)) {
-        p.next(SyntaxKind.NAME);
+    if (p.at(SyntaxKind.IDENT)) {
+        p.next(SyntaxKind.IDENT);
     } else {
         p.err_and_next("expected an identifier");
     }
 
-    return m.complete(p, SyntaxKind.IDENT);
+    return m.complete(p, SyntaxKind.NAME_REF);
 }
 
 export function var_decl(p: Parser) {
@@ -32,9 +32,9 @@ export function var_decl(p: Parser) {
 
     if (!is_type(p.cur())) {
         p.err_and_next("expected typename");
+    } else {
+        p.next_any();
     }
-
-    p.next_any();
     name(p);
 
     m.complete(p, SyntaxKind.VAR_DECL);

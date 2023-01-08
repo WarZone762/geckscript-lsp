@@ -3,13 +3,13 @@ import { TreeData } from "./types/hir";
 import { Node, Token, NodeOrToken } from "./types/syntax_node";
 
 
-export function ForEachChild(node: Node, func: (node: NodeOrToken) => any): void {
+export function for_each_child(node: Node, func: (node: NodeOrToken) => any): void {
     for (const child of node.children) {
         func(child);
     }
 }
 
-export async function ForEachChildAsync(
+export async function for_each_child_async(
     node: Node,
     func: (node: NodeOrToken) => any
 ): Promise<void> {
@@ -18,56 +18,56 @@ export async function ForEachChildAsync(
     }
 }
 
-export function ForEachChildRecursive(
+export function for_each_child_recursive(
     root: Node,
     pre_func: (node: NodeOrToken) => any = () => undefined,
     post_func: (node: NodeOrToken) => any = () => undefined,
 ): void {
-    ForEachChild(root, node => {
+    for_each_child(root, node => {
         pre_func(node);
         if (node.is_node()) {
-            ForEachChildRecursive(node, pre_func, post_func);
+            for_each_child_recursive(node, pre_func, post_func);
         }
         post_func(node);
     });
 }
 
-export async function ForEachChildRecursiveAsync(
+export async function for_each_child_recuresive_async(
     root: Node,
     pre_func: (node: NodeOrToken) => any = () => undefined,
     post_func: (node: NodeOrToken) => any = () => undefined,
 ): Promise<void> {
-    await ForEachChildAsync(root, async node => {
+    await for_each_child_async(root, async node => {
         await pre_func(node);
         if (node.is_node()) {
-            await ForEachChildRecursiveAsync(node, pre_func, post_func);
+            await for_each_child_recuresive_async(node, pre_func, post_func);
         }
         await post_func(node);
     });
 }
 
-export function* DescendantsDF(node: NodeOrToken): Generator<NodeOrToken, void, void> {
+export function* descendants_df(node: NodeOrToken): Generator<NodeOrToken, void, void> {
     if (node.is_node()) {
         yield node;
         for (const child of node.children) {
-            yield* DescendantsDF(child);
+            yield* descendants_df(child);
         }
     } else {
         yield node;
     }
 }
 
-export function* Leafs(node: NodeOrToken): Generator<Token, void, void> {
+export function* leafs(node: NodeOrToken): Generator<Token, void, void> {
     if (node.is_node()) {
         for (const child of node.children) {
-            yield* Leafs(child);
+            yield* leafs(child);
         }
     } else {
         yield node;
     }
 }
 
-export function* Siblings(node: NodeOrToken): Generator<NodeOrToken, void, void> {
+export function* siblings(node: NodeOrToken): Generator<NodeOrToken, void, void> {
     if (node.parent != undefined) {
         for (const sibling of node.parent.children) {
             yield sibling;
@@ -77,7 +77,7 @@ export function* Siblings(node: NodeOrToken): Generator<NodeOrToken, void, void>
     }
 }
 
-export function* Ancestors(node: NodeOrToken): Generator<NodeOrToken, void, void> {
+export function* ancestors(node: NodeOrToken): Generator<NodeOrToken, void, void> {
     yield node;
     while (node.parent != undefined) {
         yield node.parent;
@@ -85,11 +85,11 @@ export function* Ancestors(node: NodeOrToken): Generator<NodeOrToken, void, void
     }
 }
 
-export function FindAncestor(
+export function find_ancestor(
     node: NodeOrToken,
     predicate: (node: NodeOrToken) => boolean
 ): NodeOrToken | undefined {
-    for (const ancestor of Ancestors(node)) {
+    for (const ancestor of ancestors(node)) {
         if (predicate(ancestor)) {
             return ancestor;
         }
@@ -98,11 +98,11 @@ export function FindAncestor(
     return undefined;
 }
 
-export function NearestToken(root: Node, offset: number): Token {
-    const leafs = Leafs(root);
+export function nearest_token(root: Node, offset: number): Token {
+    const leafs_ = leafs(root);
 
-    let last_leaf = leafs.next().value!;
-    for (const leaf of leafs) {
+    let last_leaf = leafs_.next().value!;
+    for (const leaf of leafs_) {
         if (leaf.offset > offset) {
             return last_leaf;
         } else {
@@ -113,8 +113,8 @@ export function NearestToken(root: Node, offset: number): Token {
     return last_leaf;
 }
 
-export function TokenAtPosition(root: Node, offset: number): Token | undefined {
-    for (const leaf of Leafs(root)) {
+export function token_at_pos(root: Node, offset: number): Token | undefined {
+    for (const leaf of leafs(root)) {
         if (leaf.offset <= offset && offset < leaf.end()) {
             return leaf;
         }
@@ -123,21 +123,21 @@ export function TokenAtPosition(root: Node, offset: number): Token | undefined {
     return undefined;
 }
 
-export function* StringOccurences(
+export function* str_occurences(
     node: Node,
     str: string
 ): Generator<Token, void, void> {
-    for (const leaf of Leafs(node)) {
+    for (const leaf of leafs(node)) {
         if (leaf.text === str) {
             yield leaf;
         }
     }
 }
 
-export function GetText(node: Node): string {
+export function get_text(node: Node): string {
     let text = "";
 
-    for (const leaf of Leafs(node)) {
+    for (const leaf of leafs(node)) {
         text += leaf.text;
     }
 
@@ -385,7 +385,7 @@ export function GetText(node: Node): string {
 // }
 
 // debug TreeData stuff
-export function ToTreeDataFull(node: NodeOrToken): TreeData {  // TODO: add drawing data to the TreeData
+export function to_tree_data(node: NodeOrToken): TreeData {  // TODO: add drawing data to the TreeData
     const tree_data: TreeData = new TreeData(
         (node.is_node() ? syntax_kind_name(node.kind) : `'${node.text}'`),
         [new TreeData("Range", [new TreeData(
@@ -394,10 +394,10 @@ export function ToTreeDataFull(node: NodeOrToken): TreeData {  // TODO: add draw
     );
 
     if (node.is_node()) {
-        ForEachChild(
+        for_each_child(
             node,
             node => {
-                tree_data.append(ToTreeDataFull(node));
+                tree_data.append(to_tree_data(node));
             }
         );
     }
@@ -405,7 +405,7 @@ export function ToTreeDataFull(node: NodeOrToken): TreeData {  // TODO: add draw
     return tree_data;
 }
 
-export function ToHTML(  // TODO: Integrate this to tree-view
+export function to_html(  // TODO: Integrate this to tree-view
     root: NodeOrToken,
 ): string {
     function node_to_html(node: NodeOrToken): string {

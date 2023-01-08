@@ -26,11 +26,13 @@ export function is_${func_name}(kind: SyntaxKind): kind is ${type_name}SyntaxKin
 export const PRIMARY_EXPR: SyntaxKindData = [[
     "NUMBER_INT",
     "STRING",
-    "IDENT",
+    "NAME",
+    "NAME_REF",
 ], ""];
 
 export const VAR_OR_VAR_DECL: SyntaxKindData = [[
-    "IDENT",
+    "NAME",
+    "NAME_REF",
     "VAR_DECL",
 ], ""];
 
@@ -50,8 +52,7 @@ export const OTHER: SyntaxKindData = [[...new Set([
     "TOMBSTONE",
     "ERROR",
     "LITERAL",
-    "NAME",
-    "NAME_REF",
+    "IDENT",
     ...VAR_OR_VAR_DECL[0],
     "BLOCKTYPE_DESIG",
     "BRANCH",
@@ -169,6 +170,7 @@ export const STMT: SyntaxKindData = [[
     "LET",
     "BEGIN",
     "IF",
+    "ELSEIF",
     "WHILE",
     "FOREACH",
 ], "_STMT"];
@@ -219,8 +221,7 @@ export type TokenSyntaxKind =
     | SyntaxKind.NEWLINE
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
-    | SyntaxKind.NAME
-    | SyntaxKind.NAME_REF
+    | SyntaxKind.IDENT
     | SyntaxKind.BLOCKTYPE
     | SyntaxKind.BLOCKTYPE_FUNCTION
     | TypeSyntaxKind
@@ -232,7 +233,8 @@ export type NodeSyntaxKind =
     | SyntaxKind.TOMBSTONE
     | SyntaxKind.ERROR
     | SyntaxKind.LITERAL
-    | SyntaxKind.IDENT
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
     | SyntaxKind.BRANCH

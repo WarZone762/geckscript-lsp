@@ -79,6 +79,8 @@ export class CompletedMarker {
     }
 }
 
+export type TokenSet = Set<TokenSyntaxKind>;
+
 export class Parser {
     static PARSER_STEP_LIMIT = 15_000_000;
 
@@ -124,8 +126,8 @@ export class Parser {
         return true;
     }
 
-    at_ts(kinds: TokenSyntaxKind[]): boolean {
-        return kinds.includes(this.cur());
+    at_ts(kinds: TokenSet): boolean {
+        return kinds.has(this.cur());
     }
 
     start(): Marker {
@@ -160,20 +162,24 @@ export class Parser {
         return false;
     }
 
-    err_and_next(msg: string) {
-        this.err_recover(msg, []);
+    err_and_next(msg: string, skip_newline = false) {
+        this.err_recover(msg, new Set(), skip_newline);
     }
 
-    err_recover(msg: string, recovery: TokenSyntaxKind[]) {
+    err_recover(msg: string, recovery: TokenSet, skip_newline = false) {
         if (this.at_ts(recovery)) {
             this.err(msg);
             return;
         }
 
-        const m = this.start();
-        this.err(msg);
-        this.next_any();
-        m.complete(this, SyntaxKind.ERROR);
+        if (!this.at(SyntaxKind.NEWLINE) || skip_newline) {
+            const m = this.start();
+            this.err(msg);
+            this.next_any();
+            m.complete(this, SyntaxKind.ERROR);
+        } else {
+            this.err(msg);
+        }
     }
 
     do_next(kind: TokenSyntaxKind, n_raw_tokens: number) {
