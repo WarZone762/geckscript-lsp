@@ -1,51 +1,64 @@
-import { expr_primary } from "./expressions";
-import { Parser, CompletedMarker } from "../parser";
-import { stmt_list_root } from "./statements";
 import { is_type, SyntaxKind } from "../../syntax_kind/generated";
+import { Parser, TokenSet } from "../parser";
+import { expr_primary } from "./expressions";
+import { stmt_list_root } from "./statements";
 
-export function name(p: Parser): CompletedMarker {
-    const m = p.start();
-
+export function name_r(p: Parser, recovery: TokenSet) {
     if (p.at(SyntaxKind.IDENT)) {
+        const m = p.start();
         p.next(SyntaxKind.IDENT);
+        m.complete(p, SyntaxKind.NAME);
     } else {
-        p.err_and_next("expected an identifier");
+        p.err_recover("expected an identifier", recovery);
     }
 
-    return m.complete(p, SyntaxKind.NAME);
 }
 
-export function name_ref(p: Parser): CompletedMarker {
-    const m = p.start();
+export function name(p: Parser) {
+    name_r(p, new Set());
+}
 
+export function name_ref_r(p: Parser, recovery: TokenSet) {
     if (p.at(SyntaxKind.IDENT)) {
+        const m = p.start();
         p.next(SyntaxKind.IDENT);
+        m.complete(p, SyntaxKind.NAME_REF);
     } else {
-        p.err_and_next("expected an identifier");
+        p.err_recover("expected an identifier", recovery);
     }
-
-    return m.complete(p, SyntaxKind.NAME_REF);
 }
 
-export function var_decl(p: Parser) {
+export function name_ref(p: Parser) {
+    name_ref_r(p, new Set());
+}
+
+export function var_decl_r(p: Parser, recovery: TokenSet) {
     const m = p.start();
 
     if (!is_type(p.cur())) {
-        p.err_and_next("expected typename");
+        p.err_recover("expected typename", recovery);
     } else {
         p.next_any();
     }
-    name(p);
+    name_r(p, recovery);
 
     m.complete(p, SyntaxKind.VAR_DECL);
 }
 
-export function var_or_var_decl(p: Parser) {
+export function var_decl(p: Parser) {
+    var_decl_r(p, new Set());
+}
+
+export function var_or_var_decl_r(p: Parser, recovery: TokenSet) {
     if (is_type(p.cur())) {
-        var_decl(p);
+        var_decl_r(p, recovery);
     } else {
-        name_ref(p);
+        name_ref_r(p, recovery);
     }
+}
+
+export function var_or_var_decl(p: Parser) {
+    var_or_var_decl_r(p, new Set());
 }
 
 export function block_type(p: Parser) {

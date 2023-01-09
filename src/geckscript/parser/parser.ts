@@ -151,35 +151,31 @@ export class Parser {
     }
 
     err(msg: string) {
-        this.push_event(new EventError(msg));
+        this.push_event(new EventError(`parsing error: ${msg}`));
     }
 
-    expect(kind: TokenSyntaxKind): boolean {
+    expect(kind: TokenSyntaxKind, err_msg?: string): boolean {
         if (this.opt(kind)) {
             return true;
         }
-        this.err(`expected ${syntax_kind_name(kind)}`);
+        this.err(err_msg ?? `expected ${syntax_kind_name(kind)}`);
         return false;
     }
 
-    err_and_next(msg: string, skip_newline = false) {
-        this.err_recover(msg, new Set(), skip_newline);
+    err_and_next(msg: string) {
+        this.err_recover(msg, new Set());
     }
 
-    err_recover(msg: string, recovery: TokenSet, skip_newline = false) {
-        if (this.at_ts(recovery)) {
+    err_recover(msg: string, recovery: TokenSet) {
+        if (this.at(SyntaxKind.NEWLINE) || this.at_ts(recovery)) {
             this.err(msg);
             return;
         }
 
-        if (!this.at(SyntaxKind.NEWLINE) || skip_newline) {
-            const m = this.start();
-            this.err(msg);
-            this.next_any();
-            m.complete(this, SyntaxKind.ERROR);
-        } else {
-            this.err(msg);
-        }
+        const m = this.start();
+        this.err(msg);
+        this.next_any();
+        m.complete(this, SyntaxKind.ERROR);
     }
 
     do_next(kind: TokenSyntaxKind, n_raw_tokens: number) {

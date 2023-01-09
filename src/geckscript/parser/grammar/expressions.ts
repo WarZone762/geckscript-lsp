@@ -1,7 +1,7 @@
-import { var_decl, name_ref } from "./other";
+import { is_op, is_primary_expr, is_unary_op, SyntaxKind } from "../../syntax_kind/generated";
 import { CompletedMarker, Marker, Parser, TokenSet } from "../parser";
+import { name_ref, var_decl } from "./other";
 import { stmt } from "./statements";
-import { SyntaxKind, is_op, syntax_kind_name, is_unary_op, is_primary_expr } from "../../syntax_kind/generated";
 
 export const LITERAL_FIRST: TokenSet = new Set([
     SyntaxKind.NUMBER_INT,
@@ -95,7 +95,9 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
             if (p.nth_at(1, SyntaxKind.LPAREN) || is_primary_expr(p.nth(1)) || p.nth_at(1, SyntaxKind.IDENT)) {
                 return expr_func(p);
             } else {
-                return name_ref(p);
+                const m = p.start();
+                p.next(SyntaxKind.IDENT);
+                return m.complete(p, SyntaxKind.NAME_REF);
             }
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
@@ -107,7 +109,7 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
         case SyntaxKind.LBRACK:
             return expr_lambda_inline(p);
         default:
-            p.err_and_next(`expected string, number, identifier or parenthesis, got '${syntax_kind_name(p.cur())}'`);
+            p.err_and_next("expected expression");
     }
 }
 
