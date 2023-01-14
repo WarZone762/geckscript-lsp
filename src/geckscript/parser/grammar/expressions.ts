@@ -1,15 +1,26 @@
 import { is_op, is_primary_expr, is_unary_op, SyntaxKind } from "../../syntax_kind/generated";
-import { CompletedMarker, Marker, Parser, TokenSet } from "../parser";
-import { name_ref, var_decl } from "./other";
-import { stmt } from "./statements";
+import { CompletedMarker, Marker, Parser } from "../parser";
+import { TokenSet } from "../token_set";
+import { name_ref, var_or_var_decl_r } from "./other";
+import { stmt_list } from "./statements";
 
-export const LITERAL_FIRST: TokenSet = new Set([
+export const LITERAL = new TokenSet([
     SyntaxKind.NUMBER_INT,
     SyntaxKind.STRING,
 ]);
 
+export const TYPE = new TokenSet([
+    SyntaxKind.SHORT_TYPE,
+    SyntaxKind.INT_TYPE,
+    SyntaxKind.LONG_TYPE,
+    SyntaxKind.FLOAT_TYPE,
+    SyntaxKind.REFERENCE_TYPE,
+    SyntaxKind.STRING_VAR_TYPE,
+    SyntaxKind.ARRAY_VAR_TYPE,
+]);
+
 export function literal(p: Parser): CompletedMarker | undefined {
-    if (!p.at_ts(LITERAL_FIRST)) {
+    if (!p.at_ts(LITERAL)) {
         return undefined;
     }
 
@@ -27,15 +38,15 @@ export function expr_lambda_inline(p: Parser): CompletedMarker {
 
     p.next(SyntaxKind.LBRACK);
 
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.RBRACK)) {
-        var_decl(p);
-        if (p.at(SyntaxKind.COMMA)) {
-            p.expect(SyntaxKind.COMMA);
-        }
+    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.RBRACK)) {
+        var_or_var_decl_r(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK])));
+        p.opt(SyntaxKind.COMMA);
     }
 
     p.expect(SyntaxKind.RBRACK);
-    p.expect(SyntaxKind.EQGT);
+    if (!p.opt(SyntaxKind.EQGT)) {
+        p.err_recover("expected '=>'", new TokenSet());  // TODO: recovery EXPR_FIRST
+    }
     expr(p);
 
     return m.complete(p, SyntaxKind.LAMBDA_INLINE_EXPR);
@@ -45,21 +56,21 @@ export function expr_lambda(p: Parser): CompletedMarker {
     const m = p.start();
 
     p.next(SyntaxKind.BEGIN_KW);
-    p.expect(SyntaxKind.BLOCKTYPE_FUNCTION);
-    p.expect(SyntaxKind.LBRACK);
+    if (!p.opt(SyntaxKind.BLOCKTYPE_FUNCTION)) {
+        p.err_recover("expected 'Function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
+    }
+    if (!p.opt(SyntaxKind.LBRACK)) {
+        p.err_recover("expected '{'", TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN])));
+    }
 
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.RBRACK)) {
-        var_decl(p);
-        if (p.at(SyntaxKind.COMMA)) {
-            p.expect(SyntaxKind.COMMA);
-        }
+    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.RBRACK) && !p.at(SyntaxKind.RPAREN)) {
+        var_or_var_decl_r(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN])));
+        p.opt(SyntaxKind.COMMA);
     }
     p.expect(SyntaxKind.RBRACK);
     p.expect(SyntaxKind.NEWLINE);
 
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.END_KW)) {
-        stmt(p);
-    }
+    stmt_list(p, new TokenSet([SyntaxKind.RPAREN]));
 
     p.expect(SyntaxKind.END_KW);
 
@@ -101,6 +112,9 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
             }
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
+            if (p.opt(SyntaxKind.RPAREN)) {
+                return undefined;
+            }
             const m = p.at(SyntaxKind.BEGIN_KW) ? expr_lambda(p) : expr_bp(p, 1);
             p.expect(SyntaxKind.RPAREN);
 
@@ -110,6 +124,81 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
             return expr_lambda_inline(p);
         default:
             p.err_and_next("expected expression");
+    }
+}
+
+export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined {
+    let lhs = expr_lhs(p);
+    if (lhs == undefined) {
+        return undefined;
+    }
+
+    while (true) {
+        const bp = bin_op_bp(p) * 2;
+        if (bp < min_bp) {
+            break;
+        }
+
+        const m: Marker = lhs.precede(p);
+        p.next_any();
+        expr_bp(p, bp + 1);
+
+        lhs = m.complete(p, SyntaxKind.BIN_EXPR);
+    }
+
+    return lhs;
+}
+
+export function expr_lhs(p: Parser): CompletedMarker | undefined {
+    if (is_unary_op(p.cur())) {
+        const m = p.start();
+
+        const bp = unary_op_bp(p) * 2;
+        p.next_any();
+        expr_bp(p, bp);
+
+        return m.complete(p, SyntaxKind.UNARY_EXPR);
+    } else {
+        const lhs = expr_primary(p);
+        if (lhs == undefined) {
+            return undefined;
+        }
+
+        return expr_member_access(p, lhs);
+    }
+}
+
+export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMarker {
+    while (true) {
+        switch (p.cur()) {
+            case SyntaxKind.LSQBRACK: {
+                const m: Marker = lhs.precede(p);
+                p.next(SyntaxKind.LSQBRACK);
+                expr_bp(p, 0);  // TODO: add ']' as recovery
+                p.expect(SyntaxKind.RSQBRACK);
+
+                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
+                break;
+            }
+            case SyntaxKind.RARROW: {
+                const m: Marker = lhs.precede(p);
+                p.next(SyntaxKind.RARROW);
+                expr_primary(p);
+
+                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
+                break;
+            }
+            case SyntaxKind.DOT: {
+                const m = lhs.precede(p);
+                p.next(SyntaxKind.DOT);
+                expr_primary(p);
+
+                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
+                break;
+            }
+            default:
+                return lhs;
+        }
     }
 }
 
@@ -174,80 +263,5 @@ export function bin_op_bp(p: Parser): number {
             return 1;
         default:
             return 0;
-    }
-}
-
-export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined {
-    let lhs = expr_lhs(p);
-    if (lhs == undefined) {
-        return undefined;
-    }
-
-    while (true) {
-        const bp = bin_op_bp(p) * 2;
-        if (bp < min_bp) {
-            break;
-        }
-
-        const m: Marker = lhs.precede(p);
-        p.next_any();
-        expr_bp(p, bp + 1);
-
-        lhs = m.complete(p, SyntaxKind.BIN_EXPR);
-    }
-
-    return lhs;
-}
-
-export function expr_lhs(p: Parser): CompletedMarker | undefined {
-    if (is_unary_op(p.cur())) {
-        const m = p.start();
-
-        const bp = unary_op_bp(p) * 2;
-        p.next_any();
-        expr_bp(p, bp);
-
-        return m.complete(p, SyntaxKind.UNARY_EXPR);
-    } else {
-        const lhs = expr_primary(p);
-        if (lhs == undefined) {
-            return undefined;
-        }
-
-        return expr_member_access(p, lhs);
-    }
-}
-
-export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMarker {
-    while (true) {
-        switch (p.cur()) {
-            case SyntaxKind.LSQBRACK: {
-                const m: Marker = lhs.precede(p);
-                p.next(SyntaxKind.LSQBRACK);
-                expr_bp(p, 0);
-                p.expect(SyntaxKind.RSQBRACK);
-
-                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
-                break;
-            }
-            case SyntaxKind.RARROW: {
-                const m: Marker = lhs.precede(p);
-                p.next(SyntaxKind.RARROW);
-                expr_primary(p);
-
-                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
-                break;
-            }
-            case SyntaxKind.DOT: {
-                const m = lhs.precede(p);
-                p.next(SyntaxKind.DOT);
-                expr_primary(p);
-
-                lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
-                break;
-            }
-            default:
-                return lhs;
-        }
     }
 }

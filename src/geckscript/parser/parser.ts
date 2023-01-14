@@ -2,6 +2,7 @@ import assert = require("assert");
 import { TokenSyntaxKind, NodeSyntaxKind, SyntaxKind, syntax_kind_name } from "../syntax_kind/generated";
 import { AnyEvent, EventError, EventFinish, EventKind, EventStart, EventToken } from "./event";
 import { script } from "./grammar/other";
+import { TokenSet } from "./token_set";
 
 export class Input {
     tokens: TokenSyntaxKind[];
@@ -79,8 +80,6 @@ export class CompletedMarker {
     }
 }
 
-export type TokenSet = Set<TokenSyntaxKind>;
-
 export class Parser {
     static PARSER_STEP_LIMIT = 15_000_000;
 
@@ -154,16 +153,16 @@ export class Parser {
         this.push_event(new EventError(`parsing error: ${msg}`));
     }
 
-    expect(kind: TokenSyntaxKind, err_msg?: string): boolean {
+    expect(kind: TokenSyntaxKind): boolean {
         if (this.opt(kind)) {
             return true;
         }
-        this.err(err_msg ?? `expected ${syntax_kind_name(kind)}`);
+        this.err(`expected ${syntax_kind_name(kind)}`);
         return false;
     }
 
     err_and_next(msg: string) {
-        this.err_recover(msg, new Set());
+        this.err_recover(msg, new TokenSet());
     }
 
     err_recover(msg: string, recovery: TokenSet) {

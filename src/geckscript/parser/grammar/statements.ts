@@ -1,9 +1,10 @@
 import { is_assignment_op, is_keyword, is_type, SyntaxKind } from "../../syntax_kind/generated";
-import { Parser, TokenSet } from "../parser";
+import { Parser } from "../parser";
+import { TokenSet } from "../token_set";
 import { expr, expr_bp } from "./expressions";
 import { block_type, name_ref_r, var_decl_r, var_or_var_decl_r } from "./other";
 
-export const STMT_LIST_TERMINATORS: TokenSet = new Set([
+export const STMT_LIST_TERMINATORS = new TokenSet([
     SyntaxKind.END_KW,
     SyntaxKind.LOOP_KW,
     SyntaxKind.ELSEIF_KW,
@@ -11,7 +12,7 @@ export const STMT_LIST_TERMINATORS: TokenSet = new Set([
     SyntaxKind.ENDIF_KW,
 ]);
 
-export const ASSIGNMENT_OP: TokenSet = new Set([
+export const ASSIGNMENT_OP = new TokenSet([
     SyntaxKind.EQ,
     SyntaxKind.COLONEQ,
     SyntaxKind.PLUSEQ,
@@ -49,7 +50,7 @@ export function stmt(p: Parser) {
             return;
         default:
             if (is_keyword(p.cur())) {
-                if (p.at_ts(new Set([SyntaxKind.CONTINUE_KW, SyntaxKind.BREAK_KW, SyntaxKind.RETURN_KW]))) {
+                if (p.at_ts(new TokenSet([SyntaxKind.CONTINUE_KW, SyntaxKind.BREAK_KW, SyntaxKind.RETURN_KW]))) {
                     p.next_any();
                 } else {
                     p.err_and_next("unexpected keyword");
@@ -92,10 +93,10 @@ export function stmt_root(p: Parser) {
     }
 }
 
-export function stmt_list(p: Parser) {
+export function stmt_list(p: Parser, extra_terminators: TokenSet = new TokenSet()) {
     const m = p.start();
 
-    while (!p.at(SyntaxKind.EOF) && !p.at_ts(STMT_LIST_TERMINATORS)) {
+    while (!p.at(SyntaxKind.EOF) && !p.at_ts(STMT_LIST_TERMINATORS.union(extra_terminators))) {
         stmt(p);
     }
 
@@ -128,8 +129,10 @@ export function stmt_set(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.SET_KW);
-    name_ref_r(p, new Set([SyntaxKind.TO_KW]));
-    p.expect(SyntaxKind.TO_KW, "expected 'to'");
+    name_ref_r(p, new TokenSet([SyntaxKind.TO_KW]));
+    if (!p.opt(SyntaxKind.TO_KW)) {
+        p.err_recover("expected 'to'", new TokenSet());  // TODO: recovery = EXPR_FIRST
+    }
     expr_bp(p, 2);
 
     m.complete(p, SyntaxKind.SET_STMT);
@@ -143,7 +146,7 @@ export function stmt_let(p: Parser) {
     if (is_assignment_op(p.cur())) {
         p.next_any();
     } else {
-        p.err_recover("expected assignment operator", new Set());  // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected assignment operator", new TokenSet());  // TODO: recovery = EXPR_FIRST
     }
     expr(p);
 
@@ -167,11 +170,9 @@ export function stmt_foreach(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.FOREACH_KW);
-    var_or_var_decl_r(p, new Set([SyntaxKind.LARROW]));
-    if (p.at(SyntaxKind.LARROW)) {
-        p.next(SyntaxKind.LARROW);
-    } else {
-        p.err_recover("expected '<-'", new Set());  // TODO: recovery = EXPR_FIRST
+    var_or_var_decl_r(p, new TokenSet([SyntaxKind.LARROW]));
+    if (!p.opt(SyntaxKind.LARROW)) {
+        p.err_recover("expected '<-'", new TokenSet());  // TODO: recovery = EXPR_FIRST
     }
     expr(p);
     p.expect(SyntaxKind.NEWLINE);
