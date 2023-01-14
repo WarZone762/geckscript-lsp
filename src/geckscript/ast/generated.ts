@@ -1,4 +1,20 @@
-import { ExprSyntaxKind, is_expr, is_op, is_primary_expr, is_stmt, is_type, is_var_or_var_decl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated";
+import {
+    ExprSyntaxKind,
+    is_expr,
+    is_op,
+    is_primary_expr,
+    is_stmt,
+    is_type,
+    is_var_or_var_decl,
+    NodeSyntaxKind,
+    OpSyntaxKind,
+    PrimaryExprSyntaxKind,
+    StmtSyntaxKind,
+    SyntaxKind,
+    TokenSyntaxKind,
+    TypeSyntaxKind,
+    VarOrVarDeclSyntaxKind,
+} from "../syntax_kind/generated";
 import { Node, NodeOrToken, Token } from "../types/syntax_node";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
@@ -7,14 +23,21 @@ export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
         this.green = green;
     }
 
-    static from_green<C, T extends NodeSyntaxKind>(this: { new(green: Node<T>): C; }, green: Node<T> | undefined): C | undefined {
+    static from_green<C, T extends NodeSyntaxKind>(
+        this: { new (green: Node<T>): C },
+        green: Node<T> | undefined
+    ): C | undefined {
         if (green != undefined) {
             return new this(green);
         }
     }
 }
 
-function token<T extends TokenSyntaxKind>(node: AstNode, predicate: (kind: SyntaxKind) => kind is T, idx = 0): Token<T> | undefined {
+function token<T extends TokenSyntaxKind>(
+    node: AstNode,
+    predicate: (kind: SyntaxKind) => kind is T,
+    idx = 0
+): Token<T> | undefined {
     for (const child of node.green.children) {
         if (predicate(child.kind)) {
             if (idx > 0) {
@@ -26,7 +49,11 @@ function token<T extends TokenSyntaxKind>(node: AstNode, predicate: (kind: Synta
     }
 }
 
-function child<T extends NodeSyntaxKind>(node: AstNode, predicate: (kind: SyntaxKind) => kind is T, idx = 0): Node<T> | undefined {
+function child<T extends NodeSyntaxKind>(
+    node: AstNode,
+    predicate: (kind: SyntaxKind) => kind is T,
+    idx = 0
+): Node<T> | undefined {
     for (const child of node.green.children) {
         if (predicate(child.kind)) {
             if (idx > 0) {
@@ -38,7 +65,10 @@ function child<T extends NodeSyntaxKind>(node: AstNode, predicate: (kind: Syntax
     }
 }
 
-function* children<T extends SyntaxKind>(node: AstNode, predicate: (kind: SyntaxKind) => kind is T): Generator<NodeOrToken<T>, void, undefined> {
+function* children<T extends SyntaxKind>(
+    node: AstNode,
+    predicate: (kind: SyntaxKind) => kind is T
+): Generator<NodeOrToken<T>, void, undefined> {
     for (const child of node.green.children) {
         if (predicate(child.kind)) {
             yield child as NodeOrToken<T>;
@@ -49,13 +79,11 @@ function* children<T extends SyntaxKind>(node: AstNode, predicate: (kind: Syntax
 export type Type = Token<TypeSyntaxKind>;
 export type Op = Token<OpSyntaxKind>;
 
-export type PrimaryExpr =
-    | Token<SyntaxKind.NUMBER_INT>
-    | Token<SyntaxKind.STRING>
-    | NameRef
-    ;
+export type PrimaryExpr = Token<SyntaxKind.NUMBER_INT> | Token<SyntaxKind.STRING> | NameRef;
 
-export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefined): PrimaryExpr | undefined {
+export function PrimaryExpr(
+    green: NodeOrToken<PrimaryExprSyntaxKind> | undefined
+): PrimaryExpr | undefined {
     if (green == undefined) {
         return undefined;
     }
@@ -70,13 +98,11 @@ export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefine
     }
 }
 
-export type VarOrVarDecl =
-    | Name
-    | NameRef
-    | VarDecl
-    ;
+export type VarOrVarDecl = Name | NameRef | VarDecl;
 
-export function VarOrVarDecl(green: Node<VarOrVarDeclSyntaxKind> | undefined): VarOrVarDecl | undefined {
+export function VarOrVarDecl(
+    green: Node<VarOrVarDeclSyntaxKind> | undefined
+): VarOrVarDecl | undefined {
     if (green == undefined) {
         return undefined;
     }
@@ -90,14 +116,7 @@ export function VarOrVarDecl(green: Node<VarOrVarDeclSyntaxKind> | undefined): V
             return new VarDecl(green as Node<SyntaxKind.VAR_DECL>);
     }
 }
-export type Expr =
-    | UnaryExpr
-    | BinExpr
-    | MemberExpr
-    | FuncExpr
-    | LambdaInlineExpr
-    | LambdaExpr
-    ;
+export type Expr = UnaryExpr | BinExpr | MemberExpr | FuncExpr | LambdaInlineExpr | LambdaExpr;
 
 export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined {
     if (green == undefined) {
@@ -119,15 +138,7 @@ export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined 
             return new LambdaExpr(green as Node<SyntaxKind.LAMBDA_EXPR>);
     }
 }
-export type Stmt =
-    | VarDeclStmt
-    | SetStmt
-    | LetStmt
-    | BeginStmt
-    | ForeachStmt
-    | WhileStmt
-    | IfStmt
-    ;
+export type Stmt = VarDeclStmt | SetStmt | LetStmt | BeginStmt | ForeachStmt | WhileStmt | IfStmt;
 
 export function Stmt(green: Node<StmtSyntaxKind> | undefined): Stmt | undefined {
     if (green == undefined) {
@@ -183,13 +194,19 @@ export class StmtList extends AstNode<SyntaxKind.STMT_LIST> {
 
 export class Name extends AstNode<SyntaxKind.NAME> {
     name() {
-        return token(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT
+        );
     }
 }
 
 export class NameRef extends AstNode<SyntaxKind.NAME_REF> {
     name_ref() {
-        return token(this, (k => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT
+        );
     }
 }
 
@@ -198,7 +215,9 @@ export class VarDecl extends AstNode<SyntaxKind.VAR_DECL> {
         return token(this, is_type);
     }
     ident() {
-        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
+        return Name.from_green(
+            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+        );
     }
 }
 
@@ -228,7 +247,13 @@ export class MemberExpr extends AstNode<SyntaxKind.MEMBER_EXPR> {
         return Expr(child(this, is_expr));
     }
     left_op() {
-        return token(this, (k => k === SyntaxKind.LSQBRACK || k === SyntaxKind.RARROW || k === SyntaxKind.DOT) as (k: SyntaxKind) => k is SyntaxKind.LSQBRACK | SyntaxKind.RARROW | SyntaxKind.DOT);
+        return token(
+            this,
+            ((k) =>
+                k === SyntaxKind.LSQBRACK || k === SyntaxKind.RARROW || k === SyntaxKind.DOT) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.LSQBRACK | SyntaxKind.RARROW | SyntaxKind.DOT
+        );
     }
     rhs() {
         return Expr(child(this, is_expr));
@@ -237,25 +262,51 @@ export class MemberExpr extends AstNode<SyntaxKind.MEMBER_EXPR> {
 
 export class FuncExpr extends AstNode<SyntaxKind.FUNC_EXPR> {
     name() {
-        return NameRef.from_green(child(this, (k => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF));
+        return NameRef.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF
+            )
+        );
     }
     args() {
-        return ExprList.from_green(child(this, (k => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST));
+        return ExprList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST
+            )
+        );
     }
 }
 
 export class LambdaInlineExpr extends AstNode<SyntaxKind.LAMBDA_INLINE_EXPR> {
     lbrack() {
-        return token(this, (k => k === SyntaxKind.LBRACK) as (k: SyntaxKind) => k is SyntaxKind.LBRACK);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LBRACK) as (k: SyntaxKind) => k is SyntaxKind.LBRACK
+        );
     }
     params() {
-        return VarOrVarDeclList.from_green(child(this, (k => k === SyntaxKind.VAR_OR_VAR_DECL_LIST) as (k: SyntaxKind) => k is SyntaxKind.VAR_OR_VAR_DECL_LIST));
+        return VarOrVarDeclList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.VAR_OR_VAR_DECL_LIST) as (
+                    k: SyntaxKind
+                ) => k is SyntaxKind.VAR_OR_VAR_DECL_LIST
+            )
+        );
     }
     rbrack() {
-        return token(this, (k => k === SyntaxKind.RBRACK) as (k: SyntaxKind) => k is SyntaxKind.RBRACK);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.RBRACK) as (k: SyntaxKind) => k is SyntaxKind.RBRACK
+        );
     }
     arrow() {
-        return token(this, (k => k === SyntaxKind.EQGT) as (k: SyntaxKind) => k is SyntaxKind.EQGT);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.EQGT) as (k: SyntaxKind) => k is SyntaxKind.EQGT
+        );
     }
     expr() {
         return Expr(child(this, is_expr));
@@ -264,40 +315,86 @@ export class LambdaInlineExpr extends AstNode<SyntaxKind.LAMBDA_INLINE_EXPR> {
 
 export class LambdaExpr extends AstNode<SyntaxKind.LAMBDA_EXPR> {
     begin() {
-        return token(this, (k => k === SyntaxKind.BEGIN_KW) as (k: SyntaxKind) => k is SyntaxKind.BEGIN_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.BEGIN_KW) as (k: SyntaxKind) => k is SyntaxKind.BEGIN_KW
+        );
     }
     func_kw() {
-        return token(this, (k => k === SyntaxKind.BLOCKTYPE_FUNCTION) as (k: SyntaxKind) => k is SyntaxKind.BLOCKTYPE_FUNCTION);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.BLOCKTYPE_FUNCTION) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.BLOCKTYPE_FUNCTION
+        );
     }
     lbrack() {
-        return token(this, (k => k === SyntaxKind.LBRACK) as (k: SyntaxKind) => k is SyntaxKind.LBRACK);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LBRACK) as (k: SyntaxKind) => k is SyntaxKind.LBRACK
+        );
     }
     params() {
-        return VarOrVarDeclList.from_green(child(this, (k => k === SyntaxKind.VAR_OR_VAR_DECL_LIST) as (k: SyntaxKind) => k is SyntaxKind.VAR_OR_VAR_DECL_LIST));
+        return VarOrVarDeclList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.VAR_OR_VAR_DECL_LIST) as (
+                    k: SyntaxKind
+                ) => k is SyntaxKind.VAR_OR_VAR_DECL_LIST
+            )
+        );
     }
     rbrack() {
-        return token(this, (k => k === SyntaxKind.RBRACK) as (k: SyntaxKind) => k is SyntaxKind.RBRACK);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.RBRACK) as (k: SyntaxKind) => k is SyntaxKind.RBRACK
+        );
     }
     body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     end() {
-        return token(this, (k => k === SyntaxKind.END_KW) as (k: SyntaxKind) => k is SyntaxKind.END_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.END_KW) as (k: SyntaxKind) => k is SyntaxKind.END_KW
+        );
     }
 }
 
 export class BlocktypeDesig extends AstNode<SyntaxKind.BLOCKTYPE_DESIG> {
     blocktype() {
-        return token(this, (k => k === SyntaxKind.BLOCKTYPE || k === SyntaxKind.BLOCKTYPE_FUNCTION) as (k: SyntaxKind) => k is SyntaxKind.BLOCKTYPE | SyntaxKind.BLOCKTYPE_FUNCTION);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.BLOCKTYPE || k === SyntaxKind.BLOCKTYPE_FUNCTION) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.BLOCKTYPE | SyntaxKind.BLOCKTYPE_FUNCTION
+        );
     }
     args() {
-        return PrimaryExprList.from_green(child(this, (k => k === SyntaxKind.PRIMARY_EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.PRIMARY_EXPR_LIST));
+        return PrimaryExprList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.PRIMARY_EXPR_LIST) as (
+                    k: SyntaxKind
+                ) => k is SyntaxKind.PRIMARY_EXPR_LIST
+            )
+        );
     }
 }
 
 export class VarDeclStmt extends AstNode<SyntaxKind.VAR_DECL_STMT> {
     var() {
-        return VarDecl.from_green(child(this, (k => k === SyntaxKind.VAR_DECL) as (k: SyntaxKind) => k is SyntaxKind.VAR_DECL));
+        return VarDecl.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.VAR_DECL) as (k: SyntaxKind) => k is SyntaxKind.VAR_DECL
+            )
+        );
     }
     op() {
         return token(this, is_op);
@@ -309,10 +406,18 @@ export class VarDeclStmt extends AstNode<SyntaxKind.VAR_DECL_STMT> {
 
 export class SetStmt extends AstNode<SyntaxKind.SET_STMT> {
     set() {
-        return token(this, (k => k === SyntaxKind.SET_KW) as (k: SyntaxKind) => k is SyntaxKind.SET_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.SET_KW) as (k: SyntaxKind) => k is SyntaxKind.SET_KW
+        );
     }
     var() {
-        return NameRef.from_green(child(this, (k => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF));
+        return NameRef.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF
+            )
+        );
     }
     expr() {
         return Expr(child(this, is_expr));
@@ -321,7 +426,10 @@ export class SetStmt extends AstNode<SyntaxKind.SET_STMT> {
 
 export class LetStmt extends AstNode<SyntaxKind.LET_STMT> {
     let() {
-        return token(this, (k => k === SyntaxKind.LET_KW) as (k: SyntaxKind) => k is SyntaxKind.LET_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LET_KW) as (k: SyntaxKind) => k is SyntaxKind.LET_KW
+        );
     }
     var() {
         return VarOrVarDecl(child(this, is_var_or_var_decl));
@@ -336,93 +444,177 @@ export class LetStmt extends AstNode<SyntaxKind.LET_STMT> {
 
 export class BeginStmt extends AstNode<SyntaxKind.BEGIN_STMT> {
     begin() {
-        return token(this, (k => k === SyntaxKind.BEGIN_KW) as (k: SyntaxKind) => k is SyntaxKind.BEGIN_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.BEGIN_KW) as (k: SyntaxKind) => k is SyntaxKind.BEGIN_KW
+        );
     }
     blocktype() {
-        return BlocktypeDesig.from_green(child(this, (k => k === SyntaxKind.BLOCKTYPE_DESIG) as (k: SyntaxKind) => k is SyntaxKind.BLOCKTYPE_DESIG));
+        return BlocktypeDesig.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.BLOCKTYPE_DESIG) as (
+                    k: SyntaxKind
+                ) => k is SyntaxKind.BLOCKTYPE_DESIG
+            )
+        );
     }
     body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     end() {
-        return token(this, (k => k === SyntaxKind.END_KW) as (k: SyntaxKind) => k is SyntaxKind.END_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.END_KW) as (k: SyntaxKind) => k is SyntaxKind.END_KW
+        );
     }
 }
 
 export class ForeachStmt extends AstNode<SyntaxKind.FOREACH_STMT> {
     foreach() {
-        return token(this, (k => k === SyntaxKind.FOREACH_KW) as (k: SyntaxKind) => k is SyntaxKind.FOREACH_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.FOREACH_KW) as (k: SyntaxKind) => k is SyntaxKind.FOREACH_KW
+        );
     }
     ident() {
-        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
+        return Name.from_green(
+            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+        );
     }
     larrow() {
-        return token(this, (k => k === SyntaxKind.LARROW) as (k: SyntaxKind) => k is SyntaxKind.LARROW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LARROW) as (k: SyntaxKind) => k is SyntaxKind.LARROW
+        );
     }
     iterable() {
         return Expr(child(this, is_expr));
     }
     body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     loop() {
-        return token(this, (k => k === SyntaxKind.LOOP_KW) as (k: SyntaxKind) => k is SyntaxKind.LOOP_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LOOP_KW) as (k: SyntaxKind) => k is SyntaxKind.LOOP_KW
+        );
     }
 }
 
 export class WhileStmt extends AstNode<SyntaxKind.WHILE_STMT> {
     while() {
-        return token(this, (k => k === SyntaxKind.WHILE_KW) as (k: SyntaxKind) => k is SyntaxKind.WHILE_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.WHILE_KW) as (k: SyntaxKind) => k is SyntaxKind.WHILE_KW
+        );
     }
     cond() {
         return Expr(child(this, is_expr));
     }
     body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     loop() {
-        return token(this, (k => k === SyntaxKind.LOOP_KW) as (k: SyntaxKind) => k is SyntaxKind.LOOP_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LOOP_KW) as (k: SyntaxKind) => k is SyntaxKind.LOOP_KW
+        );
     }
 }
 
 export class IfStmt extends AstNode<SyntaxKind.IF_STMT> {
     if() {
-        return token(this, (k => k === SyntaxKind.IF_KW) as (k: SyntaxKind) => k is SyntaxKind.IF_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.IF_KW) as (k: SyntaxKind) => k is SyntaxKind.IF_KW
+        );
     }
     if_cond() {
         return Expr(child(this, is_expr));
     }
     if_body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     elseif() {
-        return token(this, (k => k === SyntaxKind.ELSEIF_KW) as (k: SyntaxKind) => k is SyntaxKind.ELSEIF_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.ELSEIF_KW) as (k: SyntaxKind) => k is SyntaxKind.ELSEIF_KW
+        );
     }
     elseif_cond() {
         return Expr(child(this, is_expr));
     }
     elseif_body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     else() {
-        return token(this, (k => k === SyntaxKind.ELSE_KW) as (k: SyntaxKind) => k is SyntaxKind.ELSE_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.ELSE_KW) as (k: SyntaxKind) => k is SyntaxKind.ELSE_KW
+        );
     }
     else_body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
     endif() {
-        return token(this, (k => k === SyntaxKind.ENDIF_KW) as (k: SyntaxKind) => k is SyntaxKind.ENDIF_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.ENDIF_KW) as (k: SyntaxKind) => k is SyntaxKind.ENDIF_KW
+        );
     }
 }
 
 export class Script extends AstNode<SyntaxKind.SCRIPT> {
     scriptname() {
-        return token(this, (k => k === SyntaxKind.SCRIPTNAME_KW) as (k: SyntaxKind) => k is SyntaxKind.SCRIPTNAME_KW);
+        return token(
+            this,
+            ((k) => k === SyntaxKind.SCRIPTNAME_KW) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.SCRIPTNAME_KW
+        );
     }
     name() {
-        return Name.from_green(child(this, (k => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME));
+        return Name.from_green(
+            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+        );
     }
     body() {
-        return StmtList.from_green(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));
+        return StmtList.from_green(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
     }
 }

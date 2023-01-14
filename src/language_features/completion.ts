@@ -1,11 +1,10 @@
-import { TokenData } from "../geckscript/types/token_data";
-import { FunctionData, GetFunctionInfo } from "../geckscript/function_data";
-import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { Script } from "../geckscript/ast/generated";
-import { Position } from "vscode-languageserver-textdocument";
 import * as ast from "../geckscript/ast";
+import { Script } from "../geckscript/ast/generated";
+import { FunctionData, GetFunctionInfo } from "../geckscript/function_data";
+import { TokenData } from "../geckscript/types/token_data";
 import * as functions from "../wiki/functions";
-
+import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
 
 // export async function GetCompletionItems(
 //   script: Script,
@@ -80,7 +79,6 @@ export async function GetCompletionItemDoc(item: CompletionItem): Promise<Comple
 
     let text = doc.template.summary ?? "";
     text += "\n\n" + doc.text;
-
 
     item.documentation = {
         kind: "markdown",

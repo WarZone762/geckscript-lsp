@@ -5,4 +5,3 @@ export class TokenSet extends Set<TokenSyntaxKind> {
         return new TokenSet([...this, ...other]);
     }
 }
-

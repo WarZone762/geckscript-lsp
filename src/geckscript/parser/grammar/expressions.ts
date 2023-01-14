@@ -4,10 +4,7 @@ import { TokenSet } from "../token_set";
 import { name_ref, var_or_var_decl_r } from "./other";
 import { stmt_list } from "./statements";
 
-export const LITERAL = new TokenSet([
-    SyntaxKind.NUMBER_INT,
-    SyntaxKind.STRING,
-]);
+export const LITERAL = new TokenSet([SyntaxKind.NUMBER_INT, SyntaxKind.STRING]);
 
 export const TYPE = new TokenSet([
     SyntaxKind.SHORT_TYPE,
@@ -45,7 +42,7 @@ export function expr_lambda_inline(p: Parser): CompletedMarker {
 
     p.expect(SyntaxKind.RBRACK);
     if (!p.opt(SyntaxKind.EQGT)) {
-        p.err_recover("expected '=>'", new TokenSet());  // TODO: recovery EXPR_FIRST
+        p.err_recover("expected '=>'", new TokenSet()); // TODO: recovery EXPR_FIRST
     }
     expr(p);
 
@@ -60,11 +57,22 @@ export function expr_lambda(p: Parser): CompletedMarker {
         p.err_recover("expected 'Function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
     }
     if (!p.opt(SyntaxKind.LBRACK)) {
-        p.err_recover("expected '{'", TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN])));
+        p.err_recover(
+            "expected '{'",
+            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN]))
+        );
     }
 
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.RBRACK) && !p.at(SyntaxKind.RPAREN)) {
-        var_or_var_decl_r(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN])));
+    while (
+        !p.at(SyntaxKind.EOF) &&
+        !p.at(SyntaxKind.NEWLINE) &&
+        !p.at(SyntaxKind.RBRACK) &&
+        !p.at(SyntaxKind.RPAREN)
+    ) {
+        var_or_var_decl_r(
+            p,
+            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN]))
+        );
         p.opt(SyntaxKind.COMMA);
     }
     p.expect(SyntaxKind.RBRACK);
@@ -81,7 +89,11 @@ export function expr_func(p: Parser): CompletedMarker {
     const m = p.start();
 
     name_ref(p);
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && (!is_op(p.nth(0)) || p.at(SyntaxKind.LPAREN))) {
+    while (
+        !p.at(SyntaxKind.EOF) &&
+        !p.at(SyntaxKind.NEWLINE) &&
+        (!is_op(p.nth(0)) || p.at(SyntaxKind.LPAREN))
+    ) {
         if (p.at(SyntaxKind.IDENT)) {
             name_ref(p);
         } else {
@@ -103,7 +115,11 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
     switch (p.cur()) {
         case SyntaxKind.IDENT:
             // if (GetFunctionInfo(p.current().text.toLocaleLowerCase()) != undefined) {
-            if (p.nth_at(1, SyntaxKind.LPAREN) || is_primary_expr(p.nth(1)) || p.nth_at(1, SyntaxKind.IDENT)) {
+            if (
+                p.nth_at(1, SyntaxKind.LPAREN) ||
+                is_primary_expr(p.nth(1)) ||
+                p.nth_at(1, SyntaxKind.IDENT)
+            ) {
                 return expr_func(p);
             } else {
                 const m = p.start();
@@ -174,7 +190,7 @@ export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMa
             case SyntaxKind.LSQBRACK: {
                 const m: Marker = lhs.precede(p);
                 p.next(SyntaxKind.LSQBRACK);
-                expr_bp(p, 0);  // TODO: add ']' as recovery
+                expr_bp(p, 0); // TODO: add ']' as recovery
                 p.expect(SyntaxKind.RSQBRACK);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);

@@ -1,8 +1,14 @@
-import assert = require("assert");
-import { TokenSyntaxKind, NodeSyntaxKind, SyntaxKind, syntax_kind_name } from "../syntax_kind/generated";
+import {
+    TokenSyntaxKind,
+    NodeSyntaxKind,
+    SyntaxKind,
+    syntax_kind_name,
+} from "../syntax_kind/generated";
 import { AnyEvent, EventError, EventFinish, EventKind, EventStart, EventToken } from "./event";
 import { script } from "./grammar/other";
 import { TokenSet } from "./token_set";
+
+import assert = require("assert");
 
 export class Input {
     tokens: TokenSyntaxKind[];
@@ -38,7 +44,11 @@ export class Marker {
     abandon(p: Parser) {
         if (this.pos == p.events.length - 1) {
             const event = p.events.pop()!;
-            if (event.kind != EventKind.Start || event.syntax_kind != SyntaxKind.TOMBSTONE || event.forward_parent != undefined) {
+            if (
+                event.kind != EventKind.Start ||
+                event.syntax_kind != SyntaxKind.TOMBSTONE ||
+                event.forward_parent != undefined
+            ) {
                 assert(false);
             }
         }

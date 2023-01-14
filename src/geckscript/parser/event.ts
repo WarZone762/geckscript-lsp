@@ -53,11 +53,4 @@ export class EventError {
     }
 }
 
-export type AnyEvent =
-    | EventTombstone
-    | EventStart
-    | EventFinish
-    | EventToken
-    | EventError
-    ;
-
+export type AnyEvent = EventTombstone | EventStart | EventFinish | EventToken | EventError;

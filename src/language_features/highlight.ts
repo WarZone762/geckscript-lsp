@@ -46,5 +46,3 @@
 
 //   return highlights;
 // }
-
-

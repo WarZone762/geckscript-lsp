@@ -50,7 +50,15 @@ export function stmt(p: Parser) {
             return;
         default:
             if (is_keyword(p.cur())) {
-                if (p.at_ts(new TokenSet([SyntaxKind.CONTINUE_KW, SyntaxKind.BREAK_KW, SyntaxKind.RETURN_KW]))) {
+                if (
+                    p.at_ts(
+                        new TokenSet([
+                            SyntaxKind.CONTINUE_KW,
+                            SyntaxKind.BREAK_KW,
+                            SyntaxKind.RETURN_KW,
+                        ])
+                    )
+                ) {
                     p.next_any();
                 } else {
                     p.err_and_next("unexpected keyword");
@@ -131,7 +139,7 @@ export function stmt_set(p: Parser) {
     p.next(SyntaxKind.SET_KW);
     name_ref_r(p, new TokenSet([SyntaxKind.TO_KW]));
     if (!p.opt(SyntaxKind.TO_KW)) {
-        p.err_recover("expected 'to'", new TokenSet());  // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected 'to'", new TokenSet()); // TODO: recovery = EXPR_FIRST
     }
     expr_bp(p, 2);
 
@@ -146,7 +154,8 @@ export function stmt_let(p: Parser) {
     if (is_assignment_op(p.cur())) {
         p.next_any();
     } else {
-        p.err_recover("expected assignment operator", new TokenSet());  // TODO: recovery = EXPR_FIRST
+        // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected assignment operator", new TokenSet());
     }
     expr(p);
 
@@ -172,7 +181,7 @@ export function stmt_foreach(p: Parser) {
     p.next(SyntaxKind.FOREACH_KW);
     var_or_var_decl_r(p, new TokenSet([SyntaxKind.LARROW]));
     if (!p.opt(SyntaxKind.LARROW)) {
-        p.err_recover("expected '<-'", new TokenSet());  // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected '<-'", new TokenSet()); // TODO: recovery = EXPR_FIRST
     }
     expr(p);
     p.expect(SyntaxKind.NEWLINE);

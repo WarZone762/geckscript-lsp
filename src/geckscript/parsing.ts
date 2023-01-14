@@ -1,9 +1,10 @@
-import assert = require("assert");
 import { Lexer } from "./lexer";
 import { AnyEvent, EventError, EventKind, EventStart } from "./parser/event";
 import { Input, parse } from "./parser/parser";
 import { NodeSyntaxKind, SyntaxKind, syntax_kind_name } from "./syntax_kind/generated";
 import { Node, NodeOrToken, Token } from "./types/syntax_node";
+
+import assert = require("assert");
 
 export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): string {
     let indent = 0;
@@ -11,7 +12,9 @@ export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): st
     return tree_to_str_recursive(node, filter);
 
     function tree_to_str_recursive(node: Node, filter: Set<SyntaxKind>): string {
-        let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${node.offset}..${node.end()}\n`;
+        let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${
+            node.offset
+        }..${node.end()}\n`;
         ++indent;
         for (const child of node.children) {
             if (filter.has(child.kind)) {
@@ -21,7 +24,9 @@ export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): st
             if (child.is_node()) {
                 text += tree_to_str_recursive(child, filter);
             } else {
-                text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${child.offset}..${child.end()} ${JSON.stringify(child.text)}\n`;
+                text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${
+                    child.offset
+                }..${child.end()} ${JSON.stringify(child.text)}\n`;
             }
         }
         --indent;
@@ -33,8 +38,10 @@ export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): st
 export function parse_str(str: string): [Node, Error[]] {
     const l = new Lexer(str);
     const tokens_full = Array.from(l.lex());
-    const tokens = tokens_full.filter(t => t.kind != SyntaxKind.WHITESPACE && t.kind != SyntaxKind.COMMENT);
-    const input = new Input(tokens.map(t => t.kind));
+    const tokens = tokens_full.filter(
+        (t) => t.kind != SyntaxKind.WHITESPACE && t.kind != SyntaxKind.COMMENT
+    );
+    const input = new Input(tokens.map((t) => t.kind));
 
     return output_to_tree(process_events(parse(input)), tokens_full);
 }
@@ -65,7 +72,7 @@ export function process_events(events: AnyEvent[]): AnyEvent[] {
                 fp = events[idx] as EventStart;
             }
 
-            output.push(...forward_parents.filter(e => e.syntax_kind !== SyntaxKind.TOMBSTONE));
+            output.push(...forward_parents.filter((e) => e.syntax_kind !== SyntaxKind.TOMBSTONE));
             forward_parents.splice(0);
         }
     }

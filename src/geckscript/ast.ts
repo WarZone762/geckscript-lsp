@@ -2,8 +2,7 @@ import { is_expr, is_stmt, SyntaxKind, syntax_kind_name } from "./syntax_kind/ge
 import { TreeData } from "./types/hir";
 import { Node, Token, NodeOrToken } from "./types/syntax_node";
 
-
-export function for_each_child(node: Node, func: (node: NodeOrToken) => any): void {
+export function for_each_child(node: Node, func: (node: NodeOrToken) => unknown): void {
     for (const child of node.children) {
         func(child);
     }
@@ -11,7 +10,7 @@ export function for_each_child(node: Node, func: (node: NodeOrToken) => any): vo
 
 export async function for_each_child_async(
     node: Node,
-    func: (node: NodeOrToken) => any
+    func: (node: NodeOrToken) => unknown
 ): Promise<void> {
     for await (const child of node.children) {
         await func(child);
@@ -20,10 +19,10 @@ export async function for_each_child_async(
 
 export function for_each_child_recursive(
     root: Node,
-    pre_func: (node: NodeOrToken) => any = () => undefined,
-    post_func: (node: NodeOrToken) => any = () => undefined,
+    pre_func: (node: NodeOrToken) => unknown = () => undefined,
+    post_func: (node: NodeOrToken) => unknown = () => undefined
 ): void {
-    for_each_child(root, node => {
+    for_each_child(root, (node) => {
         pre_func(node);
         if (node.is_node()) {
             for_each_child_recursive(node, pre_func, post_func);
@@ -34,10 +33,10 @@ export function for_each_child_recursive(
 
 export async function for_each_child_recuresive_async(
     root: Node,
-    pre_func: (node: NodeOrToken) => any = () => undefined,
-    post_func: (node: NodeOrToken) => any = () => undefined,
+    pre_func: (node: NodeOrToken) => unknown = () => undefined,
+    post_func: (node: NodeOrToken) => unknown = () => undefined
 ): Promise<void> {
-    await for_each_child_async(root, async node => {
+    await for_each_child_async(root, async (node) => {
         await pre_func(node);
         if (node.is_node()) {
             await for_each_child_recuresive_async(node, pre_func, post_func);
@@ -123,10 +122,7 @@ export function token_at_pos(root: Node, offset: number): Token | undefined {
     return undefined;
 }
 
-export function* str_occurences(
-    node: Node,
-    str: string
-): Generator<Token, void, void> {
+export function* str_occurences(node: Node, str: string): Generator<Token, void, void> {
     for (const leaf of leafs(node)) {
         if (leaf.text === str) {
             yield leaf;
@@ -385,29 +381,24 @@ export function get_text(node: Node): string {
 // }
 
 // debug TreeData stuff
-export function to_tree_data(node: NodeOrToken): TreeData {  // TODO: add drawing data to the TreeData
+export function to_tree_data(node: NodeOrToken): TreeData {
+    // TODO: add drawing data to the TreeData
     const tree_data: TreeData = new TreeData(
-        (node.is_node() ? syntax_kind_name(node.kind) : `'${node.text}'`),
-        [new TreeData("Range", [new TreeData(
-            `${node.offset} - ${node.end()}`
-        )])]
+        node.is_node() ? syntax_kind_name(node.kind) : `'${node.text}'`,
+        [new TreeData("Range", [new TreeData(`${node.offset} - ${node.end()}`)])]
     );
 
     if (node.is_node()) {
-        for_each_child(
-            node,
-            node => {
-                tree_data.append(to_tree_data(node));
-            }
-        );
+        for_each_child(node, (node) => {
+            tree_data.append(to_tree_data(node));
+        });
     }
 
     return tree_data;
 }
 
-export function to_html(  // TODO: Integrate this to tree-view
-    root: NodeOrToken,
-): string {
+export function to_html(root: NodeOrToken): string {
+    // TODO: Integrate this to tree-view
     function node_to_html(node: NodeOrToken): string {
         if (!node.is_node()) {
             return node.text;
@@ -423,10 +414,7 @@ export function to_html(  // TODO: Integrate this to tree-view
 
             const content = node_to_html(child);
 
-            if (
-                child.kind === SyntaxKind.STMT_LIST &&
-                child.parent?.kind !== SyntaxKind.SCRIPT
-            ) {
+            if (child.kind === SyntaxKind.STMT_LIST && child.parent?.kind !== SyntaxKind.SCRIPT) {
                 html += "\t";
             }
 
@@ -444,7 +432,8 @@ export function to_html(  // TODO: Integrate this to tree-view
         return html;
     }
 
-    const style = "span { display: inline-block; border: black solid; } span.Statement { border: blue solid; } span.Expression { border: green solid; } span.Block { border: purple solid; } span.Branch { border: orange solid; } span.VariableDeclaration { border: brown solid; }";
+    const style =
+        "span { display: inline-block; border: black solid; } span.Statement { border: blue solid; } span.Expression { border: green solid; } span.Block { border: purple solid; } span.Branch { border: orange solid; } span.VariableDeclaration { border: brown solid; }";
 
     return `<style>${style}</style><pre><div>${node_to_html(root)}</div></pre>`;
 }

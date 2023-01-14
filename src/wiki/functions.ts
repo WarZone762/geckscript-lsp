@@ -1,23 +1,17 @@
+import { FunctionInfo } from "../geckscript/function_data";
+import * as api from "./api";
 import * as fs from "fs";
 import * as path from "path";
-
 import * as wtf from "wtf_wikipedia";
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 wtf.plugin(require("wtf-plugin-markdown"));
 
-import * as api from "./api";
-import { FunctionInfo } from "../geckscript/function_data";
+const CachePath = path.join(__dirname, "../../resources", "function_page_cache.json");
 
-
-const CachePath = path.join(
-    __dirname,
-    "../../resources",
-    "function_page_cache.json"
-);
-
-const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath) ?
-    JSON.parse(fs.readFileSync(CachePath).toString()) :
-    {};
+const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath)
+    ? JSON.parse(fs.readFileSync(CachePath).toString())
+    : {};
 
 async function SaveCache() {
     await fs.promises.writeFile(CachePath, JSON.stringify(FunctionPageCache));
@@ -38,73 +32,76 @@ async function GetCacheValue(key: string): Promise<string | undefined> {
 }
 
 export interface Template {
-  title: string;
-  arguments: { [key: string]: any };
+    title: string;
+    arguments: { [key: string]: unknown };
 }
 
 export interface FunctionArgumentTemplate {
-  name?: string;
-  type?: string;
-  optional?: string;
-  value?: string;
+    name?: string;
+    type?: string;
+    optional?: string;
+    value?: string;
 }
 
 export const enum FunctionTemplateOrigin {
-  "CONSOLENV" = "console functions",
-  "GECK1" = "GECK 1.1",
-  "GECK1.5" = "GECK 1.5",
-  "FOSE1" = "FOSE v1",
-  "VEGAS1" = "GECK 1.1 New Vegas",
-  "NVSE" = "NVSE",
-  "NX" = "NX plugin",
-  "LU" = "Lutana Plugin",
-  "PN" = "Project Nevada",
-  "MCM" = "MCM",
-  "UDF" = "UDF",
-  "JIP" = "JIP",
-  "JohnnyGuitar" = "Johnny Guitar",
-  "SUP" = "SUP NVSE",
-  "kNVSE" = "kNVSE Plugin",
-  "TTW" = "TTW",
-  "LNONLY" = "Lutana, not merged in JIP",
-  "BookMenu" = "Book Menu Restored",
-  "CommandExtender" = "Command Extender",
-  "HotReload" = "Hot Reload",
-  "ShowOff" = "ShowOff NVSE",
-  "Anh" = "AnhNVSE",
-  "ClearCommand" = "Clear Command NVSE"
+    "CONSOLENV" = "console functions",
+    "GECK1" = "GECK 1.1",
+    "GECK1.5" = "GECK 1.5",
+    "FOSE1" = "FOSE v1",
+    "VEGAS1" = "GECK 1.1 New Vegas",
+    "NVSE" = "NVSE",
+    "NX" = "NX plugin",
+    "LU" = "Lutana Plugin",
+    "PN" = "Project Nevada",
+    "MCM" = "MCM",
+    "UDF" = "UDF",
+    "JIP" = "JIP",
+    "JohnnyGuitar" = "Johnny Guitar",
+    "SUP" = "SUP NVSE",
+    "kNVSE" = "kNVSE Plugin",
+    "TTW" = "TTW",
+    "LNONLY" = "Lutana, not merged in JIP",
+    "BookMenu" = "Book Menu Restored",
+    "CommandExtender" = "Command Extender",
+    "HotReload" = "Hot Reload",
+    "ShowOff" = "ShowOff NVSE",
+    "Anh" = "AnhNVSE",
+    "ClearCommand" = "Clear Command NVSE",
 }
 
 export interface FunctionTemplate {
-  cswikipage?: string;
-  origin?: keyof FunctionArgumentTemplate;
-  originversion?: string;
-  summary?: string;
-  name?: string
-  alias?: string;
-  returnval?: string;
-  returntype?: string;
-  referencetype?: string;
-  arguments?: (FunctionArgumentTemplate | string)[];
-  example?: string;
-  categorylist?: string[];
-  consoleonly?: string;
-  conditionfunc?: "Condition" | "Script" | "Both"
+    cswikipage?: string;
+    origin?: keyof FunctionArgumentTemplate;
+    originversion?: string;
+    summary?: string;
+    name?: string;
+    alias?: string;
+    returnval?: string;
+    returntype?: string;
+    referencetype?: string;
+    arguments?: (FunctionArgumentTemplate | string)[];
+    example?: string;
+    categorylist?: string[];
+    consoleonly?: string;
+    conditionfunc?: "Condition" | "Script" | "Both";
 }
 
 export interface FunctionDocumentation {
-  template: FunctionTemplate;
-  text: string;
+    template: FunctionTemplate;
+    text: string;
 }
 
 export async function GetFunctions(): Promise<string[]> {
-    return (await api.GetCategoryPages("Category:Functions (All)", ["page"]))
-        .concat(await api.GetCategoryPages("Category:Function Alias", ["page"]));
+    return (await api.GetCategoryPages("Category:Functions (All)", ["page"])).concat(
+        await api.GetCategoryPages("Category:Function Alias", ["page"])
+    );
 }
 
 // TODO: update types for the new parser
-export function ParseTemplate(element: any): Template | FunctionArgumentTemplate | FunctionTemplate {
-    const parameters: { [key: string]: any } = {};
+export function ParseTemplate(
+    element: Record<string, Record<string, unknown>>
+): Template | FunctionArgumentTemplate | FunctionTemplate {
+    const parameters: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(element.parameters)) {
         parameters[k] = v;
     }
@@ -112,7 +109,7 @@ export function ParseTemplate(element: any): Template | FunctionArgumentTemplate
     return parameters;
 }
 
-wtf.extend((models: any, templates: any) => {
+wtf.extend((models: Record<string, { new (): unknown }>, templates: Record<string, Function>) => {
     models.Link.prototype.markdown = function () {
         const href = this.href().replaceAll(" ", "_");
         const str = this.text() || this.page();
@@ -124,21 +121,20 @@ wtf.extend((models: any, templates: any) => {
     };
 
     models.Sentence.prototype.old = {
-        markdown: models.Sentence.prototype.markdown
+        markdown: models.Sentence.prototype.markdown,
     };
 
-    models.Sentence.prototype.markdown = function (options: any) {
+    models.Sentence.prototype.markdown = function (options: unknown) {
         let text = this.old.markdown.bind(this)(options);
 
         if (this.wikitext()[0] === " ") {
             text = "\t" + text + "\n";
         }
 
-
         return text;
     };
 
-    templates.pre = (tmpl: any, list: any, parse: any) => {
+    templates.pre = (tmpl: unknown, list: Array<unknown>, parse: Function) => {
         const obj = parse(tmpl);
         list.push(obj);
 
@@ -146,20 +142,18 @@ wtf.extend((models: any, templates: any) => {
         return obj.inner;
     };
 
-    templates.functionargument = (tmpl: any, list: any, parse: any) => {
+    templates.functionargument = (tmpl: unknown, list: Array<unknown>, parse: Function) => {
         const obj = parse(tmpl);
         list.push(obj);
 
         return `${JSON.stringify(obj)},`;
     };
 
-    templates.function = (tmpl: any, list: any, parse: any) => {
+    templates.function = (tmpl: unknown, list: Array<unknown>, parse: Function) => {
         const obj = parse(tmpl);
 
         if (obj.arguments != undefined) {
-            obj.arguments = JSON.parse(
-                `[${obj.arguments.substring(0, obj.arguments.length - 1)}]`
-            );
+            obj.arguments = JSON.parse(`[${obj.arguments.substring(0, obj.arguments.length - 1)}]`);
         }
 
         list.push(obj);
@@ -168,15 +162,15 @@ wtf.extend((models: any, templates: any) => {
     };
 });
 
-export async function GetFunctionDocumentation(page_name: string): Promise<FunctionDocumentation | undefined> {
+export async function GetFunctionDocumentation(
+    page_name: string
+): Promise<FunctionDocumentation | undefined> {
     let text = await GetCacheValue(page_name);
     if (text == undefined) {
         return undefined;
     }
 
-    text = text
-        .replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}")
-        .replaceAll(/^\* /gm, "*");
+    text = text.replaceAll(/<pre>(.*?)<\/pre>/gs, "{{pre|inner=$1}}").replaceAll(/^\* /gm, "*");
 
     const page = wtf(text);
 
@@ -186,7 +180,7 @@ export async function GetFunctionDocumentation(page_name: string): Promise<Funct
 
     return {
         template: template,
-        text: (page as any).markdown().trim(),
+        text: (page as unknown as { markdown: Function }).markdown().trim(),
     };
 }
 
@@ -198,10 +192,7 @@ export async function GetFunctionDocumentation(page_name: string): Promise<Funct
 export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation): string {
     let signature = "";
 
-    if (
-        doc.template.returnval != undefined ||
-    doc.template.returntype != undefined
-    ) {
+    if (doc.template.returnval != undefined || doc.template.returntype != undefined) {
         signature += "(";
 
         if (doc.template.returnval != undefined) {
@@ -240,7 +231,6 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
             if ((arg as FunctionArgumentTemplate)?.optional != undefined) {
                 signature += "?";
             }
-
         }
 
         signature += " ";

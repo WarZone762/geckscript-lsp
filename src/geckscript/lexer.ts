@@ -3,7 +3,6 @@ import { is_op, OpSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./syntax_kind/
 import { Token } from "./types/syntax_node";
 import { GetTokenKind } from "./types/token_data";
 
-
 export class Lexer {
     data: string;
     pos = 0;
@@ -108,10 +107,7 @@ export class Lexer {
     number_int(): Token<SyntaxKind.NUMBER_INT> {
         const token = this.start(SyntaxKind.NUMBER_INT);
 
-        if (
-            this.char === "0" &&
-            this.nth(1)?.toLowerCase() === "x"
-        ) {
+        if (this.char === "0" && this.nth(1)?.toLowerCase() === "x") {
             this.next_to_buf();
             this.next_to_buf();
 
@@ -135,7 +131,6 @@ export class Lexer {
                 this.next_to_buf();
                 break;
             } else {
-
                 return this.finish(token);
             }
         }
@@ -205,7 +200,7 @@ export class Lexer {
                 token = this.number_int();
             } else if (
                 /\./.test(this.char) &&
-                (char => char != undefined && /\d/.test(char))(this.nth(1))
+                ((char) => char != undefined && /\d/.test(char))(this.nth(1))
             ) {
                 token = this.number_int();
             } else if (/[a-zA-Z_]/.test(this.char)) {
@@ -213,9 +208,7 @@ export class Lexer {
             } else if (/\S/.test(this.char)) {
                 token = this.op();
             } else {
-                throw new Error(
-                    `Unknown character "${this.char}" at offset ${this.pos}`
-                );
+                throw new Error(`Unknown character "${this.char}" at offset ${this.pos}`);
             }
 
             this.last_token = token;

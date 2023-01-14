@@ -1,3 +1,16 @@
+// import { Environment } from "./geckscript/ast/generated";
+import * as ast from "./geckscript/ast";
+// import * as ST from "./language_features/semantic_tokens";
+import * as FD from "./geckscript/function_data";
+import { Environment } from "./geckscript/types/hir";
+// import * as Wiki from "./wiki/wiki";
+import { Token } from "./geckscript/types/syntax_node";
+import * as TreeViewServer from "./tree_view/server";
+// import * as completion from "./language_features/completion";
+// import { GetHighlight as GetHighlights } from "./language_features/highlight";
+import * as fs from "fs/promises";
+import * as path from "path";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     createConnection,
     TextDocuments,
@@ -11,24 +24,6 @@ import {
     Hover,
 } from "vscode-languageserver/node";
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-
-import * as TreeViewServer from "./tree_view/server";
-
-// import * as Wiki from "./wiki/wiki";
-import { Token } from "./geckscript/types/syntax_node";
-// import { Environment } from "./geckscript/ast/generated";
-import * as ast from "./geckscript/ast";
-// import * as ST from "./language_features/semantic_tokens";
-import * as FD from "./geckscript/function_data";
-// import * as completion from "./language_features/completion";
-// import { GetHighlight as GetHighlights } from "./language_features/highlight";
-
-import * as fs from "fs/promises";
-import * as path from "path";
-import { Environment } from "./geckscript/types/hir";
-
-
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
 
 const connection = createConnection(ProposedFeatures.all);
@@ -37,58 +32,54 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 const ENV = new Environment();
 
-connection.onInitialize(
-    async (params: InitializeParams) => {
-        const capabilities = params.capabilities;
+connection.onInitialize(async (params: InitializeParams) => {
+    const capabilities = params.capabilities;
 
-        const result: InitializeResult = {
-            capabilities: {
-                textDocumentSync: TextDocumentSyncKind.Incremental,
-                // documentHighlightProvider: true,
-                // completionProvider: {
-                //     resolveProvider: true
-                // },
-                // hoverProvider: true,
-            }
-        };
+    const result: InitializeResult = {
+        capabilities: {
+            textDocumentSync: TextDocumentSyncKind.Incremental,
+            // documentHighlightProvider: true,
+            // completionProvider: {
+            //     resolveProvider: true
+            // },
+            // hoverProvider: true,
+        },
+    };
 
-        // if (capabilities.textDocument?.semanticTokens) {
-        //   result.capabilities.semanticTokensProvider = {
-        //     documentSelector: [{
-        //       language: "GECKScript",
-        //       scheme: "file"
-        //     }],
-        //     legend: ST.Legend,
-        //     full: true
-        //   };
-        // }
+    // if (capabilities.textDocument?.semanticTokens) {
+    //   result.capabilities.semanticTokensProvider = {
+    //     documentSelector: [{
+    //       language: "GECKScript",
+    //       scheme: "file"
+    //     }],
+    //     legend: ST.Legend,
+    //     full: true
+    //   };
+    // }
 
-        if (process.argv.find(e => e === "--tree-view-server") !== undefined) {
-            console.log("Running tree view server");
-            tree_view_server = new TreeViewServer.TreeViewServer();
-        }
-
-        if (process.argv.find(arg => arg === "--update-functions") !== undefined) {
-            await FD.PopulateFunctionData(true);
-        }
-
-        return result;
+    if (process.argv.find((e) => e === "--tree-view-server") !== undefined) {
+        console.log("Running tree view server");
+        tree_view_server = new TreeViewServer.TreeViewServer();
     }
-);
 
-documents.onDidChangeContent(
-    async (params) => {
-        const doc = params.document;
-
-        const diagnostics = ENV.parse_doc(doc)[1];
-
-        // fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
-
-        // tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
-
-        connection.sendDiagnostics({ uri: doc.uri, diagnostics: diagnostics });
+    if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
+        await FD.PopulateFunctionData(true);
     }
-);
+
+    return result;
+});
+
+documents.onDidChangeContent(async (params) => {
+    const doc = params.document;
+
+    const diagnostics = ENV.parse_doc(doc)[1];
+
+    // fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
+
+    // tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
+
+    connection.sendDiagnostics({ uri: doc.uri, diagnostics: diagnostics });
+});
 
 // connection.onCompletion(
 //   async (params) => {
@@ -132,10 +123,7 @@ documents.onDidChangeContent(
 //   }
 // );
 
-connection.onNotification(
-    "GECKScript/updateFunctionData",
-    () => FD.PopulateFunctionData(true)
-);
+connection.onNotification("GECKScript/updateFunctionData", () => FD.PopulateFunctionData(true));
 
 connection.onExit(() => tree_view_server?.close());
 

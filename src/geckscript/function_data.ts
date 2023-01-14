@@ -1,9 +1,7 @@
-import * as path from "path";
-import * as fs from "fs";
-
 import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions";
 import { Symbol, SymbolKind, ExprType } from "./types/hir";
-
+import * as fs from "fs";
+import * as path from "path";
 
 export interface FunctionInfo {
     name: string;
@@ -11,11 +9,7 @@ export interface FunctionInfo {
     wiki_page_name: string;
 }
 
-const FilePath = path.join(
-    __dirname,
-    "../../resources",
-    "functions.json"
-);
+const FilePath = path.join(__dirname, "../../resources", "functions.json");
 
 const ignored_functions = [
     "Break",
@@ -56,7 +50,7 @@ function renameFunc(name: string): string {
     return name.replace(/ \(Function\)$/, "");
 }
 
-export let FunctionData: { [key: string]: FunctionInfo; } = {};
+export let FunctionData: { [key: string]: FunctionInfo } = {};
 
 export async function PopulateFunctionData(update = false) {
     let functions: string[] = [];
@@ -72,7 +66,7 @@ export async function PopulateFunctionData(update = false) {
 
     FunctionData = {};
     for (const func of functions) {
-        if (ignored_functions.find(v => v === func)) {
+        if (ignored_functions.find((v) => v === func)) {
             continue;
         }
 
@@ -91,7 +85,9 @@ export function GetFunctionInfo(function_name: string): FunctionInfo | undefined
     return FunctionData[function_name];
 }
 
-export async function CreateGlobalFunctionSymbol(function_name: string): Promise<Symbol | undefined> {
+export async function CreateGlobalFunctionSymbol(
+    function_name: string
+): Promise<Symbol | undefined> {
     const function_info = GetFunctionInfo(function_name);
     if (function_info == undefined) {
         return undefined;

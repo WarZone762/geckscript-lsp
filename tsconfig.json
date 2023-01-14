@@ -1,9 +1,7 @@
 {
     "compilerOptions": {
         "target": "es2022",
-        "lib": [
-            "es2022",
-        ],
+        "lib": ["es2022"],
         "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": true,
@@ -11,10 +9,6 @@
         "outDir": "out",
         "rootDir": "src"
     },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+    "include": ["src"],
+    "exclude": ["node_modules"]
 }

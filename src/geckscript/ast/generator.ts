@@ -3,22 +3,26 @@ import assert = require("assert");
 class NodeInfo {
     syntax_kind: string;
 
-    members: { [key: string]: MemberInfo; } = {};
+    members: { [key: string]: MemberInfo } = {};
 
     constructor(syntax_kind: string) {
         this.syntax_kind = syntax_kind;
     }
 
     funcs(): string {
-        return `${Object.entries(this.members).map(m => `
+        return `${Object.entries(this.members)
+            .map((m) =>
+                `
     ${m[0]}() {
         return ${m[1].ret()};
     }
-    `.trim()).join("\n    ")}`;
+    `.trim()
+            )
+            .join("\n    ")}`;
     }
 }
 
-type InfoMap = { [key: string]: NodeInfo; };
+type InfoMap = { [key: string]: NodeInfo };
 
 const VAR_OR_VAR_DECL_INFO_MAP: InfoMap = {};
 const EXPR_INFO_MAP: InfoMap = {};
@@ -37,8 +41,14 @@ class MemberInfo {
     ret(): string {
         switch (this.args[0]) {
             case "Token": {
-                const pred_body = this.args.slice(1).map(d => `k === SyntaxKind.${d}`).join(" || ");
-                const pred_type_ret = this.args.slice(1).map(d => `SyntaxKind.${d}`).join(" | ");
+                const pred_body = this.args
+                    .slice(1)
+                    .map((d) => `k === SyntaxKind.${d}`)
+                    .join(" || ");
+                const pred_type_ret = this.args
+                    .slice(1)
+                    .map((d) => `SyntaxKind.${d}`)
+                    .join(" | ");
 
                 return `token(this, (k => ${pred_body}) as (k: SyntaxKind) => k is ${pred_type_ret})`;
             }
@@ -53,7 +63,9 @@ class MemberInfo {
             case "Stmt":
                 return "Stmt(child(this, is_stmt))";
             default: {
-                const syntax_kind = NODE_INFO_MAP[this.args[0]]?.syntax_kind ?? LIST_INFO_MAP[this.args[0]]?.syntax_kind;
+                const syntax_kind =
+                    NODE_INFO_MAP[this.args[0]]?.syntax_kind ??
+                    LIST_INFO_MAP[this.args[0]]?.syntax_kind;
                 return `${this.args[0]}.from_green(child(this, (k => k === SyntaxKind.${syntax_kind}) as (k: SyntaxKind) => k is SyntaxKind.${syntax_kind}))`;
             }
         }
@@ -74,7 +86,10 @@ function parse_data(data: string) {
     return infos;
 
     function tokens(): string[] {
-        return data.trim().split(/\s+/).flatMap(e => e.split(/\b/));
+        return data
+            .trim()
+            .split(/\s+/)
+            .flatMap((e) => e.split(/\b/));
     }
 
     function parse_node(): [string, NodeInfo] {
@@ -139,14 +154,17 @@ export function ${name}(green: Node<${name}SyntaxKind> | undefined): ${name} | u
     }
 
     switch (green.kind) {
-        ${Object.entries(info_map).map(n => `
+        ${Object.entries(info_map)
+            .map((n) =>
+                `
         case SyntaxKind.${n[1].syntax_kind}:
             return new ${n[0]}(green as Node<SyntaxKind.${n[1].syntax_kind}>);
-        `.trim()).join("\n        ")}
+        `.trim()
+            )
+            .join("\n        ")}
     }
 }
 `.trim();
-
 }
 
 function generate(): string {
@@ -236,11 +254,15 @@ ${list_type("VarOrVarDecl", "VAR_OR_VAR_DECL", "is_var_or_var_decl")}
 ${list_type("Expr", "EXPR", "is_expr")}
 ${list_type("Stmt", "STMT", "is_stmt")}
 
-${Object.entries(NODE_INFO_MAP).map(n => `
+${Object.entries(NODE_INFO_MAP)
+    .map((n) =>
+        `
 export class ${n[0]} extends AstNode<SyntaxKind.${n[1].syntax_kind}> {
     ${n[1].funcs()}
 }
-`.trim()).join("\n\n")}
+`.trim()
+    )
+    .join("\n\n")}
 `.trim();
 }
 
@@ -380,6 +402,6 @@ Script: SCRIPT {
     name: Name,
     body: StmtList,
 }
-`;  // FIXME: IfStmt
+`; // FIXME: IfStmt
 
 console.log(generate());

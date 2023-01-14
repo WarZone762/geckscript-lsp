@@ -58,7 +58,10 @@ class NodeImpl<T extends NodeSyntaxKind = NodeSyntaxKind> extends NodeCommon<T> 
         }
     }
 
-    token_pred<T extends TokenSyntaxKind>(predicate: (kind: SyntaxKind) => kind is T, idx = 0): TokenImpl<T> | undefined {
+    token_pred<T extends TokenSyntaxKind>(
+        predicate: (kind: SyntaxKind) => kind is T,
+        idx = 0
+    ): TokenImpl<T> | undefined {
         for (const child of this.children) {
             if (predicate(child.kind)) {
                 if (idx > 0) {
@@ -82,8 +85,10 @@ class NodeImpl<T extends NodeSyntaxKind = NodeSyntaxKind> extends NodeCommon<T> 
         }
     }
 
-
-    child_pred<T extends NodeSyntaxKind>(predicate: (kind: SyntaxKind) => kind is T, idx = 0): NodeImpl<T> | undefined {
+    child_pred<T extends NodeSyntaxKind>(
+        predicate: (kind: SyntaxKind) => kind is T,
+        idx = 0
+    ): NodeImpl<T> | undefined {
         for (const child of this.children) {
             if (predicate(child.kind)) {
                 if (idx > 0) {
@@ -96,7 +101,11 @@ class NodeImpl<T extends NodeSyntaxKind = NodeSyntaxKind> extends NodeCommon<T> 
     }
 }
 
-export type NodeOrToken<T extends SyntaxKind = SyntaxKind> = T extends TokenSyntaxKind ? TokenImpl<T> : T extends NodeSyntaxKind ? NodeImpl<T> : never;
+export type NodeOrToken<T extends SyntaxKind = SyntaxKind> = T extends TokenSyntaxKind
+    ? TokenImpl<T>
+    : T extends NodeSyntaxKind
+    ? NodeImpl<T>
+    : never;
 export type Token<T extends TokenSyntaxKind = TokenSyntaxKind> = NodeOrToken<T>;
 export function Token<T extends TokenSyntaxKind>(kind: T): Token<T> {
     return new TokenImpl(kind) as Token<T>;

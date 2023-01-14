@@ -1,7 +1,7 @@
-import { Diagnostic } from "vscode-languageserver";
 import { AstNode } from "../ast/generated";
-import { Node } from "./syntax_node";
 import * as parsing from "../parsing";
+import { Node } from "./syntax_node";
+import { Diagnostic } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 export class TreeData {
@@ -64,7 +64,7 @@ export interface Symbol {
     type: ExprType;
 }
 
-export type SymbolTable = { [key: string]: Symbol; };
+export type SymbolTable = { [key: string]: Symbol };
 
 export class Environment {
     files: Map<string, [Node, Diagnostic[]]> = new Map();
@@ -81,7 +81,7 @@ export class Environment {
                 range: {
                     start: start,
                     end: end,
-                }
+                },
             });
         }
 

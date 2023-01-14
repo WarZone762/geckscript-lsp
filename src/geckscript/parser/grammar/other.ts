@@ -12,7 +12,6 @@ export function name_r(p: Parser, recovery: TokenSet) {
     } else {
         p.err_recover("expected an identifier", recovery);
     }
-
 }
 
 export function name(p: Parser) {
@@ -68,7 +67,7 @@ export function block_type(p: Parser) {
     if (p.at(SyntaxKind.BLOCKTYPE) || p.at(SyntaxKind.BLOCKTYPE_FUNCTION)) {
         p.next_any();
     } else {
-        p.err_recover("expected blocktype name", new TokenSet());  // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected blocktype name", new TokenSet()); // TODO: recovery = EXPR_FIRST
     }
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE)) {
         expr_primary(p);

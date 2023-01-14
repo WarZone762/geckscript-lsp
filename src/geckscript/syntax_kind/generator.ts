@@ -1,179 +1,163 @@
 type SyntaxKindData = [string[], string];
 
 function syntax_kinds(data: SyntaxKindData): string {
-    return data[0].map(e => e + data[1]).join(",\n    ");
+    return data[0].map((e) => e + data[1]).join(",\n    ");
 }
 
 function syntax_kind_names(data: SyntaxKindData): string {
-    return data[0].map(e => {
-        const name = e + data[1];
-        return `[SyntaxKind.${name}]: "${name}"`;
-    }).join(",\n    ");
+    return data[0]
+        .map((e) => {
+            const name = e + data[1];
+            return `[SyntaxKind.${name}]: "${name}"`;
+        })
+        .join(",\n    ");
 }
 
-function syntax_kind_type_union(data: SyntaxKindData, type_name: string, func_name: string): string {
+function syntax_kind_type_union(
+    data: SyntaxKindData,
+    type_name: string,
+    func_name: string
+): string {
     return `export type ${type_name}SyntaxKind =
-    | ${data[0].map(e => `SyntaxKind.${e + data[1]}`).join("\n    | ")}
+    | ${data[0].map((e) => `SyntaxKind.${e + data[1]}`).join("\n    | ")}
     ;
 
 export function is_${func_name}(kind: SyntaxKind): kind is ${type_name}SyntaxKind {
     return (
-        ${data[0].map(e => `kind == SyntaxKind.${e + data[1]}`).join(" ||\n        ")}
+        ${data[0].map((e) => `kind == SyntaxKind.${e + data[1]}`).join(" ||\n        ")}
     );
 }`;
 }
 
-export const PRIMARY_EXPR: SyntaxKindData = [[
-    "NUMBER_INT",
-    "STRING",
-    "NAME",
-    "NAME_REF",
-], ""];
+export const PRIMARY_EXPR: SyntaxKindData = [["NUMBER_INT", "STRING", "NAME", "NAME_REF"], ""];
 
-export const VAR_OR_VAR_DECL: SyntaxKindData = [[
-    "NAME",
-    "NAME_REF",
-    "VAR_DECL",
-], ""];
+export const VAR_OR_VAR_DECL: SyntaxKindData = [["NAME", "NAME_REF", "VAR_DECL"], ""];
 
-export const OTHER: SyntaxKindData = [[...new Set([
-    "UNKNOWN",
+export const OTHER: SyntaxKindData = [
+    [
+        ...new Set([
+            "UNKNOWN",
 
-    "WHITESPACE",
-    "COMMENT",
+            "WHITESPACE",
+            "COMMENT",
 
-    "EOF",
-    "NEWLINE",
+            "EOF",
+            "NEWLINE",
 
-    ...PRIMARY_EXPR[0],
-    "BLOCKTYPE",
-    "BLOCKTYPE_FUNCTION",
+            ...PRIMARY_EXPR[0],
+            "BLOCKTYPE",
+            "BLOCKTYPE_FUNCTION",
 
-    "TOMBSTONE",
-    "ERROR",
-    "LITERAL",
-    "IDENT",
-    ...VAR_OR_VAR_DECL[0],
-    "BLOCKTYPE_DESIG",
-    "BRANCH",
-    "SCRIPT",
-])], ""];
+            "TOMBSTONE",
+            "ERROR",
+            "LITERAL",
+            "IDENT",
+            ...VAR_OR_VAR_DECL[0],
+            "BLOCKTYPE_DESIG",
+            "BRANCH",
+            "SCRIPT",
+        ]),
+    ],
+    "",
+];
 
-export const TYPE: SyntaxKindData = [[
-    "SHORT",
-    "INT",
-    "LONG",
-    "FLOAT",
-    "REFERENCE",
-    "STRING_VAR",
-    "ARRAY_VAR",
-], "_TYPE"];
+export const TYPE: SyntaxKindData = [
+    ["SHORT", "INT", "LONG", "FLOAT", "REFERENCE", "STRING_VAR", "ARRAY_VAR"],
+    "_TYPE",
+];
 
-export const KEYWORD: SyntaxKindData = [[
-    "SCRIPTNAME",
-    "BEGIN",
-    "END",
-    "IF",
-    "ELSEIF",
-    "ELSE",
-    "ENDIF",
-    "WHILE",
-    "FOREACH",
-    "LOOP",
-    "CONTINUE",
-    "BREAK",
-    "RETURN",
-    "SET",
-    "TO",
-    "LET",
-], "_KW"];
+export const KEYWORD: SyntaxKindData = [
+    [
+        "SCRIPTNAME",
+        "BEGIN",
+        "END",
+        "IF",
+        "ELSEIF",
+        "ELSE",
+        "ENDIF",
+        "WHILE",
+        "FOREACH",
+        "LOOP",
+        "CONTINUE",
+        "BREAK",
+        "RETURN",
+        "SET",
+        "TO",
+        "LET",
+    ],
+    "_KW",
+];
 
-export const SIMPLE_ASSIGNMENT_OP: SyntaxKindData = [[
-    "EQ",
-    "COLONEQ",
-], ""];
+export const SIMPLE_ASSIGNMENT_OP: SyntaxKindData = [["EQ", "COLONEQ"], ""];
 
-export const ASSIGNMENT_OP: SyntaxKindData = [[
-    ...SIMPLE_ASSIGNMENT_OP[0],
-    "PLUSEQ",
-    "MINUSEQ",
-    "ASTERISKEQ",
-    "SLASHEQ",
-    "PERCENTEQ",
-    "CIRCUMFLEXEQ",
-    "VBAREQ",
-    "AMPERSANDEQ",
-], ""];
+export const ASSIGNMENT_OP: SyntaxKindData = [
+    [
+        ...SIMPLE_ASSIGNMENT_OP[0],
+        "PLUSEQ",
+        "MINUSEQ",
+        "ASTERISKEQ",
+        "SLASHEQ",
+        "PERCENTEQ",
+        "CIRCUMFLEXEQ",
+        "VBAREQ",
+        "AMPERSANDEQ",
+    ],
+    "",
+];
 
-export const UNARY_OP: SyntaxKindData = [[
-    "MINUS",
-    "DOLLAR",
-    "HASH",
-    "AMPERSAND",
-    "ASTERISK",
-], ""];
+export const UNARY_OP: SyntaxKindData = [["MINUS", "DOLLAR", "HASH", "AMPERSAND", "ASTERISK"], ""];
 
-export const OP: SyntaxKindData = [[
-    ...ASSIGNMENT_OP[0],
-    "EXCLAMATION",
-    "CIRCUMFLEX",
-    "PLUS",
-    ...UNARY_OP[0],
-    "SLASH",
-    "PERCENT",
-    "LT2",
-    "GT2",
-    "VBAR",
-    "GT",
-    "LT",
-    "GTEQ",
-    "LTEQ",
-    "EQ2",
-    "EXCLAMATIONEQ",
-    "COLON",
-    "COLON2",
-    "AMPERSAND2",
-    "VBAR2",
-    "LPAREN",
-    "RPAREN",
-    "LSQBRACK",
-    "RSQBRACK",
-    "LBRACK",
-    "RBRACK",
-    "LARROW",
-    "RARROW",
-    "DOT",
-    "COMMA",
-    "EQGT",
-], ""];
+export const OP: SyntaxKindData = [
+    [
+        ...ASSIGNMENT_OP[0],
+        "EXCLAMATION",
+        "CIRCUMFLEX",
+        "PLUS",
+        ...UNARY_OP[0],
+        "SLASH",
+        "PERCENT",
+        "LT2",
+        "GT2",
+        "VBAR",
+        "GT",
+        "LT",
+        "GTEQ",
+        "LTEQ",
+        "EQ2",
+        "EXCLAMATIONEQ",
+        "COLON",
+        "COLON2",
+        "AMPERSAND2",
+        "VBAR2",
+        "LPAREN",
+        "RPAREN",
+        "LSQBRACK",
+        "RSQBRACK",
+        "LBRACK",
+        "RBRACK",
+        "LARROW",
+        "RARROW",
+        "DOT",
+        "COMMA",
+        "EQGT",
+    ],
+    "",
+];
 
-export const LIST: SyntaxKindData = [[
-    "VAR_OR_VAR_DECL",
-    "PRIMARY_EXPR",
-    "EXPR",
-    "BRANCH",
-    "STMT",
-], "_LIST"];
+export const LIST: SyntaxKindData = [
+    ["VAR_OR_VAR_DECL", "PRIMARY_EXPR", "EXPR", "BRANCH", "STMT"],
+    "_LIST",
+];
 
-export const EXPR: SyntaxKindData = [[
-    "LAMBDA",
-    "LAMBDA_INLINE",
-    "UNARY",
-    "BIN",
-    "MEMBER",
-    "FUNC",
-], "_EXPR"];
+export const EXPR: SyntaxKindData = [
+    ["LAMBDA", "LAMBDA_INLINE", "UNARY", "BIN", "MEMBER", "FUNC"],
+    "_EXPR",
+];
 
-export const STMT: SyntaxKindData = [[
-    "VAR_DECL",
-    "SET",
-    "LET",
-    "BEGIN",
-    "IF",
-    "ELSEIF",
-    "WHILE",
-    "FOREACH",
-], "_STMT"];
+export const STMT: SyntaxKindData = [
+    ["VAR_DECL", "SET", "LET", "BEGIN", "IF", "ELSEIF", "WHILE", "FOREACH"],
+    "_STMT",
+];
 
 export function generate(): string {
     return `export const enum SyntaxKind {

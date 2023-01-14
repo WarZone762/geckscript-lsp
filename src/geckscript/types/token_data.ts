@@ -1,6 +1,5 @@
 import { SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated";
 
-
 export interface TokenInfo {
     name: string;
     canonical_name: string;
@@ -9,76 +8,76 @@ export interface TokenInfo {
 }
 
 export const TokenData = (() => {
-    const map: { [key: string]: TokenInfo; } = {};
+    const map: { [key: string]: TokenInfo } = {};
 
     for (const [k, v] of Object.entries({
         // Typenames
-        "short": SyntaxKind.SHORT_TYPE,
-        "int": SyntaxKind.INT_TYPE,
-        "long": SyntaxKind.LONG_TYPE,
-        "float": SyntaxKind.FLOAT_TYPE,
-        "ref": SyntaxKind.REFERENCE_TYPE,
-        "reference": SyntaxKind.REFERENCE_TYPE,
-        "string_var": SyntaxKind.STRING_VAR_TYPE,
-        "array_var": SyntaxKind.ARRAY_VAR_TYPE,
+        short: SyntaxKind.SHORT_TYPE,
+        int: SyntaxKind.INT_TYPE,
+        long: SyntaxKind.LONG_TYPE,
+        float: SyntaxKind.FLOAT_TYPE,
+        ref: SyntaxKind.REFERENCE_TYPE,
+        reference: SyntaxKind.REFERENCE_TYPE,
+        string_var: SyntaxKind.STRING_VAR_TYPE,
+        array_var: SyntaxKind.ARRAY_VAR_TYPE,
 
         // Keywords
-        "scn": SyntaxKind.SCRIPTNAME_KW,
-        "scriptname": SyntaxKind.SCRIPTNAME_KW,
-        "begin": SyntaxKind.BEGIN_KW,
-        "end": SyntaxKind.END_KW,
-        "if": SyntaxKind.IF_KW,
-        "elseif": SyntaxKind.ELSEIF_KW,
-        "else": SyntaxKind.ELSE_KW,
-        "endif": SyntaxKind.ENDIF_KW,
-        "while": SyntaxKind.WHILE_KW,
-        "foreach": SyntaxKind.FOREACH_KW,
-        "loop": SyntaxKind.LOOP_KW,
-        "continue": SyntaxKind.CONTINUE_KW,
-        "break": SyntaxKind.BREAK_KW,
-        "return": SyntaxKind.RETURN_KW,
-        "set": SyntaxKind.SET_KW,
-        "to": SyntaxKind.TO_KW,
-        "let": SyntaxKind.LET_KW,
+        scn: SyntaxKind.SCRIPTNAME_KW,
+        scriptname: SyntaxKind.SCRIPTNAME_KW,
+        begin: SyntaxKind.BEGIN_KW,
+        end: SyntaxKind.END_KW,
+        if: SyntaxKind.IF_KW,
+        elseif: SyntaxKind.ELSEIF_KW,
+        else: SyntaxKind.ELSE_KW,
+        endif: SyntaxKind.ENDIF_KW,
+        while: SyntaxKind.WHILE_KW,
+        foreach: SyntaxKind.FOREACH_KW,
+        loop: SyntaxKind.LOOP_KW,
+        continue: SyntaxKind.CONTINUE_KW,
+        break: SyntaxKind.BREAK_KW,
+        return: SyntaxKind.RETURN_KW,
+        set: SyntaxKind.SET_KW,
+        to: SyntaxKind.TO_KW,
+        let: SyntaxKind.LET_KW,
 
         // Blocktypes
-        "Function": SyntaxKind.BLOCKTYPE_FUNCTION,
-        "GameMode": SyntaxKind.BLOCKTYPE,
-        "MenuMode": SyntaxKind.BLOCKTYPE,
-        "OnActivate": SyntaxKind.BLOCKTYPE,
-        "OnActorEquip": SyntaxKind.BLOCKTYPE,
-        "OnActorUnequip": SyntaxKind.BLOCKTYPE,
-        "OnAdd": SyntaxKind.BLOCKTYPE,
-        "OnClose": SyntaxKind.BLOCKTYPE,
-        "OnCombatEnd": SyntaxKind.BLOCKTYPE,
-        "OnDeath": SyntaxKind.BLOCKTYPE,
-        "OnDestructionStageChange": SyntaxKind.BLOCKTYPE,
-        "OnDrop": SyntaxKind.BLOCKTYPE,
-        "OnEquip": SyntaxKind.BLOCKTYPE,
-        "OnFire": SyntaxKind.BLOCKTYPE,
-        "OnGrab": SyntaxKind.BLOCKTYPE,
-        "OnHit": SyntaxKind.BLOCKTYPE,
-        "OnHitWith": SyntaxKind.BLOCKTYPE,
-        "OnLoad": SyntaxKind.BLOCKTYPE,
-        "OnMagicEffectHit": SyntaxKind.BLOCKTYPE,
-        "OnMurder": SyntaxKind.BLOCKTYPE,
-        "OnNPCActivate": SyntaxKind.BLOCKTYPE,
-        "OnOpen": SyntaxKind.BLOCKTYPE,
-        "OnPackageChange": SyntaxKind.BLOCKTYPE,
-        "OnPackageDone": SyntaxKind.BLOCKTYPE,
-        "OnPackageStart": SyntaxKind.BLOCKTYPE,
-        "OnRelease": SyntaxKind.BLOCKTYPE,
-        "OnReset": SyntaxKind.BLOCKTYPE,
-        "OnSell": SyntaxKind.BLOCKTYPE,
-        "OnStartCombat": SyntaxKind.BLOCKTYPE,
-        "OnTrigger": SyntaxKind.BLOCKTYPE,
-        "OnTriggerEnter": SyntaxKind.BLOCKTYPE,
-        "OnTriggerLeave": SyntaxKind.BLOCKTYPE,
-        "OnUnequip": SyntaxKind.BLOCKTYPE,
-        "SayToDone": SyntaxKind.BLOCKTYPE,
-        "ScriptEffectFinish": SyntaxKind.BLOCKTYPE,
-        "ScriptEffectStart": SyntaxKind.BLOCKTYPE,
-        "ScriptEffectUpdate": SyntaxKind.BLOCKTYPE,
+        Function: SyntaxKind.BLOCKTYPE_FUNCTION,
+        GameMode: SyntaxKind.BLOCKTYPE,
+        MenuMode: SyntaxKind.BLOCKTYPE,
+        OnActivate: SyntaxKind.BLOCKTYPE,
+        OnActorEquip: SyntaxKind.BLOCKTYPE,
+        OnActorUnequip: SyntaxKind.BLOCKTYPE,
+        OnAdd: SyntaxKind.BLOCKTYPE,
+        OnClose: SyntaxKind.BLOCKTYPE,
+        OnCombatEnd: SyntaxKind.BLOCKTYPE,
+        OnDeath: SyntaxKind.BLOCKTYPE,
+        OnDestructionStageChange: SyntaxKind.BLOCKTYPE,
+        OnDrop: SyntaxKind.BLOCKTYPE,
+        OnEquip: SyntaxKind.BLOCKTYPE,
+        OnFire: SyntaxKind.BLOCKTYPE,
+        OnGrab: SyntaxKind.BLOCKTYPE,
+        OnHit: SyntaxKind.BLOCKTYPE,
+        OnHitWith: SyntaxKind.BLOCKTYPE,
+        OnLoad: SyntaxKind.BLOCKTYPE,
+        OnMagicEffectHit: SyntaxKind.BLOCKTYPE,
+        OnMurder: SyntaxKind.BLOCKTYPE,
+        OnNPCActivate: SyntaxKind.BLOCKTYPE,
+        OnOpen: SyntaxKind.BLOCKTYPE,
+        OnPackageChange: SyntaxKind.BLOCKTYPE,
+        OnPackageDone: SyntaxKind.BLOCKTYPE,
+        OnPackageStart: SyntaxKind.BLOCKTYPE,
+        OnRelease: SyntaxKind.BLOCKTYPE,
+        OnReset: SyntaxKind.BLOCKTYPE,
+        OnSell: SyntaxKind.BLOCKTYPE,
+        OnStartCombat: SyntaxKind.BLOCKTYPE,
+        OnTrigger: SyntaxKind.BLOCKTYPE,
+        OnTriggerEnter: SyntaxKind.BLOCKTYPE,
+        OnTriggerLeave: SyntaxKind.BLOCKTYPE,
+        OnUnequip: SyntaxKind.BLOCKTYPE,
+        SayToDone: SyntaxKind.BLOCKTYPE,
+        ScriptEffectFinish: SyntaxKind.BLOCKTYPE,
+        ScriptEffectStart: SyntaxKind.BLOCKTYPE,
+        ScriptEffectUpdate: SyntaxKind.BLOCKTYPE,
 
         // Operators
         "=": SyntaxKind.EQ,
@@ -110,7 +109,7 @@ export const TokenData = (() => {
         "&": SyntaxKind.AMPERSAND,
         "<<": SyntaxKind.LT2,
         ">>": SyntaxKind.GT2,
-        "$": SyntaxKind.DOLLAR,
+        $: SyntaxKind.DOLLAR,
         "#": SyntaxKind.HASH,
         "(": SyntaxKind.LPAREN,
         ")": SyntaxKind.RPAREN,
@@ -125,7 +124,7 @@ export const TokenData = (() => {
         "::": SyntaxKind.COLON2,
         ",": SyntaxKind.COMMA,
         "=>": SyntaxKind.EQGT,
-    } as { [key: string]: TokenSyntaxKind; })) {
+    } as { [key: string]: TokenSyntaxKind })) {
         map[k.toLowerCase()] = {
             name: k.toLowerCase(),
             canonical_name: k,
@@ -197,7 +196,6 @@ export function GetTokenKind(token_name: string): TokenSyntaxKind {
 // export function SyntaxKindName(kind: SyntaxKind): string {
 //     return SyntaxKindNames[kind] ?? `SyntaxKind(${kind})`;
 // }
-
 
 // type TokenInfo = [TokenSubtype | undefined, string, string]
 // type TokenIndex = {

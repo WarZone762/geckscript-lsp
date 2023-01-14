@@ -225,8 +225,7 @@ export type TypeSyntaxKind =
     | SyntaxKind.FLOAT_TYPE
     | SyntaxKind.REFERENCE_TYPE
     | SyntaxKind.STRING_VAR_TYPE
-    | SyntaxKind.ARRAY_VAR_TYPE
-    ;
+    | SyntaxKind.ARRAY_VAR_TYPE;
 
 export function is_type(kind: SyntaxKind): kind is TypeSyntaxKind {
     return (
@@ -255,8 +254,7 @@ export type KeywordSyntaxKind =
     | SyntaxKind.RETURN_KW
     | SyntaxKind.SET_KW
     | SyntaxKind.TO_KW
-    | SyntaxKind.LET_KW
-    ;
+    | SyntaxKind.LET_KW;
 
 export function is_keyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
     return (
@@ -278,16 +276,10 @@ export function is_keyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
         kind == SyntaxKind.LET_KW
     );
 }
-export type SimpleAssignmentOpSyntaxKind =
-    | SyntaxKind.EQ
-    | SyntaxKind.COLONEQ
-    ;
+export type SimpleAssignmentOpSyntaxKind = SyntaxKind.EQ | SyntaxKind.COLONEQ;
 
 export function is_simple_assignment_op(kind: SyntaxKind): kind is SimpleAssignmentOpSyntaxKind {
-    return (
-        kind == SyntaxKind.EQ ||
-        kind == SyntaxKind.COLONEQ
-    );
+    return kind == SyntaxKind.EQ || kind == SyntaxKind.COLONEQ;
 }
 export type AssignmentOpSyntaxKind =
     | SyntaxKind.EQ
@@ -299,8 +291,7 @@ export type AssignmentOpSyntaxKind =
     | SyntaxKind.PERCENTEQ
     | SyntaxKind.CIRCUMFLEXEQ
     | SyntaxKind.VBAREQ
-    | SyntaxKind.AMPERSANDEQ
-    ;
+    | SyntaxKind.AMPERSANDEQ;
 
 export function is_assignment_op(kind: SyntaxKind): kind is AssignmentOpSyntaxKind {
     return (
@@ -321,8 +312,7 @@ export type UnaryOpSyntaxKind =
     | SyntaxKind.DOLLAR
     | SyntaxKind.HASH
     | SyntaxKind.AMPERSAND
-    | SyntaxKind.ASTERISK
-    ;
+    | SyntaxKind.ASTERISK;
 
 export function is_unary_op(kind: SyntaxKind): kind is UnaryOpSyntaxKind {
     return (
@@ -377,8 +367,7 @@ export type OpSyntaxKind =
     | SyntaxKind.RARROW
     | SyntaxKind.DOT
     | SyntaxKind.COMMA
-    | SyntaxKind.EQGT
-    ;
+    | SyntaxKind.EQGT;
 
 export function is_op(kind: SyntaxKind): kind is OpSyntaxKind {
     return (
@@ -432,8 +421,7 @@ export type PrimaryExprSyntaxKind =
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
     | SyntaxKind.NAME
-    | SyntaxKind.NAME_REF
-    ;
+    | SyntaxKind.NAME_REF;
 
 export function is_primary_expr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind {
     return (
@@ -444,26 +432,17 @@ export function is_primary_expr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind
     );
 }
 
-export type VarOrVarDeclSyntaxKind =
-    | SyntaxKind.NAME
-    | SyntaxKind.NAME_REF
-    | SyntaxKind.VAR_DECL
-    ;
+export type VarOrVarDeclSyntaxKind = SyntaxKind.NAME | SyntaxKind.NAME_REF | SyntaxKind.VAR_DECL;
 
 export function is_var_or_var_decl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
-    return (
-        kind == SyntaxKind.NAME ||
-        kind == SyntaxKind.NAME_REF ||
-        kind == SyntaxKind.VAR_DECL
-    );
+    return kind == SyntaxKind.NAME || kind == SyntaxKind.NAME_REF || kind == SyntaxKind.VAR_DECL;
 }
 export type ListSyntaxKind =
     | SyntaxKind.VAR_OR_VAR_DECL_LIST
     | SyntaxKind.PRIMARY_EXPR_LIST
     | SyntaxKind.EXPR_LIST
     | SyntaxKind.BRANCH_LIST
-    | SyntaxKind.STMT_LIST
-    ;
+    | SyntaxKind.STMT_LIST;
 
 export function is_list(kind: SyntaxKind): kind is ListSyntaxKind {
     return (
@@ -480,8 +459,7 @@ export type ExprSyntaxKind =
     | SyntaxKind.UNARY_EXPR
     | SyntaxKind.BIN_EXPR
     | SyntaxKind.MEMBER_EXPR
-    | SyntaxKind.FUNC_EXPR
-    ;
+    | SyntaxKind.FUNC_EXPR;
 
 export function is_expr(kind: SyntaxKind): kind is ExprSyntaxKind {
     return (
@@ -501,8 +479,7 @@ export type StmtSyntaxKind =
     | SyntaxKind.IF_STMT
     | SyntaxKind.ELSEIF_STMT
     | SyntaxKind.WHILE_STMT
-    | SyntaxKind.FOREACH_STMT
-    ;
+    | SyntaxKind.FOREACH_STMT;
 
 export function is_stmt(kind: SyntaxKind): kind is StmtSyntaxKind {
     return (
@@ -530,8 +507,7 @@ export type TokenSyntaxKind =
     | SyntaxKind.BLOCKTYPE_FUNCTION
     | TypeSyntaxKind
     | KeywordSyntaxKind
-    | OpSyntaxKind
-    ;
+    | OpSyntaxKind;
 
 export type NodeSyntaxKind =
     | SyntaxKind.TOMBSTONE
@@ -545,5 +521,4 @@ export type NodeSyntaxKind =
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind
-    | StmtSyntaxKind
-    ;
+    | StmtSyntaxKind;
