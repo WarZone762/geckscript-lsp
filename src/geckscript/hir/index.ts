@@ -1,26 +1,8 @@
 import { AstNode } from "../ast/generated";
 import * as parsing from "../parsing";
-import { Node } from "./syntax_node";
+import { Node } from "../types/syntax_node";
 import { Diagnostic } from "vscode-languageserver";
-import { TextDocument } from "vscode-languageserver-textdocument";
-
-export class TreeData {
-    name: string;
-    children: TreeData[];
-
-    constructor(name: string, children: TreeData[] = []) {
-        this.name = name;
-        this.children = children;
-    }
-
-    append(child: TreeData): void {
-        this.children.push(child);
-    }
-
-    concat(children: TreeData[]): void {
-        this.children = this.children.concat(children);
-    }
-}
+import { Position, TextDocument } from "vscode-languageserver-textdocument";
 
 export const enum ExprType {
     Unknown,
@@ -66,10 +48,30 @@ export interface Symbol {
 
 export type SymbolTable = { [key: string]: Symbol };
 
-export class Environment {
-    files: Map<string, [Node, Diagnostic[]]> = new Map();
+export class ParsedString {
+    doc: TextDocument;
+    root: Node;
+    diagnostics: Diagnostic[];
 
-    parse_doc(doc: TextDocument): [Node, Diagnostic[]] {
+    constructor(doc: TextDocument, root: Node, diagnostics: Diagnostic[]) {
+        this.doc = doc;
+        this.root = root;
+        this.diagnostics = diagnostics;
+    }
+
+    pos_at(offset: number): Position {
+        return this.doc.positionAt(offset);
+    }
+
+    offset_at(pos: Position): number {
+        return this.doc.offsetAt(pos);
+    }
+}
+
+export class Environment {
+    files: Map<string, ParsedString> = new Map();
+
+    parse_doc(doc: TextDocument): ParsedString {
         const [node, errors] = parsing.parse_str(doc.getText());
         const diagnostics: Diagnostic[] = [];
         for (const e of errors) {
@@ -85,9 +87,9 @@ export class Environment {
             });
         }
 
-        const output: [Node, Diagnostic[]] = [node, diagnostics];
-        this.files.set(doc.uri, output);
+        const parsed = new ParsedString(doc, node, diagnostics);
+        this.files.set(doc.uri, parsed);
 
-        return output;
+        return parsed;
     }
 }

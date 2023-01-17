@@ -1,27 +1,32 @@
-import { Script } from "../geckscript/ast/generated";
+import * as ast from "../geckscript/ast";
+import { FuncExpr } from "../geckscript/ast/generated";
+import { ParsedString } from "../geckscript/hir";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated";
+import { Node } from "../geckscript/types/syntax_node";
 import {
     SemanticTokens,
     SemanticTokensBuilder,
     SemanticTokensLegend,
 } from "vscode-languageserver/node";
 
-export const Legend: SemanticTokensLegend = {
-    tokenTypes: ["variable"],
+export const legend: SemanticTokensLegend = {
+    tokenTypes: ["variable", "function"],
     tokenModifiers: ["readonly"],
 };
 
-// export function BuildSemanticTokens(script: Script): SemanticTokens {
-//   const tokens_builder = new SemanticTokensBuilder();
+export function build_semantic_tokens(parsed: ParsedString): SemanticTokens {
+    const builder = new SemanticTokensBuilder();
 
-//   for (const token of script.semantic_tokens) {
-//     tokens_builder.push(
-//       token.range.start.line,
-//       token.range.start.character,
-//       token.range.end.character - token.range.start.character,
-//       0,
-//       1,
-//     );
-//   }
+    for (const func of [...ast.descendants_df(parsed.root)].filter(
+        (n) => n.kind === SyntaxKind.FUNC_EXPR
+    )) {
+        const node = new FuncExpr(func as Node<SyntaxKind.FUNC_EXPR>);
+        const name = node.name();
+        if (name != undefined) {
+            const pos = parsed.pos_at(name.green.offset);
+            builder.push(pos.line, pos.character, name.green.len(), 1, 0);
+        }
+    }
 
-//   return tokens_builder.build();
-// }
+    return builder.build();
+}

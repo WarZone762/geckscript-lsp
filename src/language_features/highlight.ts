@@ -1,7 +1,24 @@
-// import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
-// import { Position } from "vscode-languageserver-textdocument";
-// import * as ast from "../geckscript/ast";
-// import { Identifier, IsAssignmentOperator, Script, SyntaxKind, Token, VariableDeclarationStatement } from "../geckscript/types";
+import * as ast from "../geckscript/ast";
+import { ParsedString } from "../geckscript/hir";
+import { DocumentHighlight } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
+
+export function get_highlight(parsed: ParsedString, pos: Position): DocumentHighlight[] | null {
+    const highlights: DocumentHighlight[] = [];
+
+    const token = ast.token_at_offset(parsed.root, parsed.offset_at(pos));
+    if (token == undefined) {
+        return null;
+    }
+
+    for (const e of ast.str_occurences(parsed.root, token.text)) {
+        highlights.push({
+            range: { start: parsed.pos_at(e.offset), end: parsed.pos_at(e.end()) },
+        });
+    }
+
+    return highlights;
+}
 
 // export function GetHighlight(
 //   script: Script,

@@ -6,12 +6,12 @@ import { Node, NodeOrToken, Token } from "./types/syntax_node";
 
 import assert = require("assert");
 
-export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): string {
+export function print_tree(node: Node, filter: Set<SyntaxKind> = new Set()): string {
     let indent = 0;
 
-    return tree_to_str_recursive(node, filter);
+    return print_tree_recursive(node, filter);
 
-    function tree_to_str_recursive(node: Node, filter: Set<SyntaxKind>): string {
+    function print_tree_recursive(node: Node, filter: Set<SyntaxKind>): string {
         let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${
             node.offset
         }..${node.end()}\n`;
@@ -22,7 +22,7 @@ export function tree_to_str(node: Node, filter: Set<SyntaxKind> = new Set()): st
             }
 
             if (child.is_node()) {
-                text += tree_to_str_recursive(child, filter);
+                text += print_tree_recursive(child, filter);
             } else {
                 text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${
                     child.offset
@@ -90,7 +90,7 @@ export class TreeBuilder {
 
     start_node(kind: NodeSyntaxKind) {
         const node = Node(kind);
-        node.offset = this.children.at(-1)?.offset ?? this.parents.at(-1)?.[0].offset ?? 0;
+        node.offset = this.children.at(-1)?.end() ?? this.parents.at(-1)?.[0].end() ?? 0;
         this.parents.push([node, this.children.length]);
     }
 

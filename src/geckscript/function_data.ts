@@ -1,5 +1,5 @@
 import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions";
-import { Symbol, SymbolKind, ExprType } from "./types/hir";
+import { Symbol, SymbolKind, ExprType } from "./hir";
 import * as fs from "fs";
 import * as path from "path";
 

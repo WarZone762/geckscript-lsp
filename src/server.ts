@@ -1,15 +1,11 @@
-// import { Environment } from "./geckscript/ast/generated";
 import * as ast from "./geckscript/ast";
-// import * as ST from "./language_features/semantic_tokens";
 import * as FD from "./geckscript/function_data";
-import { Environment } from "./geckscript/types/hir";
+import { Environment } from "./geckscript/hir";
 // import * as Wiki from "./wiki/wiki";
-import { Token } from "./geckscript/types/syntax_node";
+import { get_highlight } from "./language_features/highlight";
+import { build_semantic_tokens, legend } from "./language_features/semantic_tokens";
 import * as TreeViewServer from "./tree_view/server";
 // import * as completion from "./language_features/completion";
-// import { GetHighlight as GetHighlights } from "./language_features/highlight";
-import * as fs from "fs/promises";
-import * as path from "path";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     createConnection,
@@ -38,24 +34,26 @@ connection.onInitialize(async (params: InitializeParams) => {
     const result: InitializeResult = {
         capabilities: {
             textDocumentSync: TextDocumentSyncKind.Incremental,
-            // documentHighlightProvider: true,
+            documentHighlightProvider: true,
             // completionProvider: {
             //     resolveProvider: true
             // },
-            // hoverProvider: true,
+            hoverProvider: true,
         },
     };
 
-    // if (capabilities.textDocument?.semanticTokens) {
-    //   result.capabilities.semanticTokensProvider = {
-    //     documentSelector: [{
-    //       language: "GECKScript",
-    //       scheme: "file"
-    //     }],
-    //     legend: ST.Legend,
-    //     full: true
-    //   };
-    // }
+    if (capabilities.textDocument?.semanticTokens) {
+        result.capabilities.semanticTokensProvider = {
+            documentSelector: [
+                {
+                    language: "GECKScript",
+                    scheme: "file",
+                },
+            ],
+            legend: legend,
+            full: true,
+        };
+    }
 
     if (process.argv.find((e) => e === "--tree-view-server") !== undefined) {
         console.log("Running tree view server");
@@ -72,13 +70,11 @@ connection.onInitialize(async (params: InitializeParams) => {
 documents.onDidChangeContent(async (params) => {
     const doc = params.document;
 
-    const diagnostics = ENV.parse_doc(doc)[1];
+    const parsed = ENV.parse_doc(doc);
 
-    // fs.writeFile(path.join(__dirname, "..", "..", "test.html"), ast.ToHTML(script.parsed.script));
+    tree_view_server?.write_tree_data(ast.to_tree_data(parsed.root));
 
-    // tree_view_server?.write_tree_data(ast.ToTreeDataFull(script.parsed.script));
-
-    connection.sendDiagnostics({ uri: doc.uri, diagnostics: diagnostics });
+    connection.sendDiagnostics({ uri: doc.uri, diagnostics: parsed.diagnostics });
 });
 
 // connection.onCompletion(
@@ -96,32 +92,40 @@ documents.onDidChangeContent(async (params) => {
 //   }
 // );
 
-// connection.onHover(
-//     async (params: HoverParams): Promise<Hover | null> => {
-//         const doc = documents.get(params.textDocument.uri)!;
+connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
+    const parsed = ENV.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
 
-//         const token = ast.TokenAtPosition(environment.map[doc.uri].parsed.script, doc.offsetAt(params.position));
+    const token = ast.token_at_offset(parsed.root, parsed.offset_at(params.position));
+    if (token == undefined) {
+        return null;
+    }
 
-//         return {
-//             contents: String(token?.text)
-//         };
-//     }
-// );
+    return {
+        contents: token.text,
+        range: { start: parsed.pos_at(token.offset), end: parsed.pos_at(token.end()) },
+    };
+});
 
-// connection.onDocumentHighlight(
-//   (params) => {
-//     return GetHighlights(environment.map[params.textDocument.uri], params.position);
-//   }
-// );
+connection.onDocumentHighlight(async (params) => {
+    const parsed = ENV.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
 
-// connection.onRequest(
-//   SemanticTokensRequest.method,
-//   async (params: SemanticTokensParams) => {
-//     const script = environment.map[params.textDocument.uri];
+    return get_highlight(parsed, params.position);
+});
 
-//     return ST.BuildSemanticTokens(script);
-//   }
-// );
+connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
+    const parsed = ENV.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return build_semantic_tokens(parsed);
+});
 
 connection.onNotification("GECKScript/updateFunctionData", () => FD.PopulateFunctionData(true));
 

@@ -1,4 +1,4 @@
-import { TreeData } from "../geckscript/types/hir";
+import { TreeData } from "../geckscript/ast";
 import * as fs from "fs";
 import * as http from "http";
 import * as mime from "mime";
