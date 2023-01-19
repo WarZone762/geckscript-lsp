@@ -1,4 +1,4 @@
-import { syntax_kind_name } from "./syntax_kind/generated";
+import { SyntaxKind, syntax_kind_name } from "./syntax_kind/generated";
 import { Node, Token, NodeOrToken } from "./types/syntax_node";
 
 export function for_each_child(node: Node, func: (node: NodeOrToken) => unknown): void {
@@ -135,6 +135,35 @@ export class TreeData {
 
     set_range(start: number, end: number) {
         this.children.unshift(new TreeData("Range", [new TreeData(`${start}..${end}`)]));
+    }
+}
+
+export function to_debug(node: Node, filter: Set<SyntaxKind> = new Set()): string {
+    let indent = 0;
+
+    return to_debug_recursive(node, filter);
+
+    function to_debug_recursive(node: Node, filter: Set<SyntaxKind>): string {
+        let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${
+            node.offset
+        }..${node.end()}\n`;
+        ++indent;
+        for (const child of node.children) {
+            if (filter.has(child.kind)) {
+                continue;
+            }
+
+            if (child.is_node()) {
+                text += to_debug_recursive(child, filter);
+            } else {
+                text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${
+                    child.offset
+                }..${child.end()} ${JSON.stringify(child.text)}\n`;
+            }
+        }
+        --indent;
+
+        return text;
     }
 }
 

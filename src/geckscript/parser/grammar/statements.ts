@@ -211,38 +211,32 @@ export function stmt_if(p: Parser) {
     p.next(SyntaxKind.IF_KW);
     expr(p);
     p.expect(SyntaxKind.NEWLINE);
-
     stmt_list(p);
-
-    if (p.at(SyntaxKind.ELSEIF_KW)) {
-        stmt_elseif(p);
-    } else if (p.at(SyntaxKind.ELSE_KW)) {
-        stmt_else(p);
-    }
+    elseif_else(p);
 
     p.expect(SyntaxKind.ENDIF_KW);
 
     m.complete(p, SyntaxKind.IF_STMT);
 }
 
-export function stmt_else(p: Parser) {
-    p.next(SyntaxKind.ELSE_KW);
-    p.expect(SyntaxKind.NEWLINE);
-    stmt_list(p);
-}
-
-export function stmt_elseif(p: Parser) {
-    const m = p.start();
-    p.next(SyntaxKind.ELSEIF_KW);
-    expr(p);
-    p.expect(SyntaxKind.NEWLINE);
-    stmt_list(p);
-
+export function elseif_else(p: Parser) {
     if (p.at(SyntaxKind.ELSEIF_KW)) {
-        stmt_elseif(p);
-    } else if (p.at(SyntaxKind.ELSE_KW)) {
-        stmt_else(p);
-    }
+        const m = p.start();
 
-    m.complete(p, SyntaxKind.ELSEIF_STMT);
+        p.next(SyntaxKind.ELSEIF_KW);
+        expr(p);
+        p.expect(SyntaxKind.NEWLINE);
+        stmt_list(p);
+        elseif_else(p);
+
+        m.complete(p, SyntaxKind.ELSE_BRANCH);
+    } else if (p.at(SyntaxKind.ELSE_KW)) {
+        const m = p.start();
+
+        p.next(SyntaxKind.ELSE_KW);
+        p.expect(SyntaxKind.NEWLINE);
+        stmt_list(p);
+
+        m.complete(p, SyntaxKind.ELSE_BRANCH);
+    }
 }

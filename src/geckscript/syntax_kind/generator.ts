@@ -54,7 +54,7 @@ export const OTHER: SyntaxKindData = [
             "IDENT",
             ...VAR_OR_VAR_DECL[0],
             "BLOCKTYPE_DESIG",
-            "BRANCH",
+            "ELSE_BRANCH",
             "SCRIPT",
         ]),
     ],
@@ -155,7 +155,7 @@ export const EXPR: SyntaxKindData = [
 ];
 
 export const STMT: SyntaxKindData = [
-    ["VAR_DECL", "SET", "LET", "BEGIN", "IF", "ELSEIF", "WHILE", "FOREACH"],
+    ["VAR_DECL", "SET", "LET", "BEGIN", "IF", "WHILE", "FOREACH"],
     "_STMT",
 ];
 
@@ -221,7 +221,7 @@ export type NodeSyntaxKind =
     | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
-    | SyntaxKind.BRANCH
+    | SyntaxKind.ELSE_BRANCH
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind

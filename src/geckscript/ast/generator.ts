@@ -370,17 +370,8 @@ IfStmt: IF_STMT {
     if: Token IF_KW,
     cond: Expr,
     true_branch: StmtList,
-    else: Token ELSE_KW,
-    false_branch: ElseifOrElse,
+    false_branch: ElseBranch,
     endif: Token ENDIF_KW,
-}
-
-ElseifStmt: ELSEIF_STMT {
-    elseif: Token ELSEIF_KW,
-    cond: Expr,
-    true_branch: StmtList,
-    else: Token ELSE_KW,
-    false_branch: ElseifOrElse,
 }
 `.trim();
 
@@ -397,11 +388,18 @@ BlocktypeDesig: BLOCKTYPE_DESIG {
 
 ${STMT_DATA}
 
+ElseBranch: ELSE_BRANCH {
+    elseif: Token ELSEIF_KW ELSE_KW,
+    cond: Expr,
+    true_branch: StmtList,
+    false_branch: ElseBranch,
+}
+
 Script: SCRIPT {
     scriptname: Token SCRIPTNAME_KW,
     name: Name,
     body: StmtList,
 }
-`; // FIXME: IfStmt
+`;
 
 console.log(generate());

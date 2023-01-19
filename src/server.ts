@@ -1,6 +1,6 @@
 import * as ast from "./geckscript/ast";
 import * as FD from "./geckscript/function_data";
-import { Environment } from "./geckscript/hir";
+import { FileDatabase } from "./geckscript/hir";
 // import * as Wiki from "./wiki/wiki";
 import { get_highlight } from "./language_features/highlight";
 import { build_semantic_tokens, legend } from "./language_features/semantic_tokens";
@@ -26,7 +26,7 @@ const connection = createConnection(ProposedFeatures.all);
 
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const ENV = new Environment();
+const DB = new FileDatabase();
 
 connection.onInitialize(async (params: InitializeParams) => {
     const capabilities = params.capabilities;
@@ -70,9 +70,9 @@ connection.onInitialize(async (params: InitializeParams) => {
 documents.onDidChangeContent(async (params) => {
     const doc = params.document;
 
-    const parsed = ENV.parse_doc(doc);
+    const parsed = DB.parse_doc(doc);
 
-    tree_view_server?.write_tree_data(ast.to_tree_data(parsed.root));
+    tree_view_server?.write_tree_data(ast.to_tree_data(parsed.root.green));
 
     connection.sendDiagnostics({ uri: doc.uri, diagnostics: parsed.diagnostics });
 });
@@ -93,12 +93,12 @@ documents.onDidChangeContent(async (params) => {
 // );
 
 connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
-    const parsed = ENV.files.get(params.textDocument.uri);
+    const parsed = DB.files.get(params.textDocument.uri);
     if (parsed == undefined) {
         return null;
     }
 
-    const token = ast.token_at_offset(parsed.root, parsed.offset_at(params.position));
+    const token = ast.token_at_offset(parsed.root.green, parsed.offset_at(params.position));
     if (token == undefined) {
         return null;
     }
@@ -110,7 +110,7 @@ connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
 });
 
 connection.onDocumentHighlight(async (params) => {
-    const parsed = ENV.files.get(params.textDocument.uri);
+    const parsed = DB.files.get(params.textDocument.uri);
     if (parsed == undefined) {
         return null;
     }
@@ -119,7 +119,7 @@ connection.onDocumentHighlight(async (params) => {
 });
 
 connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
-    const parsed = ENV.files.get(params.textDocument.uri);
+    const parsed = DB.files.get(params.textDocument.uri);
     if (parsed == undefined) {
         return null;
     }

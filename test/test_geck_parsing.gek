@@ -1,6 +1,10 @@
 ; start comment
 scn ScriptName1
 
+int foo
+float bar
+ref r
+
 begin MenuMode 1024
 
     1 + 2 * 3

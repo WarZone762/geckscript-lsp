@@ -17,7 +17,7 @@ export const legend: SemanticTokensLegend = {
 export function build_semantic_tokens(parsed: ParsedString): SemanticTokens {
     const builder = new SemanticTokensBuilder();
 
-    for (const func of [...ast.descendants_df(parsed.root)].filter(
+    for (const func of [...ast.descendants_df(parsed.root.green)].filter(
         (n) => n.kind === SyntaxKind.FUNC_EXPR
     )) {
         const node = new FuncExpr(func as Node<SyntaxKind.FUNC_EXPR>);

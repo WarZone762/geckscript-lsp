@@ -16,7 +16,7 @@ export const enum SyntaxKind {
     IDENT,
     VAR_DECL,
     BLOCKTYPE_DESIG,
-    BRANCH,
+    ELSE_BRANCH,
     SCRIPT,
     SHORT_TYPE,
     INT_TYPE,
@@ -101,7 +101,6 @@ export const enum SyntaxKind {
     LET_STMT,
     BEGIN_STMT,
     IF_STMT,
-    ELSEIF_STMT,
     WHILE_STMT,
     FOREACH_STMT,
 }
@@ -124,7 +123,7 @@ export const syntax_kind_names = {
     [SyntaxKind.IDENT]: "IDENT",
     [SyntaxKind.VAR_DECL]: "VAR_DECL",
     [SyntaxKind.BLOCKTYPE_DESIG]: "BLOCKTYPE_DESIG",
-    [SyntaxKind.BRANCH]: "BRANCH",
+    [SyntaxKind.ELSE_BRANCH]: "BRANCH",
     [SyntaxKind.SCRIPT]: "SCRIPT",
     [SyntaxKind.SHORT_TYPE]: "SHORT_TYPE",
     [SyntaxKind.INT_TYPE]: "INT_TYPE",
@@ -209,7 +208,6 @@ export const syntax_kind_names = {
     [SyntaxKind.LET_STMT]: "LET_STMT",
     [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
     [SyntaxKind.IF_STMT]: "IF_STMT",
-    [SyntaxKind.ELSEIF_STMT]: "ELSEIF_STMT",
     [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
     [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
 };
@@ -477,7 +475,6 @@ export type StmtSyntaxKind =
     | SyntaxKind.LET_STMT
     | SyntaxKind.BEGIN_STMT
     | SyntaxKind.IF_STMT
-    | SyntaxKind.ELSEIF_STMT
     | SyntaxKind.WHILE_STMT
     | SyntaxKind.FOREACH_STMT;
 
@@ -488,7 +485,6 @@ export function is_stmt(kind: SyntaxKind): kind is StmtSyntaxKind {
         kind == SyntaxKind.LET_STMT ||
         kind == SyntaxKind.BEGIN_STMT ||
         kind == SyntaxKind.IF_STMT ||
-        kind == SyntaxKind.ELSEIF_STMT ||
         kind == SyntaxKind.WHILE_STMT ||
         kind == SyntaxKind.FOREACH_STMT
     );
@@ -517,7 +513,7 @@ export type NodeSyntaxKind =
     | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
-    | SyntaxKind.BRANCH
+    | SyntaxKind.ELSE_BRANCH
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind

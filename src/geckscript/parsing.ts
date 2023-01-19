@@ -6,35 +6,6 @@ import { Node, NodeOrToken, Token } from "./types/syntax_node";
 
 import assert = require("assert");
 
-export function print_tree(node: Node, filter: Set<SyntaxKind> = new Set()): string {
-    let indent = 0;
-
-    return print_tree_recursive(node, filter);
-
-    function print_tree_recursive(node: Node, filter: Set<SyntaxKind>): string {
-        let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${
-            node.offset
-        }..${node.end()}\n`;
-        ++indent;
-        for (const child of node.children) {
-            if (filter.has(child.kind)) {
-                continue;
-            }
-
-            if (child.is_node()) {
-                text += print_tree_recursive(child, filter);
-            } else {
-                text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${
-                    child.offset
-                }..${child.end()} ${JSON.stringify(child.text)}\n`;
-            }
-        }
-        --indent;
-
-        return text;
-    }
-}
-
 export function parse_str(str: string): [Node, Error[]] {
     const l = new Lexer(str);
     const tokens_full = Array.from(l.lex());
