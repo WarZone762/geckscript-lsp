@@ -52,6 +52,89 @@ export function* siblings(node: NodeOrToken): Generator<NodeOrToken> {
     }
 }
 
+export function index_in_parent(node: NodeOrToken): number | undefined {
+    if (node.parent == undefined) {
+        return undefined;
+    }
+
+    for (let i = 0; i < node.parent.children.length; ++i) {
+        if (node.parent.children[i] === node) {
+            return i;
+        }
+    }
+}
+
+export function prev_sibling(node: NodeOrToken): NodeOrToken | undefined {
+    const i = index_in_parent(node);
+    if (i == undefined) {
+        return node;
+    }
+
+    return node.parent?.children[i - 1];
+}
+
+export function next_sibling(node: NodeOrToken): NodeOrToken | undefined {
+    const i = index_in_parent(node);
+    if (i == undefined) {
+        return node;
+    }
+
+    return node.parent?.children[i + 1];
+}
+
+export function prev_node_df(node: NodeOrToken): NodeOrToken | undefined {
+    let child = prev_sibling(node);
+    if (child == undefined) {
+        return node.parent;
+    }
+
+    while (true) {
+        if (!child.is_node() || child.children.at(-1) == undefined) {
+            return child;
+        }
+        child = child.children.at(-1)!;
+    }
+}
+
+export function next_node_df(node: NodeOrToken): NodeOrToken | undefined {
+    if (node.is_node() && node.children[0] != undefined) {
+        return node.children[0];
+    }
+
+    let parent: NodeOrToken | undefined = node;
+    let ns = next_sibling(node);
+    while (true) {
+        if (ns != undefined) {
+            return ns;
+        }
+        parent = parent.parent;
+        if (parent == undefined) {
+            return undefined;
+        }
+        ns = next_sibling(parent);
+    }
+}
+
+export function prev_token(token: Token): Token | undefined {
+    let prev = prev_node_df(token);
+    while (prev != undefined) {
+        if (!prev.is_node()) {
+            return prev;
+        }
+        prev = prev_node_df(prev);
+    }
+}
+
+export function next_token(token: Token): Token | undefined {
+    let next = next_node_df(token);
+    while (next != undefined) {
+        if (!next.is_node()) {
+            return next;
+        }
+        next = next_node_df(next);
+    }
+}
+
 export function* ancestors(node: NodeOrToken): Generator<NodeOrToken> {
     yield node;
     while (node.parent != undefined) {

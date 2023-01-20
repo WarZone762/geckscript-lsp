@@ -1,7 +1,7 @@
 import { Lexer } from "./lexer";
 import { AnyEvent, EventError, EventKind, EventStart } from "./parser/event";
 import { Input, parse } from "./parser/parser";
-import { NodeSyntaxKind, SyntaxKind, syntax_kind_name } from "./syntax_kind/generated";
+import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated";
 import { Node, NodeOrToken, Token } from "./types/syntax_node";
 
 import assert = require("assert");
@@ -125,10 +125,13 @@ export class TriviaBuilder {
     }
 
     start_node(kind: NodeSyntaxKind) {
-        if (this.tree_builder.parents.length !== 0) {
+        if (this.tree_builder.parents.length !== 0 && kind !== SyntaxKind.STMT_LIST) {
             this.attach_trivia();
         }
         this.tree_builder.start_node(kind);
+        if (kind === SyntaxKind.STMT_LIST) {
+            this.attach_trivia();
+        }
     }
 
     finish_node(is_last = false) {
