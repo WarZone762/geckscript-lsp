@@ -16,7 +16,7 @@ export const enum SyntaxKind {
     IDENT,
     VAR_DECL,
     BLOCKTYPE_DESIG,
-    ELSE_BRANCH,
+    BRANCH,
     SCRIPT,
     SHORT_TYPE,
     INT_TYPE,
@@ -123,7 +123,7 @@ export const syntax_kind_names = {
     [SyntaxKind.IDENT]: "IDENT",
     [SyntaxKind.VAR_DECL]: "VAR_DECL",
     [SyntaxKind.BLOCKTYPE_DESIG]: "BLOCKTYPE_DESIG",
-    [SyntaxKind.ELSE_BRANCH]: "BRANCH",
+    [SyntaxKind.BRANCH]: "BRANCH",
     [SyntaxKind.SCRIPT]: "SCRIPT",
     [SyntaxKind.SHORT_TYPE]: "SHORT_TYPE",
     [SyntaxKind.INT_TYPE]: "INT_TYPE",
@@ -513,7 +513,7 @@ export type NodeSyntaxKind =
     | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
-    | SyntaxKind.ELSE_BRANCH
+    | SyntaxKind.BRANCH
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind

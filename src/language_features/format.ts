@@ -1,37 +1,127 @@
-import { for_each_child_recursive, prev_token } from "../geckscript/ast";
+import { to_string } from "../geckscript/ast";
 import { ParsedString } from "../geckscript/hir";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated";
+import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node";
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
+
+function format_inline(node: Node, indent_level: number, indent_str: string) {
+    const children: NodeOrToken[] = [];
+    for (let i = 1; i < node.children.length; ++i) {
+        const child = node.children[i - 1];
+        if (child.kind === SyntaxKind.WHITESPACE) {
+            continue;
+        }
+
+        children.push(child);
+        if (
+            child.kind === SyntaxKind.STMT_LIST ||
+            child.kind === SyntaxKind.BRANCH ||
+            node.children[i].kind === SyntaxKind.NEWLINE
+        ) {
+            continue;
+        }
+
+        const t = Token(SyntaxKind.WHITESPACE);
+        if (child.kind === SyntaxKind.NEWLINE) {
+            t.text = indent_str.repeat(Math.max(0, indent_level + 1));
+        } else {
+            t.text = " ";
+        }
+        children.push(t);
+    }
+
+    const last_child = node.children.at(-1);
+    if (last_child != undefined && last_child.kind !== SyntaxKind.WHITESPACE) {
+        children.push(last_child);
+    }
+
+    node.children = children;
+}
+
+function format_stmt_list(node: Node, indent_level: number, indent_str: string) {
+    const children: NodeOrToken[] = [];
+    for (let i = 1; i < node.children.length; ++i) {
+        const child = node.children[i - 1];
+
+        if (child.kind === SyntaxKind.WHITESPACE) {
+            continue;
+        } else if (
+            child.kind === SyntaxKind.COMMENT &&
+            children.at(-1)?.kind !== SyntaxKind.WHITESPACE
+        ) {
+            const last_child = node.children[i - 2];
+            if (last_child?.kind === SyntaxKind.WHITESPACE) {
+                children.push(last_child);
+            } else {
+                const t = Token(SyntaxKind.WHITESPACE);
+                t.text = " ";
+                children.push(t);
+            }
+        }
+
+        children.push(child);
+        if (child.kind !== SyntaxKind.NEWLINE) {
+            continue;
+        }
+
+        const t = Token(SyntaxKind.WHITESPACE);
+        t.text = indent_str.repeat(Math.max(0, indent_level));
+        children.push(t);
+    }
+
+    const last_child = node.children.at(-1);
+    if (last_child != undefined && last_child.kind !== SyntaxKind.WHITESPACE) {
+        children.push(last_child);
+        if (last_child.kind === SyntaxKind.NEWLINE) {
+            const t = Token(SyntaxKind.WHITESPACE);
+            t.text = indent_str.repeat(Math.max(0, indent_level - 1));
+            children.push(t);
+        }
+    }
+
+    node.children = children;
+}
 
 export function format_doc(parsed: ParsedString, opts: FormattingOptions): TextEdit[] | null {
     const edits: TextEdit[] = [];
     const indent_str = opts.insertSpaces ? " ".repeat(opts.tabSize) : "\t";
 
-    let indent_level = 0;
+    let indent_level = -1;
 
-    for_each_child_recursive(
-        parsed.root.green,
-        (n) => {
-            if (n.kind === SyntaxKind.STMT_LIST) {
-                ++indent_level;
-            } else if (n.kind === SyntaxKind.WHITESPACE) {
-                const prev = prev_token(n);
-                if (prev == undefined || prev.kind === SyntaxKind.NEWLINE) {
-                    edits.push(
-                        TextEdit.replace(
-                            { start: parsed.pos_at(n.offset), end: parsed.pos_at(n.end()) },
-                            indent_str.repeat(indent_level - 1)
-                        )
-                    );
-                }
-            }
-        },
-        (n) => {
-            if (n.kind === SyntaxKind.STMT_LIST) {
-                --indent_level;
-            }
-        }
+    format_recursive(parsed.root.green);
+
+    edits.push(
+        TextEdit.replace(
+            {
+                start: parsed.pos_at(parsed.root.green.offset),
+                end: parsed.pos_at(parsed.root.green.end()),
+            },
+            to_string(parsed.root.green)
+        )
     );
 
     return edits;
+
+    function format_recursive(n: NodeOrToken) {
+        if (!n.is_node()) {
+            return;
+        }
+
+        switch (n.kind) {
+            case SyntaxKind.STMT_LIST:
+                format_stmt_list(n, indent_level, indent_str);
+                break;
+            default:
+                format_inline(n, indent_level, indent_str);
+        }
+        for (const child of n.children) {
+            if (child.kind === SyntaxKind.STMT_LIST) {
+                ++indent_level;
+            }
+            format_recursive(child);
+            if (child.kind === SyntaxKind.STMT_LIST) {
+                --indent_level;
+            }
+        }
+    }
 }

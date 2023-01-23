@@ -125,13 +125,13 @@ export class TriviaBuilder {
     }
 
     start_node(kind: NodeSyntaxKind) {
-        if (this.tree_builder.parents.length !== 0 && kind !== SyntaxKind.STMT_LIST) {
+        if (this.tree_builder.parents.length !== 0 /* && kind !== SyntaxKind.STMT_LIST*/) {
             this.attach_trivia();
         }
         this.tree_builder.start_node(kind);
-        if (kind === SyntaxKind.STMT_LIST) {
-            this.attach_trivia();
-        }
+        // if (kind === SyntaxKind.STMT_LIST) {
+        //     this.attach_trivia();
+        // }
     }
 
     finish_node(is_last = false) {

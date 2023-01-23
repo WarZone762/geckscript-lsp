@@ -67,7 +67,7 @@ export function index_in_parent(node: NodeOrToken): number | undefined {
 export function prev_sibling(node: NodeOrToken): NodeOrToken | undefined {
     const i = index_in_parent(node);
     if (i == undefined) {
-        return node;
+        return undefined;
     }
 
     return node.parent?.children[i - 1];
@@ -76,7 +76,7 @@ export function prev_sibling(node: NodeOrToken): NodeOrToken | undefined {
 export function next_sibling(node: NodeOrToken): NodeOrToken | undefined {
     const i = index_in_parent(node);
     if (i == undefined) {
-        return node;
+        return undefined;
     }
 
     return node.parent?.children[i + 1];
@@ -253,7 +253,7 @@ export function to_debug(node: Node, filter: Set<SyntaxKind> = new Set()): strin
 export function to_tree_data(node: NodeOrToken): TreeData {
     // TODO: add drawing data to the TreeData
     const tree_data: TreeData = new TreeData(
-        node.is_node() ? syntax_kind_name(node.kind) : `'${node.text}'`
+        node.is_node() ? syntax_kind_name(node.kind) : JSON.stringify(node.text)
     );
     tree_data.set_range(node.offset, node.end());
 

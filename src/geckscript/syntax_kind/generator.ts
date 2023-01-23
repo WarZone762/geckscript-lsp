@@ -54,7 +54,7 @@ export const OTHER: SyntaxKindData = [
             "IDENT",
             ...VAR_OR_VAR_DECL[0],
             "BLOCKTYPE_DESIG",
-            "ELSE_BRANCH",
+            "BRANCH",
             "SCRIPT",
         ]),
     ],
@@ -144,10 +144,7 @@ export const OP: SyntaxKindData = [
     "",
 ];
 
-export const LIST: SyntaxKindData = [
-    ["VAR_OR_VAR_DECL", "PRIMARY_EXPR", "EXPR", "BRANCH", "STMT"],
-    "_LIST",
-];
+export const LIST: SyntaxKindData = [["VAR_OR_VAR_DECL", "PRIMARY_EXPR", "EXPR", "STMT"], "_LIST"];
 
 export const EXPR: SyntaxKindData = [
     ["LAMBDA", "LAMBDA_INLINE", "UNARY", "BIN", "MEMBER", "FUNC"],
@@ -221,7 +218,7 @@ export type NodeSyntaxKind =
     | SyntaxKind.NAME_REF
     | SyntaxKind.VAR_DECL
     | SyntaxKind.BLOCKTYPE_DESIG
-    | SyntaxKind.ELSE_BRANCH
+    | SyntaxKind.BRANCH
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind

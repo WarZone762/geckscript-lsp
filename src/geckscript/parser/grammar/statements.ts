@@ -229,7 +229,7 @@ export function elseif_else(p: Parser) {
         stmt_list(p);
         elseif_else(p);
 
-        m.complete(p, SyntaxKind.ELSE_BRANCH);
+        m.complete(p, SyntaxKind.BRANCH);
     } else if (p.at(SyntaxKind.ELSE_KW)) {
         const m = p.start();
 
@@ -237,6 +237,6 @@ export function elseif_else(p: Parser) {
         p.expect(SyntaxKind.NEWLINE);
         stmt_list(p);
 
-        m.complete(p, SyntaxKind.ELSE_BRANCH);
+        m.complete(p, SyntaxKind.BRANCH);
     }
 }
