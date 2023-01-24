@@ -1,8 +1,25 @@
 import * as ast from "../geckscript/ast";
-import { ParsedString, ScopeNode } from "../geckscript/hir";
+import { Name, NameRef } from "../geckscript/ast/generated";
+import { ParsedString } from "../geckscript/hir";
+import { find_definitions, find_references } from "../geckscript/hir/api";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated";
+import { Token } from "../geckscript/types/syntax_node";
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
+
+function highlight(
+    parsed: ParsedString,
+    token: Token,
+    kind: DocumentHighlightKind
+): DocumentHighlight {
+    return {
+        range: {
+            start: parsed.pos_at(token.offset),
+            end: parsed.pos_at(token.end()),
+        },
+        kind: kind,
+    };
+}
 
 export function get_highlight(parsed: ParsedString, pos: Position): DocumentHighlight[] | null {
     const highlights: DocumentHighlight[] = [];
@@ -12,84 +29,23 @@ export function get_highlight(parsed: ParsedString, pos: Position): DocumentHigh
         return null;
     }
 
-    if (token.kind === SyntaxKind.IDENT) {
-        const scope = ScopeNode.build(parsed.root.green);
-        scope.traverse((s) => {
-            s.decls
-                .filter((e) => e.name()?.text === token.text)
-                .forEach((e) => {
-                    highlights.push({
-                        range: {
-                            start: parsed.pos_at(e.green.offset),
-                            end: parsed.pos_at(e.green.end()),
-                        },
-                        kind: DocumentHighlightKind.Text,
-                    });
-                });
-            s.refs
-                .filter((e) => e.name_ref()?.text === token.text)
-                .forEach((e) => {
-                    highlights.push({
-                        range: {
-                            start: parsed.pos_at(e.green.offset),
-                            end: parsed.pos_at(e.green.end()),
-                        },
-                        kind: DocumentHighlightKind.Text,
-                    });
-                });
-        });
+    let def: Name | undefined;
+    if (token.parent?.kind === SyntaxKind.NAME_REF) {
+        def = find_definitions(new NameRef(token.parent))[0];
+    } else if (token.parent?.kind === SyntaxKind.NAME) {
+        def = new Name(token.parent);
+    }
+
+    if (def != undefined) {
+        highlights.push(highlight(parsed, def.name()!, DocumentHighlightKind.Text));
+        for (const ref of find_references(def)) {
+            highlights.push(highlight(parsed, ref.name_ref()!, DocumentHighlightKind.Text));
+        }
     } else {
         for (const e of ast.str_occurences(parsed.root.green, token.text)) {
-            highlights.push({
-                range: { start: parsed.pos_at(e.offset), end: parsed.pos_at(e.end()) },
-                kind: DocumentHighlightKind.Text,
-            });
+            highlights.push(highlight(parsed, e, DocumentHighlightKind.Text));
         }
     }
 
     return highlights;
 }
-
-// export function GetHighlight(
-//   script: Script,
-//   position: Position
-// ): DocumentHighlight[] | null {
-//   const highlights: DocumentHighlight[] = [];
-
-//   const token = ast.GetTokenAtPosition(script, position);
-
-//   if (token?.kind === SyntaxKind.Identifier) {
-//     const refs = ast.FindAllReferences(token, (token as Identifier).content);
-//     if (refs.length !== 0) {
-
-//       for (const ref of refs) {
-//         let kind: DocumentHighlightKind;
-//         if (
-//           ref.parent.kind === SyntaxKind.SetStatement ||
-//           ref.parent.kind === SyntaxKind.LetStatement ||
-//           "parent" in ref.parent && (
-//             ref.parent.parent.kind === SyntaxKind.LetStatement ||
-//             (ref.parent.parent as VariableDeclarationStatement).children.expression != undefined
-//           ) || (
-//             ref.parent.kind === SyntaxKind.BinaryExpresison &&
-//             IsAssignmentOperator(ref.parent.children.op.kind)
-//           )
-//         ) {
-//           kind = DocumentHighlightKind.Write;
-//         } else {
-//           kind = DocumentHighlightKind.Read;
-//         }
-
-//         highlights.push({ range: ref.range, kind: kind });
-//       }
-
-//       return highlights;
-//     }
-//   }
-
-//   for (const occurrence of ast.FindAllOccurrencesOfText(script, (token as Token).content)) {
-//     highlights.push({ range: occurrence.range });
-//   }
-
-//   return highlights;
-// }

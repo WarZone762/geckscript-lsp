@@ -1,239 +1,131 @@
-// export function FindSymbolDeclarationBlock(
-//   node: NodeOrToken,
-//   name: string
-// ): StatementList | undefined {
-//   while (true) {
-//     const parent = FindAncestor(node, node => node.kind === SyntaxKind.StatementList) as StatementList | undefined;
+import { ancestors, find_ancestor } from "../ast";
+import {
+    LambdaExpr,
+    LambdaInlineExpr,
+    LetStmt,
+    Name,
+    NameRef,
+    Script,
+    VarDecl,
+    VarDeclStmt,
+} from "../ast/generated";
+import { SyntaxKind } from "../syntax_kind/generated";
+import { Node, NodeOrToken } from "../types/syntax_node";
 
-//     if (parent == undefined) {
-//       break;
-//     }
+export function find_references(node: Name): NameRef[] {
+    const refs: NameRef[] = [];
 
-//     if (parent.symbol_table[name] != undefined) {
-//       return parent;
-//     }
+    const text = node.name()?.text;
+    if (text == undefined) {
+        return refs;
+    }
+    const stmt_list = find_ancestor(node.green, (n) => n.kind === SyntaxKind.STMT_LIST);
+    if (stmt_list == undefined) {
+        return refs;
+    }
 
-//     if ("parent" in parent.parent) {
-//       node = parent.parent;
-//     } else {
-//       break;
-//     }
-//   }
+    find_references_recursive(stmt_list as Node);
 
-//   return undefined;
-// }
+    return refs;
 
-// export async function ResolveSymbol(
-//   node: AnyNodeWithParent,
-//   name: string
-// ): Promise<Symbol | undefined> {
-//   const block = FindSymbolDeclarationBlock(node, name);
+    function find_references_recursive(node: Node) {
+        for (const c of node.children) {
+            if (c.kind === SyntaxKind.NAME_REF) {
+                const ref = new NameRef(c);
+                if (ref.name_ref()?.text === text) {
+                    refs.push(ref);
+                }
+            } else if (c.is_node()) {
+                find_references_recursive(c);
+            }
+        }
+    }
+}
 
-//   if (block != undefined) {
-//     return block.symbol_table[name];
-//   } else {
-//     const script = FindAncestor(node, node => node.kind === SyntaxKind.Script)! as Script;
-//     return script.environment.global_symbol_table[name] ??
-//       await CreateGlobalFunctionSymbol(name.toLowerCase());
-//   }
-// }
+export function find_definitions(node: NameRef): Name[] {
+    const defs: Name[] = [];
+    if (node.green.parent == undefined || node.name_ref() == undefined) {
+        return defs;
+    }
 
-// export function FindAllReferences(
-//   scope: AnyNodeWithParent,
-//   name: string
-// ): Identifier[] {
-//   const block = FindSymbolDeclarationBlock(scope, name);
+    for (const a of ancestors(node.green.parent)) {
+        for (const def of find_scope_definitions(a)) {
+            if (def.name()?.text === node.name_ref()!.text) {
+                defs.push(def);
+            }
+        }
+    }
 
-//   if (block == undefined) {
-//     return [];
-//   }
+    return defs;
+}
 
-//   const refs: Identifier[] = [];
-//   const symbol = block.symbol_table[name];
-//   const leafs = GetNodeLeafs(block);
+export function* find_scope_definitions(node: NodeOrToken) {
+    switch (node.kind) {
+        case SyntaxKind.STMT_LIST:
+            yield* find_stmt_list_definitions(node);
+            break;
+        case SyntaxKind.SCRIPT: {
+            const name = new Script(node).name();
+            if (name != undefined) {
+                yield name;
+            }
+            break;
+        }
+        case SyntaxKind.LAMBDA_EXPR: {
+            const var_or_var_decl_list = new LambdaExpr(node).params();
+            if (var_or_var_decl_list != undefined) {
+                for (const var_or_var_decl of var_or_var_decl_list.iter()) {
+                    if (var_or_var_decl instanceof VarDecl) {
+                        const def = var_or_var_decl.ident();
+                        if (def != undefined) {
+                            yield def;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case SyntaxKind.LAMBDA_INLINE_EXPR: {
+            const var_or_var_decl_list = new LambdaInlineExpr(node).params();
+            if (var_or_var_decl_list != undefined) {
+                for (const var_or_var_decl of var_or_var_decl_list.iter()) {
+                    if (var_or_var_decl instanceof VarDecl) {
+                        const def = var_or_var_decl.ident();
+                        if (def != undefined) {
+                            yield def;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            return;
+    }
+}
 
-//   for (const leaf of leafs) {
-//     if (leaf.kind === SyntaxKind.Identifier && leaf.symbol === symbol) {
-//       refs.push(leaf);
-//     }
-//   }
-
-//   return refs;
-// }
-
-// export function GetVisibleSymbols(node: AnyNodeWithParent): SymbolTable {
-//   const symbol_table: SymbolTable = {};
-
-//   let last_node: AnyNode = node;
-
-//   while (true) {
-//     const parent = FindAncestor(last_node, node => node.kind === SyntaxKind.StatementList) as StatementList | undefined;
-//     if (parent == undefined) {
-//       break;
-//     }
-//     Object.assign(symbol_table, parent.symbol_table);
-//     last_node = parent.parent;
-//     if (!("parent" in last_node)) {
-//       break;
-//     }
-//   }
-
-//   Object.assign(
-//     symbol_table,
-//     (last_node as Script).environment.global_symbol_table
-//   );
-
-//   return symbol_table;
-// }
-
-// export function GetExpressionType(node: AnyNode): Type {
-//   if (node.expression_type != undefined) {
-//     return node.expression_type;
-//   }
-
-//   switch (node.kind) {
-//     case SyntaxKind.Number:
-//       if (node.content.includes(".")) {
-//         node.expression_type = Type.Float;
-//       } else {
-//         node.expression_type = Type.Integer;
-//       }
-
-//       return node.expression_type!;
-
-//     case SyntaxKind.String:
-//       node.expression_type = Type.String;
-//       return Type.String;
-
-//     case SyntaxKind.BinaryExpresison: {
-//       const lhs = GetExpressionType(node.children.lhs);
-//       const rhs = GetExpressionType(node.children.rhs);
-
-//       node.expression_type =
-//         lhs === Type.Ambiguous ? rhs :
-//           rhs === Type.Ambiguous ? lhs :
-//             lhs === rhs ? lhs :
-//               Type.Unknown;
-
-//       return node.expression_type!;
-//     }
-
-//     case SyntaxKind.Identifier:
-//     case SyntaxKind.FunctionExpression:
-//       node.expression_type = Type.Ambiguous;
-//       return Type.Ambiguous;
-
-//     default: return Type.Unknown;
-//   }
-// }
-
-// export function AssignNodeSymbol(
-//   node: AnyNode,
-//   symbol_table: SymbolTable,
-//   global_symbol_table: SymbolTable,
-// ): void {
-//   switch (node.kind) {
-//     case SyntaxKind.VariableDeclaration:
-//       symbol_table[node.children.variable.content] = {
-//         name: node.children.variable.content,
-//         kind: SymbolKind.Variable,
-//         declaration: node,
-//         type: Type.Ambiguous,
-//       };
-//       break;
-
-//     case SyntaxKind.Script:
-//       symbol_table[node.children.name.content] = {
-//         name: node.children.name.content,
-//         kind: SymbolKind.Script,
-//         declaration: node,
-//         type: Type.Ambiguous,
-//       };
-//       break;
-
-//     case SyntaxKind.BlockTypeFunction: {
-//       const parent = node.parent;
-//       if (parent.kind === SyntaxKind.BlockTypeExpression) {
-//         const script = parent.parent.parent;
-//         if (script.kind === SyntaxKind.Script) {
-//           global_symbol_table[script.children.name.content] = {
-//             name: script.children.name.content,
-//             kind: SymbolKind.Function,
-//             declaration: script,
-//             type: Type.Ambiguous,
-//           };
-//         }
-//       }
-//       break;
-//     }
-
-//     default:
-//       break;
-//   }
-// }
-
-// export function BuildScriptSymbolTables(script: Script) {
-//   let last_symbol_table: SymbolTable = script.environment.global_symbol_table;
-//   let last_symbol_table_saved: SymbolTable;
-
-//   ForEachChildRecursive(
-//     script,
-//     node => {
-//       last_symbol_table_saved = last_symbol_table;
-
-//       if (node.kind === SyntaxKind.StatementList) {
-//         last_symbol_table = node.symbol_table;
-//       } else {
-//         AssignNodeSymbol(
-//           node,
-//           last_symbol_table,
-//           script.environment.global_symbol_table
-//         );
-//       }
-//     },
-//     () => {
-//       last_symbol_table = last_symbol_table_saved;
-//     }
-//   );
-// }
-
-// export async function ValidateNode(node: AnyNode, script: Script): Promise<void> {
-//   switch (node.kind) {
-//     case SyntaxKind.BinaryExpresison: {
-//       const lhs = GetExpressionType(node.children.lhs);
-//       const rhs = GetExpressionType(node.children.rhs);
-
-//       if (
-//         (lhs === rhs || lhs === Type.Ambiguous || rhs === Type.Ambiguous) &&
-//         lhs !== Type.Unknown &&
-//         rhs !== Type.Unknown
-//       ) {
-//         return;
-//       } else {
-//         script.diagnostics.push({
-//           message: `Unexpected operand types: "${GetTypeName(lhs)}" and "${GetTypeName(rhs)}"`,
-//           range: node.range
-//         });
-//       }
-
-//       break;
-//     }
-
-//     case SyntaxKind.Identifier:
-//       node.symbol = await ResolveSymbol(
-//         node,
-//         node.content
-//       );
-
-//       if (node.symbol == undefined) {
-//         script.semantic_tokens.push(node);
-//       }
-//   }
-// }
-
-// export async function ValidateScript(script: Script): Promise<void> {
-//   ForEachChildRecursiveAsync(
-//     script,
-//     async node => await ValidateNode(node, script)
-//   );
-// }
+export function* find_stmt_list_definitions(node: Node) {
+    for (const c of node.children) {
+        switch (c.kind) {
+            case SyntaxKind.VAR_DECL_STMT: {
+                const def = new VarDeclStmt(c).var()?.ident();
+                if (def != undefined) {
+                    yield def;
+                }
+                break;
+            }
+            case SyntaxKind.LET_STMT: {
+                const var_or_var_decl = new LetStmt(c).var();
+                if (var_or_var_decl instanceof Name) {
+                    yield var_or_var_decl;
+                } else if (var_or_var_decl instanceof VarDecl) {
+                    const def = var_or_var_decl.ident();
+                    if (def != undefined) {
+                        yield def;
+                    }
+                }
+                break;
+            }
+        }
+    }
+}

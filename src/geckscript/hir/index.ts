@@ -1,7 +1,6 @@
-import { AstNode, Name, NameRef, Script } from "../ast/generated";
+import { AstNode, Script } from "../ast/generated";
 import * as parsing from "../parsing";
 import { SyntaxKind } from "../syntax_kind/generated";
-import { Node, NodeOrToken } from "../types/syntax_node";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, TextDocument } from "vscode-languageserver-textdocument";
 
@@ -95,56 +94,5 @@ export class FileDatabase {
         this.files.set(doc.uri, parsed);
 
         return parsed;
-    }
-}
-
-export class ScopeNode {
-    node: Node;
-    decls: Name[] = [];
-    refs: NameRef[] = [];
-    children: ScopeNode[] = [];
-
-    constructor(node: Node) {
-        this.node = node;
-    }
-
-    traverse(callback: (s: ScopeNode) => unknown) {
-        callback(this);
-        for (const s of this.children) {
-            s.traverse(callback);
-        }
-    }
-
-    static build(node: Node): ScopeNode {
-        const stack = [new ScopeNode(node)];
-
-        function build_recursive(node: Node) {
-            for (const child of node.children) {
-                if (!child.is_node()) {
-                    continue;
-                }
-
-                switch (child.kind) {
-                    case SyntaxKind.NAME:
-                        stack.at(-1)!.decls.push(new Name(child));
-                        break;
-                    case SyntaxKind.NAME_REF:
-                        stack.at(-1)!.refs.push(new NameRef(child));
-                        break;
-                    case SyntaxKind.STMT_LIST:
-                        stack.push(new ScopeNode(child));
-                        build_recursive(child);
-                        stack.at(-2)!.children.push(stack.pop()!);
-                        break;
-                    default: {
-                        build_recursive(child);
-                        break;
-                    }
-                }
-            }
-        }
-
-        build_recursive(node);
-        return stack.pop()!;
     }
 }
