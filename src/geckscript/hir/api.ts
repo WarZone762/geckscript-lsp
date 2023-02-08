@@ -1,5 +1,4 @@
 import { ancestors, find_ancestor } from "../ast";
-import * as ast from "../ast";
 import {
     LambdaExpr,
     LambdaInlineExpr,
@@ -74,7 +73,7 @@ export function find_refs(node: Name): NameRef[] {
     }
 }
 
-function* find_scope_defs(node: NodeOrToken) {
+export function* find_scope_defs(node: NodeOrToken) {
     switch (node.kind) {
         case SyntaxKind.STMT_LIST:
             yield* find_stmt_list_defs(node);
@@ -116,6 +115,7 @@ function* find_scope_defs(node: NodeOrToken) {
         }
         default:
             return;
+        // TODO: add other nodes that create a scope
     }
 }
 

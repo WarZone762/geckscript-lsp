@@ -20,6 +20,7 @@ import {
     PrepareRenameParams,
     DefinitionParams,
     ReferenceParams,
+    DocumentSymbolParams,
 } from "vscode-languageserver/node";
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -39,6 +40,7 @@ connection.onInitialize(async (params: InitializeParams) => {
             hoverProvider: true,
             referencesProvider: true,
             renameProvider: { prepareProvider: true },
+            documentSymbolProvider: true,
             textDocumentSync: TextDocumentSyncKind.Incremental,
         },
     };
@@ -173,6 +175,15 @@ connection.onReferences(async (params: ReferenceParams) => {
     }
 
     return features.refs(parsed, params.position);
+});
+
+connection.onDocumentSymbol(async (params: DocumentSymbolParams) => {
+    const parsed = DB.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return features.symbols(parsed);
 });
 
 connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
