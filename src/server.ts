@@ -1,12 +1,9 @@
 import * as ast from "./geckscript/ast";
 import * as FD from "./geckscript/function_data";
 import { FileDatabase } from "./geckscript/hir";
-import { format_doc } from "./language_features/format";
+import * as features from "./language_features/features";
 // import * as Wiki from "./wiki/wiki";
-import { get_highlight } from "./language_features/highlight";
-import { build_semantic_tokens, legend } from "./language_features/semantic_tokens";
 import * as TreeViewServer from "./tree_view/server";
-// import * as completion from "./language_features/completion";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     createConnection,
@@ -19,6 +16,8 @@ import {
     HoverParams,
     Hover,
     DocumentFormattingParams,
+    RenameParams,
+    PrepareRenameParams,
 } from "vscode-languageserver/node";
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -38,6 +37,7 @@ connection.onInitialize(async (params: InitializeParams) => {
             // },
             hoverProvider: true,
             documentFormattingProvider: true,
+            renameProvider: { prepareProvider: true },
         },
     };
 
@@ -49,7 +49,7 @@ connection.onInitialize(async (params: InitializeParams) => {
                     scheme: "file",
                 },
             ],
-            legend: legend,
+            legend: features.legend,
             full: true,
         };
     }
@@ -125,7 +125,7 @@ connection.onDocumentHighlight(async (params) => {
         return null;
     }
 
-    return get_highlight(parsed, params.position);
+    return features.get_highlight(parsed, params.position);
 });
 
 connection.onDocumentFormatting(async (params: DocumentFormattingParams) => {
@@ -134,7 +134,25 @@ connection.onDocumentFormatting(async (params: DocumentFormattingParams) => {
         return null;
     }
 
-    return format_doc(parsed, params.options);
+    return features.format_doc(parsed, params.options);
+});
+
+connection.onPrepareRename(async (params: PrepareRenameParams) => {
+    const parsed = DB.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return features.prepare_rename(parsed, params.position);
+});
+
+connection.onRenameRequest(async (params: RenameParams) => {
+    const parsed = DB.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return features.rename(parsed, params.newName, params.position);
 });
 
 connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
@@ -143,7 +161,7 @@ connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokens
         return null;
     }
 
-    return build_semantic_tokens(parsed);
+    return features.build_semantic_tokens(parsed);
 });
 
 connection.onNotification("GECKScript/updateFunctionData", () => FD.PopulateFunctionData(true));

@@ -1,8 +1,9 @@
 import { AstNode, Script } from "../ast/generated";
 import * as parsing from "../parsing";
 import { SyntaxKind } from "../syntax_kind/generated";
+import { NodeOrToken } from "../types/syntax_node";
 import { Diagnostic } from "vscode-languageserver";
-import { Position, TextDocument } from "vscode-languageserver-textdocument";
+import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 
 import assert = require("assert");
 
@@ -59,6 +60,10 @@ export class ParsedString {
         this.doc = doc;
         this.root = root;
         this.diagnostics = diagnostics;
+    }
+
+    range_of(node: NodeOrToken): Range {
+        return { start: this.pos_at(node.offset), end: this.pos_at(node.end()) };
     }
 
     pos_at(offset: number): Position {

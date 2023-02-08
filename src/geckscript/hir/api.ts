@@ -1,4 +1,5 @@
 import { ancestors, find_ancestor } from "../ast";
+import * as ast from "../ast";
 import {
     LambdaExpr,
     LambdaInlineExpr,
@@ -12,7 +13,21 @@ import {
 import { SyntaxKind } from "../syntax_kind/generated";
 import { Node, NodeOrToken } from "../types/syntax_node";
 
-export function find_references(node: Name): NameRef[] {
+export function find_def(node: NameRef): Name | undefined {
+    if (node.green.parent == undefined || node.name_ref() == undefined) {
+        return undefined;
+    }
+
+    for (const a of ancestors(node.green.parent)) {
+        for (const def of find_scope_defs(a)) {
+            if (def.name()?.text === node.name_ref()!.text) {
+                return def;
+            }
+        }
+    }
+}
+
+export function find_refs(node: Name): NameRef[] {
     const refs: NameRef[] = [];
 
     const text = node.name()?.text;
@@ -42,27 +57,10 @@ export function find_references(node: Name): NameRef[] {
     }
 }
 
-export function find_definitions(node: NameRef): Name[] {
-    const defs: Name[] = [];
-    if (node.green.parent == undefined || node.name_ref() == undefined) {
-        return defs;
-    }
-
-    for (const a of ancestors(node.green.parent)) {
-        for (const def of find_scope_definitions(a)) {
-            if (def.name()?.text === node.name_ref()!.text) {
-                defs.push(def);
-            }
-        }
-    }
-
-    return defs;
-}
-
-export function* find_scope_definitions(node: NodeOrToken) {
+function* find_scope_defs(node: NodeOrToken) {
     switch (node.kind) {
         case SyntaxKind.STMT_LIST:
-            yield* find_stmt_list_definitions(node);
+            yield* find_stmt_list_defs(node);
             break;
         case SyntaxKind.SCRIPT: {
             const name = new Script(node).name();
@@ -104,7 +102,7 @@ export function* find_scope_definitions(node: NodeOrToken) {
     }
 }
 
-export function* find_stmt_list_definitions(node: Node) {
+function* find_stmt_list_defs(node: Node) {
     for (const c of node.children) {
         switch (c.kind) {
             case SyntaxKind.VAR_DECL_STMT: {

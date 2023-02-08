@@ -1,7 +1,7 @@
 import * as ast from "../geckscript/ast";
 import { Name, NameRef } from "../geckscript/ast/generated";
 import { ParsedString } from "../geckscript/hir";
-import { find_definitions, find_references } from "../geckscript/hir/api";
+import { find_def, find_refs } from "../geckscript/hir/api";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated";
 import { Token } from "../geckscript/types/syntax_node";
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
@@ -31,14 +31,14 @@ export function get_highlight(parsed: ParsedString, pos: Position): DocumentHigh
 
     let def: Name | undefined;
     if (token.parent?.kind === SyntaxKind.NAME_REF) {
-        def = find_definitions(new NameRef(token.parent))[0];
+        def = find_def(new NameRef(token.parent));
     } else if (token.parent?.kind === SyntaxKind.NAME) {
         def = new Name(token.parent);
     }
 
     if (def != undefined) {
         highlights.push(highlight(parsed, def.name()!, DocumentHighlightKind.Text));
-        for (const ref of find_references(def)) {
+        for (const ref of find_refs(def)) {
             highlights.push(highlight(parsed, ref.name_ref()!, DocumentHighlightKind.Text));
         }
     } else {

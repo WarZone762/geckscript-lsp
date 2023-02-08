@@ -147,7 +147,7 @@ export class Parser {
 
     next(kind: TokenSyntaxKind) {
         if (!this.opt(kind)) {
-            throw new Error("called 'bump' with an incorrect SyntaxKind");
+            throw new Error("called 'next' with an incorrect SyntaxKind");
         }
     }
 

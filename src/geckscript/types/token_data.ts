@@ -92,7 +92,7 @@ export const TokenData = (() => {
         "&=": SyntaxKind.AMPERSANDEQ,
         "!": SyntaxKind.EXCLAMATION,
         "||": SyntaxKind.VBAR2,
-        "&&": SyntaxKind.AMPERSAND,
+        "&&": SyntaxKind.AMPERSAND2,
         "==": SyntaxKind.EQ2,
         "!=": SyntaxKind.EXCLAMATIONEQ,
         ">": SyntaxKind.GT,
