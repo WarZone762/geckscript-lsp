@@ -90,15 +90,7 @@ export function format_doc(parsed: ParsedString, opts: FormattingOptions): TextE
 
     format_recursive(parsed.root.green);
 
-    edits.push(
-        TextEdit.replace(
-            {
-                start: parsed.pos_at(parsed.root.green.offset),
-                end: parsed.pos_at(parsed.root.green.end()),
-            },
-            to_string(parsed.root.green)
-        )
-    );
+    edits.push(TextEdit.replace(parsed.range_of(parsed.root.green), to_string(parsed.root.green)));
 
     return edits;
 

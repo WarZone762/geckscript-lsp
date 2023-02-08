@@ -11,7 +11,24 @@ import {
     VarDeclStmt,
 } from "../ast/generated";
 import { SyntaxKind } from "../syntax_kind/generated";
-import { Node, NodeOrToken } from "../types/syntax_node";
+import { Node, NodeOrToken, Token } from "../types/syntax_node";
+
+export function find_def_from_token(token: Token): Name | undefined {
+    if (token.kind !== SyntaxKind.IDENT) {
+        return undefined;
+    }
+
+    const parent = token.parent;
+    if (parent == undefined) {
+        return undefined;
+    }
+
+    if (parent.kind === SyntaxKind.NAME) {
+        return new Name(parent);
+    } else if (parent.kind === SyntaxKind.NAME_REF) {
+        return find_def(new NameRef(parent));
+    }
+}
 
 export function find_def(node: NameRef): Name | undefined {
     if (node.green.parent == undefined || node.name_ref() == undefined) {

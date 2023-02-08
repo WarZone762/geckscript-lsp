@@ -18,6 +18,8 @@ import {
     DocumentFormattingParams,
     RenameParams,
     PrepareRenameParams,
+    DefinitionParams,
+    ReferenceParams,
 } from "vscode-languageserver/node";
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
@@ -30,14 +32,14 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     const result: InitializeResult = {
         capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Incremental,
-            documentHighlightProvider: true,
-            // completionProvider: {
-            //     resolveProvider: true
-            // },
-            hoverProvider: true,
+            // completionProvider: { resolveProvider: true },
+            definitionProvider: true,
             documentFormattingProvider: true,
+            documentHighlightProvider: true,
+            hoverProvider: true,
+            referencesProvider: true,
             renameProvider: { prepareProvider: true },
+            textDocumentSync: TextDocumentSyncKind.Incremental,
         },
     };
 
@@ -153,6 +155,24 @@ connection.onRenameRequest(async (params: RenameParams) => {
     }
 
     return features.rename(parsed, params.newName, params.position);
+});
+
+connection.onDefinition(async (params: DefinitionParams) => {
+    const parsed = DB.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return features.goto_def(parsed, params.position);
+});
+
+connection.onReferences(async (params: ReferenceParams) => {
+    const parsed = DB.files.get(params.textDocument.uri);
+    if (parsed == undefined) {
+        return null;
+    }
+
+    return features.refs(parsed, params.position);
 });
 
 connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
