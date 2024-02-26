@@ -1,8 +1,8 @@
-import { is_type, SyntaxKind } from "../../syntax_kind/generated";
-import { Parser } from "../parser";
-import { TokenSet } from "../token_set";
-import { expr_primary } from "./expressions";
-import { stmt_list_root } from "./statements";
+import { is_type, SyntaxKind } from "../../syntax_kind/generated.js";
+import { Parser } from "../parser.js";
+import { TokenSet } from "../token_set.js";
+import { expr_primary } from "./expressions.js";
+import { stmt_list_root } from "./statements.js";
 
 export function name_r(p: Parser, recovery: TokenSet) {
     if (p.at(SyntaxKind.IDENT)) {

@@ -1,6 +1,6 @@
-import * as ast from "../geckscript/ast";
-import { ParsedString } from "../geckscript/hir";
-import { find_def_from_token, find_refs } from "../geckscript/hir/api";
+import * as ast from "../geckscript/ast.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
+import { find_def_from_token, find_refs } from "../geckscript/hir/api.js";
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 

@@ -1,7 +1,7 @@
-import { AstNode, Script } from "../ast/generated";
-import * as parsing from "../parsing";
-import { SyntaxKind } from "../syntax_kind/generated";
-import { NodeOrToken } from "../types/syntax_node";
+import { AstNode, Script } from "../ast/generated.js";
+import * as parsing from "../parsing.js";
+import { SyntaxKind } from "../syntax_kind/generated.js";
+import { NodeOrToken } from "../types/syntax_node.js";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 

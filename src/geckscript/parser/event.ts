@@ -1,4 +1,4 @@
-import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated";
+import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export const enum EventKind {
     Tombstone,

@@ -1,7 +1,7 @@
-import { ParsedString } from "../geckscript/hir";
-import { find_scope_defs } from "../geckscript/hir/api";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated";
-import { Node } from "../geckscript/types/syntax_node";
+import { ParsedString } from "../geckscript/hir/hir.js";
+import { find_scope_defs } from "../geckscript/hir/api.js";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
+import { Node } from "../geckscript/types/syntax_node.js";
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
 
 export function symbols(parsed: ParsedString): SymbolInformation[] {

@@ -1,8 +1,8 @@
-import { is_assignment_op, is_keyword, is_type, SyntaxKind } from "../../syntax_kind/generated";
-import { Parser } from "../parser";
-import { TokenSet } from "../token_set";
-import { expr, expr_bp } from "./expressions";
-import { block_type, name_ref_r, var_decl_r, var_or_var_decl_r } from "./other";
+import { is_assignment_op, is_keyword, is_type, SyntaxKind } from "../../syntax_kind/generated.js";
+import { Parser } from "../parser.js";
+import { TokenSet } from "../token_set.js";
+import { expr, expr_bp } from "./expressions.js";
+import { block_type, name_ref_r, var_decl_r, var_or_var_decl_r } from "./other.js";
 
 export const STMT_LIST_TERMINATORS = new TokenSet([
     SyntaxKind.END_KW,

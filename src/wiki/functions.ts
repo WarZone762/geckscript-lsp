@@ -1,13 +1,15 @@
-import { FunctionInfo } from "../geckscript/function_data";
-import * as api from "./api";
+import { FunctionInfo } from "../geckscript/function_data.js";
+import * as api from "./api.js";
 import * as fs from "fs";
 import * as path from "path";
-import * as wtf from "wtf_wikipedia";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-wtf.plugin(require("wtf-plugin-markdown"));
+import wtf from "wtf_wikipedia";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import wtf_md from "wtf-plugin-markdown";
+wtf.plugin(wtf_md);
 
-const CachePath = path.join(__dirname, "../../resources", "function_page_cache.json");
+const CachePath = path.join("resources", "function_page_cache.json");
 
 const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath)
     ? JSON.parse(fs.readFileSync(CachePath).toString())
@@ -109,8 +111,8 @@ export function ParseTemplate(
     return parameters;
 }
 
-wtf.extend((models: Record<string, { new (): unknown }>, templates: Record<string, Function>) => {
-    models.Link.prototype.markdown = function () {
+wtf.extend((models: Record<string, { new(): unknown }>, templates: Record<string, Function>) => {
+    models.Link.prototype.markdown = function() {
         const href = this.href().replaceAll(" ", "_");
         const str = this.text() || this.page();
         if (this.type() === "internal") {
@@ -124,7 +126,7 @@ wtf.extend((models: Record<string, { new (): unknown }>, templates: Record<strin
         markdown: models.Sentence.prototype.markdown,
     };
 
-    models.Sentence.prototype.markdown = function (options: unknown) {
+    models.Sentence.prototype.markdown = function(options: unknown) {
         let text = this.old.markdown.bind(this)(options);
 
         if (this.wikitext()[0] === " ") {

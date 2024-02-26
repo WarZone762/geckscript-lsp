@@ -3,10 +3,10 @@ import {
     NodeSyntaxKind,
     SyntaxKind,
     syntax_kind_name,
-} from "../syntax_kind/generated";
-import { AnyEvent, EventError, EventFinish, EventKind, EventStart, EventToken } from "./event";
-import { script } from "./grammar/other";
-import { TokenSet } from "./token_set";
+} from "../syntax_kind/generated.js";
+import { AnyEvent, EventError, EventFinish, EventKind, EventStart, EventToken } from "./event.js";
+import { script } from "./grammar/other.js";
+import { TokenSet } from "./token_set.js";
 
 import assert = require("assert");
 

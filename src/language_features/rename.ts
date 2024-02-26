@@ -1,7 +1,7 @@
-import { token_at_offset } from "../geckscript/ast";
-import { ParsedString } from "../geckscript/hir";
-import { find_def_from_token, find_refs } from "../geckscript/hir/api";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated";
+import { token_at_offset } from "../geckscript/ast.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
+import { find_def_from_token, find_refs } from "../geckscript/hir/api.js";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
 import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver";
 import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 

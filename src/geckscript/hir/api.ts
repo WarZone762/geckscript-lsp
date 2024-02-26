@@ -1,4 +1,4 @@
-import { ancestors, find_ancestor } from "../ast";
+import { ancestors, find_ancestor } from "../ast.js";
 import {
     LambdaExpr,
     LambdaInlineExpr,
@@ -8,9 +8,9 @@ import {
     Script,
     VarDecl,
     VarDeclStmt,
-} from "../ast/generated";
-import { SyntaxKind } from "../syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "../types/syntax_node";
+} from "../ast/generated.js";
+import { SyntaxKind } from "../syntax_kind/generated.js";
+import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
 export function find_def_from_token(token: Token): Name | undefined {
     if (token.kind !== SyntaxKind.IDENT) {

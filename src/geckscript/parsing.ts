@@ -1,8 +1,8 @@
-import { Lexer } from "./lexer";
-import { AnyEvent, EventError, EventKind, EventStart } from "./parser/event";
-import { Input, parse } from "./parser/parser";
-import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "./types/syntax_node";
+import { Lexer } from "./lexer.js";
+import { AnyEvent, EventError, EventKind, EventStart } from "./parser/event.js";
+import { Input, parse } from "./parser/parser.js";
+import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated.js";
+import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
 
 import assert = require("assert");
 

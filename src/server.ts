@@ -1,9 +1,9 @@
-import * as ast from "./geckscript/ast";
-import * as FD from "./geckscript/function_data";
-import { FileDatabase } from "./geckscript/hir";
-import * as features from "./language_features/features";
-// import * as Wiki from "./wiki/wiki";
-import * as TreeViewServer from "./tree_view/server";
+import * as ast from "./geckscript/ast.js";
+import * as FD from "./geckscript/function_data.js";
+import { FileDatabase } from "./geckscript/hir/hir.js";
+import * as features from "./language_features/features.js";
+// import * as Wiki from "./wiki/wiki.js";
+import * as TreeViewServer from "./tree_view/server.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     createConnection,
@@ -21,7 +21,7 @@ import {
     DefinitionParams,
     ReferenceParams,
     DocumentSymbolParams,
-} from "vscode-languageserver/node";
+} from "vscode-languageserver/node.js";
 
 let tree_view_server: TreeViewServer.TreeViewServer | undefined;
 
@@ -60,7 +60,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     if (process.argv.find((e) => e === "--tree-view-server") !== undefined) {
         console.log("Running tree view server");
-        tree_view_server = new TreeViewServer.TreeViewServer();
+        tree_view_server = new TreeViewServer.TreeViewServer(8000, "localhost");
     }
 
     if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
@@ -82,6 +82,7 @@ connection.onDidOpenTextDocument(async (params) => {
 });
 
 connection.onDidChangeTextDocument(async (params) => {
+    console.warn("onDidChangeTextDocument");
     let parsed = DB.files.get(params.textDocument.uri)!;
     TextDocument.update(parsed.doc, params.contentChanges, params.textDocument.version);
     parsed = DB.parse_doc(parsed.doc);

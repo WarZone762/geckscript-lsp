@@ -1,8 +1,8 @@
-import * as ast from "../geckscript/ast";
-import { Script } from "../geckscript/ast/generated";
-import { FunctionData, GetFunctionInfo } from "../geckscript/function_data";
-import { TokenData } from "../geckscript/types/token_data";
-import * as functions from "../wiki/functions";
+import * as ast from "../geckscript/ast.js";
+import { Script } from "../geckscript/ast/generated.js";
+import { FunctionData, GetFunctionInfo } from "../geckscript/function_data.js";
+import { TokenData } from "../geckscript/types/token_data.js";
+import * as functions from "../wiki/functions.js";
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 

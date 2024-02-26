@@ -1,4 +1,4 @@
-import { TokenSyntaxKind } from "../syntax_kind/generated";
+import { TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export class TokenSet extends Set<TokenSyntaxKind> {
     union(other: TokenSet) {

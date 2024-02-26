@@ -173,8 +173,8 @@ function generate(): string {
     Object.assign(STMT_INFO_MAP, parse_data(STMT_DATA));
     Object.assign(NODE_INFO_MAP, parse_data(NODE_DATA));
     return `
-import { ExprSyntaxKind, is_expr, is_op, is_primary_expr, is_stmt, is_type, is_var_or_var_decl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "../types/syntax_node";
+import { ExprSyntaxKind, is_expr, is_op, is_primary_expr, is_stmt, is_type, is_var_or_var_decl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated.js";
+import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
     green: Node<T>;

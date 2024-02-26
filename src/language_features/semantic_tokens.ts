@@ -1,13 +1,13 @@
-import * as ast from "../geckscript/ast";
-import { FuncExpr } from "../geckscript/ast/generated";
-import { ParsedString } from "../geckscript/hir";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated";
-import { Node } from "../geckscript/types/syntax_node";
+import * as ast from "../geckscript/ast.js";
+import { FuncExpr } from "../geckscript/ast/generated.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
+import { Node } from "../geckscript/types/syntax_node.js";
 import {
     SemanticTokens,
     SemanticTokensBuilder,
     SemanticTokensLegend,
-} from "vscode-languageserver/node";
+} from "vscode-languageserver/node.js";
 
 export const legend: SemanticTokensLegend = {
     tokenTypes: ["variable", "function"],

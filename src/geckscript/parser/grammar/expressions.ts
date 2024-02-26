@@ -1,8 +1,8 @@
-import { is_op, is_primary_expr, is_unary_op, SyntaxKind } from "../../syntax_kind/generated";
-import { CompletedMarker, Marker, Parser } from "../parser";
-import { TokenSet } from "../token_set";
-import { name_ref, var_or_var_decl_r } from "./other";
-import { stmt_list } from "./statements";
+import { is_op, is_primary_expr, is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
+import { CompletedMarker, Marker, Parser } from "../parser.js";
+import { TokenSet } from "../token_set.js";
+import { name_ref, var_or_var_decl_r } from "./other.js";
+import { stmt_list } from "./statements.js";
 
 export const LITERAL = new TokenSet([SyntaxKind.NUMBER_INT, SyntaxKind.STRING]);
 

@@ -14,8 +14,8 @@ import {
     TokenSyntaxKind,
     TypeSyntaxKind,
     VarOrVarDeclSyntaxKind,
-} from "../syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "../types/syntax_node";
+} from "../syntax_kind/generated.js";
+import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
     green: Node<T>;

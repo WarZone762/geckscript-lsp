@@ -1,7 +1,7 @@
-import { to_string } from "../geckscript/ast";
-import { ParsedString } from "../geckscript/hir";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated";
-import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node";
+import { to_string } from "../geckscript/ast.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
+import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node.js";
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
 
 function format_inline(node: Node, indent_level: number, indent_str: string) {

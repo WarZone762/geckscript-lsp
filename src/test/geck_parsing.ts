@@ -1,10 +1,10 @@
-import { to_debug } from "../geckscript/ast";
-import { parse_str } from "../geckscript/parsing";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated";
+import { to_debug } from "../geckscript/ast.js";
+import { parse_str } from "../geckscript/parsing.js";
+import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
 import * as fs from "fs";
 import * as path from "path";
 
-const data = fs.readFileSync(path.join(__dirname, "../../test/test.gek")).toString();
+const data = fs.readFileSync(path.join("test/test.gek")).toString();
 
 const output = parse_str(data);
 

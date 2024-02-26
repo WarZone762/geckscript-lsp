@@ -1,5 +1,5 @@
-import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions";
-import { Symbol, SymbolKind, ExprType } from "./hir";
+import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions.js";
+import { Symbol, SymbolKind, ExprType } from "./hir/hir.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -9,7 +9,7 @@ export interface FunctionInfo {
     wiki_page_name: string;
 }
 
-const FilePath = path.join(__dirname, "../../resources", "functions.json");
+const FilePath = path.join("resources", "functions.json");
 
 const ignored_functions = [
     "Break",
