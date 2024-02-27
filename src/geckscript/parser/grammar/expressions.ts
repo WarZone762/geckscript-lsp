@@ -1,4 +1,4 @@
-import { is_op, is_primary_expr, is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
+import { is_op, is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
 import { TokenSet } from "../token_set.js";
 import { name_ref, var_or_var_decl_r } from "./other.js";
@@ -85,27 +85,29 @@ export function expr_lambda(p: Parser): CompletedMarker {
     return m.complete(p, SyntaxKind.LAMBDA_EXPR);
 }
 
-export function expr_func(p: Parser): CompletedMarker {
+export function expr_name_ref_or_func(p: Parser): CompletedMarker | undefined {
     const m = p.start();
 
-    name_ref(p);
-    while (
-        !p.at(SyntaxKind.EOF) &&
+    const ident = name_ref(p);
+
+    const cond = () => !p.at(SyntaxKind.EOF) &&
         !p.at(SyntaxKind.NEWLINE) &&
-        (!is_op(p.nth(0)) || p.at(SyntaxKind.LPAREN))
-    ) {
-        if (p.at(SyntaxKind.IDENT)) {
-            name_ref(p);
-        } else {
-            expr_bp(p, 7);
-        }
-        p.opt(SyntaxKind.COMMA);
+        (!is_op(p.cur()) || p.at(SyntaxKind.LPAREN));
+
+    if (cond()) {
+        do {
+            expr_bp_impl(p, 7, true);
+            p.opt(SyntaxKind.COMMA);
+        } while (cond())
+    } else {
+        m.abandon(p);
+        return ident;
     }
 
     return m.complete(p, SyntaxKind.FUNC_EXPR);
 }
 
-export function expr_primary(p: Parser): CompletedMarker | undefined {
+export function expr_primary(p: Parser, no_func: boolean): CompletedMarker | undefined {
     const lit = literal(p);
 
     if (lit != undefined) {
@@ -114,17 +116,12 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
 
     switch (p.cur()) {
         case SyntaxKind.IDENT:
-            // if (GetFunctionInfo(p.current().text.toLocaleLowerCase()) != undefined) {
-            if (
-                p.nth_at(1, SyntaxKind.LPAREN) ||
-                is_primary_expr(p.nth(1)) ||
-                p.nth_at(1, SyntaxKind.IDENT)
-            ) {
-                return expr_func(p);
-            } else {
+            if (no_func) {
                 const m = p.start();
-                p.next(SyntaxKind.IDENT);
+                p.next_any();
                 return m.complete(p, SyntaxKind.NAME_REF);
+            } else {
+                return expr_name_ref_or_func(p);
             }
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
@@ -144,7 +141,11 @@ export function expr_primary(p: Parser): CompletedMarker | undefined {
 }
 
 export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined {
-    let lhs = expr_lhs(p);
+    return expr_bp_impl(p, min_bp, false);
+}
+
+function expr_bp_impl(p: Parser, min_bp: number, no_func: boolean): CompletedMarker | undefined {
+    let lhs = expr_lhs(p, no_func);
     if (lhs == undefined) {
         return undefined;
     }
@@ -165,7 +166,7 @@ export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined 
     return lhs;
 }
 
-export function expr_lhs(p: Parser): CompletedMarker | undefined {
+export function expr_lhs(p: Parser, no_func: boolean): CompletedMarker | undefined {
     if (is_unary_op(p.cur())) {
         const m = p.start();
 
@@ -175,7 +176,7 @@ export function expr_lhs(p: Parser): CompletedMarker | undefined {
 
         return m.complete(p, SyntaxKind.UNARY_EXPR);
     } else {
-        const lhs = expr_primary(p);
+        const lhs = expr_primary(p, no_func);
         if (lhs == undefined) {
             return undefined;
         }
@@ -199,7 +200,7 @@ export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMa
             case SyntaxKind.RARROW: {
                 const m: Marker = lhs.precede(p);
                 p.next(SyntaxKind.RARROW);
-                expr_primary(p);
+                expr_primary(p, true);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
                 break;
@@ -207,7 +208,7 @@ export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMa
             case SyntaxKind.DOT: {
                 const m = lhs.precede(p);
                 p.next(SyntaxKind.DOT);
-                expr_primary(p);
+                expr_primary(p, true);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
                 break;

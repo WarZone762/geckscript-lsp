@@ -1,5 +1,5 @@
 import { is_type, SyntaxKind } from "../../syntax_kind/generated.js";
-import { Parser } from "../parser.js";
+import { CompletedMarker, Parser } from "../parser.js";
 import { TokenSet } from "../token_set.js";
 import { expr_primary } from "./expressions.js";
 import { stmt_list_root } from "./statements.js";
@@ -18,18 +18,18 @@ export function name(p: Parser) {
     name_r(p, new TokenSet());
 }
 
-export function name_ref_r(p: Parser, recovery: TokenSet) {
+export function name_ref_r(p: Parser, recovery: TokenSet): CompletedMarker | undefined {
     if (p.at(SyntaxKind.IDENT)) {
         const m = p.start();
         p.next(SyntaxKind.IDENT);
-        m.complete(p, SyntaxKind.NAME_REF);
+        return m.complete(p, SyntaxKind.NAME_REF);
     } else {
         p.err_recover("expected an identifier", recovery);
     }
 }
 
-export function name_ref(p: Parser) {
-    name_ref_r(p, new TokenSet());
+export function name_ref(p: Parser): CompletedMarker | undefined {
+    return name_ref_r(p, new TokenSet());
 }
 
 export function var_decl_r(p: Parser, recovery: TokenSet) {
@@ -70,7 +70,7 @@ export function block_type(p: Parser) {
         p.err_recover("expected blocktype name", new TokenSet()); // TODO: recovery = EXPR_FIRST
     }
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE)) {
-        expr_primary(p);
+        expr_primary(p, true);
     }
 
     m.complete(p, SyntaxKind.BLOCKTYPE_DESIG);
