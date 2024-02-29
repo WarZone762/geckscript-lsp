@@ -1,9 +1,8 @@
 import { TreeData } from "../geckscript/ast.js";
-import * as http from "http";
 import * as ast from "../geckscript/ast.js";
-
-import * as jsdom from "jsdom";
 import * as d3 from "d3";
+import * as http from "http";
+import * as jsdom from "jsdom";
 
 export class TreeViewServer {
     server: http.Server;
@@ -71,13 +70,16 @@ export class TreeViewServer {
     }
 
     render(): string {
-        global.document = (new jsdom.JSDOM("")).window.document;
+        global.document = new jsdom.JSDOM("").window.document;
 
         const dx = 12;
         const dy = 120;
         const margin_left = dy;
         const tree = d3.tree<ast.TreeData>().nodeSize([dx, dy]);
-        const tree_link = d3.linkHorizontal<d3.HierarchyPointLink<ast.TreeData>, { x: number, y: number }>().x(d => d.y).y(d => d.x);
+        const tree_link = d3
+            .linkHorizontal<d3.HierarchyPointLink<ast.TreeData>, { x: number; y: number }>()
+            .x((d) => d.y)
+            .y((d) => d.x);
 
         function graph(root: d3.HierarchyNode<ast.TreeData>) {
             const tree_node = tree(root);
@@ -86,7 +88,7 @@ export class TreeViewServer {
             let x1 = -Infinity;
             let y0 = Infinity;
             let y1 = -Infinity;
-            tree_node.each(d => {
+            tree_node.each((d) => {
                 if (d.x > x1) {
                     x1 = d.x;
                 }
@@ -101,12 +103,14 @@ export class TreeViewServer {
                 }
             });
 
-            const svg = d3.create("svg")
+            const svg = d3
+                .create("svg")
                 .attr("viewBox", [0, 0, y1 - y0 + dy * 2, x1 - x0 + dx * 2])
                 .style("overflow", "visible")
                 .style("width", "100rem");
 
-            const g = svg.append("g")
+            const g = svg
+                .append("g")
                 .attr("font-family", "sans-serif")
                 .attr("font-size", 10)
                 .attr("transform", `translate(${margin_left},${dx - x0})`);
@@ -121,16 +125,17 @@ export class TreeViewServer {
                 .join("path")
                 .attr("d", tree_link);
 
-            const node = g.append("g")
+            const node = g
+                .append("g")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-width", 3)
                 .selectAll("g")
                 .data(tree_node.descendants())
                 .join("g")
-                .attr("transform", d => `translate(${d.y},${d.x})`);
+                .attr("transform", (d) => `translate(${d.y},${d.x})`);
 
             node.append("circle")
-                .attr("fill", d => d.children ? "#555" : "#999")
+                .attr("fill", (d) => (d.children ? "#555" : "#999"))
                 .attr("r", 2.5);
 
             node.append("text")
@@ -139,7 +144,7 @@ export class TreeViewServer {
                 .attr("dy", "0.3em")
                 .attr("x", -6)
                 .attr("text-anchor", "end")
-                .text(d => d.data.name);
+                .text((d) => d.data.name);
 
             return svg.node();
         }

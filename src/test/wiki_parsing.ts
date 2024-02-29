@@ -1,8 +1,8 @@
-import wtf from "wtf_wikipedia";
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import wtf_md from "wtf-plugin-markdown";
+import wtf from "wtf_wikipedia";
+
 wtf.plugin(wtf_md);
 
 // const text = "{{Function\n |origin = GECK1\n |summary = When given a number, returns the absolute value of the number.\n |name = Abs\n |returnType = float\n |arguments = \n  {{FunctionArgument\n   |Name = x\n   |Type = float\n  }}\n |example = abs x\nWill return the absolute value of x.\n}}\n\n==Notes==\n*The abs directive ([[Mathematical UI directives]]) is a trait that\n\n\n returns the absolute value of an element in a user interface XML block.\n\n==See Also==\n*[[Cos]]\n*[[Log]]\n*[[Pow]]\n*[[Sin]]\n*[[Tan]]\n\n[[Category:User_Interface]]\n[[Category:Functions (GECK)]]\n[[Category:Functions]]\n[[Category:Math Functions]]\n[[Category:Functions (FO3)]]";

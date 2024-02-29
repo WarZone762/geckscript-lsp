@@ -1,6 +1,6 @@
 import { token_at_offset } from "../geckscript/ast.js";
-import { ParsedString } from "../geckscript/hir/hir.js";
 import { find_def_from_token, find_refs } from "../geckscript/hir/api.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
 import { Location } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
