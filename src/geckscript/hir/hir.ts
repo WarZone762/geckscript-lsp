@@ -2,8 +2,11 @@ import { AstNode, Script } from "../ast/generated.js";
 import * as parsing from "../parsing.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
 import { NodeOrToken } from "../types/syntax_node.js";
+import * as fs from "fs/promises";
+import * as path from "path";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
+import { URI } from "vscode-uri";
 
 import assert = require("assert");
 
@@ -99,5 +102,26 @@ export class FileDatabase {
         this.files.set(doc.uri, parsed);
 
         return parsed;
+    }
+
+    async load_folder(dir_path: string) {
+        const files = await fs.readdir(dir_path);
+        for (const file of files) {
+            const full_path = path.resolve(path.join(dir_path, file));
+            const stat = await fs.stat(full_path);
+
+            if (stat.isDirectory() || (!file.endsWith(".gek") && !file.endsWith(".geck"))) {
+                continue;
+            }
+
+            const content = await fs.readFile(full_path);
+            const doc = TextDocument.create(
+                URI.file(full_path).toString(),
+                "geckscript",
+                0,
+                content.toString()
+            );
+            this.parse_doc(doc);
+        }
     }
 }
