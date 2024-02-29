@@ -104,10 +104,11 @@ export class Lexer {
         return this.finish(token);
     }
 
-    number_int(): Token<SyntaxKind.NUMBER_INT> {
-        const token = this.start(SyntaxKind.NUMBER_INT);
-
+    number_or_word(): Token {
+        // try parsing as a hex number
         if (this.char === "0" && this.nth(1)?.toLowerCase() === "x") {
+            const token = this.start(SyntaxKind.NUMBER_INT) as Token;
+
             this.next_to_buf();
             this.next_to_buf();
 
@@ -122,7 +123,40 @@ export class Lexer {
             return this.finish(token);
         }
 
-        this.next_to_buf();
+        // try parsing as a number
+        const [token, finished] = this.try_number();
+        if (finished) {
+            return token;
+        }
+
+        // parse as a word
+        while (this.more_data() && /[0-9a-zA-Z_]/.test(this.char)) {
+            this.next_to_buf();
+        }
+
+        const kind = GetTokenKind(this.buf.toString().toLowerCase());
+        token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.IDENT;
+
+        return this.finish(token);
+    }
+
+    try_number(): [Token<SyntaxKind.NUMBER_INT>, true] | [Token, false] {
+        const token = this.start(SyntaxKind.NUMBER_INT);
+
+        if (this.char === "0" && this.nth(1)?.toLowerCase() === "x") {
+            this.next_to_buf();
+            this.next_to_buf();
+
+            while (this.more_data()) {
+                if (/[0-9a-fA-F]/.test(this.char)) {
+                    this.next_to_buf();
+                } else {
+                    break;
+                }
+            }
+
+            return [this.finish(token), true];
+        }
 
         while (this.more_data()) {
             if (/\d/.test(this.char)) {
@@ -130,8 +164,10 @@ export class Lexer {
             } else if (this.char === ".") {
                 this.next_to_buf();
                 break;
+            } else if (/[0-9a-zA-Z_]/.test(this.char)) {
+                return [token, false];
             } else {
-                return this.finish(token);
+                return [this.finish(token), true];
             }
         }
 
@@ -139,7 +175,7 @@ export class Lexer {
             this.next_to_buf();
         }
 
-        return this.finish(token);
+        return [this.finish(token), true];
     }
 
     op(): Token<OpSyntaxKind | SyntaxKind.UNKNOWN> {
@@ -170,20 +206,6 @@ export class Lexer {
         return this.finish(token);
     }
 
-    word(): Token {
-        const token = this.start();
-
-        while (this.more_data() && /[0-9a-zA-Z_]/.test(this.char)) {
-            this.next_to_buf();
-        }
-
-        const kind = GetTokenKind(this.buf.toString().toLowerCase());
-
-        token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.IDENT;
-
-        return this.finish(token);
-    }
-
     lex_token(): Token {
         let token: Token;
 
@@ -196,15 +218,10 @@ export class Lexer {
                 token = this.comment();
             } else if (/["']/.test(this.char)) {
                 token = this.str();
-            } else if (/\d/.test(this.char)) {
-                token = this.number_int();
-            } else if (
-                /\./.test(this.char) &&
-                ((char) => char != undefined && /\d/.test(char))(this.nth(1))
-            ) {
-                token = this.number_int();
-            } else if (/[a-zA-Z_]/.test(this.char)) {
-                token = this.word();
+            } else if (this.char === "." && this.is_number(1)) {
+                token = this.try_number()[0];
+            } else if (/[a-zA-Z0-9_]/.test(this.char)) {
+                token = this.number_or_word();
             } else if (/\S/.test(this.char)) {
                 token = this.op();
             } else {
@@ -220,6 +237,28 @@ export class Lexer {
 
             return eof;
         }
+    }
+
+    is_number(offset: number): boolean {
+        let nth = this.nth(offset);
+        // first character must be a number
+        if (nth === undefined || /\D/.test(nth)) {
+            return false;
+        }
+        offset++;
+        nth = this.nth(offset);
+
+        while (nth !== undefined) {
+            if (/[a-zA-Z_]/.test(nth)) {
+                return false;
+            } else if (/\D/.test(nth)) {
+                return true;
+            }
+            offset++;
+            nth = this.nth(offset);
+        }
+
+        return true;
     }
 
     *lex(): Generator<Token> {
