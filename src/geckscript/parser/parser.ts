@@ -106,10 +106,12 @@ export class Parser {
         return this.events;
     }
 
+    /** Get the current token */
     cur(): TokenSyntaxKind {
         return this.nth(0);
     }
 
+    /** Get the token `n` tokens after the current one */
     nth(n: number): TokenSyntaxKind {
         assert(this.steps < Parser.PARSER_STEP_LIMIT, "the parser seems to be stuck");
 
@@ -118,14 +120,25 @@ export class Parser {
         return this.inp.kind(this.pos + n);
     }
 
+    /** Check if the current token is `kind` */
     at(kind: TokenSyntaxKind): boolean {
         return this.nth_at(0, kind);
     }
 
+    /** Check if the current token is in `kinds` */
+    at_ts(kinds: TokenSet): boolean {
+        return kinds.has(this.cur());
+    }
+
+    /** Check if the token `n` tokens after the current one is `kind` */
     nth_at(n: number, kind: TokenSyntaxKind): boolean {
         return this.inp.kind(this.pos + n) == kind;
     }
 
+    /**
+     * Advance the parser if the next token is `kind`, otherwise do nothing
+     * @returns boolean indicating whether the parser was advanced
+     */
     opt(kind: TokenSyntaxKind): boolean {
         if (!this.at(kind)) {
             return false;
@@ -135,25 +148,23 @@ export class Parser {
         return true;
     }
 
-    at_ts(kinds: TokenSet): boolean {
-        return kinds.has(this.cur());
-    }
-
     start(): Marker {
         const pos = this.events.length;
         this.push_event(new EventStart(SyntaxKind.TOMBSTONE));
         return new Marker(pos);
     }
 
+    /** Assert the next token is `kind` and advance */
     next(kind: TokenSyntaxKind) {
         if (!this.opt(kind)) {
             throw new Error("called 'next' with an incorrect SyntaxKind");
         }
     }
 
+    /** Advance the parser if there are more tokens */
     next_any() {
-        const kind = this.nth(0);
-        if (kind == SyntaxKind.EOF) {
+        const kind = this.cur();
+        if (this.cur() == SyntaxKind.EOF) {
             return;
         }
         this.do_next(kind, 1);
@@ -163,6 +174,7 @@ export class Parser {
         this.push_event(new EventError(`parsing error: ${msg}`));
     }
 
+    /** Advance the parser and push an error if the next token is not `kind` */
     expect(kind: TokenSyntaxKind): boolean {
         if (this.opt(kind)) {
             return true;
