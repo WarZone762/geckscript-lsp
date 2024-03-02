@@ -1,12 +1,13 @@
+import { DiagnosticSeverity } from "vscode-languageserver";
 import { Lexer } from "./lexer.js";
-import { AnyEvent, EventError, EventKind, EventStart } from "./parser/event.js";
+import { AnyEvent, EventDiagnostic, EventKind, EventStart } from "./parser/event.js";
 import { Input, parse } from "./parser/parser.js";
 import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
 
 import assert = require("assert");
 
-export function parse_str(str: string): [Node, Error[]] {
+export function parse_str(str: string): [Node, Diagnostic[]] {
     const l = new Lexer(str);
     const tokens_full = Array.from(l.lex());
     const tokens = tokens_full.filter(
@@ -17,7 +18,7 @@ export function parse_str(str: string): [Node, Error[]] {
     return output_to_tree(process_events(parse(input)), tokens_full);
 }
 
-export function output_to_tree(output: AnyEvent[], tokens: Token[]): [Node, Error[]] {
+export function output_to_tree(output: AnyEvent[], tokens: Token[]): [Node, Diagnostic[]] {
     const builder = new TriviaBuilder(tokens, output);
     return builder.process();
 }
@@ -89,7 +90,7 @@ export class TriviaBuilder {
     tokens: Token[];
     token_pos = 0;
     events: AnyEvent[];
-    errors: Error[] = [];
+    diagnostics: Diagnostic[] = [];
     tree_builder: TreeBuilder;
 
     constructor(tokens: Token[], parsed_output: AnyEvent[]) {
@@ -98,7 +99,7 @@ export class TriviaBuilder {
         this.tree_builder = new TreeBuilder();
     }
 
-    process(): [Node, Error[]] {
+    process(): [Node, Diagnostic[]] {
         for (const e of this.events) {
             switch (e.kind) {
                 case EventKind.Token:
@@ -140,9 +141,9 @@ export class TriviaBuilder {
         }
     }
 
-    error(event: EventError) {
+    error(event: EventDiagnostic) {
         const last_token: Token | undefined = this.tokens[this.token_pos] ?? this.tokens.at(-1);
-        this.errors.push(new Error(event.msg, last_token?.offset, last_token?.len()));
+        this.diagnostics.push(new Diagnostic(event.msg, event.severity, last_token?.offset, 0));
     }
 
     attach_trivia() {
@@ -159,20 +160,22 @@ export class TriviaBuilder {
         this.tree_builder.token(this.tokens[this.token_pos++]);
     }
 
-    finish(): [Node, Error[]] {
+    finish(): [Node, Diagnostic[]] {
         this.finish_node(true);
 
-        return [this.tree_builder.finish(), this.errors];
+        return [this.tree_builder.finish(), this.diagnostics];
     }
 }
 
-export class Error {
+export class Diagnostic {
     msg: string;
+    severity: DiagnosticSeverity;
     offset: number;
     len: number;
 
-    constructor(msg: string, offset = 0, len = 0) {
+    constructor(msg: string, severity: DiagnosticSeverity, offset = 0, len = 0) {
         this.msg = msg;
+        this.severity = severity;
         this.offset = offset;
         this.len = len;
     }

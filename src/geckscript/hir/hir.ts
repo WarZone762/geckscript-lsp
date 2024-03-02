@@ -90,6 +90,7 @@ export class FileDatabase {
 
             diagnostics.push({
                 message: e.msg,
+                severity: e.severity,
                 range: {
                     start: start,
                     end: end,
@@ -105,7 +106,7 @@ export class FileDatabase {
     }
 
     async load_folder(dir_path: string) {
-        const files = await fs.readdir(dir_path);
+        const files = await fs.readdir(dir_path, { recursive: true });
         for (const file of files) {
             const full_path = path.resolve(path.join(dir_path, file));
             const stat = await fs.stat(full_path);

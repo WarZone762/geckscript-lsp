@@ -8,8 +8,6 @@ export const enum SyntaxKind {
     STRING,
     NAME,
     NAME_REF,
-    BLOCKTYPE,
-    BLOCKTYPE_FUNCTION,
     TOMBSTONE,
     ERROR,
     LITERAL,
@@ -88,7 +86,6 @@ export const enum SyntaxKind {
     VAR_OR_VAR_DECL_LIST,
     PRIMARY_EXPR_LIST,
     EXPR_LIST,
-    BRANCH_LIST,
     STMT_LIST,
     LAMBDA_EXPR,
     LAMBDA_INLINE_EXPR,
@@ -115,8 +112,6 @@ export const syntax_kind_names = {
     [SyntaxKind.STRING]: "STRING",
     [SyntaxKind.NAME]: "NAME",
     [SyntaxKind.NAME_REF]: "NAME_REF",
-    [SyntaxKind.BLOCKTYPE]: "BLOCKTYPE",
-    [SyntaxKind.BLOCKTYPE_FUNCTION]: "BLOCKTYPE_FUNCTION",
     [SyntaxKind.TOMBSTONE]: "TOMBSTONE",
     [SyntaxKind.ERROR]: "ERROR",
     [SyntaxKind.LITERAL]: "LITERAL",
@@ -195,7 +190,6 @@ export const syntax_kind_names = {
     [SyntaxKind.VAR_OR_VAR_DECL_LIST]: "VAR_OR_VAR_DECL_LIST",
     [SyntaxKind.PRIMARY_EXPR_LIST]: "PRIMARY_EXPR_LIST",
     [SyntaxKind.EXPR_LIST]: "EXPR_LIST",
-    [SyntaxKind.BRANCH_LIST]: "BRANCH_LIST",
     [SyntaxKind.STMT_LIST]: "STMT_LIST",
     [SyntaxKind.LAMBDA_EXPR]: "LAMBDA_EXPR",
     [SyntaxKind.LAMBDA_INLINE_EXPR]: "LAMBDA_INLINE_EXPR",
@@ -439,7 +433,6 @@ export type ListSyntaxKind =
     | SyntaxKind.VAR_OR_VAR_DECL_LIST
     | SyntaxKind.PRIMARY_EXPR_LIST
     | SyntaxKind.EXPR_LIST
-    | SyntaxKind.BRANCH_LIST
     | SyntaxKind.STMT_LIST;
 
 export function is_list(kind: SyntaxKind): kind is ListSyntaxKind {
@@ -447,7 +440,6 @@ export function is_list(kind: SyntaxKind): kind is ListSyntaxKind {
         kind == SyntaxKind.VAR_OR_VAR_DECL_LIST ||
         kind == SyntaxKind.PRIMARY_EXPR_LIST ||
         kind == SyntaxKind.EXPR_LIST ||
-        kind == SyntaxKind.BRANCH_LIST ||
         kind == SyntaxKind.STMT_LIST
     );
 }
@@ -499,8 +491,6 @@ export type TokenSyntaxKind =
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
     | SyntaxKind.IDENT
-    | SyntaxKind.BLOCKTYPE
-    | SyntaxKind.BLOCKTYPE_FUNCTION
     | TypeSyntaxKind
     | KeywordSyntaxKind
     | OpSyntaxKind;

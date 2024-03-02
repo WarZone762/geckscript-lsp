@@ -45,8 +45,6 @@ export const OTHER: SyntaxKindData = [
             "NEWLINE",
 
             ...PRIMARY_EXPR[0],
-            "BLOCKTYPE",
-            "BLOCKTYPE_FUNCTION",
 
             "TOMBSTONE",
             "ERROR",
@@ -203,8 +201,6 @@ export type TokenSyntaxKind =
     | SyntaxKind.NUMBER_INT
     | SyntaxKind.STRING
     | SyntaxKind.IDENT
-    | SyntaxKind.BLOCKTYPE
-    | SyntaxKind.BLOCKTYPE_FUNCTION
     | TypeSyntaxKind
     | KeywordSyntaxKind
     | OpSyntaxKind

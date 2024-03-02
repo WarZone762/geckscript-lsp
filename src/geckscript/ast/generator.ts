@@ -314,7 +314,7 @@ LambdaInlineExpr: LAMBDA_INLINE_EXPR {
 
 LambdaExpr: LAMBDA_EXPR {
     begin: Token BEGIN_KW,
-    func_kw: Token BLOCKTYPE_FUNCTION,
+    func_kw: NameRef,
     lbrack: Token LBRACK,
     params: VarOrVarDeclList,
     rbrack: Token RBRACK,
@@ -370,7 +370,7 @@ IfStmt: IF_STMT {
     if: Token IF_KW,
     cond: Expr,
     true_branch: StmtList,
-    false_branch: ElseBranch,
+    false_branch: Branch,
     endif: Token ENDIF_KW,
 }
 `.trim();
@@ -382,17 +382,17 @@ ${VAR_OR_VAR_DECL_DATA}
 ${EXPR_DATA}
 
 BlocktypeDesig: BLOCKTYPE_DESIG {
-    blocktype: Token BLOCKTYPE BLOCKTYPE_FUNCTION,
+    blocktype: Name,
     args: PrimaryExprList,
 }
 
 ${STMT_DATA}
 
-ElseBranch: ELSE_BRANCH {
+Branch: BRANCH {
     elseif: Token ELSEIF_KW ELSE_KW,
     cond: Expr,
     true_branch: StmtList,
-    false_branch: ElseBranch,
+    false_branch: Branch,
 }
 
 Script: SCRIPT {

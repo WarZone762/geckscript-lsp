@@ -1,5 +1,6 @@
+import { URI } from "vscode-uri";
 import * as ast from "./geckscript/ast.js";
-import * as FD from "./geckscript/function_data.js";
+// import * as FD from "./geckscript/function_data.js";
 import { FileDatabase, ParsedString } from "./geckscript/hir/hir.js";
 import * as features from "./language_features/features.js";
 // import * as Wiki from "./wiki/wiki.js";
@@ -13,6 +14,8 @@ import {
     SemanticTokensRequest,
     HoverParams,
     DidChangeTextDocumentParams,
+    DiagnosticSeverity,
+    WorkspaceFolder,
 } from "vscode-languageserver/node.js";
 
 const DB = new FileDatabase();
@@ -27,21 +30,20 @@ if (check_index !== -1) {
 
     await DB.load_folder(path);
     for (const [path, doc] of DB.files.entries()) {
-        if (doc.diagnostics.length > 0) {
+        if (doc.diagnostics.filter((d) => d.severity === DiagnosticSeverity.Error).length > 0) {
             console.log(`${path}:`);
         }
         for (const diagnostic of doc.diagnostics) {
-            console.log(
-                `${diagnostic.range.start.line}:${diagnostic.range.start.character}: ${diagnostic.message}`
-            );
+            if (diagnostic.severity === DiagnosticSeverity.Error) {
+                console.log(
+                    `${diagnostic.range.start.line}:${diagnostic.range.start.character}: ${diagnostic.message}`
+                );
+            }
         }
     }
 
     process.exit();
 }
-
-const connection = createConnection(ProposedFeatures.all);
-let tree_view_server: TreeViewServer.TreeViewServer | undefined;
 
 /** Helper to create a document reqest handler function */
 function handler<RP extends { textDocument: { uri: string } }, T extends unknown[], R>(
@@ -57,7 +59,12 @@ function handler<RP extends { textDocument: { uri: string } }, T extends unknown
     };
 }
 
+const connection = createConnection(ProposedFeatures.all);
+let tree_view_server: TreeViewServer.TreeViewServer | undefined;
+let root_dirs: WorkspaceFolder[] = [];
+
 connection.onInitialize(async (params) => {
+    root_dirs = params.workspaceFolders ?? [];
     const capabilities = params.capabilities;
 
     const result: InitializeResult = {
@@ -93,11 +100,21 @@ connection.onInitialize(async (params) => {
         tree_view_server = new TreeViewServer.TreeViewServer(8000, "localhost");
     }
 
-    if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
-        await FD.PopulateFunctionData(true);
-    }
+    // if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
+    //     await FD.PopulateFunctionData(true);
+    // }
 
     return result;
+});
+
+connection.onInitialized(async () => {
+    for (const dir of root_dirs) {
+        await DB.load_folder(URI.parse(dir.uri).fsPath);
+    }
+
+    for (const file of DB.files.values()) {
+        connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
+    }
 });
 
 connection.onDidOpenTextDocument(async (params) => {
@@ -174,7 +191,7 @@ connection.onRequest(
     handler(features.build_semantic_tokens, (f) => f())
 );
 
-connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));
+// connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));
 
 connection.onExit(() => tree_view_server?.close());
 

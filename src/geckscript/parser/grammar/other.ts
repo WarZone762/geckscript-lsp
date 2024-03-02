@@ -1,6 +1,6 @@
 import { is_type, SyntaxKind } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Parser } from "../parser.js";
-import { TokenSet } from "../token_set.js";
+import { EXPR_FIRST, TokenSet } from "../token_set.js";
 import { expr_primary } from "./expressions.js";
 import { stmt_list_root } from "./statements.js";
 
@@ -64,10 +64,10 @@ export function var_or_var_decl(p: Parser) {
 export function block_type(p: Parser) {
     const m = p.start();
 
-    if (p.at(SyntaxKind.BLOCKTYPE) || p.at(SyntaxKind.BLOCKTYPE_FUNCTION)) {
+    if (p.at(SyntaxKind.IDENT)) {
         p.next_any();
     } else {
-        p.err_recover("expected blocktype name", new TokenSet()); // TODO: recovery = EXPR_FIRST
+        p.err_recover("expected blocktype name", EXPR_FIRST);
     }
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE)) {
         expr_primary(p, true);
@@ -87,9 +87,16 @@ export function script(p: Parser) {
         p.err_recover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
     }
     name(p);
+    rest_of_line(p);
     p.expect(SyntaxKind.NEWLINE);
 
     stmt_list_root(p);
 
     m.complete(p, SyntaxKind.SCRIPT);
+}
+
+export function rest_of_line(p: Parser) {
+    while (!p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.EOF)) {
+        p.warn_and_next("unexpected token");
+    }
 }

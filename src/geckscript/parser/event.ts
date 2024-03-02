@@ -1,3 +1,4 @@
+import { DiagnosticSeverity } from "vscode-languageserver";
 import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export const enum EventKind {
@@ -43,14 +44,16 @@ export class EventToken implements Event {
     }
 }
 
-export class EventError {
+export class EventDiagnostic {
     kind = EventKind.Error as const;
 
     msg: string;
+    severity: DiagnosticSeverity;
 
-    constructor(msg: string) {
+    constructor(msg: string, severity: DiagnosticSeverity) {
         this.msg = msg;
+        this.severity = severity;
     }
 }
 
-export type AnyEvent = EventTombstone | EventStart | EventFinish | EventToken | EventError;
+export type AnyEvent = EventTombstone | EventStart | EventFinish | EventToken | EventDiagnostic;

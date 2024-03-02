@@ -1,20 +1,8 @@
-import { is_op, is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
+import { is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
-import { TokenSet } from "../token_set.js";
+import { EXPR_FIRST, LITERAL, TokenSet, TYPE } from "../token_set.js";
 import { name_ref, var_or_var_decl_r } from "./other.js";
 import { stmt_list } from "./statements.js";
-
-export const LITERAL = new TokenSet([SyntaxKind.NUMBER_INT, SyntaxKind.STRING]);
-
-export const TYPE = new TokenSet([
-    SyntaxKind.SHORT_TYPE,
-    SyntaxKind.INT_TYPE,
-    SyntaxKind.LONG_TYPE,
-    SyntaxKind.FLOAT_TYPE,
-    SyntaxKind.REFERENCE_TYPE,
-    SyntaxKind.STRING_VAR_TYPE,
-    SyntaxKind.ARRAY_VAR_TYPE,
-]);
 
 export function literal(p: Parser): CompletedMarker | undefined {
     if (!p.at_ts(LITERAL)) {
@@ -30,6 +18,10 @@ export function expr(p: Parser): boolean {
     return expr_bp(p, 1) != undefined ? true : false;
 }
 
+export function expr_no_func(p: Parser): boolean {
+    return expr_bp_impl(p, 1, true) != undefined ? true : false;
+}
+
 export function expr_lambda_inline(p: Parser): CompletedMarker {
     const m = p.start();
 
@@ -42,7 +34,7 @@ export function expr_lambda_inline(p: Parser): CompletedMarker {
 
     p.expect(SyntaxKind.RBRACK);
     if (!p.opt(SyntaxKind.EQGT)) {
-        p.err_recover("expected '=>'", new TokenSet()); // TODO: recovery EXPR_FIRST
+        p.err_recover("expected '=>'", EXPR_FIRST);
     }
     expr(p);
 
@@ -53,8 +45,8 @@ export function expr_lambda(p: Parser): CompletedMarker {
     const m = p.start();
 
     p.next(SyntaxKind.BEGIN_KW);
-    if (!p.opt(SyntaxKind.BLOCKTYPE_FUNCTION)) {
-        p.err_recover("expected 'Function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
+    if (!p.opt(SyntaxKind.IDENT)) {
+        p.err_recover("expected 'function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
     }
     if (!p.opt(SyntaxKind.LBRACK)) {
         p.err_recover(
@@ -78,27 +70,28 @@ export function expr_lambda(p: Parser): CompletedMarker {
     p.expect(SyntaxKind.RBRACK);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list(p, new TokenSet([SyntaxKind.RPAREN]));
+    stmt_list(p, new TokenSet([SyntaxKind.END_KW, SyntaxKind.RPAREN]));
 
     p.expect(SyntaxKind.END_KW);
 
     return m.complete(p, SyntaxKind.LAMBDA_EXPR);
 }
 
-export function expr_name_ref_or_func(p: Parser): CompletedMarker | undefined {
+export function expr_name_ref_or_func(p: Parser, no_func: boolean): CompletedMarker | undefined {
     const m = p.start();
 
     const ident = name_ref(p);
+    if (!no_func) {
+        p.opt(SyntaxKind.COMMA);
+    }
 
-    const cond = () => !p.at(SyntaxKind.EOF) &&
-        !p.at(SyntaxKind.NEWLINE) &&
-        (!is_op(p.cur()) || p.at(SyntaxKind.LPAREN));
+    const cond = () => p.at_ts(EXPR_FIRST) && !p.at(SyntaxKind.MINUS);
 
-    if (cond()) {
+    if (cond() && !no_func) {
         do {
             expr_bp_impl(p, 7, true);
             p.opt(SyntaxKind.COMMA);
-        } while (cond())
+        } while (cond());
     } else {
         m.abandon(p);
         return ident;
@@ -116,13 +109,7 @@ export function expr_primary(p: Parser, no_func: boolean): CompletedMarker | und
 
     switch (p.cur()) {
         case SyntaxKind.IDENT:
-            if (no_func) {
-                const m = p.start();
-                p.next_any();
-                return m.complete(p, SyntaxKind.NAME_REF);
-            } else {
-                return expr_name_ref_or_func(p);
-            }
+            return expr_name_ref_or_func(p, no_func);
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
             if (p.opt(SyntaxKind.RPAREN)) {
@@ -145,6 +132,14 @@ export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined 
 }
 
 function expr_bp_impl(p: Parser, min_bp: number, no_func: boolean): CompletedMarker | undefined {
+    if (!p.at_ts(EXPR_FIRST)) {
+        p.err_recover(
+            "expected expression",
+            new TokenSet([SyntaxKind.RPAREN, SyntaxKind.RBRACK, SyntaxKind.TO_KW])
+        );
+        return undefined;
+    }
+
     let lhs = expr_lhs(p, no_func);
     if (lhs == undefined) {
         return undefined;
@@ -181,17 +176,17 @@ export function expr_lhs(p: Parser, no_func: boolean): CompletedMarker | undefin
             return undefined;
         }
 
-        return expr_member_access(p, lhs);
+        return expr_postfix(p, lhs, no_func);
     }
 }
 
-export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMarker {
+export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean): CompletedMarker {
     while (true) {
         switch (p.cur()) {
             case SyntaxKind.LSQBRACK: {
                 const m: Marker = lhs.precede(p);
                 p.next(SyntaxKind.LSQBRACK);
-                expr_bp(p, 0); // TODO: add ']' as recovery
+                expr_bp(p, 0);
                 p.expect(SyntaxKind.RSQBRACK);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
@@ -208,7 +203,7 @@ export function expr_member_access(p: Parser, lhs: CompletedMarker): CompletedMa
             case SyntaxKind.DOT: {
                 const m = lhs.precede(p);
                 p.next(SyntaxKind.DOT);
-                expr_primary(p, true);
+                expr_name_ref_or_func(p, no_func);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
                 break;

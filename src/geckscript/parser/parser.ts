@@ -1,10 +1,18 @@
+import { DiagnosticSeverity } from "vscode-languageserver";
 import {
     TokenSyntaxKind,
     NodeSyntaxKind,
     SyntaxKind,
     syntax_kind_name,
 } from "../syntax_kind/generated.js";
-import { AnyEvent, EventError, EventFinish, EventKind, EventStart, EventToken } from "./event.js";
+import {
+    AnyEvent,
+    EventDiagnostic,
+    EventFinish,
+    EventKind,
+    EventStart,
+    EventToken,
+} from "./event.js";
 import { script } from "./grammar/other.js";
 import { TokenSet } from "./token_set.js";
 
@@ -170,8 +178,17 @@ export class Parser {
         this.do_next(kind, 1);
     }
 
+    warn_and_next(msg: string) {
+        this.warn(msg);
+        this.next_any();
+    }
+
+    warn(msg: string) {
+        this.push_event(new EventDiagnostic(msg, DiagnosticSeverity.Warning));
+    }
+
     err(msg: string) {
-        this.push_event(new EventError(`parsing error: ${msg}`));
+        this.push_event(new EventDiagnostic(`parsing error: ${msg}`, DiagnosticSeverity.Error));
     }
 
     /** Advance the parser and push an error if the next token is not `kind` */
