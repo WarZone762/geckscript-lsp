@@ -13,7 +13,7 @@ class NodeInfo {
         return `${Object.entries(this.members)
             .map((m) =>
                 `
-    ${m[0]}() {
+    ${m[0]}(): ${m[1].ret_type()} {
         return ${m[1].ret()};
     }
     `.trim()
@@ -67,6 +67,32 @@ class MemberInfo {
                     NODE_INFO_MAP[this.args[0]]?.syntax_kind ??
                     LIST_INFO_MAP[this.args[0]]?.syntax_kind;
                 return `${this.args[0]}.from_green(child(this, (k => k === SyntaxKind.${syntax_kind}) as (k: SyntaxKind) => k is SyntaxKind.${syntax_kind}))`;
+            }
+        }
+    }
+
+    ret_type(): string {
+        switch (this.args[0]) {
+            case "Token": {
+                const pred_type_ret = this.args
+                    .slice(1)
+                    .map((d) => `SyntaxKind.${d}`)
+                    .join(" | ");
+
+                return `Token<${pred_type_ret}> | undefined`;
+            }
+            case "Type":
+                return "Token<TypeSyntaxKind> | undefined";
+            case "Op":
+                return "Token<OpSyntaxKind> | undefined";
+            case "VarOrVarDecl":
+                return "VarOrVarDecl | undefined";
+            case "Expr":
+                return "Expr | undefined";
+            case "Stmt":
+                return "Stmt | undefined";
+            default: {
+                return `${this.args[0]} | undefined`;
             }
         }
     }

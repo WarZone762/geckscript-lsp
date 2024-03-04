@@ -1,3 +1,5 @@
+#!/bin/env node
+
 import { URI } from "vscode-uri";
 import * as ast from "./geckscript/ast.js";
 // import * as FD from "./geckscript/function_data.js";
@@ -90,7 +92,7 @@ connection.onInitialize(async (params) => {
                     scheme: "file",
                 },
             ],
-            legend: features.legend,
+            legend: features.LEGEND,
             full: true,
         };
     }

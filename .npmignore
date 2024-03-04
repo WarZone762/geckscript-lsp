@@ -1,0 +1,11 @@
+node_modules/
+src/
+lib/**/*.map
+test/
+
+package-lock.json
+.eslintignore
+.eslintrc.cjs
+.gitignore
+.prettierrc
+tsconfig.json

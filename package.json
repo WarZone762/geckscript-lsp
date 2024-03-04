@@ -6,6 +6,9 @@
         "node": "*"
     },
     "type": "module",
+    "main": "./lib/server.js",
+    "bin": "./lib/server.js",
+    "types": "./lib/server.d.ts",
     "dependencies": {
         "d3": "^7.8",
         "jsdom": "^24.0",
@@ -24,15 +27,30 @@
         "@types/node": "^20.11",
         "@typescript-eslint/eslint-plugin": "^7.1",
         "@typescript-eslint/parser": "^7.1",
+        "assert": "^2.1.0",
+        "browserify-zlib": "^0.2.0",
+        "buffer": "^6.0.3",
+        "crypto-browserify": "^3.12.0",
         "eslint": "^8.31",
+        "events": "^3.3.0",
+        "https-browserify": "^1.0.0",
+        "os-browserify": "^0.3.0",
+        "path-browserify": "^1.0.1",
         "prettier": "^3.2",
+        "process": "^0.11.10",
+        "punycode": "^1.4.1",
+        "stream-browserify": "^3.0.0",
+        "stream-http": "^3.2.0",
+        "ts-node": "^10.9.2",
         "typescript": "^5.3",
-        "ts-node": "^10.9.2"
+        "url": "^0.11.3",
+        "util": "^0.12.5",
+        "vm-browserify": "^1.1.2"
     },
     "scripts": {
         "tsc-compile": "tsc -b",
         "tsc-watch": "tsc -b -w",
         "lint": "eslint ./src --ext .js,.ts,.tsx",
-        "clean": "rm -rf ./out"
+        "clean": "rm -rf ./lib"
     }
 }
