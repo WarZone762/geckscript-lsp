@@ -191,7 +191,10 @@ export class Parser {
         this.push_event(new EventDiagnostic(`parsing error: ${msg}`, DiagnosticSeverity.Error));
     }
 
-    /** Advance the parser and push an error if the next token is not `kind` */
+    /**
+     * Advance the parser if the current token is `kind`, otherwise emit an error
+     * @returns boolean indicating whether the parser was advanced
+     */
     expect(kind: TokenSyntaxKind): boolean {
         if (this.opt(kind)) {
             return true;

@@ -45,8 +45,11 @@ export function stmt(p: Parser) {
                 }
             } else if (is_type(p.cur())) {
                 stmt_var_decl(p);
-            } else {
+            } else if (p.at_ts(EXPR_FIRST)) {
                 expr(p);
+            } else {
+                p.err_and_next("expected expression or statement");
+                return;
             }
     }
 

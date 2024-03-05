@@ -112,9 +112,6 @@ export function expr_primary(p: Parser, no_func: boolean): CompletedMarker | und
             return expr_name_ref_or_func(p, no_func);
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
-            if (p.opt(SyntaxKind.RPAREN)) {
-                return undefined;
-            }
             const m = p.at(SyntaxKind.BEGIN_KW) ? expr_lambda(p) : expr_bp(p, 1);
             p.expect(SyntaxKind.RPAREN);
 
@@ -186,7 +183,7 @@ export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean):
             case SyntaxKind.LSQBRACK: {
                 const m: Marker = lhs.precede(p);
                 p.next(SyntaxKind.LSQBRACK);
-                expr_bp(p, 0);
+                expr(p);
                 p.expect(SyntaxKind.RSQBRACK);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
