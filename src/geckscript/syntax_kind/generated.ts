@@ -49,9 +49,9 @@ export const enum SyntaxKind {
     CIRCUMFLEXEQ,
     VBAREQ,
     AMPERSANDEQ,
-    EXCLAMATION,
     CIRCUMFLEX,
     PLUS,
+    EXCLAMATION,
     MINUS,
     DOLLAR,
     HASH,
@@ -153,9 +153,9 @@ export const syntax_kind_names = {
     [SyntaxKind.CIRCUMFLEXEQ]: "CIRCUMFLEXEQ",
     [SyntaxKind.VBAREQ]: "VBAREQ",
     [SyntaxKind.AMPERSANDEQ]: "AMPERSANDEQ",
-    [SyntaxKind.EXCLAMATION]: "EXCLAMATION",
     [SyntaxKind.CIRCUMFLEX]: "CIRCUMFLEX",
     [SyntaxKind.PLUS]: "PLUS",
+    [SyntaxKind.EXCLAMATION]: "EXCLAMATION",
     [SyntaxKind.MINUS]: "MINUS",
     [SyntaxKind.DOLLAR]: "DOLLAR",
     [SyntaxKind.HASH]: "HASH",
@@ -300,6 +300,7 @@ export function is_assignment_op(kind: SyntaxKind): kind is AssignmentOpSyntaxKi
     );
 }
 export type UnaryOpSyntaxKind =
+    | SyntaxKind.EXCLAMATION
     | SyntaxKind.MINUS
     | SyntaxKind.DOLLAR
     | SyntaxKind.HASH
@@ -308,6 +309,7 @@ export type UnaryOpSyntaxKind =
 
 export function is_unary_op(kind: SyntaxKind): kind is UnaryOpSyntaxKind {
     return (
+        kind == SyntaxKind.EXCLAMATION ||
         kind == SyntaxKind.MINUS ||
         kind == SyntaxKind.DOLLAR ||
         kind == SyntaxKind.HASH ||
@@ -326,9 +328,9 @@ export type OpSyntaxKind =
     | SyntaxKind.CIRCUMFLEXEQ
     | SyntaxKind.VBAREQ
     | SyntaxKind.AMPERSANDEQ
-    | SyntaxKind.EXCLAMATION
     | SyntaxKind.CIRCUMFLEX
     | SyntaxKind.PLUS
+    | SyntaxKind.EXCLAMATION
     | SyntaxKind.MINUS
     | SyntaxKind.DOLLAR
     | SyntaxKind.HASH
@@ -373,9 +375,9 @@ export function is_op(kind: SyntaxKind): kind is OpSyntaxKind {
         kind == SyntaxKind.CIRCUMFLEXEQ ||
         kind == SyntaxKind.VBAREQ ||
         kind == SyntaxKind.AMPERSANDEQ ||
-        kind == SyntaxKind.EXCLAMATION ||
         kind == SyntaxKind.CIRCUMFLEX ||
         kind == SyntaxKind.PLUS ||
+        kind == SyntaxKind.EXCLAMATION ||
         kind == SyntaxKind.MINUS ||
         kind == SyntaxKind.DOLLAR ||
         kind == SyntaxKind.HASH ||

@@ -37,6 +37,7 @@ export const EXPR_FIRST = new TokenSet([
     SyntaxKind.EXCLAMATION,
     SyntaxKind.DOLLAR,
     SyntaxKind.HASH,
+    SyntaxKind.ASTERISK,
     SyntaxKind.AMPERSAND,
     // SyntaxKind.PLUS,
     SyntaxKind.MINUS,

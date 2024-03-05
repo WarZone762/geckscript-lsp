@@ -1,3 +1,5 @@
+#!/bin/env -S node --loader ts-node/esm
+
 import assert = require("assert");
 
 class NodeInfo {

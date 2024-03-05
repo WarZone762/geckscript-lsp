@@ -1,3 +1,5 @@
+#!/bin/env -S node --loader ts-node/esm
+
 type SyntaxKindData = [string[], string];
 
 function syntax_kinds(data: SyntaxKindData): string {
@@ -103,12 +105,14 @@ export const ASSIGNMENT_OP: SyntaxKindData = [
     "",
 ];
 
-export const UNARY_OP: SyntaxKindData = [["MINUS", "DOLLAR", "HASH", "AMPERSAND", "ASTERISK"], ""];
+export const UNARY_OP: SyntaxKindData = [
+    ["EXCLAMATION", "MINUS", "DOLLAR", "HASH", "AMPERSAND", "ASTERISK"],
+    "",
+];
 
 export const OP: SyntaxKindData = [
     [
         ...ASSIGNMENT_OP[0],
-        "EXCLAMATION",
         "CIRCUMFLEX",
         "PLUS",
         ...UNARY_OP[0],
