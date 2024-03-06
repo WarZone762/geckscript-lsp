@@ -4,8 +4,7 @@ import { AnyEvent, EventDiagnostic, EventKind, EventStart } from "./parser/event
 import { Input, parse } from "./parser/parser.js";
 import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
-
-import assert = require("assert");
+import assert from "assert";
 
 export function parse_str(str: string): [Node, Diagnostic[]] {
     const l = new Lexer(str);
@@ -80,7 +79,7 @@ export class TreeBuilder {
 
     finish(): Node {
         const root = this.children.pop();
-        assert(root != undefined && root.is_node());
+        assert.strict(root != undefined && root.is_node());
 
         return root;
     }

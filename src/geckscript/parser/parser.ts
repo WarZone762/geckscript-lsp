@@ -15,8 +15,7 @@ import {
 } from "./event.js";
 import { script } from "./grammar/other.js";
 import { TokenSet } from "./token_set.js";
-
-import assert = require("assert");
+import assert from "assert";
 
 export class Input {
     tokens: TokenSyntaxKind[];
@@ -39,9 +38,7 @@ export class Marker {
 
     complete(p: Parser, kind: NodeSyntaxKind): CompletedMarker {
         const event = p.events[this.pos];
-        if (event.kind != EventKind.Start) {
-            assert(false);
-        }
+        assert.strictEqual(event.kind, EventKind.Start);
 
         event.syntax_kind = kind;
         p.push_event(new EventFinish());

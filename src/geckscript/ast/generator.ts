@@ -1,6 +1,6 @@
 #!/bin/env -S node --loader ts-node/esm
 
-import assert = require("assert");
+import assert from "assert";
 
 class NodeInfo {
     syntax_kind: string;
@@ -150,7 +150,7 @@ function parse_data(data: string) {
         function next(s?: string): string {
             const t = ts[pos++];
             if (s != undefined) {
-                assert(t === s);
+                assert.strictEqual(t, s);
             }
 
             return t;

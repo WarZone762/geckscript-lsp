@@ -1,3 +1,4 @@
+import assert from "assert";
 import { AstNode, Script } from "../ast/generated.js";
 import * as parsing from "../parsing.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
@@ -7,8 +8,6 @@ import * as path from "path";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
-
-import assert = require("assert");
 
 export const enum ExprType {
     Unknown,
@@ -98,7 +97,7 @@ export class FileDatabase {
             });
         }
 
-        assert(node.kind === SyntaxKind.SCRIPT);
+        assert.strictEqual(node.kind, SyntaxKind.SCRIPT);
         const parsed = new ParsedString(doc, new Script(node), diagnostics);
         this.files.set(doc.uri, parsed);
 
