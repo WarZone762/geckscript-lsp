@@ -1,41 +1,41 @@
-import { token_at_offset } from "../geckscript/ast.js";
-import { find_def_from_token, find_refs } from "../geckscript/hir/api.js";
+import { tokenAtOffset } from "../geckscript/ast.js";
+import { findDefFromToken, findRefs } from "../geckscript/hir/api.js";
 import { ParsedString } from "../geckscript/hir/hir.js";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
 import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver";
 import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 
-export function prepare_rename(
+export function prepareRename(
     parsed: ParsedString,
     pos: Position
 ): Range | { range: Range; placeholder: string } | ResponseError | null {
-    const token = token_at_offset(parsed.root.green, parsed.offset_at(pos));
+    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token?.kind !== SyntaxKind.IDENT) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    return parsed.range_of(token);
+    return parsed.rangeOf(token);
 }
 
 export function rename(
     parsed: ParsedString,
-    new_name: string,
+    newName: string,
     pos: Position
 ): WorkspaceEdit | ResponseError | null {
-    const token = token_at_offset(parsed.root.green, parsed.offset_at(pos));
+    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const def = find_def_from_token(token);
+    const def = findDefFromToken(token);
     if (def == undefined) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = find_refs(def);
-    const changes: TextEdit[] = [{ range: parsed.range_of(def.green), newText: new_name }];
+    const refs = findRefs(def);
+    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.green), newText: newName }];
     for (const ref of refs) {
-        changes.push({ range: parsed.range_of(ref.green), newText: new_name });
+        changes.push({ range: parsed.rangeOf(ref.green), newText: newName });
     }
 
     return { changes: { [parsed.doc.uri]: changes } };

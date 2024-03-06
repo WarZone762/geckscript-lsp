@@ -22,15 +22,15 @@ import {
 
 const DB = new FileDatabase();
 
-const check_index = process.argv.indexOf("--check");
-if (check_index !== -1) {
-    const path = process.argv.at(check_index + 1);
+const checkIndex = process.argv.indexOf("--check");
+if (checkIndex !== -1) {
+    const path = process.argv.at(checkIndex + 1);
     if (path === undefined) {
         console.log("ERROR: expected path after --check");
         process.exit(1);
     }
 
-    await DB.load_folder(path);
+    await DB.loadFolder(path);
     for (const [path, doc] of DB.files.entries()) {
         if (doc.diagnostics.filter((d) => d.severity === DiagnosticSeverity.Error).length > 0) {
             console.log(`${path}:`);
@@ -50,23 +50,23 @@ if (check_index !== -1) {
 /** Helper to create a document reqest handler function */
 function handler<RP extends { textDocument: { uri: string } }, T extends unknown[], R>(
     f: (parsed: ParsedString, ...params: T) => R,
-    applied: (f: (...params: T) => R, request_params: RP) => R
-): (request_params: RP) => Promise<R | null> {
-    return async (request_params) => {
-        const parsed = DB.files.get(request_params.textDocument.uri);
+    applied: (f: (...params: T) => R, requestParams: RP) => R
+): (requestParams: RP) => Promise<R | null> {
+    return async (requestParams) => {
+        const parsed = DB.files.get(requestParams.textDocument.uri);
         if (parsed == null) {
             return null;
         }
-        return applied((...params) => f(parsed, ...params), request_params);
+        return applied((...params) => f(parsed, ...params), requestParams);
     };
 }
 
 const connection = createConnection(ProposedFeatures.all);
-let tree_view_server: TreeViewServer.TreeViewServer | undefined;
-let root_dirs: WorkspaceFolder[] = [];
+let treeViewServer: TreeViewServer.TreeViewServer | undefined;
+let rootDirs: WorkspaceFolder[] = [];
 
 connection.onInitialize(async (params) => {
-    root_dirs = params.workspaceFolders ?? [];
+    rootDirs = params.workspaceFolders ?? [];
     const capabilities = params.capabilities;
 
     const result: InitializeResult = {
@@ -99,7 +99,7 @@ connection.onInitialize(async (params) => {
 
     if (process.argv.find((e) => e === "--tree-view-server") !== undefined) {
         console.log("Running tree view server");
-        tree_view_server = new TreeViewServer.TreeViewServer(8000, "localhost");
+        treeViewServer = new TreeViewServer.TreeViewServer(8000, "localhost");
     }
 
     // if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
@@ -110,8 +110,8 @@ connection.onInitialize(async (params) => {
 });
 
 connection.onInitialized(async () => {
-    for (const dir of root_dirs) {
-        await DB.load_folder(URI.parse(dir.uri).fsPath);
+    for (const dir of rootDirs) {
+        await DB.loadFolder(URI.parse(dir.uri).fsPath);
     }
 
     for (const file of DB.files.values()) {
@@ -121,11 +121,9 @@ connection.onInitialized(async () => {
 
 connection.onDidOpenTextDocument(async (params) => {
     const doc = params.textDocument;
-    const parsed = DB.parse_doc(
-        TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text)
-    );
+    const parsed = DB.parseDoc(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
 
-    tree_view_server?.write_tree_data(ast.to_tree_data(parsed.root.green));
+    treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
 
     connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
 });
@@ -134,9 +132,9 @@ connection.onDidChangeTextDocument(
     handler(
         (parsed, params: DidChangeTextDocumentParams) => {
             TextDocument.update(parsed.doc, params.contentChanges, params.textDocument.version);
-            parsed = DB.parse_doc(parsed.doc);
+            parsed = DB.parseDoc(parsed.doc);
 
-            tree_view_server?.write_tree_data(ast.to_tree_data(parsed.root.green));
+            treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
 
             connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
         },
@@ -159,28 +157,28 @@ connection.onDidChangeTextDocument(
 //   }
 // );
 
-connection.onDefinition(handler(features.goto_def, (f, p) => f(p.position)));
-connection.onDocumentFormatting(handler(features.format_doc, (f, p) => f(p.options)));
-connection.onDocumentHighlight(handler(features.get_highlight, (f, p) => f(p.position)));
+connection.onDefinition(handler(features.gotoDef, (f, p) => f(p.position)));
+connection.onDocumentFormatting(handler(features.formatDoc, (f, p) => f(p.options)));
+connection.onDocumentHighlight(handler(features.getHighlight, (f, p) => f(p.position)));
 connection.onDocumentSymbol(handler(features.symbols, (f) => f()));
 connection.onHover(
     handler(
         (parsed, params: HoverParams) => {
-            const token = ast.token_at_offset(parsed.root.green, parsed.offset_at(params.position));
+            const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(params.position));
             if (token == undefined) {
                 return null;
             }
 
             return {
                 contents: token.text,
-                range: { start: parsed.pos_at(token.offset), end: parsed.pos_at(token.end()) },
+                range: { start: parsed.posAt(token.offset), end: parsed.posAt(token.end()) },
             };
         },
         (f, p) => f(p)
     )
 );
 connection.onReferences(handler(features.refs, (f, p) => f(p.position)));
-connection.onPrepareRename(handler(features.prepare_rename, (f, p) => f(p.position)));
+connection.onPrepareRename(handler(features.prepareRename, (f, p) => f(p.position)));
 connection.onRenameRequest(handler(features.rename, (f, p) => f(p.newName, p.position)));
 connection.onSelectionRanges(
     handler(
@@ -190,11 +188,11 @@ connection.onSelectionRanges(
 );
 connection.onRequest(
     SemanticTokensRequest.method,
-    handler(features.build_semantic_tokens, (f) => f())
+    handler(features.buildSemanticTokens, (f) => f())
 );
 
 // connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));
 
-connection.onExit(() => tree_view_server?.close());
+connection.onExit(() => treeViewServer?.close());
 
 connection.listen();

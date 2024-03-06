@@ -31,7 +31,7 @@ const EXPR_TYPE_NAME_MAP: { [key in ExprType]?: string } = {
     [ExprType.Array]: "array",
 };
 
-export function expr_type_name(type: ExprType): string {
+export function exprTypeName(type: ExprType): string {
     return EXPR_TYPE_NAME_MAP[type] ?? "unable to find Type name";
 }
 
@@ -64,15 +64,15 @@ export class ParsedString {
         this.diagnostics = diagnostics;
     }
 
-    range_of(node: NodeOrToken): Range {
-        return { start: this.pos_at(node.offset), end: this.pos_at(node.end()) };
+    rangeOf(node: NodeOrToken): Range {
+        return { start: this.posAt(node.offset), end: this.posAt(node.end()) };
     }
 
-    pos_at(offset: number): Position {
+    posAt(offset: number): Position {
         return this.doc.positionAt(offset);
     }
 
-    offset_at(pos: Position): number {
+    offsetAt(pos: Position): number {
         return this.doc.offsetAt(pos);
     }
 }
@@ -80,8 +80,8 @@ export class ParsedString {
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
 
-    parse_doc(doc: TextDocument): ParsedString {
-        const [node, errors] = parsing.parse_str(doc.getText());
+    parseDoc(doc: TextDocument): ParsedString {
+        const [node, errors] = parsing.parseStr(doc.getText());
         const diagnostics: Diagnostic[] = [];
         for (const e of errors) {
             const start = doc.positionAt(e.offset);
@@ -104,24 +104,24 @@ export class FileDatabase {
         return parsed;
     }
 
-    async load_folder(dir_path: string) {
-        const files = await fs.readdir(dir_path, { recursive: true });
+    async loadFolder(dirPath: string) {
+        const files = await fs.readdir(dirPath, { recursive: true });
         for (const file of files) {
-            const full_path = path.resolve(path.join(dir_path, file));
-            const stat = await fs.stat(full_path);
+            const fullPath = path.resolve(path.join(dirPath, file));
+            const stat = await fs.stat(fullPath);
 
             if (stat.isDirectory() || (!file.endsWith(".gek") && !file.endsWith(".geck"))) {
                 continue;
             }
 
-            const content = await fs.readFile(full_path);
+            const content = await fs.readFile(fullPath);
             const doc = TextDocument.create(
-                URI.file(full_path).toString(),
+                URI.file(fullPath).toString(),
                 "geckscript",
                 0,
                 content.toString()
             );
-            this.parse_doc(doc);
+            this.parseDoc(doc);
         }
     }
 }

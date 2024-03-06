@@ -3,19 +3,19 @@
 import assert from "assert";
 
 class NodeInfo {
-    syntax_kind: string;
+    syntaxKind: string;
 
     members: { [key: string]: MemberInfo } = {};
 
-    constructor(syntax_kind: string) {
-        this.syntax_kind = syntax_kind;
+    constructor(syntaxKind: string) {
+        this.syntaxKind = syntaxKind;
     }
 
     funcs(): string {
         return `${Object.entries(this.members)
             .map((m) =>
                 `
-    ${m[0]}(): ${m[1].ret_type()} {
+    ${m[0]}(): ${m[1].retType()} {
         return ${m[1].ret()};
     }
     `.trim()
@@ -43,45 +43,45 @@ class MemberInfo {
     ret(): string {
         switch (this.args[0]) {
             case "Token": {
-                const pred_body = this.args
+                const predBody = this.args
                     .slice(1)
                     .map((d) => `k === SyntaxKind.${d}`)
                     .join(" || ");
-                const pred_type_ret = this.args
+                const predTypeRet = this.args
                     .slice(1)
                     .map((d) => `SyntaxKind.${d}`)
                     .join(" | ");
 
-                return `token(this, (k => ${pred_body}) as (k: SyntaxKind) => k is ${pred_type_ret})`;
+                return `token(this, (k => ${predBody}) as (k: SyntaxKind) => k is ${predTypeRet})`;
             }
             case "Type":
-                return "token(this, is_type)";
+                return "token(this, isType)";
             case "Op":
-                return "token(this, is_op)";
+                return "token(this, isOp)";
             case "VarOrVarDecl":
-                return "VarOrVarDecl(child(this, is_var_or_var_decl))";
+                return "VarOrVarDecl(child(this, isVarOrVarDecl))";
             case "Expr":
-                return "Expr(child(this, is_expr))";
+                return "Expr(child(this, isExpr))";
             case "Stmt":
-                return "Stmt(child(this, is_stmt))";
+                return "Stmt(child(this, isStmt))";
             default: {
-                const syntax_kind =
-                    NODE_INFO_MAP[this.args[0]]?.syntax_kind ??
-                    LIST_INFO_MAP[this.args[0]]?.syntax_kind;
-                return `${this.args[0]}.from_green(child(this, (k => k === SyntaxKind.${syntax_kind}) as (k: SyntaxKind) => k is SyntaxKind.${syntax_kind}))`;
+                const syntaxKind =
+                    NODE_INFO_MAP[this.args[0]]?.syntaxKind ??
+                    LIST_INFO_MAP[this.args[0]]?.syntaxKind;
+                return `${this.args[0]}.fromGreen(child(this, (k => k === SyntaxKind.${syntaxKind}) as (k: SyntaxKind) => k is SyntaxKind.${syntaxKind}))`;
             }
         }
     }
 
-    ret_type(): string {
+    retType(): string {
         switch (this.args[0]) {
             case "Token": {
-                const pred_type_ret = this.args
+                const predTypeRet = this.args
                     .slice(1)
                     .map((d) => `SyntaxKind.${d}`)
                     .join(" | ");
 
-                return `Token<${pred_type_ret}> | undefined`;
+                return `Token<${predTypeRet}> | undefined`;
             }
             case "Type":
                 return "Token<TypeSyntaxKind> | undefined";
@@ -100,14 +100,14 @@ class MemberInfo {
     }
 }
 
-function parse_data(data: string) {
+function parseData(data: string) {
     let pos = 0;
     const ts = tokens();
 
     const infos: InfoMap = {};
 
     while (pos < ts.length) {
-        const [name, info] = parse_node();
+        const [name, info] = parseNode();
         infos[name] = info;
     }
 
@@ -120,24 +120,24 @@ function parse_data(data: string) {
             .flatMap((e) => e.split(/\b/));
     }
 
-    function parse_node(): [string, NodeInfo] {
+    function parseNode(): [string, NodeInfo] {
         const name = next();
         next(":");
-        const syntax_kind = next();
-        const info = new NodeInfo(syntax_kind);
+        const syntaxKind = next();
+        const info = new NodeInfo(syntaxKind);
         next("{");
 
         while (cur() !== "}") {
-            const mem_name = next();
-            const mem_info = new MemberInfo();
+            const memName = next();
+            const memInfo = new MemberInfo();
             next(":");
 
             while (cur() !== ",") {
-                mem_info.args.push(next());
+                memInfo.args.push(next());
             }
             next(",");
 
-            info.members[mem_name] = mem_info;
+            info.members[memName] = memInfo;
         }
         next("}");
 
@@ -158,9 +158,9 @@ function parse_data(data: string) {
     }
 }
 
-function list_type(name: string, syntax_kind: string, predicate: string): string {
+function listType(name: string, syntaxKind: string, predicate: string): string {
     return `
-export class ${name}List extends AstNode<SyntaxKind.${syntax_kind}_LIST> {
+export class ${name}List extends AstNode<SyntaxKind.${syntaxKind}_LIST> {
     *iter() {
         for (const child of children(this, ${predicate})) {
             yield ${name}(child);
@@ -170,10 +170,10 @@ export class ${name}List extends AstNode<SyntaxKind.${syntax_kind}_LIST> {
 `.trim();
 }
 
-function enum_type(name: string, info_map: InfoMap): string {
+function enumType(name: string, infoMap: InfoMap): string {
     return `
 export type ${name} =
-    | ${Object.keys(info_map).join("\n    | ")}
+    | ${Object.keys(infoMap).join("\n    | ")}
     ;
 
 export function ${name}(green: Node<${name}SyntaxKind> | undefined): ${name} | undefined {
@@ -182,11 +182,11 @@ export function ${name}(green: Node<${name}SyntaxKind> | undefined): ${name} | u
     }
 
     switch (green.kind) {
-        ${Object.entries(info_map)
+        ${Object.entries(infoMap)
             .map((n) =>
                 `
-        case SyntaxKind.${n[1].syntax_kind}:
-            return new ${n[0]}(green as Node<SyntaxKind.${n[1].syntax_kind}>);
+        case SyntaxKind.${n[1].syntaxKind}:
+            return new ${n[0]}(green as Node<SyntaxKind.${n[1].syntaxKind}>);
         `.trim()
             )
             .join("\n        ")}
@@ -196,12 +196,12 @@ export function ${name}(green: Node<${name}SyntaxKind> | undefined): ${name} | u
 }
 
 function generate(): string {
-    Object.assign(VAR_OR_VAR_DECL_INFO_MAP, parse_data(VAR_OR_VAR_DECL_DATA));
-    Object.assign(EXPR_INFO_MAP, parse_data(EXPR_DATA));
-    Object.assign(STMT_INFO_MAP, parse_data(STMT_DATA));
-    Object.assign(NODE_INFO_MAP, parse_data(NODE_DATA));
+    Object.assign(VAR_OR_VAR_DECL_INFO_MAP, parseData(VAR_OR_VAR_DECL_DATA));
+    Object.assign(EXPR_INFO_MAP, parseData(EXPR_DATA));
+    Object.assign(STMT_INFO_MAP, parseData(STMT_DATA));
+    Object.assign(NODE_INFO_MAP, parseData(NODE_DATA));
     return `
-import { ExprSyntaxKind, is_expr, is_op, is_primary_expr, is_stmt, is_type, is_var_or_var_decl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated.js";
+import { ExprSyntaxKind, isExpr, isOp, isPrimaryExpr, isStmt, isType, isVarOrVarDecl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
@@ -210,7 +210,7 @@ export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
         this.green = green;
     }
 
-    static from_green<C, T extends NodeSyntaxKind>(this: { new(green: Node<T>): C; }, green: Node<T> | undefined): C | undefined {
+    static fromGreen<C, T extends NodeSyntaxKind>(this: { new(green: Node<T>): C; }, green: Node<T> | undefined): C | undefined {
         if (green != undefined) {
             return new this(green);
         }
@@ -273,19 +273,19 @@ export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefine
     }
 }
 
-${enum_type("VarOrVarDecl", VAR_OR_VAR_DECL_INFO_MAP)}
-${enum_type("Expr", EXPR_INFO_MAP)}
-${enum_type("Stmt", STMT_INFO_MAP)}
+${enumType("VarOrVarDecl", VAR_OR_VAR_DECL_INFO_MAP)}
+${enumType("Expr", EXPR_INFO_MAP)}
+${enumType("Stmt", STMT_INFO_MAP)}
 
-${list_type("PrimaryExpr", "PRIMARY_EXPR", "is_primary_expr")}
-${list_type("VarOrVarDecl", "VAR_OR_VAR_DECL", "is_var_or_var_decl")}
-${list_type("Expr", "EXPR", "is_expr")}
-${list_type("Stmt", "STMT", "is_stmt")}
+${listType("PrimaryExpr", "PRIMARY_EXPR", "isPrimaryExpr")}
+${listType("VarOrVarDecl", "VAR_OR_VAR_DECL", "isVarOrVarDecl")}
+${listType("Expr", "EXPR", "isExpr")}
+${listType("Stmt", "STMT", "isStmt")}
 
 ${Object.entries(NODE_INFO_MAP)
     .map((n) =>
         `
-export class ${n[0]} extends AstNode<SyntaxKind.${n[1].syntax_kind}> {
+export class ${n[0]} extends AstNode<SyntaxKind.${n[1].syntaxKind}> {
     ${n[1].funcs()}
 }
 `.trim()
@@ -300,7 +300,7 @@ Name: NAME {
 }
 
 NameRef: NAME_REF {
-    name_ref: Token IDENT,
+    nameRef: Token IDENT,
 }
 
 VarDecl: VAR_DECL {
@@ -323,7 +323,7 @@ BinExpr: BIN_EXPR {
 
 MemberExpr: MEMBER_EXPR {
     lhs: Expr,
-    left_op: Token LSQBRACK RARROW DOT,
+    leftOp: Token LSQBRACK RARROW DOT,
     rhs: Expr 1,
 }
 
@@ -342,7 +342,7 @@ LambdaInlineExpr: LAMBDA_INLINE_EXPR {
 
 LambdaExpr: LAMBDA_EXPR {
     begin: Token BEGIN_KW,
-    func_kw: NameRef,
+    funcKw: NameRef,
     lbrack: Token LBRACK,
     params: VarOrVarDeclList,
     rbrack: Token RBRACK,
@@ -397,8 +397,8 @@ WhileStmt: WHILE_STMT {
 IfStmt: IF_STMT {
     if: Token IF_KW,
     cond: Expr,
-    true_branch: StmtList,
-    false_branch: Branch,
+    trueBranch: StmtList,
+    falseBranch: Branch,
     endif: Token ENDIF_KW,
 }
 `.trim();
@@ -419,8 +419,8 @@ ${STMT_DATA}
 Branch: BRANCH {
     elseif: Token ELSEIF_KW ELSE_KW,
     cond: Expr,
-    true_branch: StmtList,
-    false_branch: Branch,
+    trueBranch: StmtList,
+    falseBranch: Branch,
 }
 
 Script: SCRIPT {

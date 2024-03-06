@@ -4,12 +4,12 @@ import * as fs from "fs";
 import * as path from "path";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import wtf_md from "wtf-plugin-markdown";
+import wtfMd from "wtf-plugin-markdown";
 import wtf from "wtf_wikipedia";
 
-wtf.plugin(wtf_md);
+wtf.plugin(wtfMd);
 
-const CachePath = path.join("resources", "function_page_cache.json");
+const CachePath = path.join("resources", "functionPageCache.json");
 
 const FunctionPageCache: { [key: string]: string } = fs.existsSync(CachePath)
     ? JSON.parse(fs.readFileSync(CachePath).toString())
@@ -165,9 +165,9 @@ wtf.extend((models: Record<string, { new (): unknown }>, templates: Record<strin
 });
 
 export async function GetFunctionDocumentation(
-    page_name: string
+    pageName: string
 ): Promise<FunctionDocumentation | undefined> {
-    let text = await GetCacheValue(page_name);
+    let text = await GetCacheValue(pageName);
     if (text == undefined) {
         return undefined;
     }
@@ -191,7 +191,7 @@ export async function GetFunctionDocumentation(
 //   console.log();
 // });
 
-export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocumentation): string {
+export function GetFunctionSignature(funcInfo: FunctionInfo, doc: FunctionDocumentation): string {
     let signature = "";
 
     if (doc.template.returnval != undefined || doc.template.returntype != undefined) {
@@ -212,7 +212,7 @@ export function GetFunctionSignature(func_info: FunctionInfo, doc: FunctionDocum
         signature += `${doc.template.referencetype}.`;
     }
 
-    signature += `${doc.template.name ?? func_info.canonical_name} `;
+    signature += `${doc.template.name ?? funcInfo.canonicalName} `;
 
     for (const arg of doc.template.arguments ?? []) {
         if (arg instanceof String) {

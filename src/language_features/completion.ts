@@ -20,10 +20,10 @@ import { Position } from "vscode-languageserver-textdocument";
 //     return null;
 //   }
 
-//   const completion_items: CompletionItem[] = [];
+//   const completionItems: CompletionItem[] = [];
 
 //   for (const v of Object.values(ast.GetVisibleSymbols(token))) {
-//     completion_items.push({
+//     completionItems.push({
 //       label: v.name,
 //       data: v.name,
 //       kind: CompletionItemKind.Variable,
@@ -35,9 +35,9 @@ import { Position } from "vscode-languageserver-textdocument";
 //       continue;
 //     }
 
-//     completion_items.push({
-//       label: v.canonical_name,
-//       data: v.wiki_page_name ?? v.canonical_name,
+//     completionItems.push({
+//       label: v.canonicalName,
+//       data: v.wikiPageName ?? v.canonicalName,
 //       kind:
 //         IsTypename(v.kind) ? CompletionItemKind.TypeParameter :
 //           IsKeyword(v.kind) ? CompletionItemKind.Keyword :
@@ -46,14 +46,14 @@ import { Position } from "vscode-languageserver-textdocument";
 //   }
 
 //   for (const v of Object.values(FunctionData)) {
-//     completion_items.push({
-//       label: v.canonical_name,
+//     completionItems.push({
+//       label: v.canonicalName,
 //       data: v.name,
 //       kind: CompletionItemKind.Function,
 //     });
 //   }
 
-//   return completion_items;
+//   return completionItems;
 // }
 
 export async function GetCompletionItemDoc(item: CompletionItem): Promise<CompletionItem> {
@@ -61,21 +61,21 @@ export async function GetCompletionItemDoc(item: CompletionItem): Promise<Comple
         return item;
     }
 
-    const func_info = GetFunctionInfo(item.data)!;
-    if (func_info == undefined) {
+    const funcInfo = GetFunctionInfo(item.data)!;
+    if (funcInfo == undefined) {
         item.detail = item.data;
         return item;
     }
 
-    const doc = await functions.GetFunctionDocumentation(func_info.wiki_page_name);
+    const doc = await functions.GetFunctionDocumentation(funcInfo.wikiPageName);
     if (doc == undefined || doc.template == undefined) {
-        item.detail = func_info.canonical_name;
+        item.detail = funcInfo.canonicalName;
         item.documentation = doc?.text ?? "Unable to get documentation";
 
         return item;
     }
 
-    item.detail = functions.GetFunctionSignature(func_info, doc);
+    item.detail = functions.GetFunctionSignature(funcInfo, doc);
 
     let text = doc.template.summary ?? "";
     text += "\n\n" + doc.text;

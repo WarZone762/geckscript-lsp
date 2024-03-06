@@ -1,31 +1,31 @@
-import { SyntaxKind, syntax_kind_name } from "./syntax_kind/generated.js";
+import { SyntaxKind, syntaxKindName } from "./syntax_kind/generated.js";
 import { Node, Token, NodeOrToken } from "./types/syntax_node.js";
 
-export function for_each_child(node: Node, func: (node: NodeOrToken) => unknown): void {
+export function forEachChild(node: Node, func: (node: NodeOrToken) => unknown): void {
     for (const child of node.children) {
         func(child);
     }
 }
 
-export function for_each_child_recursive(
+export function forEachChildRecursive(
     root: Node,
-    pre_func: (node: NodeOrToken) => unknown = () => undefined,
-    post_func: (node: NodeOrToken) => unknown = () => undefined
+    preFunc: (node: NodeOrToken) => unknown = () => undefined,
+    postFunc: (node: NodeOrToken) => unknown = () => undefined
 ): void {
-    for_each_child(root, (node) => {
-        pre_func(node);
-        if (node.is_node()) {
-            for_each_child_recursive(node, pre_func, post_func);
+    forEachChild(root, (node) => {
+        preFunc(node);
+        if (node.isNode()) {
+            forEachChildRecursive(node, preFunc, postFunc);
         }
-        post_func(node);
+        postFunc(node);
     });
 }
 
-export function* descendants_df(node: NodeOrToken): Generator<NodeOrToken> {
-    if (node.is_node()) {
+export function* descendantsDf(node: NodeOrToken): Generator<NodeOrToken> {
+    if (node.isNode()) {
         yield node;
         for (const child of node.children) {
-            yield* descendants_df(child);
+            yield* descendantsDf(child);
         }
     } else {
         yield node;
@@ -33,7 +33,7 @@ export function* descendants_df(node: NodeOrToken): Generator<NodeOrToken> {
 }
 
 export function* leafs(node: NodeOrToken): Generator<Token> {
-    if (node.is_node()) {
+    if (node.isNode()) {
         for (const child of node.children) {
             yield* leafs(child);
         }
@@ -52,7 +52,7 @@ export function* siblings(node: NodeOrToken): Generator<NodeOrToken> {
     }
 }
 
-export function index_in_parent(node: NodeOrToken): number | undefined {
+export function indexInParent(node: NodeOrToken): number | undefined {
     if (node.parent == undefined) {
         return undefined;
     }
@@ -64,8 +64,8 @@ export function index_in_parent(node: NodeOrToken): number | undefined {
     }
 }
 
-export function prev_sibling(node: NodeOrToken): NodeOrToken | undefined {
-    const i = index_in_parent(node);
+export function prevSibling(node: NodeOrToken): NodeOrToken | undefined {
+    const i = indexInParent(node);
     if (i == undefined) {
         return undefined;
     }
@@ -73,8 +73,8 @@ export function prev_sibling(node: NodeOrToken): NodeOrToken | undefined {
     return node.parent?.children[i - 1];
 }
 
-export function next_sibling(node: NodeOrToken): NodeOrToken | undefined {
-    const i = index_in_parent(node);
+export function nextSibling(node: NodeOrToken): NodeOrToken | undefined {
+    const i = indexInParent(node);
     if (i == undefined) {
         return undefined;
     }
@@ -82,27 +82,27 @@ export function next_sibling(node: NodeOrToken): NodeOrToken | undefined {
     return node.parent?.children[i + 1];
 }
 
-export function prev_node_df(node: NodeOrToken): NodeOrToken | undefined {
-    let child = prev_sibling(node);
+export function prevNodeDf(node: NodeOrToken): NodeOrToken | undefined {
+    let child = prevSibling(node);
     if (child == undefined) {
         return node.parent;
     }
 
     while (true) {
-        if (!child.is_node() || child.children.at(-1) == undefined) {
+        if (!child.isNode() || child.children.at(-1) == undefined) {
             return child;
         }
         child = child.children.at(-1)!;
     }
 }
 
-export function next_node_df(node: NodeOrToken): NodeOrToken | undefined {
-    if (node.is_node() && node.children[0] != undefined) {
+export function nextNodeDf(node: NodeOrToken): NodeOrToken | undefined {
+    if (node.isNode() && node.children[0] != undefined) {
         return node.children[0];
     }
 
     let parent: NodeOrToken | undefined = node;
-    let ns = next_sibling(node);
+    let ns = nextSibling(node);
     while (true) {
         if (ns != undefined) {
             return ns;
@@ -111,27 +111,27 @@ export function next_node_df(node: NodeOrToken): NodeOrToken | undefined {
         if (parent == undefined) {
             return undefined;
         }
-        ns = next_sibling(parent);
+        ns = nextSibling(parent);
     }
 }
 
-export function prev_token(token: Token): Token | undefined {
-    let prev = prev_node_df(token);
+export function prevToken(token: Token): Token | undefined {
+    let prev = prevNodeDf(token);
     while (prev != undefined) {
-        if (!prev.is_node()) {
+        if (!prev.isNode()) {
             return prev;
         }
-        prev = prev_node_df(prev);
+        prev = prevNodeDf(prev);
     }
 }
 
-export function next_token(token: Token): Token | undefined {
-    let next = next_node_df(token);
+export function nextToken(token: Token): Token | undefined {
+    let next = nextNodeDf(token);
     while (next != undefined) {
-        if (!next.is_node()) {
+        if (!next.isNode()) {
             return next;
         }
-        next = next_node_df(next);
+        next = nextNodeDf(next);
     }
 }
 
@@ -143,7 +143,7 @@ export function* ancestors(node: NodeOrToken): Generator<NodeOrToken> {
     }
 }
 
-export function find_ancestor(
+export function findAncestor(
     node: NodeOrToken,
     predicate: (node: NodeOrToken) => boolean
 ): NodeOrToken | undefined {
@@ -156,22 +156,22 @@ export function find_ancestor(
     return undefined;
 }
 
-export function nearest_token(root: Node, offset: number): Token | undefined {
+export function nearestToken(root: Node, offset: number): Token | undefined {
     const leafs_ = leafs(root);
 
-    let last_leaf = leafs_.next().value;
+    let lastLeaf = leafs_.next().value;
     for (const leaf of leafs_) {
         if (leaf.offset > offset) {
-            return last_leaf;
+            return lastLeaf;
         } else {
-            last_leaf = leaf;
+            lastLeaf = leaf;
         }
     }
 
-    return last_leaf;
+    return lastLeaf;
 }
 
-export function token_at_offset(root: Node, offset: number): Token | undefined {
+export function tokenAtOffset(root: Node, offset: number): Token | undefined {
     for (const leaf of leafs(root)) {
         if (leaf.offset <= offset && offset < leaf.end()) {
             return leaf;
@@ -181,7 +181,7 @@ export function token_at_offset(root: Node, offset: number): Token | undefined {
     return undefined;
 }
 
-export function* str_occurences(node: Node, str: string): Generator<Token> {
+export function* strOccurences(node: Node, str: string): Generator<Token> {
     for (const leaf of leafs(node)) {
         if (leaf.text === str) {
             yield leaf;
@@ -189,7 +189,7 @@ export function* str_occurences(node: Node, str: string): Generator<Token> {
     }
 }
 
-export function to_string(node: Node): string {
+export function toString(node: Node): string {
     let text = "";
 
     for (const leaf of leafs(node)) {
@@ -216,18 +216,18 @@ export class TreeData {
         this.children = this.children.concat(children);
     }
 
-    set_range(start: number, end: number) {
+    setRange(start: number, end: number) {
         this.children.unshift(new TreeData("Range", [new TreeData(`${start}..${end}`)]));
     }
 }
 
-export function to_debug(node: Node, filter: Set<SyntaxKind> = new Set()): string {
+export function toDebug(node: Node, filter: Set<SyntaxKind> = new Set()): string {
     let indent = 0;
 
-    return to_debug_recursive(node, filter);
+    return toDebugRecursive(node, filter);
 
-    function to_debug_recursive(node: Node, filter: Set<SyntaxKind>): string {
-        let text = `${"  ".repeat(indent)}${syntax_kind_name(node.kind)} ${
+    function toDebugRecursive(node: Node, filter: Set<SyntaxKind>): string {
+        let text = `${"  ".repeat(indent)}${syntaxKindName(node.kind)} ${
             node.offset
         }..${node.end()}\n`;
         ++indent;
@@ -236,10 +236,10 @@ export function to_debug(node: Node, filter: Set<SyntaxKind> = new Set()): strin
                 continue;
             }
 
-            if (child.is_node()) {
-                text += to_debug_recursive(child, filter);
+            if (child.isNode()) {
+                text += toDebugRecursive(child, filter);
             } else {
-                text += `${"  ".repeat(indent)}${syntax_kind_name(child.kind)} ${
+                text += `${"  ".repeat(indent)}${syntaxKindName(child.kind)} ${
                     child.offset
                 }..${child.end()} ${JSON.stringify(child.text)}\n`;
             }
@@ -250,18 +250,18 @@ export function to_debug(node: Node, filter: Set<SyntaxKind> = new Set()): strin
     }
 }
 
-export function to_tree_data(node: NodeOrToken): TreeData {
+export function toTreeData(node: NodeOrToken): TreeData {
     // TODO: add drawing data to the TreeData
-    const tree_data: TreeData = new TreeData(
-        node.is_node() ? syntax_kind_name(node.kind) : JSON.stringify(node.text)
+    const treeData: TreeData = new TreeData(
+        node.isNode() ? syntaxKindName(node.kind) : JSON.stringify(node.text)
     );
-    tree_data.set_range(node.offset, node.end());
+    treeData.setRange(node.offset, node.end());
 
-    if (node.is_node()) {
-        for_each_child(node, (node) => {
-            tree_data.append(to_tree_data(node));
+    if (node.isNode()) {
+        forEachChild(node, (node) => {
+            treeData.append(toTreeData(node));
         });
     }
 
-    return tree_data;
+    return treeData;
 }

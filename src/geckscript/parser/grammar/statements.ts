@@ -1,37 +1,37 @@
-import { is_assignment_op, is_keyword, is_type, SyntaxKind } from "../../syntax_kind/generated.js";
+import { isAssignmentOp, isKeyword, isType, SyntaxKind } from "../../syntax_kind/generated.js";
 import { Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, TokenSet } from "../token_set.js";
-import { expr, expr_bp, expr_no_func } from "./expressions.js";
-import { block_type, rest_of_line, var_decl_r, var_or_var_decl_r } from "./other.js";
+import { expr, exprBp, exprNoFunc } from "./expressions.js";
+import { blockType, restOfLine, varDeclR, varOrVarDeclR } from "./other.js";
 
 export function stmt(p: Parser) {
     switch (p.cur()) {
         case SyntaxKind.SET_KW:
-            stmt_set(p);
+            stmtSet(p);
             break;
         case SyntaxKind.LET_KW:
-            stmt_let(p);
+            stmtLet(p);
             break;
         case SyntaxKind.IF_KW:
         case SyntaxKind.ELSEIF_KW:
-            stmt_if(p);
+            stmtIf(p);
             break;
         case SyntaxKind.WHILE_KW:
-            stmt_while(p);
+            stmtWhile(p);
             break;
         case SyntaxKind.FOREACH_KW:
-            stmt_foreach(p);
+            stmtForeach(p);
             break;
         case SyntaxKind.NEWLINE:
-            p.next_any();
+            p.nextAny();
             return;
         case SyntaxKind.BEGIN_KW:
-            p.err_and_next("nested begin blocks not allowed");
+            p.errAndNext("nested begin blocks not allowed");
             return;
         default:
-            if (is_keyword(p.cur())) {
+            if (isKeyword(p.cur())) {
                 if (
-                    p.at_ts(
+                    p.atTs(
                         new TokenSet([
                             SyntaxKind.CONTINUE_KW,
                             SyntaxKind.BREAK_KW,
@@ -39,16 +39,16 @@ export function stmt(p: Parser) {
                         ])
                     )
                 ) {
-                    p.next_any();
+                    p.nextAny();
                 } else {
-                    p.warn_and_next("unexpected keyword");
+                    p.warnAndNext("unexpected keyword");
                 }
-            } else if (is_type(p.cur())) {
-                stmt_var_decl(p);
-            } else if (p.at_ts(EXPR_FIRST)) {
+            } else if (isType(p.cur())) {
+                stmtVarDecl(p);
+            } else if (p.atTs(EXPR_FIRST)) {
                 expr(p);
             } else {
-                p.err_and_next("expected expression or statement");
+                p.errAndNext("expected expression or statement");
                 return;
             }
     }
@@ -56,25 +56,25 @@ export function stmt(p: Parser) {
     p.expect(SyntaxKind.NEWLINE);
 }
 
-export function stmt_root(p: Parser) {
+export function stmtRoot(p: Parser) {
     switch (p.cur()) {
         case SyntaxKind.SET_KW:
-            stmt_set(p);
+            stmtSet(p);
             break;
         case SyntaxKind.LET_KW:
-            stmt_let(p);
+            stmtLet(p);
             break;
         case SyntaxKind.BEGIN_KW:
-            stmt_begin(p);
+            stmtBegin(p);
             break;
         case SyntaxKind.NEWLINE:
-            p.next_any();
+            p.nextAny();
             return;
         default:
-            if (is_type(p.cur())) {
-                stmt_var_decl(p);
+            if (isType(p.cur())) {
+                stmtVarDecl(p);
             } else {
-                p.warn_and_next("statement outside of begin block");
+                p.warnAndNext("statement outside of begin block");
                 return;
             }
     }
@@ -84,151 +84,151 @@ export function stmt_root(p: Parser) {
     }
 }
 
-export function stmt_list(p: Parser, terminators: TokenSet) {
+export function stmtList(p: Parser, terminators: TokenSet) {
     const m = p.start();
 
-    while (!p.at(SyntaxKind.EOF) && !p.at_ts(terminators)) {
+    while (!p.at(SyntaxKind.EOF) && !p.atTs(terminators)) {
         stmt(p);
     }
 
     m.complete(p, SyntaxKind.STMT_LIST);
 }
 
-export function stmt_list_root(p: Parser) {
+export function stmtListRoot(p: Parser) {
     const m = p.start();
 
     while (!p.at(SyntaxKind.EOF)) {
-        stmt_root(p);
+        stmtRoot(p);
     }
 
     m.complete(p, SyntaxKind.STMT_LIST);
 }
 
-export function stmt_var_decl(p: Parser) {
+export function stmtVarDecl(p: Parser) {
     const m = p.start();
 
-    var_decl_r(p, ASSIGNMENT_OP);
-    if (is_assignment_op(p.cur())) {
-        p.next_any();
+    varDeclR(p, ASSIGNMENT_OP);
+    if (isAssignmentOp(p.cur())) {
+        p.nextAny();
         expr(p);
     }
 
     m.complete(p, SyntaxKind.VAR_DECL_STMT);
 }
 
-export function stmt_set(p: Parser) {
+export function stmtSet(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.SET_KW);
-    expr_no_func(p);
+    exprNoFunc(p);
     if (!p.opt(SyntaxKind.TO_KW)) {
-        p.err_recover("expected 'to'", EXPR_FIRST);
+        p.errRecover("expected 'to'", EXPR_FIRST);
     }
-    expr_bp(p, 2);
+    exprBp(p, 2);
 
     m.complete(p, SyntaxKind.SET_STMT);
 }
 
-export function stmt_let(p: Parser) {
+export function stmtLet(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.LET_KW);
-    var_or_var_decl_r(p, ASSIGNMENT_OP);
-    if (is_assignment_op(p.cur())) {
-        p.next_any();
+    varOrVarDeclR(p, ASSIGNMENT_OP);
+    if (isAssignmentOp(p.cur())) {
+        p.nextAny();
     } else {
-        p.err_recover("expected assignment operator", EXPR_FIRST);
+        p.errRecover("expected assignment operator", EXPR_FIRST);
     }
     expr(p);
 
     m.complete(p, SyntaxKind.LET_STMT);
 }
 
-export function stmt_begin(p: Parser) {
+export function stmtBegin(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.BEGIN_KW);
-    block_type(p);
+    blockType(p);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list(p, new TokenSet([SyntaxKind.END_KW]));
+    stmtList(p, new TokenSet([SyntaxKind.END_KW]));
     p.expect(SyntaxKind.END_KW);
-    rest_of_line(p);
+    restOfLine(p);
 
     m.complete(p, SyntaxKind.BEGIN_STMT);
 }
 
-export function stmt_foreach(p: Parser) {
+export function stmtForeach(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.FOREACH_KW);
-    var_or_var_decl_r(p, new TokenSet([SyntaxKind.LARROW]));
+    varOrVarDeclR(p, new TokenSet([SyntaxKind.LARROW]));
     if (!p.opt(SyntaxKind.LARROW)) {
-        p.err_recover("expected '<-'", EXPR_FIRST);
+        p.errRecover("expected '<-'", EXPR_FIRST);
     }
     expr(p);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list(p, new TokenSet([SyntaxKind.LOOP_KW]));
+    stmtList(p, new TokenSet([SyntaxKind.LOOP_KW]));
     p.expect(SyntaxKind.LOOP_KW);
 
     m.complete(p, SyntaxKind.FOREACH_STMT);
 }
 
-export function stmt_while(p: Parser) {
+export function stmtWhile(p: Parser) {
     const m = p.start();
 
     p.next(SyntaxKind.WHILE_KW);
     expr(p);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list(p, new TokenSet([SyntaxKind.LOOP_KW]));
+    stmtList(p, new TokenSet([SyntaxKind.LOOP_KW]));
     p.expect(SyntaxKind.LOOP_KW);
 
     m.complete(p, SyntaxKind.WHILE_STMT);
 }
 
-export function stmt_if(p: Parser) {
+export function stmtIf(p: Parser) {
     const m = p.start();
 
     if (p.at(SyntaxKind.IF_KW)) {
-        p.next_any();
+        p.nextAny();
     } else if (p.at(SyntaxKind.ELSEIF_KW)) {
-        p.warn_and_next("replace this 'elseif' with 'if'");
+        p.warnAndNext("replace this 'elseif' with 'if'");
     } else {
         p.expect(SyntaxKind.IF_KW);
     }
     expr(p);
     p.expect(SyntaxKind.NEWLINE);
-    stmt_list(p, new TokenSet([SyntaxKind.ELSEIF_KW, SyntaxKind.ELSE_KW, SyntaxKind.ENDIF_KW]));
-    elseif_else(p);
+    stmtList(p, new TokenSet([SyntaxKind.ELSEIF_KW, SyntaxKind.ELSE_KW, SyntaxKind.ENDIF_KW]));
+    elseifElse(p);
 
     p.expect(SyntaxKind.ENDIF_KW);
 
     m.complete(p, SyntaxKind.IF_STMT);
 }
 
-export function elseif_else(p: Parser) {
+export function elseifElse(p: Parser) {
     if (p.at(SyntaxKind.ELSEIF_KW) || (p.at(SyntaxKind.ELSE_KW) && p.nth(1) === SyntaxKind.IF_KW)) {
         const m = p.start();
 
-        p.next_any();
+        p.nextAny();
         if (p.at(SyntaxKind.IF_KW)) {
-            p.next_any();
+            p.nextAny();
         }
         expr(p);
         p.expect(SyntaxKind.NEWLINE);
-        stmt_list(p, new TokenSet([SyntaxKind.ELSEIF_KW, SyntaxKind.ELSE_KW, SyntaxKind.ENDIF_KW]));
-        elseif_else(p);
+        stmtList(p, new TokenSet([SyntaxKind.ELSEIF_KW, SyntaxKind.ELSE_KW, SyntaxKind.ENDIF_KW]));
+        elseifElse(p);
 
         m.complete(p, SyntaxKind.BRANCH);
     } else if (p.at(SyntaxKind.ELSE_KW)) {
         const m = p.start();
 
-        p.next_any();
-        rest_of_line(p);
+        p.nextAny();
+        restOfLine(p);
         p.expect(SyntaxKind.NEWLINE);
-        stmt_list(p, new TokenSet([SyntaxKind.ENDIF_KW]));
+        stmtList(p, new TokenSet([SyntaxKind.ENDIF_KW]));
 
         m.complete(p, SyntaxKind.BRANCH);
     }

@@ -1,5 +1,5 @@
 import { StringBuffer } from "../common.js";
-import { is_op, OpSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./syntax_kind/generated.js";
+import { isOp, OpSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./syntax_kind/generated.js";
 import { Token } from "./types/syntax_node.js";
 import { GetTokenKind } from "./types/token_data.js";
 
@@ -7,7 +7,7 @@ export class Lexer {
     data: string;
     pos = 0;
     char: string;
-    last_token: Token | undefined;
+    lastToken: Token | undefined;
     buf: StringBuffer;
 
     constructor(text: string) {
@@ -20,7 +20,7 @@ export class Lexer {
         this.char = this.data[++this.pos];
     }
 
-    next_to_buf(): void {
+    nextToBuf(): void {
         this.buf.append(this.char);
         this.next();
     }
@@ -29,7 +29,7 @@ export class Lexer {
         return this.data[this.pos + offset];
     }
 
-    more_data(): boolean {
+    moreData(): boolean {
         return this.pos < this.data.length;
     }
 
@@ -49,9 +49,9 @@ export class Lexer {
     whitespace(): Token<SyntaxKind.WHITESPACE> {
         const token = this.start(SyntaxKind.WHITESPACE);
 
-        this.next_to_buf();
-        while (this.more_data() && /[^\S\n]/.test(this.char)) {
-            this.next_to_buf();
+        this.nextToBuf();
+        while (this.moreData() && /[^\S\n]/.test(this.char)) {
+            this.nextToBuf();
         }
 
         this.finish(token);
@@ -62,9 +62,9 @@ export class Lexer {
     newline(): Token<SyntaxKind.NEWLINE> {
         let token = this.start(SyntaxKind.NEWLINE);
 
-        this.next_to_buf();
-        while (this.more_data() && this.char === "\n") {
-            this.next_to_buf();
+        this.nextToBuf();
+        while (this.moreData() && this.char === "\n") {
+            this.nextToBuf();
         }
         token = this.finish(token);
 
@@ -74,11 +74,11 @@ export class Lexer {
     comment(): Token<SyntaxKind.COMMENT> {
         const token = this.start(SyntaxKind.COMMENT);
 
-        while (this.more_data() && this.char !== "\n") {
+        while (this.moreData() && this.char !== "\n") {
             if (this.char === "\r" && this.nth(1) === "\n") {
                 break;
             }
-            this.next_to_buf();
+            this.nextToBuf();
         }
 
         this.finish(token);
@@ -91,30 +91,30 @@ export class Lexer {
 
         const quote: string = this.char;
 
-        this.next_to_buf();
+        this.nextToBuf();
 
-        while (this.more_data()) {
+        while (this.moreData()) {
             if (this.char === quote) {
-                this.next_to_buf();
+                this.nextToBuf();
                 break;
             }
-            this.next_to_buf();
+            this.nextToBuf();
         }
 
         return this.finish(token);
     }
 
-    number_or_word(): Token {
+    numberOrWord(): Token {
         // try parsing as a hex number
         if (this.char === "0" && this.nth(1)?.toLowerCase() === "x") {
             const token = this.start(SyntaxKind.NUMBER_INT) as Token;
 
-            this.next_to_buf();
-            this.next_to_buf();
+            this.nextToBuf();
+            this.nextToBuf();
 
-            while (this.more_data()) {
+            while (this.moreData()) {
                 if (/[0-9a-fA-F]/.test(this.char)) {
-                    this.next_to_buf();
+                    this.nextToBuf();
                 } else {
                     break;
                 }
@@ -124,14 +124,14 @@ export class Lexer {
         }
 
         // try parsing as a number
-        const [token, finished] = this.try_number();
+        const [token, finished] = this.tryNumber();
         if (finished) {
             return token;
         }
 
         // parse as a word
-        while (this.more_data() && /[0-9a-zA-Z_]/.test(this.char)) {
-            this.next_to_buf();
+        while (this.moreData() && /[0-9a-zA-Z_]/.test(this.char)) {
+            this.nextToBuf();
         }
 
         const kind = GetTokenKind(this.buf.toString().toLowerCase());
@@ -140,16 +140,16 @@ export class Lexer {
         return this.finish(token);
     }
 
-    try_number(): [Token<SyntaxKind.NUMBER_INT>, true] | [Token, false] {
+    tryNumber(): [Token<SyntaxKind.NUMBER_INT>, true] | [Token, false] {
         const token = this.start(SyntaxKind.NUMBER_INT);
 
         if (this.char === "0" && this.nth(1)?.toLowerCase() === "x") {
-            this.next_to_buf();
-            this.next_to_buf();
+            this.nextToBuf();
+            this.nextToBuf();
 
-            while (this.more_data()) {
+            while (this.moreData()) {
                 if (/[0-9a-fA-F]/.test(this.char)) {
-                    this.next_to_buf();
+                    this.nextToBuf();
                 } else {
                     break;
                 }
@@ -158,11 +158,11 @@ export class Lexer {
             return [this.finish(token), true];
         }
 
-        while (this.more_data()) {
+        while (this.moreData()) {
             if (/\d/.test(this.char)) {
-                this.next_to_buf();
+                this.nextToBuf();
             } else if (this.char === ".") {
-                this.next_to_buf();
+                this.nextToBuf();
                 break;
             } else if (/[0-9a-zA-Z_]/.test(this.char)) {
                 return [token, false];
@@ -171,45 +171,45 @@ export class Lexer {
             }
         }
 
-        while (this.more_data() && /\d/.test(this.char)) {
-            this.next_to_buf();
+        while (this.moreData() && /\d/.test(this.char)) {
+            this.nextToBuf();
         }
 
         return [this.finish(token), true];
     }
 
     op(): Token<OpSyntaxKind | SyntaxKind.UNKNOWN> {
-        const next_char = this.nth(1);
-        if (next_char != undefined) {
-            const operator = this.char + next_char;
-            if (is_op(GetTokenKind(operator))) {
+        const nextChar = this.nth(1);
+        if (nextChar != undefined) {
+            const operator = this.char + nextChar;
+            if (isOp(GetTokenKind(operator))) {
                 const token = this.start(GetTokenKind(operator));
 
-                this.next_to_buf();
-                this.next_to_buf();
+                this.nextToBuf();
+                this.nextToBuf();
 
                 return this.finish(token) as Token<OpSyntaxKind>;
             }
         }
 
-        if (is_op(GetTokenKind(this.char))) {
+        if (isOp(GetTokenKind(this.char))) {
             const token = this.start(GetTokenKind(this.char));
-            this.next_to_buf();
+            this.nextToBuf();
 
             return this.finish(token) as Token<OpSyntaxKind>;
         }
 
         const token = this.start(SyntaxKind.UNKNOWN);
 
-        this.next_to_buf();
+        this.nextToBuf();
 
         return this.finish(token);
     }
 
-    lex_token(): Token {
+    lexToken(): Token {
         let token: Token;
 
-        if (this.more_data()) {
+        if (this.moreData()) {
             if (/[^\S\n]/.test(this.char)) {
                 token = this.whitespace();
             } else if (this.char === "\n") {
@@ -218,17 +218,17 @@ export class Lexer {
                 token = this.comment();
             } else if (/["']/.test(this.char)) {
                 token = this.str();
-            } else if (this.char === "." && this.is_number(1)) {
-                token = this.try_number()[0];
+            } else if (this.char === "." && this.isNumber(1)) {
+                token = this.tryNumber()[0];
             } else if (/[a-zA-Z0-9_]/.test(this.char)) {
-                token = this.number_or_word();
+                token = this.numberOrWord();
             } else if (/\S/.test(this.char)) {
                 token = this.op();
             } else {
                 throw new Error(`Unknown character "${this.char}" at offset ${this.pos}`);
             }
 
-            this.last_token = token;
+            this.lastToken = token;
 
             return token;
         } else {
@@ -239,7 +239,7 @@ export class Lexer {
         }
     }
 
-    is_number(offset: number): boolean {
+    isNumber(offset: number): boolean {
         let nth = this.nth(offset);
         // first character must be a number
         if (nth === undefined || /\D/.test(nth)) {
@@ -262,9 +262,9 @@ export class Lexer {
     }
 
     *lex(): Generator<Token> {
-        while (this.more_data()) {
-            yield this.lex_token();
+        while (this.moreData()) {
+            yield this.lexToken();
         }
-        yield this.lex_token();
+        yield this.lexToken();
     }
 }

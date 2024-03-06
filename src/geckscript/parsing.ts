@@ -6,25 +6,25 @@ import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
 import assert from "assert";
 
-export function parse_str(str: string): [Node, Diagnostic[]] {
+export function parseStr(str: string): [Node, Diagnostic[]] {
     const l = new Lexer(str);
-    const tokens_full = Array.from(l.lex());
-    const tokens = tokens_full.filter(
+    const tokensFull = Array.from(l.lex());
+    const tokens = tokensFull.filter(
         (t) => t.kind != SyntaxKind.WHITESPACE && t.kind != SyntaxKind.COMMENT
     );
     const input = new Input(tokens.map((t) => t.kind));
 
-    return output_to_tree(process_events(parse(input)), tokens_full);
+    return outputToTree(processEvents(parse(input)), tokensFull);
 }
 
-export function output_to_tree(output: AnyEvent[], tokens: Token[]): [Node, Diagnostic[]] {
+export function outputToTree(output: AnyEvent[], tokens: Token[]): [Node, Diagnostic[]] {
     const builder = new TriviaBuilder(tokens, output);
     return builder.process();
 }
 
-export function process_events(events: AnyEvent[]): AnyEvent[] {
+export function processEvents(events: AnyEvent[]): AnyEvent[] {
     const output: AnyEvent[] = [];
-    const forward_parents: EventStart[] = [];
+    const forwardParents: EventStart[] = [];
 
     for (let i = 0; i < events.length; ++i) {
         const e = events[i];
@@ -34,17 +34,17 @@ export function process_events(events: AnyEvent[]): AnyEvent[] {
             let idx = i;
             let fp: EventStart = e as EventStart;
             while (true) {
-                forward_parents.unshift(new EventStart(fp.syntax_kind));
-                fp.syntax_kind = SyntaxKind.TOMBSTONE;
-                if (fp.forward_parent == undefined) {
+                forwardParents.unshift(new EventStart(fp.syntaxKind));
+                fp.syntaxKind = SyntaxKind.TOMBSTONE;
+                if (fp.forwardParent == undefined) {
                     break;
                 }
-                idx += fp.forward_parent;
+                idx += fp.forwardParent;
                 fp = events[idx] as EventStart;
             }
 
-            output.push(...forward_parents.filter((e) => e.syntax_kind !== SyntaxKind.TOMBSTONE));
-            forward_parents.splice(0);
+            output.push(...forwardParents.filter((e) => e.syntaxKind !== SyntaxKind.TOMBSTONE));
+            forwardParents.splice(0);
         }
     }
 
@@ -59,27 +59,27 @@ export class TreeBuilder {
         this.children.push(token);
     }
 
-    start_node(kind: NodeSyntaxKind) {
+    startNode(kind: NodeSyntaxKind) {
         const node = Node(kind);
         node.offset = this.children.at(-1)?.end() ?? this.parents.at(-1)?.[0].end() ?? 0;
         this.parents.push([node, this.children.length]);
     }
 
-    finish_node() {
-        const [node, first_child] = this.parents.pop()!;
-        const n = this.children.length - first_child;
+    finishNode() {
+        const [node, firstChild] = this.parents.pop()!;
+        const n = this.children.length - firstChild;
         for (let _ = 0; _ < n; ++_) {
             const child = this.children.pop()!;
             child.parent = node;
             node.children.unshift(child);
         }
-        node.text_len = (node.children.at(-1)?.end() ?? node.offset) - node.offset;
+        node.textLen = (node.children.at(-1)?.end() ?? node.offset) - node.offset;
         this.children.push(node);
     }
 
     finish(): Node {
         const root = this.children.pop();
-        assert.strict(root != undefined && root.is_node());
+        assert.strict(root != undefined && root.isNode());
 
         return root;
     }
@@ -87,15 +87,15 @@ export class TreeBuilder {
 
 export class TriviaBuilder {
     tokens: Token[];
-    token_pos = 0;
+    tokenPos = 0;
     events: AnyEvent[];
     diagnostics: Diagnostic[] = [];
-    tree_builder: TreeBuilder;
+    treeBuilder: TreeBuilder;
 
-    constructor(tokens: Token[], parsed_output: AnyEvent[]) {
+    constructor(tokens: Token[], parsedOutput: AnyEvent[]) {
         this.tokens = tokens;
-        this.events = parsed_output;
-        this.tree_builder = new TreeBuilder();
+        this.events = parsedOutput;
+        this.treeBuilder = new TreeBuilder();
     }
 
     process(): [Node, Diagnostic[]] {
@@ -105,64 +105,64 @@ export class TriviaBuilder {
                     this.token();
                     break;
                 case EventKind.Start:
-                    this.start_node(e.syntax_kind);
+                    this.startNode(e.syntaxKind);
                     break;
                 case EventKind.Finish:
-                    this.finish_node();
+                    this.finishNode();
                     break;
                 case EventKind.Error:
                     this.error(e);
             }
         }
-        this.attach_trivia();
+        this.attachTrivia();
 
         return this.finish();
     }
 
     token() {
-        this.attach_trivia();
-        this.do_token();
+        this.attachTrivia();
+        this.doToken();
     }
 
-    start_node(kind: NodeSyntaxKind) {
-        if (this.tree_builder.parents.length !== 0 /* && kind !== SyntaxKind.STMT_LIST*/) {
-            this.attach_trivia();
+    startNode(kind: NodeSyntaxKind) {
+        if (this.treeBuilder.parents.length !== 0 /* && kind !== SyntaxKind.STMT_LIST*/) {
+            this.attachTrivia();
         }
-        this.tree_builder.start_node(kind);
+        this.treeBuilder.startNode(kind);
         // if (kind === SyntaxKind.STMT_LIST) {
-        //     this.attach_trivia();
+        //     this.attachTrivia();
         // }
     }
 
-    finish_node(is_last = false) {
-        if (this.tree_builder.parents.length !== 1 || is_last) {
-            this.tree_builder.finish_node();
+    finishNode(isLast = false) {
+        if (this.treeBuilder.parents.length !== 1 || isLast) {
+            this.treeBuilder.finishNode();
         }
     }
 
     error(event: EventDiagnostic) {
-        const last_token: Token | undefined = this.tokens[this.token_pos] ?? this.tokens.at(-1);
-        this.diagnostics.push(new Diagnostic(event.msg, event.severity, last_token?.offset, 0));
+        const lastToken: Token | undefined = this.tokens[this.tokenPos] ?? this.tokens.at(-1);
+        this.diagnostics.push(new Diagnostic(event.msg, event.severity, lastToken?.offset, 0));
     }
 
-    attach_trivia() {
-        while (this.token_pos < this.tokens.length) {
-            const kind = this.tokens[this.token_pos].kind;
+    attachTrivia() {
+        while (this.tokenPos < this.tokens.length) {
+            const kind = this.tokens[this.tokenPos].kind;
             if (kind !== SyntaxKind.WHITESPACE && kind !== SyntaxKind.COMMENT) {
                 break;
             }
-            this.do_token();
+            this.doToken();
         }
     }
 
-    do_token() {
-        this.tree_builder.token(this.tokens[this.token_pos++]);
+    doToken() {
+        this.treeBuilder.token(this.tokens[this.tokenPos++]);
     }
 
     finish(): [Node, Diagnostic[]] {
-        this.finish_node(true);
+        this.finishNode(true);
 
-        return [this.tree_builder.finish(), this.diagnostics];
+        return [this.treeBuilder.finish(), this.diagnostics];
     }
 }
 

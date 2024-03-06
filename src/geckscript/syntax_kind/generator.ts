@@ -2,11 +2,11 @@
 
 type SyntaxKindData = [string[], string];
 
-function syntax_kinds(data: SyntaxKindData): string {
+function syntaxKinds(data: SyntaxKindData): string {
     return data[0].map((e) => e + data[1]).join(",\n    ");
 }
 
-function syntax_kind_names(data: SyntaxKindData): string {
+function syntaxKindNames(data: SyntaxKindData): string {
     return data[0]
         .map((e) => {
             const name = e + data[1];
@@ -15,16 +15,12 @@ function syntax_kind_names(data: SyntaxKindData): string {
         .join(",\n    ");
 }
 
-function syntax_kind_type_union(
-    data: SyntaxKindData,
-    type_name: string,
-    func_name: string
-): string {
-    return `export type ${type_name}SyntaxKind =
+function syntaxKindTypeUnion(data: SyntaxKindData, typeName: string, funcName: string): string {
+    return `export type ${typeName}SyntaxKind =
     | ${data[0].map((e) => `SyntaxKind.${e + data[1]}`).join("\n    | ")}
     ;
 
-export function is_${func_name}(kind: SyntaxKind): kind is ${type_name}SyntaxKind {
+export function is_${funcName}(kind: SyntaxKind): kind is ${typeName}SyntaxKind {
     return (
         ${data[0].map((e) => `kind == SyntaxKind.${e + data[1]}`).join(" ||\n        ")}
     );
@@ -160,41 +156,41 @@ export const STMT: SyntaxKindData = [
 
 export function generate(): string {
     return `export const enum SyntaxKind {
-    ${syntax_kinds(OTHER)},
-    ${syntax_kinds(TYPE)},
-    ${syntax_kinds(KEYWORD)},
-    ${syntax_kinds(OP)},
-    ${syntax_kinds(LIST)},
-    ${syntax_kinds(EXPR)},
-    ${syntax_kinds(STMT)},
+    ${syntaxKinds(OTHER)},
+    ${syntaxKinds(TYPE)},
+    ${syntaxKinds(KEYWORD)},
+    ${syntaxKinds(OP)},
+    ${syntaxKinds(LIST)},
+    ${syntaxKinds(EXPR)},
+    ${syntaxKinds(STMT)},
 }
 
-export const syntax_kind_names = {
-    ${syntax_kind_names(OTHER)},
-    ${syntax_kind_names(TYPE)},
-    ${syntax_kind_names(KEYWORD)},
-    ${syntax_kind_names(OP)},
-    ${syntax_kind_names(LIST)},
-    ${syntax_kind_names(EXPR)},
-    ${syntax_kind_names(STMT)},
+export const syntax_kindNames = {
+    ${syntaxKindNames(OTHER)},
+    ${syntaxKindNames(TYPE)},
+    ${syntaxKindNames(KEYWORD)},
+    ${syntaxKindNames(OP)},
+    ${syntaxKindNames(LIST)},
+    ${syntaxKindNames(EXPR)},
+    ${syntaxKindNames(STMT)},
 };
 
-export function syntax_kind_name(kind: SyntaxKind): string {
-    return syntax_kind_names[kind] ?? "UNKNOWN";
+export function syntax_kindName(kind: SyntaxKind): string {
+    return syntax_kindNames[kind] ?? "UNKNOWN";
 }
 
-${syntax_kind_type_union(TYPE, "Type", "type")}
-${syntax_kind_type_union(KEYWORD, "Keyword", "keyword")}
-${syntax_kind_type_union(SIMPLE_ASSIGNMENT_OP, "SimpleAssignmentOp", "simple_assignment_op")}
-${syntax_kind_type_union(ASSIGNMENT_OP, "AssignmentOp", "assignment_op")}
-${syntax_kind_type_union(UNARY_OP, "UnaryOp", "unary_op")}
-${syntax_kind_type_union(OP, "Op", "op")}
-${syntax_kind_type_union(PRIMARY_EXPR, "PrimaryExpr", "primary_expr")}
+${syntaxKindTypeUnion(TYPE, "Type", "type")}
+${syntaxKindTypeUnion(KEYWORD, "Keyword", "keyword")}
+${syntaxKindTypeUnion(SIMPLE_ASSIGNMENT_OP, "SimpleAssignmentOp", "simpleAssignmentOp")}
+${syntaxKindTypeUnion(ASSIGNMENT_OP, "AssignmentOp", "assignmentOp")}
+${syntaxKindTypeUnion(UNARY_OP, "UnaryOp", "unaryOp")}
+${syntaxKindTypeUnion(OP, "Op", "op")}
+${syntaxKindTypeUnion(PRIMARY_EXPR, "PrimaryExpr", "primaryExpr")}
 
-${syntax_kind_type_union(VAR_OR_VAR_DECL, "VarOrVarDecl", "var_or_var_decl")}
-${syntax_kind_type_union(LIST, "List", "list")}
-${syntax_kind_type_union(EXPR, "Expr", "expr")}
-${syntax_kind_type_union(STMT, "Stmt", "stmt")}
+${syntaxKindTypeUnion(VAR_OR_VAR_DECL, "VarOrVarDecl", "varOrVarDecl")}
+${syntaxKindTypeUnion(LIST, "List", "list")}
+${syntaxKindTypeUnion(EXPR, "Expr", "expr")}
+${syntaxKindTypeUnion(STMT, "Stmt", "stmt")}
 
 export type TokenSyntaxKind =
     | SyntaxKind.UNKNOWN

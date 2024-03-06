@@ -7,11 +7,11 @@ import * as jsdom from "jsdom";
 export class TreeViewServer {
     server: http.Server;
     clients: http.ServerResponse[];
-    tree_data: ast.TreeData;
+    treeData: ast.TreeData;
 
     constructor(port: number, hostname: string) {
         this.clients = [];
-        this.tree_data = new ast.TreeData("root");
+        this.treeData = new ast.TreeData("root");
 
         this.server = http
             .createServer((req, res) => {
@@ -52,8 +52,8 @@ export class TreeViewServer {
         console.log("TreeViewServer running");
     }
 
-    write_tree_data(tree_data: TreeData) {
-        this.tree_data = tree_data;
+    writeTreeData(treeData: TreeData) {
+        this.treeData = treeData;
         for (const client of this.clients) {
             client.write(`data: ${this.render()}\n\n`);
         }
@@ -74,21 +74,21 @@ export class TreeViewServer {
 
         const dx = 12;
         const dy = 120;
-        const margin_left = dy;
+        const marginLeft = dy;
         const tree = d3.tree<ast.TreeData>().nodeSize([dx, dy]);
-        const tree_link = d3
+        const treeLink = d3
             .linkHorizontal<d3.HierarchyPointLink<ast.TreeData>, { x: number; y: number }>()
             .x((d) => d.y)
             .y((d) => d.x);
 
         function graph(root: d3.HierarchyNode<ast.TreeData>) {
-            const tree_node = tree(root);
+            const treeNode = tree(root);
 
             let x0 = Infinity;
             let x1 = -Infinity;
             let y0 = Infinity;
             let y1 = -Infinity;
-            tree_node.each((d) => {
+            treeNode.each((d) => {
                 if (d.x > x1) {
                     x1 = d.x;
                 }
@@ -113,7 +113,7 @@ export class TreeViewServer {
                 .append("g")
                 .attr("font-family", "sans-serif")
                 .attr("font-size", 10)
-                .attr("transform", `translate(${margin_left},${dx - x0})`);
+                .attr("transform", `translate(${marginLeft},${dx - x0})`);
 
             g.append("g")
                 .attr("fill", "none")
@@ -121,16 +121,16 @@ export class TreeViewServer {
                 .attr("stroke-opacity", 0.4)
                 .attr("stroke-width", 1.5)
                 .selectAll("path")
-                .data(tree_node.links())
+                .data(treeNode.links())
                 .join("path")
-                .attr("d", tree_link);
+                .attr("d", treeLink);
 
             const node = g
                 .append("g")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-width", 3)
                 .selectAll("g")
-                .data(tree_node.descendants())
+                .data(treeNode.descendants())
                 .join("g")
                 .attr("transform", (d) => `translate(${d.y},${d.x})`);
 
@@ -149,9 +149,9 @@ export class TreeViewServer {
             return svg.node();
         }
 
-        const hierarchy = d3.hierarchy(this.tree_data);
-        const hierarchy_chart = graph(hierarchy);
+        const hierarchy = d3.hierarchy(this.treeData);
+        const hierarchyChart = graph(hierarchy);
 
-        return hierarchy_chart?.outerHTML ?? "";
+        return hierarchyChart?.outerHTML ?? "";
     }
 }

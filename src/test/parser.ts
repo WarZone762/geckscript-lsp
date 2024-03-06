@@ -1,37 +1,37 @@
 #!/bin/env -S node --loader ts-node/esm
 
 import assert from "assert";
-import { to_debug } from "../geckscript/ast.js";
-import { parse_str } from "../geckscript/parsing.js";
+import { toDebug } from "../geckscript/ast.js";
+import { parseStr } from "../geckscript/parsing.js";
 import * as fs from "fs/promises";
 import test from "node:test";
 import * as path from "path";
 import * as url from "url";
 
-const module_path = url.fileURLToPath(import.meta.url);
-const is_main = process.argv[1] === module_path;
+const modulePath = url.fileURLToPath(import.meta.url);
+const isMain = process.argv[1] === modulePath;
 
-if (is_main) {
-    const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-    const test_dir = path.resolve(path.join(__dirname, "..", "..", "test"));
+if (isMain) {
+    const _Dirname = url.fileURLToPath(new URL(".", import.meta.url));
+    const testDir = path.resolve(path.join(_Dirname, "..", "..", "test"));
 
     test("Parsing", async (t) => {
-        for (const f of await fs.readdir(test_dir, { withFileTypes: true })) {
+        for (const f of await fs.readdir(testDir, { withFileTypes: true })) {
             if (f.isFile() && f.name.endsWith(".gek")) {
-                const full_path = path.resolve(path.join(test_dir, f.name));
+                const fullPath = path.resolve(path.join(testDir, f.name));
 
-                await t.test(f.name, async () => await test_file(full_path));
+                await t.test(f.name, async () => await testFile(fullPath));
             }
         }
     });
 }
 
-export async function test_file(file: string) {
-    const test_data = (await fs.readFile(`${file}.ast`)).toString();
+export async function testFile(file: string) {
+    const testData = (await fs.readFile(`${file}.ast`)).toString();
 
-    assert.strictEqual(test_data, await tree(file));
+    assert.strictEqual(testData, await tree(file));
 }
 
 export async function tree(file: string): Promise<string> {
-    return to_debug(parse_str((await fs.readFile(file)).toString())[0]);
+    return toDebug(parseStr((await fs.readFile(file)).toString())[0]);
 }

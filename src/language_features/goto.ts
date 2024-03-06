@@ -1,33 +1,33 @@
-import { token_at_offset } from "../geckscript/ast.js";
-import { find_def_from_token, find_refs } from "../geckscript/hir/api.js";
+import { tokenAtOffset } from "../geckscript/ast.js";
+import { findDefFromToken, findRefs } from "../geckscript/hir/api.js";
 import { ParsedString } from "../geckscript/hir/hir.js";
 import { Location } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
-export function goto_def(parsed: ParsedString, pos: Position): Location | null {
-    const token = token_at_offset(parsed.root.green, parsed.offset_at(pos));
+export function gotoDef(parsed: ParsedString, pos: Position): Location | null {
+    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return null;
     }
 
-    const def = find_def_from_token(token);
+    const def = findDefFromToken(token);
     if (def == undefined) {
         return null;
     }
 
-    return { uri: parsed.doc.uri, range: parsed.range_of(def.green) };
+    return { uri: parsed.doc.uri, range: parsed.rangeOf(def.green) };
 }
 
-export function goto_refs(parsed: ParsedString, pos: Position) {
-    const token = token_at_offset(parsed.root.green, parsed.offset_at(pos));
+export function refs(parsed: ParsedString, pos: Position) {
+    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return null;
     }
 
-    const def = find_def_from_token(token);
+    const def = findDefFromToken(token);
     if (def == undefined) {
         return null;
     }
 
-    return find_refs(def).map((r) => ({ uri: parsed.doc.uri, range: parsed.range_of(r.green) }));
+    return findRefs(def).map((r) => ({ uri: parsed.doc.uri, range: parsed.rangeOf(r.green) }));
 }

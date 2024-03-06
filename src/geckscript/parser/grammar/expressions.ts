@@ -1,55 +1,55 @@
-import { is_unary_op, SyntaxKind } from "../../syntax_kind/generated.js";
+import { isUnaryOp, SyntaxKind } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
 import { EXPR_FIRST, LITERAL, TokenSet, TYPE } from "../token_set.js";
-import { name_ref, var_or_var_decl_r } from "./other.js";
-import { stmt_list } from "./statements.js";
+import { nameRef, varOrVarDeclR } from "./other.js";
+import { stmtList } from "./statements.js";
 
 export function literal(p: Parser): CompletedMarker | undefined {
-    if (!p.at_ts(LITERAL)) {
+    if (!p.atTs(LITERAL)) {
         return undefined;
     }
 
     const m = p.start();
-    p.next_any();
+    p.nextAny();
     return m.complete(p, SyntaxKind.LITERAL);
 }
 
 export function expr(p: Parser): boolean {
-    return expr_bp(p, 1) != undefined ? true : false;
+    return exprBp(p, 1) != undefined ? true : false;
 }
 
-export function expr_no_func(p: Parser): boolean {
-    return expr_bp_impl(p, 1, true) != undefined ? true : false;
+export function exprNoFunc(p: Parser): boolean {
+    return exprBpImpl(p, 1, true) != undefined ? true : false;
 }
 
-export function expr_lambda_inline(p: Parser): CompletedMarker {
+export function exprLambdaInline(p: Parser): CompletedMarker {
     const m = p.start();
 
     p.next(SyntaxKind.LBRACK);
 
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.RBRACK)) {
-        var_or_var_decl_r(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK])));
+        varOrVarDeclR(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK])));
         p.opt(SyntaxKind.COMMA);
     }
 
     p.expect(SyntaxKind.RBRACK);
     if (!p.opt(SyntaxKind.EQGT)) {
-        p.err_recover("expected '=>'", EXPR_FIRST);
+        p.errRecover("expected '=>'", EXPR_FIRST);
     }
     expr(p);
 
     return m.complete(p, SyntaxKind.LAMBDA_INLINE_EXPR);
 }
 
-export function expr_lambda(p: Parser): CompletedMarker {
+export function exprLambda(p: Parser): CompletedMarker {
     const m = p.start();
 
     p.next(SyntaxKind.BEGIN_KW);
     if (!p.opt(SyntaxKind.IDENT)) {
-        p.err_recover("expected 'function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
+        p.errRecover("expected 'function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
     }
     if (!p.opt(SyntaxKind.LBRACK)) {
-        p.err_recover(
+        p.errRecover(
             "expected '{'",
             TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN]))
         );
@@ -61,7 +61,7 @@ export function expr_lambda(p: Parser): CompletedMarker {
         !p.at(SyntaxKind.RBRACK) &&
         !p.at(SyntaxKind.RPAREN)
     ) {
-        var_or_var_decl_r(
+        varOrVarDeclR(
             p,
             TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN]))
         );
@@ -70,26 +70,26 @@ export function expr_lambda(p: Parser): CompletedMarker {
     p.expect(SyntaxKind.RBRACK);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list(p, new TokenSet([SyntaxKind.END_KW, SyntaxKind.RPAREN]));
+    stmtList(p, new TokenSet([SyntaxKind.END_KW, SyntaxKind.RPAREN]));
 
     p.expect(SyntaxKind.END_KW);
 
     return m.complete(p, SyntaxKind.LAMBDA_EXPR);
 }
 
-export function expr_name_ref_or_func(p: Parser, no_func: boolean): CompletedMarker | undefined {
+export function exprNameRefOrFunc(p: Parser, noFunc: boolean): CompletedMarker | undefined {
     const m = p.start();
 
-    const ident = name_ref(p);
-    if (!no_func) {
+    const ident = nameRef(p);
+    if (!noFunc) {
         p.opt(SyntaxKind.COMMA);
     }
 
-    const cond = () => p.at_ts(EXPR_FIRST) && !p.at(SyntaxKind.MINUS);
+    const cond = () => p.atTs(EXPR_FIRST) && !p.at(SyntaxKind.MINUS);
 
-    if (cond() && !no_func) {
+    if (cond() && !noFunc) {
         do {
-            expr_bp_impl(p, 7, true);
+            exprBpImpl(p, 7, true);
             p.opt(SyntaxKind.COMMA);
         } while (cond());
     } else {
@@ -100,7 +100,7 @@ export function expr_name_ref_or_func(p: Parser, no_func: boolean): CompletedMar
     return m.complete(p, SyntaxKind.FUNC_EXPR);
 }
 
-export function expr_primary(p: Parser, no_func: boolean): CompletedMarker | undefined {
+export function exprPrimary(p: Parser, noFunc: boolean): CompletedMarker | undefined {
     const lit = literal(p);
 
     if (lit != undefined) {
@@ -109,48 +109,48 @@ export function expr_primary(p: Parser, no_func: boolean): CompletedMarker | und
 
     switch (p.cur()) {
         case SyntaxKind.IDENT:
-            return expr_name_ref_or_func(p, no_func);
+            return exprNameRefOrFunc(p, noFunc);
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
-            const m = p.at(SyntaxKind.BEGIN_KW) ? expr_lambda(p) : expr_bp(p, 1);
+            const m = p.at(SyntaxKind.BEGIN_KW) ? exprLambda(p) : exprBp(p, 1);
             p.expect(SyntaxKind.RPAREN);
 
             return m;
         }
         case SyntaxKind.LBRACK:
-            return expr_lambda_inline(p);
+            return exprLambdaInline(p);
         default:
-            p.err_and_next("expected expression");
+            p.errAndNext("expected expression");
     }
 }
 
-export function expr_bp(p: Parser, min_bp: number): CompletedMarker | undefined {
-    return expr_bp_impl(p, min_bp, false);
+export function exprBp(p: Parser, minBp: number): CompletedMarker | undefined {
+    return exprBpImpl(p, minBp, false);
 }
 
-function expr_bp_impl(p: Parser, min_bp: number, no_func: boolean): CompletedMarker | undefined {
-    if (!p.at_ts(EXPR_FIRST)) {
-        p.err_recover(
+function exprBpImpl(p: Parser, minBp: number, noFunc: boolean): CompletedMarker | undefined {
+    if (!p.atTs(EXPR_FIRST)) {
+        p.errRecover(
             "expected expression",
             new TokenSet([SyntaxKind.RPAREN, SyntaxKind.RBRACK, SyntaxKind.TO_KW])
         );
         return undefined;
     }
 
-    let lhs = expr_lhs(p, no_func);
+    let lhs = exprLhs(p, noFunc);
     if (lhs == undefined) {
         return undefined;
     }
 
     while (true) {
-        const bp = bin_op_bp(p) * 2;
-        if (bp < min_bp) {
+        const bp = binOpBp(p) * 2;
+        if (bp < minBp) {
             break;
         }
 
         const m: Marker = lhs.precede(p);
-        p.next_any();
-        expr_bp(p, bp + 1);
+        p.nextAny();
+        exprBp(p, bp + 1);
 
         lhs = m.complete(p, SyntaxKind.BIN_EXPR);
     }
@@ -158,26 +158,26 @@ function expr_bp_impl(p: Parser, min_bp: number, no_func: boolean): CompletedMar
     return lhs;
 }
 
-export function expr_lhs(p: Parser, no_func: boolean): CompletedMarker | undefined {
-    if (is_unary_op(p.cur())) {
+export function exprLhs(p: Parser, noFunc: boolean): CompletedMarker | undefined {
+    if (isUnaryOp(p.cur())) {
         const m = p.start();
 
-        const bp = unary_op_bp(p) * 2;
-        p.next_any();
-        expr_bp(p, bp);
+        const bp = unaryOpBp(p) * 2;
+        p.nextAny();
+        exprBp(p, bp);
 
         return m.complete(p, SyntaxKind.UNARY_EXPR);
     } else {
-        const lhs = expr_primary(p, no_func);
+        const lhs = exprPrimary(p, noFunc);
         if (lhs == undefined) {
             return undefined;
         }
 
-        return expr_postfix(p, lhs, no_func);
+        return exprPostfix(p, lhs, noFunc);
     }
 }
 
-export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean): CompletedMarker {
+export function exprPostfix(p: Parser, lhs: CompletedMarker, noFunc: boolean): CompletedMarker {
     while (true) {
         switch (p.cur()) {
             case SyntaxKind.LSQBRACK: {
@@ -192,7 +192,7 @@ export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean):
             case SyntaxKind.RARROW: {
                 const m: Marker = lhs.precede(p);
                 p.next(SyntaxKind.RARROW);
-                expr_primary(p, true);
+                exprPrimary(p, true);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
                 break;
@@ -200,7 +200,7 @@ export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean):
             case SyntaxKind.DOT: {
                 const m = lhs.precede(p);
                 p.next(SyntaxKind.DOT);
-                expr_name_ref_or_func(p, no_func);
+                exprNameRefOrFunc(p, noFunc);
 
                 lhs = m.complete(p, SyntaxKind.MEMBER_EXPR);
                 break;
@@ -211,7 +211,7 @@ export function expr_postfix(p: Parser, lhs: CompletedMarker, no_func: boolean):
     }
 }
 
-export function unary_op_bp(p: Parser): number {
+export function unaryOpBp(p: Parser): number {
     switch (p.cur()) {
         case SyntaxKind.EXCLAMATION:
             return 14;
@@ -226,7 +226,7 @@ export function unary_op_bp(p: Parser): number {
     }
 }
 
-export function bin_op_bp(p: Parser): number {
+export function binOpBp(p: Parser): number {
     switch (p.cur()) {
         case SyntaxKind.CIRCUMFLEX:
             return 12;

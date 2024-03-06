@@ -1,4 +1,4 @@
-import { ancestors, find_ancestor } from "../ast.js";
+import { ancestors, findAncestor } from "../ast.js";
 import {
     LambdaExpr,
     LambdaInlineExpr,
@@ -12,7 +12,7 @@ import {
 import { SyntaxKind } from "../syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
-export function find_def_from_token(token: Token): Name | undefined {
+export function findDefFromToken(token: Token): Name | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
         return undefined;
     }
@@ -25,58 +25,58 @@ export function find_def_from_token(token: Token): Name | undefined {
     if (parent.kind === SyntaxKind.NAME) {
         return new Name(parent);
     } else if (parent.kind === SyntaxKind.NAME_REF) {
-        return find_def(new NameRef(parent));
+        return findDef(new NameRef(parent));
     }
 }
 
-export function find_def(node: NameRef): Name | undefined {
-    if (node.green.parent == undefined || node.name_ref() == undefined) {
+export function findDef(node: NameRef): Name | undefined {
+    if (node.green.parent == undefined || node.nameRef() == undefined) {
         return undefined;
     }
 
     for (const a of ancestors(node.green.parent)) {
-        for (const def of find_scope_defs(a)) {
-            if (def.name()?.text === node.name_ref()!.text) {
+        for (const def of findScopeDefs(a)) {
+            if (def.name()?.text === node.nameRef()!.text) {
                 return def;
             }
         }
     }
 }
 
-export function find_refs(node: Name): NameRef[] {
+export function findRefs(node: Name): NameRef[] {
     const refs: NameRef[] = [];
 
     const text = node.name()?.text;
     if (text == undefined) {
         return refs;
     }
-    const stmt_list = find_ancestor(node.green, (n) => n.kind === SyntaxKind.STMT_LIST);
-    if (stmt_list == undefined) {
+    const stmtList = findAncestor(node.green, (n) => n.kind === SyntaxKind.STMT_LIST);
+    if (stmtList == undefined) {
         return refs;
     }
 
-    find_references_recursive(stmt_list as Node);
+    findReferencesRecursive(stmtList as Node);
 
     return refs;
 
-    function find_references_recursive(node: Node) {
+    function findReferencesRecursive(node: Node) {
         for (const c of node.children) {
             if (c.kind === SyntaxKind.NAME_REF) {
                 const ref = new NameRef(c);
-                if (ref.name_ref()?.text === text) {
+                if (ref.nameRef()?.text === text) {
                     refs.push(ref);
                 }
-            } else if (c.is_node()) {
-                find_references_recursive(c);
+            } else if (c.isNode()) {
+                findReferencesRecursive(c);
             }
         }
     }
 }
 
-export function* find_scope_defs(node: NodeOrToken) {
+export function* findScopeDefs(node: NodeOrToken) {
     switch (node.kind) {
         case SyntaxKind.STMT_LIST:
-            yield* find_stmt_list_defs(node);
+            yield* findStmtListDefs(node);
             break;
         case SyntaxKind.SCRIPT: {
             const name = new Script(node).name();
@@ -86,11 +86,11 @@ export function* find_scope_defs(node: NodeOrToken) {
             break;
         }
         case SyntaxKind.LAMBDA_EXPR: {
-            const var_or_var_decl_list = new LambdaExpr(node).params();
-            if (var_or_var_decl_list != undefined) {
-                for (const var_or_var_decl of var_or_var_decl_list.iter()) {
-                    if (var_or_var_decl instanceof VarDecl) {
-                        const def = var_or_var_decl.ident();
+            const varOrVarDeclList = new LambdaExpr(node).params();
+            if (varOrVarDeclList != undefined) {
+                for (const varOrVarDecl of varOrVarDeclList.iter()) {
+                    if (varOrVarDecl instanceof VarDecl) {
+                        const def = varOrVarDecl.ident();
                         if (def != undefined) {
                             yield def;
                         }
@@ -100,11 +100,11 @@ export function* find_scope_defs(node: NodeOrToken) {
             break;
         }
         case SyntaxKind.LAMBDA_INLINE_EXPR: {
-            const var_or_var_decl_list = new LambdaInlineExpr(node).params();
-            if (var_or_var_decl_list != undefined) {
-                for (const var_or_var_decl of var_or_var_decl_list.iter()) {
-                    if (var_or_var_decl instanceof VarDecl) {
-                        const def = var_or_var_decl.ident();
+            const varOrVarDeclList = new LambdaInlineExpr(node).params();
+            if (varOrVarDeclList != undefined) {
+                for (const varOrVarDecl of varOrVarDeclList.iter()) {
+                    if (varOrVarDecl instanceof VarDecl) {
+                        const def = varOrVarDecl.ident();
                         if (def != undefined) {
                             yield def;
                         }
@@ -119,7 +119,7 @@ export function* find_scope_defs(node: NodeOrToken) {
     }
 }
 
-function* find_stmt_list_defs(node: Node) {
+function* findStmtListDefs(node: Node) {
     for (const c of node.children) {
         switch (c.kind) {
             case SyntaxKind.VAR_DECL_STMT: {
@@ -130,11 +130,11 @@ function* find_stmt_list_defs(node: Node) {
                 break;
             }
             case SyntaxKind.LET_STMT: {
-                const var_or_var_decl = new LetStmt(c).var();
-                if (var_or_var_decl instanceof Name) {
-                    yield var_or_var_decl;
-                } else if (var_or_var_decl instanceof VarDecl) {
-                    const def = var_or_var_decl.ident();
+                const varOrVarDecl = new LetStmt(c).var();
+                if (varOrVarDecl instanceof Name) {
+                    yield varOrVarDecl;
+                } else if (varOrVarDecl instanceof VarDecl) {
+                    const def = varOrVarDecl.ident();
                     if (def != undefined) {
                         yield def;
                     }

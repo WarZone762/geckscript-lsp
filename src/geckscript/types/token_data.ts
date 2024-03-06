@@ -2,9 +2,9 @@ import { SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export interface TokenInfo {
     name: string;
-    canonical_name: string;
+    canonicalName: string;
     kind: TokenSyntaxKind;
-    wiki_page_name?: string;
+    wikiPageName?: string;
 }
 
 export const TokenData = (() => {
@@ -18,8 +18,8 @@ export const TokenData = (() => {
         float: SyntaxKind.FLOAT_TYPE,
         ref: SyntaxKind.REFERENCE_TYPE,
         reference: SyntaxKind.REFERENCE_TYPE,
-        string_var: SyntaxKind.STRING_VAR_TYPE,
-        array_var: SyntaxKind.ARRAY_VAR_TYPE,
+        stringVar: SyntaxKind.STRING_VAR_TYPE,
+        arrayVar: SyntaxKind.ARRAY_VAR_TYPE,
 
         // Keywords
         scn: SyntaxKind.SCRIPTNAME_KW,
@@ -88,7 +88,7 @@ export const TokenData = (() => {
     } as { [key: string]: TokenSyntaxKind })) {
         map[k.toLowerCase()] = {
             name: k.toLowerCase(),
-            canonical_name: k,
+            canonicalName: k,
             kind: v,
         };
     }
@@ -96,6 +96,6 @@ export const TokenData = (() => {
     return map;
 })();
 
-export function GetTokenKind(token_name: string): TokenSyntaxKind {
-    return TokenData[token_name]?.kind ?? SyntaxKind.UNKNOWN;
+export function GetTokenKind(tokenName: string): TokenSyntaxKind {
+    return TokenData[tokenName]?.kind ?? SyntaxKind.UNKNOWN;
 }

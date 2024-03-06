@@ -20,11 +20,11 @@ export class EventTombstone implements Event {
 export class EventStart implements Event {
     kind = EventKind.Start as const;
 
-    syntax_kind: NodeSyntaxKind;
-    forward_parent?: number;
+    syntaxKind: NodeSyntaxKind;
+    forwardParent?: number;
 
     constructor(kind: NodeSyntaxKind) {
-        this.syntax_kind = kind;
+        this.syntaxKind = kind;
     }
 }
 
@@ -35,12 +35,12 @@ export class EventFinish implements Event {
 export class EventToken implements Event {
     kind = EventKind.Token as const;
 
-    syntax_kind: TokenSyntaxKind;
-    n_raw_tokens: number;
+    syntaxKind: TokenSyntaxKind;
+    nRawTokens: number;
 
-    constructor(syntax_kind: TokenSyntaxKind, n_raw_tokens: number) {
-        this.syntax_kind = syntax_kind;
-        this.n_raw_tokens = n_raw_tokens;
+    constructor(syntaxKind: TokenSyntaxKind, nRawTokens: number) {
+        this.syntaxKind = syntaxKind;
+        this.nRawTokens = nRawTokens;
     }
 }
 

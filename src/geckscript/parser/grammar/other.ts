@@ -1,76 +1,76 @@
-import { is_type, SyntaxKind } from "../../syntax_kind/generated.js";
+import { isType, SyntaxKind } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Parser } from "../parser.js";
 import { EXPR_FIRST, TokenSet } from "../token_set.js";
-import { expr_primary } from "./expressions.js";
-import { stmt_list_root } from "./statements.js";
+import { exprPrimary } from "./expressions.js";
+import { stmtListRoot } from "./statements.js";
 
-export function name_r(p: Parser, recovery: TokenSet) {
+export function nameR(p: Parser, recovery: TokenSet) {
     if (p.at(SyntaxKind.IDENT)) {
         const m = p.start();
         p.next(SyntaxKind.IDENT);
         m.complete(p, SyntaxKind.NAME);
     } else {
-        p.err_recover("expected an identifier", recovery);
+        p.errRecover("expected an identifier", recovery);
     }
 }
 
 export function name(p: Parser) {
-    name_r(p, new TokenSet());
+    nameR(p, new TokenSet());
 }
 
-export function name_ref_r(p: Parser, recovery: TokenSet): CompletedMarker | undefined {
+export function nameRefR(p: Parser, recovery: TokenSet): CompletedMarker | undefined {
     if (p.at(SyntaxKind.IDENT)) {
         const m = p.start();
         p.next(SyntaxKind.IDENT);
         return m.complete(p, SyntaxKind.NAME_REF);
     } else {
-        p.err_recover("expected an identifier", recovery);
+        p.errRecover("expected an identifier", recovery);
     }
 }
 
-export function name_ref(p: Parser): CompletedMarker | undefined {
-    return name_ref_r(p, new TokenSet());
+export function nameRef(p: Parser): CompletedMarker | undefined {
+    return nameRefR(p, new TokenSet());
 }
 
-export function var_decl_r(p: Parser, recovery: TokenSet) {
+export function varDeclR(p: Parser, recovery: TokenSet) {
     const m = p.start();
 
-    if (is_type(p.cur())) {
-        p.next_any();
+    if (isType(p.cur())) {
+        p.nextAny();
     } else {
-        p.err_recover("expected typename", recovery);
+        p.errRecover("expected typename", recovery);
     }
-    name_r(p, recovery);
+    nameR(p, recovery);
 
     m.complete(p, SyntaxKind.VAR_DECL);
 }
 
-export function var_decl(p: Parser) {
-    var_decl_r(p, new TokenSet());
+export function varDecl(p: Parser) {
+    varDeclR(p, new TokenSet());
 }
 
-export function var_or_var_decl_r(p: Parser, recovery: TokenSet) {
-    if (is_type(p.cur())) {
-        var_decl_r(p, recovery);
+export function varOrVarDeclR(p: Parser, recovery: TokenSet) {
+    if (isType(p.cur())) {
+        varDeclR(p, recovery);
     } else {
-        name_ref_r(p, recovery);
+        nameRefR(p, recovery);
     }
 }
 
-export function var_or_var_decl(p: Parser) {
-    var_or_var_decl_r(p, new TokenSet());
+export function varOrVarDecl(p: Parser) {
+    varOrVarDeclR(p, new TokenSet());
 }
 
-export function block_type(p: Parser) {
+export function blockType(p: Parser) {
     const m = p.start();
 
     if (p.at(SyntaxKind.IDENT)) {
-        p.next_any();
+        p.nextAny();
     } else {
-        p.err_recover("expected blocktype name", EXPR_FIRST);
+        p.errRecover("expected blocktype name", EXPR_FIRST);
     }
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE)) {
-        expr_primary(p, true);
+        exprPrimary(p, true);
     }
 
     m.complete(p, SyntaxKind.BLOCKTYPE_DESIG);
@@ -84,19 +84,19 @@ export function script(p: Parser) {
     }
 
     if (!p.opt(SyntaxKind.SCRIPTNAME_KW)) {
-        p.err_recover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
+        p.errRecover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
     }
     name(p);
-    rest_of_line(p);
+    restOfLine(p);
     p.expect(SyntaxKind.NEWLINE);
 
-    stmt_list_root(p);
+    stmtListRoot(p);
 
     m.complete(p, SyntaxKind.SCRIPT);
 }
 
-export function rest_of_line(p: Parser) {
+export function restOfLine(p: Parser) {
     while (!p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.EOF)) {
-        p.warn_and_next("unexpected token");
+        p.warnAndNext("unexpected token");
     }
 }

@@ -5,13 +5,13 @@ import * as path from "path";
 
 export interface FunctionInfo {
     name: string;
-    canonical_name: string;
-    wiki_page_name: string;
+    canonicalName: string;
+    wikiPageName: string;
 }
 
 const FilePath = path.join("resources", "functions.json");
 
-const ignored_functions = [
+const ignoredFunctions = [
     "Break",
     "Continue",
     "ForEach",
@@ -66,43 +66,43 @@ export async function PopulateFunctionData(update = false) {
 
     FunctionData = {};
     for (const func of functions) {
-        if (ignored_functions.find((v) => v === func)) {
+        if (ignoredFunctions.find((v) => v === func)) {
             continue;
         }
 
-        const canoncial_name = renameFunc(func);
-        const name = canoncial_name.toLowerCase();
+        const canoncialName = renameFunc(func);
+        const name = canoncialName.toLowerCase();
 
         FunctionData[name] = {
             name: name,
-            canonical_name: canoncial_name,
-            wiki_page_name: func,
+            canonicalName: canoncialName,
+            wikiPageName: func,
         };
     }
 }
 
-export function GetFunctionInfo(function_name: string): FunctionInfo | undefined {
-    return FunctionData[function_name];
+export function GetFunctionInfo(functionName: string): FunctionInfo | undefined {
+    return FunctionData[functionName];
 }
 
 export async function CreateGlobalFunctionSymbol(
-    function_name: string
+    functionName: string
 ): Promise<Symbol | undefined> {
-    const function_info = GetFunctionInfo(function_name);
-    if (function_info == undefined) {
+    const functionInfo = GetFunctionInfo(functionName);
+    if (functionInfo == undefined) {
         return undefined;
     }
 
     return {
         kind: SymbolKind.Function,
-        name: function_info.canonical_name,
+        name: functionInfo.canonicalName,
         type: ExprType.Ambiguous,
     };
 }
 
 export async function DumpFunctionNames() {
     await fs.promises.writeFile(
-        path.join(path.dirname(FilePath), "function_names.json"),
+        path.join(path.dirname(FilePath), "functionNames.json"),
         JSON.stringify(Object.keys(FunctionData))
     );
 }

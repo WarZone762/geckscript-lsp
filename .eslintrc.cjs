@@ -6,6 +6,7 @@ module.exports = {
     plugins: ["@typescript-eslint"],
     extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
     rules: {
+        camelcase: "warn",
         "no-inner-declarations": "off",
         "no-constant-condition": ["error", { checkLoops: false }],
         curly: ["error", "all"],

@@ -3,7 +3,7 @@ import {
     TokenSyntaxKind,
     NodeSyntaxKind,
     SyntaxKind,
-    syntax_kind_name,
+    syntaxKindName,
 } from "../syntax_kind/generated.js";
 import {
     AnyEvent,
@@ -40,8 +40,8 @@ export class Marker {
         const event = p.events[this.pos];
         assert.strictEqual(event.kind, EventKind.Start);
 
-        event.syntax_kind = kind;
-        p.push_event(new EventFinish());
+        event.syntaxKind = kind;
+        p.pushEvent(new EventFinish());
 
         return new CompletedMarker(this.pos, kind);
     }
@@ -51,8 +51,8 @@ export class Marker {
             const event = p.events.pop()!;
             if (
                 event.kind != EventKind.Start ||
-                event.syntax_kind != SyntaxKind.TOMBSTONE ||
-                event.forward_parent != undefined
+                event.syntaxKind != SyntaxKind.TOMBSTONE ||
+                event.forwardParent != undefined
             ) {
                 assert(false);
             }
@@ -71,25 +71,25 @@ export class CompletedMarker {
 
     /** Crate a marker before this marker */
     precede(p: Parser): Marker {
-        const new_pos = p.start();
+        const newPos = p.start();
         const event = p.events[this.pos];
         if (event.kind != EventKind.Start) {
             assert(false);
         }
 
-        event.forward_parent = new_pos.pos - this.pos;
+        event.forwardParent = newPos.pos - this.pos;
 
-        return new_pos;
+        return newPos;
     }
 
     /** Extend this marker to the left until the specified marker */
-    extend_to(p: Parser, m: Marker): CompletedMarker {
+    extendTo(p: Parser, m: Marker): CompletedMarker {
         const event = p.events[m.pos];
         if (event.kind != EventKind.Start) {
             assert(false);
         }
 
-        event.forward_parent = this.pos - m.pos;
+        event.forwardParent = this.pos - m.pos;
 
         return this;
     }
@@ -127,16 +127,16 @@ export class Parser {
 
     /** Check if the current token is `kind` */
     at(kind: TokenSyntaxKind): boolean {
-        return this.nth_at(0, kind);
+        return this.nthAt(0, kind);
     }
 
     /** Check if the current token is in `kinds` */
-    at_ts(kinds: TokenSet): boolean {
+    atTs(kinds: TokenSet): boolean {
         return kinds.has(this.cur());
     }
 
     /** Check if the token `n` tokens after the current one is `kind` */
-    nth_at(n: number, kind: TokenSyntaxKind): boolean {
+    nthAt(n: number, kind: TokenSyntaxKind): boolean {
         return this.inp.kind(this.pos + n) == kind;
     }
 
@@ -149,13 +149,13 @@ export class Parser {
             return false;
         }
 
-        this.do_next(kind, 1);
+        this.doNext(kind, 1);
         return true;
     }
 
     start(): Marker {
         const pos = this.events.length;
-        this.push_event(new EventStart(SyntaxKind.TOMBSTONE));
+        this.pushEvent(new EventStart(SyntaxKind.TOMBSTONE));
         return new Marker(pos);
     }
 
@@ -167,25 +167,25 @@ export class Parser {
     }
 
     /** Advance the parser if there are more tokens */
-    next_any() {
+    nextAny() {
         const kind = this.cur();
         if (this.cur() == SyntaxKind.EOF) {
             return;
         }
-        this.do_next(kind, 1);
+        this.doNext(kind, 1);
     }
 
-    warn_and_next(msg: string) {
+    warnAndNext(msg: string) {
         this.warn(msg);
-        this.next_any();
+        this.nextAny();
     }
 
     warn(msg: string) {
-        this.push_event(new EventDiagnostic(msg, DiagnosticSeverity.Warning));
+        this.pushEvent(new EventDiagnostic(msg, DiagnosticSeverity.Warning));
     }
 
     err(msg: string) {
-        this.push_event(new EventDiagnostic(`parsing error: ${msg}`, DiagnosticSeverity.Error));
+        this.pushEvent(new EventDiagnostic(`parsing error: ${msg}`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -196,33 +196,33 @@ export class Parser {
         if (this.opt(kind)) {
             return true;
         }
-        this.err(`expected ${syntax_kind_name(kind)}`);
+        this.err(`expected ${syntaxKindName(kind)}`);
         return false;
     }
 
-    err_and_next(msg: string) {
-        this.err_recover(msg, new TokenSet());
+    errAndNext(msg: string) {
+        this.errRecover(msg, new TokenSet());
     }
 
-    err_recover(msg: string, recovery: TokenSet) {
-        if (this.at(SyntaxKind.NEWLINE) || this.at_ts(recovery)) {
+    errRecover(msg: string, recovery: TokenSet) {
+        if (this.at(SyntaxKind.NEWLINE) || this.atTs(recovery)) {
             this.err(msg);
             return;
         }
 
         const m = this.start();
         this.err(msg);
-        this.next_any();
+        this.nextAny();
         m.complete(this, SyntaxKind.ERROR);
     }
 
-    do_next(kind: TokenSyntaxKind, n_raw_tokens: number) {
-        this.pos += n_raw_tokens;
+    doNext(kind: TokenSyntaxKind, nRawTokens: number) {
+        this.pos += nRawTokens;
         this.steps = 0;
-        this.push_event(new EventToken(kind, n_raw_tokens));
+        this.pushEvent(new EventToken(kind, nRawTokens));
     }
 
-    push_event(event: AnyEvent) {
+    pushEvent(event: AnyEvent) {
         this.events.push(event);
     }
 }

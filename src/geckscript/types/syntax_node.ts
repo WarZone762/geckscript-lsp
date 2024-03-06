@@ -9,7 +9,7 @@ export abstract class NodeCommon<T extends SyntaxKind> {
         this.kind = kind;
     }
 
-    abstract is_node(): this is Node;
+    abstract isNode(): this is Node;
     abstract len(): number;
     abstract end(): number;
 }
@@ -17,7 +17,7 @@ export abstract class NodeCommon<T extends SyntaxKind> {
 class TokenImpl<T extends TokenSyntaxKind = TokenSyntaxKind> extends NodeCommon<T> {
     text = "";
 
-    is_node(): this is Node {
+    isNode(): this is Node {
         return false;
     }
 
@@ -31,19 +31,19 @@ class TokenImpl<T extends TokenSyntaxKind = TokenSyntaxKind> extends NodeCommon<
 }
 
 class NodeImpl<T extends NodeSyntaxKind = NodeSyntaxKind> extends NodeCommon<T> {
-    text_len = 0;
+    textLen = 0;
     children: NodeOrToken[] = [];
 
-    is_node(): this is Node {
+    isNode(): this is Node {
         return true;
     }
 
     len(): number {
-        return this.text_len;
+        return this.textLen;
     }
 
     end(): number {
-        return this.offset + this.text_len;
+        return this.offset + this.textLen;
     }
 }
 

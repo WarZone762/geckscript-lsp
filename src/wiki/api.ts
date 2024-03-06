@@ -24,22 +24,22 @@ export async function GETRequest(url: string): Promise<string | undefined> {
     });
 }
 
-export async function GetPageWikitext(page_title: string): Promise<string | undefined> {
+export async function GetPageWikitext(pageTitle: string): Promise<string | undefined> {
     const response = await GETRequest(
-        `https://geckwiki.com/api.php?action=parse&page=${page_title}&redirects=1&prop=wikitext&disabletoc=1&format=json`
+        `https://geckwiki.com/api.php?action=parse&page=${pageTitle}&redirects=1&prop=wikitext&disabletoc=1&format=json`
     );
 
     return response != undefined ? await JSON.parse(response).parse?.wikitext?.["*"] : undefined;
 }
 
 export async function GetCategoryPages(category: string, types?: string[]): Promise<string[]> {
-    const type_string = types != undefined ? "&cmtype=" + types.join("|") : "";
+    const typeString = types != undefined ? "&cmtype=" + types.join("|") : "";
 
     const items: string[] = [];
 
     let response = JSON.parse(
         (await GETRequest(
-            `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${type_string}&cmlimit=max&format=json`
+            `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${typeString}&cmlimit=max&format=json`
         )) ?? ""
     );
 
@@ -48,7 +48,7 @@ export async function GetCategoryPages(category: string, types?: string[]): Prom
     while (response?.continue?.cmcontinue != undefined) {
         response = JSON.parse(
             (await GETRequest(
-                `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${type_string}&cmlimit=max&cmcontinue=${response?.continue?.cmcontinue}&format=json`
+                `https://geckwiki.com/api.php?action=query&list=categorymembers&cmtitle=${category}&cmprop=title|type${typeString}&cmlimit=max&cmcontinue=${response?.continue?.cmcontinue}&format=json`
             )) ?? ""
         );
         response?.query?.categorymembers.forEach((item: { title: string }) =>

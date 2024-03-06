@@ -9,21 +9,21 @@ import {
     SemanticTokensLegend,
 } from "vscode-languageserver/node.js";
 
-export const legend: SemanticTokensLegend = {
+export const LEGEND: SemanticTokensLegend = {
     tokenTypes: ["variable", "function"],
     tokenModifiers: ["readonly"],
 };
 
-export function build_semantic_tokens(parsed: ParsedString): SemanticTokens {
+export function buildSemanticTokens(parsed: ParsedString): SemanticTokens {
     const builder = new SemanticTokensBuilder();
 
-    for (const func of [...ast.descendants_df(parsed.root.green)].filter(
+    for (const func of [...ast.descendantsDf(parsed.root.green)].filter(
         (n) => n.kind === SyntaxKind.FUNC_EXPR
     )) {
         const node = new FuncExpr(func as Node<SyntaxKind.FUNC_EXPR>);
         const name = node.name();
         if (name != undefined) {
-            const pos = parsed.pos_at(name.green.offset);
+            const pos = parsed.posAt(name.green.offset);
             builder.push(pos.line, pos.character, name.green.len(), 1, 0);
         }
     }

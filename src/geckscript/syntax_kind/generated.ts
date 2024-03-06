@@ -102,7 +102,7 @@ export const enum SyntaxKind {
     FOREACH_STMT,
 }
 
-export const syntax_kind_names = {
+export const syntaxBindNames = {
     [SyntaxKind.UNKNOWN]: "UNKNOWN",
     [SyntaxKind.WHITESPACE]: "WHITESPACE",
     [SyntaxKind.COMMENT]: "COMMENT",
@@ -206,8 +206,8 @@ export const syntax_kind_names = {
     [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
 };
 
-export function syntax_kind_name(kind: SyntaxKind): string {
-    return syntax_kind_names[kind] ?? "UNKNOWN";
+export function syntaxKindName(kind: SyntaxKind): string {
+    return syntaxBindNames[kind] ?? "UNKNOWN";
 }
 
 export type TypeSyntaxKind =
@@ -219,7 +219,7 @@ export type TypeSyntaxKind =
     | SyntaxKind.STRING_VAR_TYPE
     | SyntaxKind.ARRAY_VAR_TYPE;
 
-export function is_type(kind: SyntaxKind): kind is TypeSyntaxKind {
+export function isType(kind: SyntaxKind): kind is TypeSyntaxKind {
     return (
         kind == SyntaxKind.SHORT_TYPE ||
         kind == SyntaxKind.INT_TYPE ||
@@ -248,7 +248,7 @@ export type KeywordSyntaxKind =
     | SyntaxKind.TO_KW
     | SyntaxKind.LET_KW;
 
-export function is_keyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
+export function isKeyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
     return (
         kind == SyntaxKind.SCRIPTNAME_KW ||
         kind == SyntaxKind.BEGIN_KW ||
@@ -270,7 +270,7 @@ export function is_keyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
 }
 export type SimpleAssignmentOpSyntaxKind = SyntaxKind.EQ | SyntaxKind.COLONEQ;
 
-export function is_simple_assignment_op(kind: SyntaxKind): kind is SimpleAssignmentOpSyntaxKind {
+export function isSimpleAssignmentOp(kind: SyntaxKind): kind is SimpleAssignmentOpSyntaxKind {
     return kind == SyntaxKind.EQ || kind == SyntaxKind.COLONEQ;
 }
 export type AssignmentOpSyntaxKind =
@@ -285,7 +285,7 @@ export type AssignmentOpSyntaxKind =
     | SyntaxKind.VBAREQ
     | SyntaxKind.AMPERSANDEQ;
 
-export function is_assignment_op(kind: SyntaxKind): kind is AssignmentOpSyntaxKind {
+export function isAssignmentOp(kind: SyntaxKind): kind is AssignmentOpSyntaxKind {
     return (
         kind == SyntaxKind.EQ ||
         kind == SyntaxKind.COLONEQ ||
@@ -307,7 +307,7 @@ export type UnaryOpSyntaxKind =
     | SyntaxKind.AMPERSAND
     | SyntaxKind.ASTERISK;
 
-export function is_unary_op(kind: SyntaxKind): kind is UnaryOpSyntaxKind {
+export function isUnaryOp(kind: SyntaxKind): kind is UnaryOpSyntaxKind {
     return (
         kind == SyntaxKind.EXCLAMATION ||
         kind == SyntaxKind.MINUS ||
@@ -363,7 +363,7 @@ export type OpSyntaxKind =
     | SyntaxKind.COMMA
     | SyntaxKind.EQGT;
 
-export function is_op(kind: SyntaxKind): kind is OpSyntaxKind {
+export function isOp(kind: SyntaxKind): kind is OpSyntaxKind {
     return (
         kind == SyntaxKind.EQ ||
         kind == SyntaxKind.COLONEQ ||
@@ -417,7 +417,7 @@ export type PrimaryExprSyntaxKind =
     | SyntaxKind.NAME
     | SyntaxKind.NAME_REF;
 
-export function is_primary_expr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind {
+export function isPrimaryExpr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind {
     return (
         kind == SyntaxKind.NUMBER_INT ||
         kind == SyntaxKind.STRING ||
@@ -428,7 +428,7 @@ export function is_primary_expr(kind: SyntaxKind): kind is PrimaryExprSyntaxKind
 
 export type VarOrVarDeclSyntaxKind = SyntaxKind.NAME | SyntaxKind.NAME_REF | SyntaxKind.VAR_DECL;
 
-export function is_var_or_var_decl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
+export function isVarOrVarDecl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
     return kind == SyntaxKind.NAME || kind == SyntaxKind.NAME_REF || kind == SyntaxKind.VAR_DECL;
 }
 export type ListSyntaxKind =
@@ -437,7 +437,7 @@ export type ListSyntaxKind =
     | SyntaxKind.EXPR_LIST
     | SyntaxKind.STMT_LIST;
 
-export function is_list(kind: SyntaxKind): kind is ListSyntaxKind {
+export function isList(kind: SyntaxKind): kind is ListSyntaxKind {
     return (
         kind == SyntaxKind.VAR_OR_VAR_DECL_LIST ||
         kind == SyntaxKind.PRIMARY_EXPR_LIST ||
@@ -453,7 +453,7 @@ export type ExprSyntaxKind =
     | SyntaxKind.MEMBER_EXPR
     | SyntaxKind.FUNC_EXPR;
 
-export function is_expr(kind: SyntaxKind): kind is ExprSyntaxKind {
+export function isExpr(kind: SyntaxKind): kind is ExprSyntaxKind {
     return (
         kind == SyntaxKind.LAMBDA_EXPR ||
         kind == SyntaxKind.LAMBDA_INLINE_EXPR ||
@@ -472,7 +472,7 @@ export type StmtSyntaxKind =
     | SyntaxKind.WHILE_STMT
     | SyntaxKind.FOREACH_STMT;
 
-export function is_stmt(kind: SyntaxKind): kind is StmtSyntaxKind {
+export function isStmt(kind: SyntaxKind): kind is StmtSyntaxKind {
     return (
         kind == SyntaxKind.VAR_DECL_STMT ||
         kind == SyntaxKind.SET_STMT ||
