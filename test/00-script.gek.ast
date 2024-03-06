@@ -1,0 +1,7 @@
+SCRIPT 0..18
+  SCRIPTNAME_KW 0..10 "scriptname"
+  WHITESPACE 10..11 " "
+  NAME 11..17
+    IDENT 11..17 "Test00"
+  NEWLINE 17..18 "\n"
+  STMT_LIST 18..18

@@ -1,0 +1,24 @@
+SCRIPT 0..39
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test11"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..39
+    BEGIN_STMT 12..37
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..34
+        FUNC_EXPR 27..33
+          NAME_REF 27..31
+            IDENT 27..31 "call"
+          WHITESPACE 31..32 " "
+          LITERAL 32..33
+            NUMBER_INT 32..33 "1"
+        NEWLINE 33..34 "\n"
+      END_KW 34..37 "end"
+    NEWLINE 37..39 "\n\n"

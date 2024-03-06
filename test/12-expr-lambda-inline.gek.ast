@@ -1,0 +1,36 @@
+SCRIPT 0..46
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test12"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..46
+    BEGIN_STMT 12..45
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..42
+        LAMBDA_INLINE_EXPR 27..41
+          LBRACK 27..28 "{"
+          NAME_REF 28..29
+            IDENT 28..29 "a"
+          COMMA 29..30 ","
+          WHITESPACE 30..31 " "
+          NAME_REF 31..32
+            IDENT 31..32 "b"
+          COMMA 32..33 ","
+          WHITESPACE 33..34 " "
+          NAME_REF 34..35
+            IDENT 34..35 "c"
+          RBRACK 35..36 "}"
+          WHITESPACE 36..37 " "
+          EQGT 37..39 "=>"
+          WHITESPACE 39..40 " "
+          LITERAL 40..41
+            NUMBER_INT 40..41 "1"
+        NEWLINE 41..42 "\n"
+      END_KW 42..45 "end"
+    NEWLINE 45..46 "\n"

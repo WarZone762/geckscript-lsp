@@ -1,0 +1,7 @@
+scn Test18 ; 123
+
+begin Test ; 123
+    set a to 123 ; 123
+    set a to 123   ; 123
+end ; 123
+

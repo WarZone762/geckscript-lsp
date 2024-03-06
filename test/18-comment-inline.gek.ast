@@ -1,0 +1,50 @@
+SCRIPT 0..94
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test18"
+  WHITESPACE 10..11 " "
+  COMMENT 11..16 "; 123"
+  NEWLINE 16..18 "\n\n"
+  STMT_LIST 18..94
+    BEGIN_STMT 18..86
+      BEGIN_KW 18..23 "begin"
+      WHITESPACE 23..24 " "
+      BLOCKTYPE_DESIG 24..28
+        IDENT 24..28 "Test"
+      WHITESPACE 28..29 " "
+      COMMENT 29..34 "; 123"
+      NEWLINE 34..35 "\n"
+      WHITESPACE 35..39 "    "
+      STMT_LIST 39..83
+        SET_STMT 39..51
+          SET_KW 39..42 "set"
+          WHITESPACE 42..43 " "
+          NAME_REF 43..44
+            IDENT 43..44 "a"
+          WHITESPACE 44..45 " "
+          TO_KW 45..47 "to"
+          WHITESPACE 47..48 " "
+          LITERAL 48..51
+            NUMBER_INT 48..51 "123"
+        WHITESPACE 51..52 " "
+        COMMENT 52..57 "; 123"
+        NEWLINE 57..58 "\n"
+        WHITESPACE 58..62 "    "
+        SET_STMT 62..74
+          SET_KW 62..65 "set"
+          WHITESPACE 65..66 " "
+          NAME_REF 66..67
+            IDENT 66..67 "a"
+          WHITESPACE 67..68 " "
+          TO_KW 68..70 "to"
+          WHITESPACE 70..71 " "
+          LITERAL 71..74
+            NUMBER_INT 71..74 "123"
+        WHITESPACE 74..77 "   "
+        COMMENT 77..82 "; 123"
+        NEWLINE 82..83 "\n"
+      END_KW 83..86 "end"
+    WHITESPACE 86..87 " "
+    COMMENT 87..92 "; 123"
+    NEWLINE 92..94 "\n\n"

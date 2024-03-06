@@ -1,0 +1,52 @@
+SCRIPT 0..70
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test16"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..70
+    BEGIN_STMT 12..68
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..65
+        UNARY_EXPR 27..29
+          EXCLAMATION 27..28 "!"
+          NAME_REF 28..29
+            IDENT 28..29 "a"
+        NEWLINE 29..30 "\n"
+        WHITESPACE 30..34 "    "
+        UNARY_EXPR 34..36
+          MINUS 34..35 "-"
+          NAME_REF 35..36
+            IDENT 35..36 "a"
+        NEWLINE 36..37 "\n"
+        WHITESPACE 37..41 "    "
+        UNARY_EXPR 41..43
+          DOLLAR 41..42 "$"
+          NAME_REF 42..43
+            IDENT 42..43 "a"
+        NEWLINE 43..44 "\n"
+        WHITESPACE 44..48 "    "
+        UNARY_EXPR 48..50
+          HASH 48..49 "#"
+          NAME_REF 49..50
+            IDENT 49..50 "a"
+        NEWLINE 50..51 "\n"
+        WHITESPACE 51..55 "    "
+        UNARY_EXPR 55..57
+          ASTERISK 55..56 "*"
+          NAME_REF 56..57
+            IDENT 56..57 "a"
+        NEWLINE 57..58 "\n"
+        WHITESPACE 58..62 "    "
+        UNARY_EXPR 62..64
+          AMPERSAND 62..63 "&"
+          NAME_REF 63..64
+            IDENT 63..64 "a"
+        NEWLINE 64..65 "\n"
+      END_KW 65..68 "end"
+    NEWLINE 68..70 "\n\n"

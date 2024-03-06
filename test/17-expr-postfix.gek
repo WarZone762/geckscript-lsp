@@ -1,0 +1,15 @@
+scn Test17
+
+begin Test
+    a[0]
+    a->b
+    a.b
+
+    a[a].a->a
+    a[a]->a.a
+    a.a->a[a]
+    a.a[a]->a
+    a->a[a].a
+    a->a.a[a]
+end
+

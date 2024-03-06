@@ -1,0 +1,25 @@
+SCRIPT 0..62
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test08"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..62
+    BEGIN_STMT 12..60
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..57
+        CONTINUE_KW 27..35 "continue"
+        NEWLINE 35..36 "\n"
+        WHITESPACE 36..40 "    "
+        BREAK_KW 40..45 "break"
+        NEWLINE 45..46 "\n"
+        WHITESPACE 46..50 "    "
+        RETURN_KW 50..56 "return"
+        NEWLINE 56..57 "\n"
+      END_KW 57..60 "end"
+    NEWLINE 60..62 "\n\n"

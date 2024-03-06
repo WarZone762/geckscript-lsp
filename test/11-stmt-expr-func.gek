@@ -1,0 +1,6 @@
+scn Test11
+
+begin Test
+    call 1
+end
+

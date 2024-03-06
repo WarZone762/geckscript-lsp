@@ -1,0 +1,22 @@
+SCRIPT 0..47
+  SCRIPTNAME_KW 0..10 "scriptname"
+  WHITESPACE 10..11 " "
+  NAME 11..17
+    IDENT 11..17 "Test02"
+  NEWLINE 17..20 "\n\n\n"
+  STMT_LIST 20..47
+    BEGIN_STMT 20..46
+      BEGIN_KW 20..25 "begin"
+      WHITESPACE 25..26 " "
+      BLOCKTYPE_DESIG 26..41
+        IDENT 26..30 "Test"
+        WHITESPACE 30..31 " "
+        LITERAL 31..32
+          NUMBER_INT 31..32 "1"
+        WHITESPACE 32..33 " "
+        LITERAL 33..41
+          NUMBER_INT 33..41 "0xFAF123"
+      NEWLINE 41..43 "\n\n"
+      STMT_LIST 43..43
+      END_KW 43..46 "end"
+    NEWLINE 46..47 "\n"

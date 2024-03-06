@@ -1,0 +1,7 @@
+scn Test09
+
+begin Test
+    int foo
+    float bar := 123.0
+end
+

@@ -1,0 +1,76 @@
+SCRIPT 0..138
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test06"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..138
+    BEGIN_STMT 12..136
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..133
+        IF_STMT 27..132
+          IF_KW 27..29 "if"
+          WHITESPACE 29..30 " "
+          LITERAL 30..31
+            NUMBER_INT 30..31 "1"
+          NEWLINE 31..32 "\n"
+          WHITESPACE 32..40 "        "
+          STMT_LIST 40..55
+            SET_STMT 40..54
+              SET_KW 40..43 "set"
+              WHITESPACE 43..44 " "
+              NAME_REF 44..47
+                IDENT 44..47 "foo"
+              WHITESPACE 47..48 " "
+              TO_KW 48..50 "to"
+              WHITESPACE 50..51 " "
+              LITERAL 51..54
+                NUMBER_INT 51..54 "123"
+            NEWLINE 54..55 "\n"
+          WHITESPACE 55..59 "    "
+          BRANCH 59..123
+            ELSEIF_KW 59..65 "elseif"
+            WHITESPACE 65..66 " "
+            LITERAL 66..67
+              NUMBER_INT 66..67 "2"
+            NEWLINE 67..68 "\n"
+            WHITESPACE 68..76 "        "
+            STMT_LIST 76..91
+              SET_STMT 76..90
+                SET_KW 76..79 "set"
+                WHITESPACE 79..80 " "
+                NAME_REF 80..83
+                  IDENT 80..83 "bar"
+                WHITESPACE 83..84 " "
+                TO_KW 84..86 "to"
+                WHITESPACE 86..87 " "
+                LITERAL 87..90
+                  NUMBER_INT 87..90 "234"
+              NEWLINE 90..91 "\n"
+            WHITESPACE 91..95 "    "
+            BRANCH 95..123
+              ELSE_KW 95..99 "else"
+              NEWLINE 99..100 "\n"
+              WHITESPACE 100..108 "        "
+              STMT_LIST 108..123
+                SET_STMT 108..122
+                  SET_KW 108..111 "set"
+                  WHITESPACE 111..112 " "
+                  NAME_REF 112..115
+                    IDENT 112..115 "baz"
+                  WHITESPACE 115..116 " "
+                  TO_KW 116..118 "to"
+                  WHITESPACE 118..119 " "
+                  LITERAL 119..122
+                    NUMBER_INT 119..122 "345"
+                NEWLINE 122..123 "\n"
+          WHITESPACE 123..127 "    "
+          ENDIF_KW 127..132 "endif"
+        NEWLINE 132..133 "\n"
+      END_KW 133..136 "end"
+    NEWLINE 136..138 "\n\n"

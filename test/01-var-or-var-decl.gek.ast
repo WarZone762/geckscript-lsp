@@ -1,0 +1,28 @@
+SCRIPT 0..38
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test01"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..38
+    VAR_DECL_STMT 12..19
+      VAR_DECL 12..19
+        INT_TYPE 12..15 "int"
+        WHITESPACE 15..16 " "
+        NAME 16..19
+          IDENT 16..19 "foo"
+    NEWLINE 19..20 "\n"
+    VAR_DECL_STMT 20..27
+      VAR_DECL 20..27
+        REFERENCE_TYPE 20..23 "ref"
+        WHITESPACE 23..24 " "
+        NAME 24..27
+          IDENT 24..27 "bar"
+    NEWLINE 27..28 "\n"
+    VAR_DECL_STMT 28..37
+      VAR_DECL 28..37
+        FLOAT_TYPE 28..33 "float"
+        WHITESPACE 33..34 " "
+        NAME 34..37
+          IDENT 34..37 "baz"
+    NEWLINE 37..38 "\n"

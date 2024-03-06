@@ -1,0 +1,37 @@
+SCRIPT 0..63
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test09"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..63
+    BEGIN_STMT 12..61
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..58
+        VAR_DECL_STMT 27..34
+          VAR_DECL 27..34
+            INT_TYPE 27..30 "int"
+            WHITESPACE 30..31 " "
+            NAME 31..34
+              IDENT 31..34 "foo"
+        NEWLINE 34..35 "\n"
+        WHITESPACE 35..39 "    "
+        VAR_DECL_STMT 39..57
+          VAR_DECL 39..48
+            FLOAT_TYPE 39..44 "float"
+            WHITESPACE 44..45 " "
+            NAME 45..48
+              IDENT 45..48 "bar"
+          WHITESPACE 48..49 " "
+          COLONEQ 49..51 ":="
+          WHITESPACE 51..52 " "
+          LITERAL 52..57
+            NUMBER_INT 52..57 "123.0"
+        NEWLINE 57..58 "\n"
+      END_KW 58..61 "end"
+    NEWLINE 61..63 "\n\n"

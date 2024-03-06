@@ -1,0 +1,7 @@
+scn Test10
+
+begin Test
+    while 1
+        set foo to 123
+    loop
+end

@@ -1,0 +1,6 @@
+scn Test04
+
+begin Test
+    let foo := abc
+end
+

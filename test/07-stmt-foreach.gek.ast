@@ -1,0 +1,44 @@
+SCRIPT 0..82
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test07"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..82
+    BEGIN_STMT 12..80
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..77
+        FOREACH_STMT 27..76
+          FOREACH_KW 27..34 "foreach"
+          WHITESPACE 34..35 " "
+          NAME_REF 35..36
+            IDENT 35..36 "e"
+          WHITESPACE 36..37 " "
+          LARROW 37..39 "<-"
+          WHITESPACE 39..40 " "
+          NAME_REF 40..44
+            IDENT 40..44 "iter"
+          NEWLINE 44..45 "\n"
+          WHITESPACE 45..53 "        "
+          STMT_LIST 53..68
+            SET_STMT 53..67
+              SET_KW 53..56 "set"
+              WHITESPACE 56..57 " "
+              NAME_REF 57..60
+                IDENT 57..60 "foo"
+              WHITESPACE 60..61 " "
+              TO_KW 61..63 "to"
+              WHITESPACE 63..64 " "
+              LITERAL 64..67
+                NUMBER_INT 64..67 "123"
+            NEWLINE 67..68 "\n"
+          WHITESPACE 68..72 "    "
+          LOOP_KW 72..76 "loop"
+        NEWLINE 76..77 "\n"
+      END_KW 77..80 "end"
+    NEWLINE 80..82 "\n\n"

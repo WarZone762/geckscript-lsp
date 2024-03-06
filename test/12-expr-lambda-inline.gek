@@ -1,0 +1,5 @@
+scn Test12
+
+begin Test
+    {a, b, c} => 1
+end

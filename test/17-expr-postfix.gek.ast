@@ -1,0 +1,143 @@
+SCRIPT 0..139
+  SCRIPTNAME_KW 0..3 "scn"
+  WHITESPACE 3..4 " "
+  NAME 4..10
+    IDENT 4..10 "Test17"
+  NEWLINE 10..12 "\n\n"
+  STMT_LIST 12..139
+    BEGIN_STMT 12..137
+      BEGIN_KW 12..17 "begin"
+      WHITESPACE 17..18 " "
+      BLOCKTYPE_DESIG 18..22
+        IDENT 18..22 "Test"
+      NEWLINE 22..23 "\n"
+      WHITESPACE 23..27 "    "
+      STMT_LIST 27..134
+        MEMBER_EXPR 27..31
+          NAME_REF 27..28
+            IDENT 27..28 "a"
+          LSQBRACK 28..29 "["
+          LITERAL 29..30
+            NUMBER_INT 29..30 "0"
+          RSQBRACK 30..31 "]"
+        NEWLINE 31..32 "\n"
+        WHITESPACE 32..36 "    "
+        MEMBER_EXPR 36..40
+          NAME_REF 36..37
+            IDENT 36..37 "a"
+          RARROW 37..39 "->"
+          NAME_REF 39..40
+            IDENT 39..40 "b"
+        NEWLINE 40..41 "\n"
+        WHITESPACE 41..45 "    "
+        MEMBER_EXPR 45..48
+          NAME_REF 45..46
+            IDENT 45..46 "a"
+          DOT 46..47 "."
+          NAME_REF 47..48
+            IDENT 47..48 "b"
+        NEWLINE 48..50 "\n\n"
+        WHITESPACE 50..54 "    "
+        MEMBER_EXPR 54..63
+          MEMBER_EXPR 54..60
+            MEMBER_EXPR 54..58
+              NAME_REF 54..55
+                IDENT 54..55 "a"
+              LSQBRACK 55..56 "["
+              NAME_REF 56..57
+                IDENT 56..57 "a"
+              RSQBRACK 57..58 "]"
+            DOT 58..59 "."
+            NAME_REF 59..60
+              IDENT 59..60 "a"
+          RARROW 60..62 "->"
+          NAME_REF 62..63
+            IDENT 62..63 "a"
+        NEWLINE 63..64 "\n"
+        WHITESPACE 64..68 "    "
+        MEMBER_EXPR 68..77
+          MEMBER_EXPR 68..75
+            MEMBER_EXPR 68..72
+              NAME_REF 68..69
+                IDENT 68..69 "a"
+              LSQBRACK 69..70 "["
+              NAME_REF 70..71
+                IDENT 70..71 "a"
+              RSQBRACK 71..72 "]"
+            RARROW 72..74 "->"
+            NAME_REF 74..75
+              IDENT 74..75 "a"
+          DOT 75..76 "."
+          NAME_REF 76..77
+            IDENT 76..77 "a"
+        NEWLINE 77..78 "\n"
+        WHITESPACE 78..82 "    "
+        MEMBER_EXPR 82..91
+          MEMBER_EXPR 82..88
+            MEMBER_EXPR 82..85
+              NAME_REF 82..83
+                IDENT 82..83 "a"
+              DOT 83..84 "."
+              NAME_REF 84..85
+                IDENT 84..85 "a"
+            RARROW 85..87 "->"
+            NAME_REF 87..88
+              IDENT 87..88 "a"
+          LSQBRACK 88..89 "["
+          NAME_REF 89..90
+            IDENT 89..90 "a"
+          RSQBRACK 90..91 "]"
+        NEWLINE 91..92 "\n"
+        WHITESPACE 92..96 "    "
+        MEMBER_EXPR 96..105
+          MEMBER_EXPR 96..102
+            MEMBER_EXPR 96..99
+              NAME_REF 96..97
+                IDENT 96..97 "a"
+              DOT 97..98 "."
+              NAME_REF 98..99
+                IDENT 98..99 "a"
+            LSQBRACK 99..100 "["
+            NAME_REF 100..101
+              IDENT 100..101 "a"
+            RSQBRACK 101..102 "]"
+          RARROW 102..104 "->"
+          NAME_REF 104..105
+            IDENT 104..105 "a"
+        NEWLINE 105..106 "\n"
+        WHITESPACE 106..110 "    "
+        MEMBER_EXPR 110..119
+          MEMBER_EXPR 110..117
+            MEMBER_EXPR 110..114
+              NAME_REF 110..111
+                IDENT 110..111 "a"
+              RARROW 111..113 "->"
+              NAME_REF 113..114
+                IDENT 113..114 "a"
+            LSQBRACK 114..115 "["
+            NAME_REF 115..116
+              IDENT 115..116 "a"
+            RSQBRACK 116..117 "]"
+          DOT 117..118 "."
+          NAME_REF 118..119
+            IDENT 118..119 "a"
+        NEWLINE 119..120 "\n"
+        WHITESPACE 120..124 "    "
+        MEMBER_EXPR 124..133
+          MEMBER_EXPR 124..130
+            MEMBER_EXPR 124..128
+              NAME_REF 124..125
+                IDENT 124..125 "a"
+              RARROW 125..127 "->"
+              NAME_REF 127..128
+                IDENT 127..128 "a"
+            DOT 128..129 "."
+            NAME_REF 129..130
+              IDENT 129..130 "a"
+          LSQBRACK 130..131 "["
+          NAME_REF 131..132
+            IDENT 131..132 "a"
+          RSQBRACK 132..133 "]"
+        NEWLINE 133..134 "\n"
+      END_KW 134..137 "end"
+    NEWLINE 137..139 "\n\n"

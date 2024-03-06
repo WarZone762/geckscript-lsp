@@ -1,0 +1,6 @@
+scn Test14
+
+begin Test
+    call 1 (call 2 3 (call a b c))
+end
+
