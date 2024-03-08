@@ -1,146 +1,119 @@
-import { ancestors, findAncestor } from "../ast.js";
-import {
-    LambdaExpr,
-    LambdaInlineExpr,
-    LetStmt,
-    Name,
-    NameRef,
-    Script,
-    VarDecl,
-    VarDeclStmt,
-} from "../ast/generated.js";
+import { ancestors, forEachChildRecursive } from "../ast.js";
+import { LambdaExpr, LambdaInlineExpr, NameRef, Script, StmtList } from "../ast/generated.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
-import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
+import { NodeOrToken, Token } from "../types/syntax_node.js";
+import { FileDatabase, ScopeNode, SymbolTable, Symbol } from "./hir.js";
 
-export function findDefFromToken(token: Token): Name | undefined {
+export function findDefinitionFromToken(token: Token, db: FileDatabase): Symbol | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
-        return undefined;
+        return;
     }
 
     const parent = token.parent;
-    if (parent == undefined) {
-        return undefined;
-    }
+    if (parent?.kind === SyntaxKind.NAME_REF) {
+        return findDefinition(new NameRef(parent), db);
+    } else if (parent?.kind === SyntaxKind.NAME) {
+        const symbolTable = nodeSymbolTable(parent, db);
+        if (symbolTable === undefined) {
+            return;
+        }
 
-    if (parent.kind === SyntaxKind.NAME) {
-        return new Name(parent);
-    } else if (parent.kind === SyntaxKind.NAME_REF) {
-        return findDef(new NameRef(parent));
+        return symbolTable.symbols.get(token.text);
     }
 }
 
-export function findDef(node: NameRef): Name | undefined {
-    if (node.green.parent == undefined || node.nameRef() == undefined) {
-        return undefined;
-    }
-
-    for (const a of ancestors(node.green.parent)) {
-        for (const def of findScopeDefs(a)) {
-            if (def.name()?.text === node.nameRef()!.text) {
-                return def;
+export function findReferences(symbol: Symbol): NameRef[] {
+    const refs: NameRef[] = [];
+    forEachChildRecursive(symbol.parent.node.green, (n) => {
+        if (n.kind === SyntaxKind.NAME_REF) {
+            const nameRef = new NameRef(n);
+            if (nameRef.nameRef()?.text === symbol.name) {
+                refs.push(nameRef);
             }
         }
-    }
-}
-
-export function findRefs(node: Name): NameRef[] {
-    const refs: NameRef[] = [];
-
-    const text = node.name()?.text;
-    if (text == undefined) {
-        return refs;
-    }
-    const stmtList = findAncestor(node.green, (n) => n.kind === SyntaxKind.STMT_LIST);
-    if (stmtList == undefined) {
-        return refs;
-    }
-
-    findReferencesRecursive(stmtList as Node);
+    });
 
     return refs;
-
-    function findReferencesRecursive(node: Node) {
-        for (const c of node.children) {
-            if (c.kind === SyntaxKind.NAME_REF) {
-                const ref = new NameRef(c);
-                if (ref.nameRef()?.text === text) {
-                    refs.push(ref);
-                }
-            } else if (c.isNode()) {
-                findReferencesRecursive(c);
-            }
-        }
-    }
 }
 
-export function* findScopeDefs(node: NodeOrToken) {
-    switch (node.kind) {
-        case SyntaxKind.STMT_LIST:
-            yield* findStmtListDefs(node);
-            break;
-        case SyntaxKind.SCRIPT: {
-            const name = new Script(node).name();
-            if (name != undefined) {
-                yield name;
-            }
-            break;
-        }
-        case SyntaxKind.LAMBDA_EXPR: {
-            const varOrVarDeclList = new LambdaExpr(node).params();
-            if (varOrVarDeclList != undefined) {
-                for (const varOrVarDecl of varOrVarDeclList.iter()) {
-                    if (varOrVarDecl instanceof VarDecl) {
-                        const def = varOrVarDecl.ident();
-                        if (def != undefined) {
-                            yield def;
-                        }
-                    }
-                }
-            }
-            break;
-        }
-        case SyntaxKind.LAMBDA_INLINE_EXPR: {
-            const varOrVarDeclList = new LambdaInlineExpr(node).params();
-            if (varOrVarDeclList != undefined) {
-                for (const varOrVarDecl of varOrVarDeclList.iter()) {
-                    if (varOrVarDecl instanceof VarDecl) {
-                        const def = varOrVarDecl.ident();
-                        if (def != undefined) {
-                            yield def;
-                        }
-                    }
-                }
-            }
-            break;
-        }
-        default:
+export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefined {
+    const name = node.nameRef()?.text;
+    if (name === undefined) {
+        return;
+    }
+
+    const symbol = (() => {
+        let st = nodeSymbolTable(node.green, db);
+        if (st === undefined) {
             return;
-        // TODO: add other nodes that create a scope
+        }
+
+        while (st !== undefined) {
+            console.error("st while");
+            const symbol = st.symbols.get(name);
+            if (symbol !== undefined) {
+                return symbol;
+            }
+            st = st.parent;
+        }
+    })();
+    if (symbol !== undefined) {
+        return symbol;
+    }
+
+    return db.scripts.get(name)?.symbols.get(name);
+}
+
+export function nodeSymbolTable(node: NodeOrToken, db: FileDatabase): SymbolTable | undefined {
+    const scope = findContainingScope(node);
+    if (scope === undefined) {
+        return;
+    }
+
+    return scopeSymbolTable(scope, db);
+}
+
+export function scopeSymbolTable(scope: ScopeNode, db: FileDatabase): SymbolTable | undefined {
+    if (scope.green.parent === undefined) {
+        if (!(scope instanceof Script)) {
+            return;
+        }
+        const scriptName = scope.name()?.name()?.text;
+        if (scriptName === undefined) {
+            return;
+        }
+
+        return db.scripts.get(scriptName);
+    }
+
+    const parentScope = findContainingScope(scope.green.parent);
+    if (parentScope === undefined) {
+        return;
+    }
+
+    const parentSymbolTable = scopeSymbolTable(parentScope, db);
+    if (parentSymbolTable === undefined) {
+        return;
+    }
+
+    for (const child of parentSymbolTable.children) {
+        // TODO: proper equality
+        if (child.node.green === scope.green) {
+            return child;
+        }
     }
 }
 
-function* findStmtListDefs(node: Node) {
-    for (const c of node.children) {
-        switch (c.kind) {
-            case SyntaxKind.VAR_DECL_STMT: {
-                const def = new VarDeclStmt(c).var()?.ident();
-                if (def != undefined) {
-                    yield def;
-                }
-                break;
-            }
-            case SyntaxKind.LET_STMT: {
-                const varOrVarDecl = new LetStmt(c).var();
-                if (varOrVarDecl instanceof Name) {
-                    yield varOrVarDecl;
-                } else if (varOrVarDecl instanceof VarDecl) {
-                    const def = varOrVarDecl.ident();
-                    if (def != undefined) {
-                        yield def;
-                    }
-                }
-                break;
-            }
+export function findContainingScope(node: NodeOrToken): ScopeNode | undefined {
+    for (const a of ancestors(node)) {
+        if (a.kind === SyntaxKind.STMT_LIST) {
+            return new StmtList(a);
+        } else if (a.kind === SyntaxKind.SCRIPT) {
+            return new Script(a);
+        } else if (a.kind === SyntaxKind.LAMBDA_EXPR) {
+            return new LambdaExpr(a);
+        } else if (a.kind === SyntaxKind.LAMBDA_INLINE_EXPR) {
+            return new LambdaInlineExpr(a);
         }
     }
 }

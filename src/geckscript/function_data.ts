@@ -93,11 +93,10 @@ export async function CreateGlobalFunctionSymbol(
         return undefined;
     }
 
-    return {
-        kind: SymbolKind.Function,
-        name: functionInfo.canonicalName,
-        type: ExprType.Ambiguous,
-    };
+    // return {
+    //     kind: SymbolKind.Function,
+    //     name: functionInfo.canonicalName,
+    // };
 }
 
 export async function DumpFunctionNames() {

@@ -1,38 +1,48 @@
-import { findScopeDefs } from "../geckscript/hir/api.js";
-import { ParsedString } from "../geckscript/hir/hir.js";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
-import { Node } from "../geckscript/types/syntax_node.js";
+import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
+import * as hir from "../geckscript/hir/hir.js";
 
-export function symbols(parsed: ParsedString): SymbolInformation[] {
-    const syms: SymbolInformation[] = [];
+export function symbols(db: FileDatabase, parsed: ParsedString): SymbolInformation[] | null {
+    const symbols: SymbolInformation[] = [];
 
-    symbolsRecursive(parsed.root.green);
+    const scriptName = parsed.root.name()?.name()?.text;
+    if (scriptName === undefined) {
+        return null;
+    }
 
-    return syms;
+    const symbolTable = db.scripts.get(scriptName);
+    if (symbolTable === undefined) {
+        return null;
+    }
 
-    function symbolsRecursive(node: Node) {
-        for (const sym of findScopeDefs(node)) {
+    const stack = [symbolTable];
+
+    while (stack.length !== 0) {
+        const top = stack.pop()!;
+        for (const symbol of top.symbols.values()) {
             let kind: SymbolKind;
-            if (sym.green.parent?.kind === SyntaxKind.SCRIPT) {
-                kind = SymbolKind.Function;
-            } else {
-                kind = SymbolKind.Variable;
+            switch (symbol.kind) {
+                case hir.SymbolKind.Function:
+                    kind = SymbolKind.Function;
+                    break;
+                case hir.SymbolKind.Script:
+                    kind = SymbolKind.File;
+                    break;
+                case hir.SymbolKind.Variable:
+                    kind = SymbolKind.Variable;
+                    break;
+                default:
+                    continue;
             }
-
-            syms.push({
-                name: sym.name()!.text,
-                location: { uri: parsed.doc.uri, range: parsed.rangeOf(sym.green) },
+            symbols.push({
+                name: symbol.name,
+                location: { uri: parsed.doc.uri, range: parsed.rangeOf(symbol.decl.green) },
                 kind: kind,
             });
         }
 
-        for (const child of node.children) {
-            if (!child.isNode()) {
-                continue;
-            }
-
-            symbolsRecursive(child);
-        }
+        stack.push(...top.children);
     }
+
+    return symbols;
 }

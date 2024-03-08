@@ -2,10 +2,8 @@
 
 import { URI } from "vscode-uri";
 import * as ast from "./geckscript/ast.js";
-// import * as FD from "./geckscript/function_data.js";
 import { FileDatabase, ParsedString } from "./geckscript/hir/hir.js";
 import * as features from "./language_features/features.js";
-// import * as Wiki from "./wiki/wiki.js";
 import * as TreeViewServer from "./tree_view/server.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
@@ -18,6 +16,10 @@ import {
     DidChangeTextDocumentParams,
     DiagnosticSeverity,
     WorkspaceFolder,
+    DefinitionParams,
+    ReferenceParams,
+    DocumentHighlightParams,
+    RenameParams,
 } from "vscode-languageserver/node.js";
 
 const DB = new FileDatabase();
@@ -31,14 +33,11 @@ if (checkIndex !== -1) {
     }
 
     await DB.loadFolder(path);
-    for (const [path, doc] of DB.files.entries()) {
-        if (doc.diagnostics.filter((d) => d.severity === DiagnosticSeverity.Error).length > 0) {
-            console.log(`${path}:`);
-        }
+    for (const [uri, doc] of DB.files.entries()) {
         for (const diagnostic of doc.diagnostics) {
             if (diagnostic.severity === DiagnosticSeverity.Error) {
                 console.log(
-                    `${diagnostic.range.start.line}:${diagnostic.range.start.character}: ${diagnostic.message}`
+                    `${path}${uri.split(path).at(-1) ?? uri}:${diagnostic.range.start.line}:${diagnostic.range.start.character}: ${diagnostic.message}`
                 );
             }
         }
@@ -71,7 +70,7 @@ connection.onInitialize(async (params) => {
 
     const result: InitializeResult = {
         capabilities: {
-            // completionProvider: { resolveProvider: true },
+            completionProvider: {},
             definitionProvider: true,
             documentFormattingProvider: true,
             documentHighlightProvider: true,
@@ -142,25 +141,39 @@ connection.onDidChangeTextDocument(
     )
 );
 
-// connection.onCompletion(
-//   async (params) => {
-//     return completion.GetCompletionItems(
-//       environment.map[params.textDocument.uri],
-//       params.position
-//     );
-//   }
-// );
+connection.onCompletion(handler(features.completionItems, (f, p) => f(p.position)));
 
 // connection.onCompletionResolve(
 //   async (item) => {
-//     return completion.GetCompletionItemDoc(item);
+//     return features.completion_doc(item);
 //   }
 // );
 
-connection.onDefinition(handler(features.gotoDef, (f, p) => f(p.position)));
+connection.onDefinition(
+    handler(
+        (parsed, params: DefinitionParams) => {
+            return features.gotoDef(DB, parsed, params.position);
+        },
+        (f, p) => f(p)
+    )
+);
 connection.onDocumentFormatting(handler(features.formatDoc, (f, p) => f(p.options)));
-connection.onDocumentHighlight(handler(features.getHighlight, (f, p) => f(p.position)));
-connection.onDocumentSymbol(handler(features.symbols, (f) => f()));
+connection.onDocumentHighlight(
+    handler(
+        (parsed, params: DocumentHighlightParams) => {
+            return features.getHighlight(DB, parsed, params.position);
+        },
+        (f, p) => f(p)
+    )
+);
+connection.onDocumentSymbol(
+    handler(
+        (parsed) => {
+            return features.symbols(DB, parsed);
+        },
+        (f) => f()
+    )
+);
 connection.onHover(
     handler(
         (parsed, params: HoverParams) => {
@@ -177,9 +190,23 @@ connection.onHover(
         (f, p) => f(p)
     )
 );
-connection.onReferences(handler(features.refs, (f, p) => f(p.position)));
+connection.onReferences(
+    handler(
+        (parsed, params: ReferenceParams) => {
+            return features.refs(DB, parsed, params.position);
+        },
+        (f, p) => f(p)
+    )
+);
 connection.onPrepareRename(handler(features.prepareRename, (f, p) => f(p.position)));
-connection.onRenameRequest(handler(features.rename, (f, p) => f(p.newName, p.position)));
+connection.onRenameRequest(
+    handler(
+        (parsed, params: RenameParams) => {
+            return features.rename(DB, parsed, params.newName, params.position);
+        },
+        (f, p) => f(p)
+    )
+);
 connection.onSelectionRanges(
     handler(
         () => null,
