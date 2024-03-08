@@ -1,5 +1,6 @@
-import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
+
+import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
 import * as hir from "../geckscript/hir/hir.js";
 
 export function symbols(db: FileDatabase, parsed: ParsedString): SymbolInformation[] | null {

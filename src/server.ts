@@ -1,26 +1,26 @@
 #!/bin/env node
-
+import { TextDocument } from "vscode-languageserver-textdocument";
+import {
+    DefinitionParams,
+    DiagnosticSeverity,
+    DidChangeTextDocumentParams,
+    DocumentHighlightParams,
+    HoverParams,
+    InitializeResult,
+    ProposedFeatures,
+    ReferenceParams,
+    RenameParams,
+    SemanticTokensRequest,
+    TextDocumentSyncKind,
+    WorkspaceFolder,
+    createConnection,
+} from "vscode-languageserver/node.js";
 import { URI } from "vscode-uri";
+
 import * as ast from "./geckscript/ast.js";
 import { FileDatabase, ParsedString } from "./geckscript/hir/hir.js";
 import * as features from "./language_features/features.js";
 import * as TreeViewServer from "./tree_view/server.js";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-    createConnection,
-    ProposedFeatures,
-    TextDocumentSyncKind,
-    InitializeResult,
-    SemanticTokensRequest,
-    HoverParams,
-    DidChangeTextDocumentParams,
-    DiagnosticSeverity,
-    WorkspaceFolder,
-    DefinitionParams,
-    ReferenceParams,
-    DocumentHighlightParams,
-    RenameParams,
-} from "vscode-languageserver/node.js";
 
 const DB = new FileDatabase();
 

@@ -1,9 +1,10 @@
+import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver";
+import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
+
 import { tokenAtOffset } from "../geckscript/ast.js";
 import { findDefinitionFromToken, findReferences } from "../geckscript/hir/api.js";
 import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
-import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver";
-import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 
 export function prepareRename(
     parsed: ParsedString,

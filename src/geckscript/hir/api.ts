@@ -2,7 +2,7 @@ import { ancestors, forEachChildRecursive } from "../ast.js";
 import { LambdaExpr, LambdaInlineExpr, NameRef, Script, StmtList } from "../ast/generated.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
 import { NodeOrToken, Token } from "../types/syntax_node.js";
-import { FileDatabase, ScopeNode, SymbolTable, Symbol } from "./hir.js";
+import { FileDatabase, ScopeNode, Symbol, SymbolTable } from "./hir.js";
 
 export function findDefinitionFromToken(token: Token, db: FileDatabase): Symbol | undefined {
     if (token.kind !== SyntaxKind.IDENT) {

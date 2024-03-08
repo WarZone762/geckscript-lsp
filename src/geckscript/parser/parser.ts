@@ -1,8 +1,10 @@
+import assert from "assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
+
 import {
-    TokenSyntaxKind,
     NodeSyntaxKind,
     SyntaxKind,
+    TokenSyntaxKind,
     syntaxKindName,
 } from "../syntax_kind/generated.js";
 import {
@@ -15,7 +17,6 @@ import {
 } from "./event.js";
 import { script } from "./grammar/other.js";
 import { TokenSet } from "./token_set.js";
-import assert from "assert";
 
 export class Input {
     tokens: TokenSyntaxKind[];

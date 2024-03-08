@@ -1,5 +1,13 @@
 {
     "tabWidth": 4,
     "trailingComma": "es5",
-    "printWidth": 100
+    "printWidth": 100,
+    "plugins": [
+        "@trivago/prettier-plugin-sort-imports"
+    ],
+    "importOrder": [
+        "^[./]"
+    ],
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true
 }

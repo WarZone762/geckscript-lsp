@@ -1,12 +1,12 @@
 #!/bin/env -S node --loader ts-node/esm
-
 import assert from "assert";
-import { toDebug } from "../geckscript/ast.js";
-import { parseStr } from "../geckscript/parsing.js";
 import * as fs from "fs/promises";
 import test from "node:test";
 import * as path from "path";
 import * as url from "url";
+
+import { toDebug } from "../geckscript/ast.js";
+import { parseStr } from "../geckscript/parsing.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;

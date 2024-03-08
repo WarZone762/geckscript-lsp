@@ -1,5 +1,5 @@
 import { StringBuffer } from "../common.js";
-import { isOp, OpSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./syntax_kind/generated.js";
+import { OpSyntaxKind, SyntaxKind, TokenSyntaxKind, isOp } from "./syntax_kind/generated.js";
 import { Token } from "./types/syntax_node.js";
 import { GetTokenKind } from "./types/token_data.js";
 

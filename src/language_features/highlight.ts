@@ -1,8 +1,9 @@
+import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
+
 import * as ast from "../geckscript/ast.js";
 import { findDefinitionFromToken, findReferences } from "../geckscript/hir/api.js";
 import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
-import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
-import { Position } from "vscode-languageserver-textdocument";
 
 export function getHighlight(
     db: FileDatabase,

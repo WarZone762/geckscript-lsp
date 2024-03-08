@@ -1,6 +1,6 @@
-import { isUnaryOp, SyntaxKind } from "../../syntax_kind/generated.js";
+import { SyntaxKind, isUnaryOp } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
-import { EXPR_FIRST, LITERAL, TokenSet, TYPE } from "../token_set.js";
+import { EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
 import { nameRef, varOrVarDeclR } from "./other.js";
 import { stmtList } from "./statements.js";
 

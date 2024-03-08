@@ -1,11 +1,12 @@
-import { FunctionInfo } from "../geckscript/function_data.js";
-import * as api from "./api.js";
 import * as fs from "fs";
 import * as path from "path";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import wtfMd from "wtf-plugin-markdown";
 import wtf from "wtf_wikipedia";
+
+import { FunctionInfo } from "../geckscript/function_data.js";
+import * as api from "./api.js";
 
 wtf.plugin(wtfMd);
 

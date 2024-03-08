@@ -1,10 +1,10 @@
 #!/bin/env -S node --loader ts-node/esm
-
-import { toDebug } from "../geckscript/ast.js";
-import { parseStr } from "../geckscript/parsing.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as url from "url";
+
+import { toDebug } from "../geckscript/ast.js";
+import { parseStr } from "../geckscript/parsing.js";
 
 const _Dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const testDir = path.resolve(path.join(_Dirname, "..", "..", "test"));

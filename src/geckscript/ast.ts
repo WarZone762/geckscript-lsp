@@ -1,5 +1,5 @@
 import { SyntaxKind, syntaxKindName } from "./syntax_kind/generated.js";
-import { Node, Token, NodeOrToken } from "./types/syntax_node.js";
+import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
 
 export function forEachChild(node: Node, func: (node: NodeOrToken) => unknown): void {
     for (const child of node.children) {

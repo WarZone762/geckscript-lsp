@@ -1,9 +1,10 @@
+import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
+
 import * as ast from "../geckscript/ast.js";
 import { ParsedString } from "../geckscript/hir/hir.js";
 import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
 import { TokenData } from "../geckscript/types/token_data.js";
-import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
-import { Position } from "vscode-languageserver-textdocument";
 
 export function completionItems(parsed: ParsedString, pos: Position): CompletionItem[] | null {
     const token = ast.nearestToken(parsed.root.green, parsed.offsetAt(pos));

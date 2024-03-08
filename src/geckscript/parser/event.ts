@@ -1,4 +1,5 @@
 import { DiagnosticSeverity } from "vscode-languageserver";
+
 import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export const enum EventKind {

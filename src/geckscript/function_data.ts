@@ -1,7 +1,8 @@
-import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions.js";
-import { Symbol, SymbolKind, ExprType } from "./hir/hir.js";
 import * as fs from "fs";
 import * as path from "path";
+
+import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions.js";
+import { ExprType, Symbol, SymbolKind } from "./hir/hir.js";
 
 export interface FunctionInfo {
     name: string;

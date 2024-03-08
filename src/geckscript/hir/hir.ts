@@ -1,13 +1,14 @@
 import assert from "assert";
-import { LambdaExpr, LambdaInlineExpr, Name, Script, StmtList, VarDecl } from "../ast/generated.js";
-import * as parsing from "../parsing.js";
-import { SyntaxKind } from "../syntax_kind/generated.js";
-import { Node, NodeOrToken } from "../types/syntax_node.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
+
+import { LambdaExpr, LambdaInlineExpr, Name, Script, StmtList, VarDecl } from "../ast/generated.js";
+import * as parsing from "../parsing.js";
+import { SyntaxKind } from "../syntax_kind/generated.js";
+import { Node, NodeOrToken } from "../types/syntax_node.js";
 
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();

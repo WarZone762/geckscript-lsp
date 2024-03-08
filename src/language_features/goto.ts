@@ -1,8 +1,9 @@
+import { Location } from "vscode-languageserver";
+import { Position } from "vscode-languageserver-textdocument";
+
 import { tokenAtOffset } from "../geckscript/ast.js";
 import { findDefinitionFromToken, findReferences } from "../geckscript/hir/api.js";
 import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
-import { Location } from "vscode-languageserver";
-import { Position } from "vscode-languageserver-textdocument";
 
 export function gotoDef(db: FileDatabase, parsed: ParsedString, pos: Position): Location | null {
     const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));

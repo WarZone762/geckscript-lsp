@@ -1,8 +1,9 @@
-import { TreeData } from "../geckscript/ast.js";
-import * as ast from "../geckscript/ast.js";
 import * as d3 from "d3";
 import * as http from "http";
 import * as jsdom from "jsdom";
+
+import { TreeData } from "../geckscript/ast.js";
+import * as ast from "../geckscript/ast.js";
 
 export class TreeViewServer {
     server: http.Server;

@@ -1,4 +1,4 @@
-import { SyntaxKind, TokenSyntaxKind, NodeSyntaxKind } from "../syntax_kind/generated.js";
+import { NodeSyntaxKind, SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
 
 export abstract class NodeCommon<T extends SyntaxKind> {
     kind: T;
@@ -50,8 +50,8 @@ class NodeImpl<T extends NodeSyntaxKind = NodeSyntaxKind> extends NodeCommon<T> 
 export type NodeOrToken<T extends SyntaxKind = SyntaxKind> = T extends TokenSyntaxKind
     ? TokenImpl<T>
     : T extends NodeSyntaxKind
-    ? NodeImpl<T>
-    : never;
+      ? NodeImpl<T>
+      : never;
 export type Token<T extends TokenSyntaxKind = TokenSyntaxKind> = NodeOrToken<T>;
 export function Token<T extends TokenSyntaxKind>(kind: T): Token<T> {
     return new TokenImpl(kind) as Token<T>;
