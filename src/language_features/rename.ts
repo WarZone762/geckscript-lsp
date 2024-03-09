@@ -34,7 +34,7 @@ export function rename(
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = findReferences(def);
+    const refs = findReferences(def, db);
     const changes: TextEdit[] = [{ range: parsed.rangeOf(def.decl.green), newText: newName }];
     for (const ref of refs) {
         changes.push({ range: parsed.rangeOf(ref.green), newText: newName });

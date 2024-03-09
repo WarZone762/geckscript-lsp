@@ -6,7 +6,7 @@ import { SyntaxKind, isKeyword } from "../geckscript/syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node.js";
 
 export function formatDoc(parsed: ParsedString, opts: FormattingOptions): TextEdit[] | null {
-    const b = new Builder(parsed, new Options(opts, KeywordCase.UPPER));
+    const b = new Builder(parsed, new Options(opts, KeywordCase.LOWER));
 
     return [b.format()];
 }

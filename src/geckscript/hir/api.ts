@@ -22,16 +22,30 @@ export function findDefinitionFromToken(token: Token, db: FileDatabase): Symbol 
     }
 }
 
-export function findReferences(symbol: Symbol): NameRef[] {
+export function findReferences(symbol: Symbol, db: FileDatabase): NameRef[] {
     const refs: NameRef[] = [];
-    forEachChildRecursive(symbol.parent.node.green, (n) => {
-        if (n.kind === SyntaxKind.NAME_REF) {
-            const nameRef = new NameRef(n);
-            if (nameRef.nameRef()?.text === symbol.name) {
-                refs.push(nameRef);
-            }
+
+    if (symbol.parent.parent?.node.green.kind === SyntaxKind.SCRIPT) {
+        for (const script of db.scripts.values()) {
+            forEachChildRecursive(script.node.green, (n) => {
+                if (n.kind === SyntaxKind.NAME_REF) {
+                    const nameRef = new NameRef(n);
+                    if (nameRef.nameRef()?.text === symbol.name) {
+                        refs.push(nameRef);
+                    }
+                }
+            });
         }
-    });
+    } else {
+        forEachChildRecursive(symbol.parent.node.green, (n) => {
+            if (n.kind === SyntaxKind.NAME_REF) {
+                const nameRef = new NameRef(n);
+                if (nameRef.nameRef()?.text === symbol.name) {
+                    refs.push(nameRef);
+                }
+            }
+        });
+    }
 
     return refs;
 }
@@ -61,7 +75,19 @@ export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefi
         return symbol;
     }
 
-    return db.scripts.get(name)?.symbols.get(name);
+    const script = db.scripts.get(name)?.symbols.get(name);
+    if (script !== undefined) {
+        return script;
+    }
+
+    if (node.green.parent?.kind === SyntaxKind.MEMBER_EXPR) {
+        for (const script of db.scripts.values()) {
+            const symbol = script.children.at(-1)?.symbols.get(name);
+            if (symbol !== undefined) {
+                return symbol;
+            }
+        }
+    }
 }
 
 export function nodeSymbolTable(node: NodeOrToken, db: FileDatabase): SymbolTable | undefined {

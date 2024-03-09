@@ -1,3 +1,4 @@
+import { Script } from "./ast/generated.js";
 import { SyntaxKind, syntaxKindName } from "./syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
 
@@ -132,6 +133,13 @@ export function nextToken(token: Token): Token | undefined {
             return next;
         }
         next = nextNodeDf(next);
+    }
+}
+
+export function root(node: NodeOrToken): Script | undefined {
+    const root = findAncestor(node, (n) => n.kind === SyntaxKind.SCRIPT && n.parent === undefined);
+    if (root !== undefined) {
+        return new Script(root as Node<SyntaxKind.SCRIPT>);
     }
 }
 

@@ -24,7 +24,7 @@ export function getHighlight(
             range: parsed.rangeOf(def.decl.green),
             kind: DocumentHighlightKind.Text,
         });
-        for (const ref of findReferences(def)) {
+        for (const ref of findReferences(def, db)) {
             highlights.push({
                 range: parsed.rangeOf(ref.nameRef()!),
                 kind: DocumentHighlightKind.Text,

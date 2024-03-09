@@ -45,6 +45,14 @@ export class FileDatabase {
         return parsed;
     }
 
+    scriptToUri(name: string): ParsedString | undefined {
+        for (const parsed of this.files.values()) {
+            if (parsed.root.name()?.name()?.text === name) {
+                return parsed;
+            }
+        }
+    }
+
     async loadFolder(dirPath: string) {
         const files = await fs.readdir(dirPath, { recursive: true });
         for (const file of files) {
