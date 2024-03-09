@@ -255,6 +255,15 @@ export class Symbol {
             return this.decl.ident()!;
         }
     }
+
+    completionDetail(): string {
+        if (this.decl instanceof Script) {
+            return `scriptname ${this.name}`;
+        } else {
+            const type = this.decl.type()?.text;
+            return `${type} ${this.name}`;
+        }
+    }
 }
 
 export type ScopeNode = Script | StmtList | LambdaExpr | LambdaInlineExpr;

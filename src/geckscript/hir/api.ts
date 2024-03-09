@@ -4,6 +4,25 @@ import { SyntaxKind } from "../syntax_kind/generated.js";
 import { NodeOrToken, Token } from "../types/syntax_node.js";
 import { FileDatabase, ScopeNode, Symbol, SymbolTable } from "./hir.js";
 
+/** Get all symbols that are visible from `node` */
+export function visibleSymbols(node: NodeOrToken, db: FileDatabase): Symbol[] {
+    const symbols: Symbol[] = [];
+
+    let symbolTable = nodeSymbolTable(node, db);
+    if (symbolTable === undefined) {
+        return symbols;
+    }
+
+    while (symbolTable !== undefined) {
+        for (const symbol of symbolTable.symbols.values()) {
+            symbols.push(symbol);
+        }
+        symbolTable = symbolTable.parent;
+    }
+
+    return symbols;
+}
+
 export function findDefinitionFromToken(token: Token, db: FileDatabase): Symbol | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
         return;
@@ -90,6 +109,7 @@ export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefi
     }
 }
 
+/** Get the nearest symbol table that contains `node` */
 export function nodeSymbolTable(node: NodeOrToken, db: FileDatabase): SymbolTable | undefined {
     const scope = findContainingScope(node);
     if (scope === undefined) {
@@ -99,6 +119,7 @@ export function nodeSymbolTable(node: NodeOrToken, db: FileDatabase): SymbolTabl
     return scopeSymbolTable(scope, db);
 }
 
+/** Get the symbol table corresponding to `scope` */
 export function scopeSymbolTable(scope: ScopeNode, db: FileDatabase): SymbolTable | undefined {
     if (scope.green.parent === undefined) {
         if (!(scope instanceof Script)) {
@@ -130,6 +151,7 @@ export function scopeSymbolTable(scope: ScopeNode, db: FileDatabase): SymbolTabl
     }
 }
 
+/** Get the nearest scope node that contains `node` */
 export function findContainingScope(node: NodeOrToken): ScopeNode | undefined {
     for (const a of ancestors(node)) {
         if (a.kind === SyntaxKind.STMT_LIST) {

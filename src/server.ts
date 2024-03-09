@@ -1,6 +1,7 @@
 #!/bin/env node
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
+    CompletionParams,
     DefinitionParams,
     DiagnosticSeverity,
     DidChangeTextDocumentParams,
@@ -141,7 +142,14 @@ connection.onDidChangeTextDocument(
     )
 );
 
-connection.onCompletion(handler(features.completionItems, (f, p) => f(p.position)));
+connection.onCompletion(
+    handler(
+        (parsed, params: CompletionParams) => {
+            return features.completionItems(DB, parsed, params.position);
+        },
+        (f, p) => f(p)
+    )
+);
 
 // connection.onCompletionResolve(
 //   async (item) => {
