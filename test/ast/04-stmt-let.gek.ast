@@ -13,16 +13,17 @@ SCRIPT 0..47
       NEWLINE 22..23 "\n"
       WHITESPACE 23..27 "    "
       STMT_LIST 27..42
-        LET_STMT 27..41
+        LET_EXPR 27..41
           LET_KW 27..30 "let"
           WHITESPACE 30..31 " "
-          NAME_REF 31..34
-            IDENT 31..34 "foo"
-          WHITESPACE 34..35 " "
-          COLONEQ 35..37 ":="
-          WHITESPACE 37..38 " "
-          NAME_REF 38..41
-            IDENT 38..41 "abc"
+          BIN_EXPR 31..41
+            NAME_REF 31..34
+              IDENT 31..34 "foo"
+            WHITESPACE 34..35 " "
+            COLONEQ 35..37 ":="
+            WHITESPACE 37..38 " "
+            NAME_REF 38..41
+              IDENT 38..41 "abc"
         NEWLINE 41..42 "\n"
       END_KW 42..45 "end"
     NEWLINE 45..47 "\n\n"

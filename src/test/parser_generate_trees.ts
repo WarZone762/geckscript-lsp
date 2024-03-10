@@ -15,7 +15,8 @@ for (const f of await fs.readdir(testDir, { withFileTypes: true })) {
 
         const parsed = parseStr((await fs.readFile(fullPath)).toString());
 
-        const out = await fs.open(`${fullPath}.ast`, "w");
+        const astPath = path.resolve(path.join(testDir, "ast", f.name));
+        const out = await fs.open(`${astPath}.ast`, "w");
         out.write(toDebug(parsed[0]));
         out.close();
     }

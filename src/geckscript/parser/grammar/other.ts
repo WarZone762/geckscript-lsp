@@ -1,7 +1,7 @@
 import { SyntaxKind, isType } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Parser } from "../parser.js";
 import { EXPR_FIRST, TokenSet } from "../token_set.js";
-import { exprPrimary } from "./expressions.js";
+import { exprNoFunc, exprPrimary } from "./expressions.js";
 import { stmtListRoot } from "./statements.js";
 
 export function nameR(p: Parser, recovery: TokenSet) {
@@ -53,7 +53,8 @@ export function varOrVarDeclR(p: Parser, recovery: TokenSet) {
     if (isType(p.cur())) {
         varDeclR(p, recovery);
     } else {
-        nameRefR(p, recovery);
+        exprNoFunc(p);
+        // nameRefR(p, recovery);
     }
 }
 

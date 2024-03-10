@@ -45,4 +45,6 @@ export const EXPR_FIRST = new TokenSet([
     SyntaxKind.LBRACK,
     SyntaxKind.LPAREN,
     SyntaxKind.BEGIN_KW,
+    // let
+    SyntaxKind.LET_KW,
 ]).union(LITERAL);

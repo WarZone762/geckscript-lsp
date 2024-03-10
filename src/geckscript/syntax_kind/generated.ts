@@ -2,6 +2,7 @@ export const enum SyntaxKind {
     UNKNOWN,
     WHITESPACE,
     COMMENT,
+    BLOCK_COMMENT,
     EOF,
     NEWLINE,
     NUMBER_INT,
@@ -39,6 +40,7 @@ export const enum SyntaxKind {
     SET_KW,
     TO_KW,
     LET_KW,
+    FUNCTION_KW,
     EQ,
     COLONEQ,
     PLUSEQ,
@@ -93,19 +95,20 @@ export const enum SyntaxKind {
     BIN_EXPR,
     MEMBER_EXPR,
     FUNC_EXPR,
+    LET_EXPR,
     VAR_DECL_STMT,
     SET_STMT,
-    LET_STMT,
     BEGIN_STMT,
     IF_STMT,
     WHILE_STMT,
     FOREACH_STMT,
 }
 
-export const syntaxBindNames = {
+export const syntaxKindNames = {
     [SyntaxKind.UNKNOWN]: "UNKNOWN",
     [SyntaxKind.WHITESPACE]: "WHITESPACE",
     [SyntaxKind.COMMENT]: "COMMENT",
+    [SyntaxKind.BLOCK_COMMENT]: "BLOCK_COMMENT",
     [SyntaxKind.EOF]: "EOF",
     [SyntaxKind.NEWLINE]: "NEWLINE",
     [SyntaxKind.NUMBER_INT]: "NUMBER_INT",
@@ -143,6 +146,7 @@ export const syntaxBindNames = {
     [SyntaxKind.SET_KW]: "SET_KW",
     [SyntaxKind.TO_KW]: "TO_KW",
     [SyntaxKind.LET_KW]: "LET_KW",
+    [SyntaxKind.FUNCTION_KW]: "FUNCTION_KW",
     [SyntaxKind.EQ]: "EQ",
     [SyntaxKind.COLONEQ]: "COLONEQ",
     [SyntaxKind.PLUSEQ]: "PLUSEQ",
@@ -197,9 +201,9 @@ export const syntaxBindNames = {
     [SyntaxKind.BIN_EXPR]: "BIN_EXPR",
     [SyntaxKind.MEMBER_EXPR]: "MEMBER_EXPR",
     [SyntaxKind.FUNC_EXPR]: "FUNC_EXPR",
+    [SyntaxKind.LET_EXPR]: "LET_EXPR",
     [SyntaxKind.VAR_DECL_STMT]: "VAR_DECL_STMT",
     [SyntaxKind.SET_STMT]: "SET_STMT",
-    [SyntaxKind.LET_STMT]: "LET_STMT",
     [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
     [SyntaxKind.IF_STMT]: "IF_STMT",
     [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
@@ -207,7 +211,7 @@ export const syntaxBindNames = {
 };
 
 export function syntaxKindName(kind: SyntaxKind): string {
-    return syntaxBindNames[kind] ?? "UNKNOWN";
+    return syntaxKindNames[kind] ?? "UNKNOWN";
 }
 
 export type TypeSyntaxKind =
@@ -246,7 +250,8 @@ export type KeywordSyntaxKind =
     | SyntaxKind.RETURN_KW
     | SyntaxKind.SET_KW
     | SyntaxKind.TO_KW
-    | SyntaxKind.LET_KW;
+    | SyntaxKind.LET_KW
+    | SyntaxKind.FUNCTION_KW;
 
 export function isKeyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
     return (
@@ -265,7 +270,8 @@ export function isKeyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
         kind == SyntaxKind.RETURN_KW ||
         kind == SyntaxKind.SET_KW ||
         kind == SyntaxKind.TO_KW ||
-        kind == SyntaxKind.LET_KW
+        kind == SyntaxKind.LET_KW ||
+        kind == SyntaxKind.FUNCTION_KW
     );
 }
 export type SimpleAssignmentOpSyntaxKind = SyntaxKind.EQ | SyntaxKind.COLONEQ;
@@ -451,7 +457,8 @@ export type ExprSyntaxKind =
     | SyntaxKind.UNARY_EXPR
     | SyntaxKind.BIN_EXPR
     | SyntaxKind.MEMBER_EXPR
-    | SyntaxKind.FUNC_EXPR;
+    | SyntaxKind.FUNC_EXPR
+    | SyntaxKind.LET_EXPR;
 
 export function isExpr(kind: SyntaxKind): kind is ExprSyntaxKind {
     return (
@@ -460,13 +467,13 @@ export function isExpr(kind: SyntaxKind): kind is ExprSyntaxKind {
         kind == SyntaxKind.UNARY_EXPR ||
         kind == SyntaxKind.BIN_EXPR ||
         kind == SyntaxKind.MEMBER_EXPR ||
-        kind == SyntaxKind.FUNC_EXPR
+        kind == SyntaxKind.FUNC_EXPR ||
+        kind == SyntaxKind.LET_EXPR
     );
 }
 export type StmtSyntaxKind =
     | SyntaxKind.VAR_DECL_STMT
     | SyntaxKind.SET_STMT
-    | SyntaxKind.LET_STMT
     | SyntaxKind.BEGIN_STMT
     | SyntaxKind.IF_STMT
     | SyntaxKind.WHILE_STMT
@@ -476,7 +483,6 @@ export function isStmt(kind: SyntaxKind): kind is StmtSyntaxKind {
     return (
         kind == SyntaxKind.VAR_DECL_STMT ||
         kind == SyntaxKind.SET_STMT ||
-        kind == SyntaxKind.LET_STMT ||
         kind == SyntaxKind.BEGIN_STMT ||
         kind == SyntaxKind.IF_STMT ||
         kind == SyntaxKind.WHILE_STMT ||
@@ -488,6 +494,7 @@ export type TokenSyntaxKind =
     | SyntaxKind.UNKNOWN
     | SyntaxKind.WHITESPACE
     | SyntaxKind.COMMENT
+    | SyntaxKind.BLOCK_COMMENT
     | SyntaxKind.EOF
     | SyntaxKind.NEWLINE
     | SyntaxKind.NUMBER_INT

@@ -331,6 +331,13 @@ FuncExpr: FUNC_EXPR {
     args: ExprList,
 }
 
+LetExpr: LET_EXPR {
+    let: Token LET_KW,
+    var: VarOrVarDecl,
+    op: Op,
+    expr: Expr,
+}
+
 LambdaInlineExpr: LAMBDA_INLINE_EXPR {
     lbrack: Token LBRACK,
     params: VarOrVarDeclList,
@@ -360,13 +367,6 @@ VarDeclStmt: VAR_DECL_STMT {
 SetStmt: SET_STMT {
     set: Token SET_KW,
     var: NameRef,
-    expr: Expr,
-}
-
-LetStmt: LET_STMT {
-    let: Token LET_KW,
-    var: VarOrVarDecl,
-    op: Op,
     expr: Expr,
 }
 

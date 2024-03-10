@@ -11,7 +11,10 @@ export function parseStr(str: string): [Node, Diagnostic[]] {
     const l = new Lexer(str);
     const tokensFull = Array.from(l.lex());
     const tokens = tokensFull.filter(
-        (t) => t.kind != SyntaxKind.WHITESPACE && t.kind != SyntaxKind.COMMENT
+        (t) =>
+            t.kind !== SyntaxKind.WHITESPACE &&
+            t.kind !== SyntaxKind.COMMENT &&
+            t.kind !== SyntaxKind.BLOCK_COMMENT
     );
     const input = new Input(tokens.map((t) => t.kind));
 
@@ -149,7 +152,11 @@ export class TriviaBuilder {
     attachTrivia() {
         while (this.tokenPos < this.tokens.length) {
             const kind = this.tokens[this.tokenPos].kind;
-            if (kind !== SyntaxKind.WHITESPACE && kind !== SyntaxKind.COMMENT) {
+            if (
+                kind !== SyntaxKind.WHITESPACE &&
+                kind !== SyntaxKind.COMMENT &&
+                kind !== SyntaxKind.BLOCK_COMMENT
+            ) {
                 break;
             }
             this.doToken();

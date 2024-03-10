@@ -125,7 +125,7 @@ class Formatter {
         const newChildren: NodeOrToken[] = [];
 
         for (const [i, child] of n.children.entries()) {
-            if (child.kind === SyntaxKind.COMMENT) {
+            if (child.kind === SyntaxKind.COMMENT || child.kind === SyntaxKind.BLOCK_COMMENT) {
                 if (i !== 0 && n.children[i - 1].kind === SyntaxKind.WHITESPACE) {
                     newChildren.push(n.children[i - 1]);
                 } else if (i !== 0 && n.children[i - 1].kind !== SyntaxKind.NEWLINE) {

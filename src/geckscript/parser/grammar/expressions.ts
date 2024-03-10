@@ -1,7 +1,7 @@
-import { SyntaxKind, isUnaryOp } from "../../syntax_kind/generated.js";
+import { SyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
-import { EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
-import { nameRef, varOrVarDeclR } from "./other.js";
+import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
+import { nameRef, varDeclR, varOrVarDeclR } from "./other.js";
 import { stmtList } from "./statements.js";
 
 export function literal(p: Parser): CompletedMarker | undefined {
@@ -45,7 +45,7 @@ export function exprLambda(p: Parser): CompletedMarker {
     const m = p.start();
 
     p.next(SyntaxKind.BEGIN_KW);
-    if (!p.opt(SyntaxKind.IDENT)) {
+    if (!p.opt(SyntaxKind.FUNCTION_KW)) {
         p.errRecover("expected 'function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
     }
     if (!p.opt(SyntaxKind.LBRACK)) {
@@ -77,6 +77,24 @@ export function exprLambda(p: Parser): CompletedMarker {
     return m.complete(p, SyntaxKind.LAMBDA_EXPR);
 }
 
+export function exprLet(p: Parser) {
+    const m = p.start();
+
+    p.next(SyntaxKind.LET_KW);
+
+    if (isType(p.cur())) {
+        varDeclR(p, ASSIGNMENT_OP);
+        if (isAssignmentOp(p.cur())) {
+            p.nextAny();
+        } else {
+            p.errRecover("expected assignment operator", EXPR_FIRST);
+        }
+    }
+    expr(p);
+
+    return m.complete(p, SyntaxKind.LET_EXPR);
+}
+
 export function exprNameRefOrFunc(p: Parser, noFunc: boolean): CompletedMarker | undefined {
     const m = p.start();
 
@@ -85,7 +103,7 @@ export function exprNameRefOrFunc(p: Parser, noFunc: boolean): CompletedMarker |
         p.opt(SyntaxKind.COMMA);
     }
 
-    const cond = () => p.atTs(EXPR_FIRST) && !p.at(SyntaxKind.MINUS);
+    const cond = () => p.atTs(EXPR_FIRST);
 
     if (cond() && !noFunc) {
         do {
@@ -112,7 +130,13 @@ export function exprPrimary(p: Parser, noFunc: boolean): CompletedMarker | undef
             return exprNameRefOrFunc(p, noFunc);
         case SyntaxKind.LPAREN: {
             p.next(SyntaxKind.LPAREN);
+            while (p.opt(SyntaxKind.NEWLINE)) {
+                continue;
+            }
             const m = p.at(SyntaxKind.BEGIN_KW) ? exprLambda(p) : exprBp(p, 1);
+            while (p.opt(SyntaxKind.NEWLINE)) {
+                continue;
+            }
             p.expect(SyntaxKind.RPAREN);
 
             return m;
@@ -135,6 +159,10 @@ function exprBpImpl(p: Parser, minBp: number, noFunc: boolean): CompletedMarker 
             new TokenSet([SyntaxKind.RPAREN, SyntaxKind.RBRACK, SyntaxKind.TO_KW])
         );
         return undefined;
+    }
+
+    if (p.at(SyntaxKind.LET_KW)) {
+        return exprLet(p);
     }
 
     let lhs = exprLhs(p, noFunc);

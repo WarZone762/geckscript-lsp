@@ -17,7 +17,7 @@ SCRIPT 0..90
         LAMBDA_EXPR 28..83
           BEGIN_KW 28..33 "begin"
           WHITESPACE 33..34 " "
-          IDENT 34..42 "function"
+          FUNCTION_KW 34..42 "function"
           WHITESPACE 42..43 " "
           LBRACK 43..44 "{"
           NAME_REF 44..45

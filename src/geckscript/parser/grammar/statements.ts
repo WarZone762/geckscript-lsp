@@ -1,16 +1,13 @@
 import { SyntaxKind, isAssignmentOp, isKeyword, isType } from "../../syntax_kind/generated.js";
 import { Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, TokenSet } from "../token_set.js";
-import { expr, exprBp, exprNoFunc } from "./expressions.js";
+import { expr, exprBp, exprLambda, exprNoFunc } from "./expressions.js";
 import { blockType, restOfLine, varDeclR, varOrVarDeclR } from "./other.js";
 
 export function stmt(p: Parser) {
     switch (p.cur()) {
         case SyntaxKind.SET_KW:
             stmtSet(p);
-            break;
-        case SyntaxKind.LET_KW:
-            stmtLet(p);
             break;
         case SyntaxKind.IF_KW:
         case SyntaxKind.ELSEIF_KW:
@@ -29,7 +26,9 @@ export function stmt(p: Parser) {
             p.errAndNext("nested begin blocks not allowed");
             return;
         default:
-            if (isKeyword(p.cur())) {
+            if (p.atTs(EXPR_FIRST)) {
+                expr(p);
+            } else if (isKeyword(p.cur())) {
                 if (
                     p.atTs(
                         new TokenSet([
@@ -45,8 +44,6 @@ export function stmt(p: Parser) {
                 }
             } else if (isType(p.cur())) {
                 stmtVarDecl(p);
-            } else if (p.atTs(EXPR_FIRST)) {
-                expr(p);
             } else {
                 p.errAndNext("expected expression or statement");
                 return;
@@ -61,11 +58,12 @@ export function stmtRoot(p: Parser) {
         case SyntaxKind.SET_KW:
             stmtSet(p);
             break;
-        case SyntaxKind.LET_KW:
-            stmtLet(p);
-            break;
         case SyntaxKind.BEGIN_KW:
-            stmtBegin(p);
+            if (p.nth(1) === SyntaxKind.FUNCTION_KW) {
+                exprLambda(p);
+            } else {
+                stmtBegin(p);
+            }
             break;
         case SyntaxKind.NEWLINE:
             p.nextAny();
@@ -127,21 +125,6 @@ export function stmtSet(p: Parser) {
     exprBp(p, 2);
 
     m.complete(p, SyntaxKind.SET_STMT);
-}
-
-export function stmtLet(p: Parser) {
-    const m = p.start();
-
-    p.next(SyntaxKind.LET_KW);
-    varOrVarDeclR(p, ASSIGNMENT_OP);
-    if (isAssignmentOp(p.cur())) {
-        p.nextAny();
-    } else {
-        p.errRecover("expected assignment operator", EXPR_FIRST);
-    }
-    expr(p);
-
-    m.complete(p, SyntaxKind.LET_STMT);
 }
 
 export function stmtBegin(p: Parser) {

@@ -1,7 +1,7 @@
 import { StringBuffer } from "../common.js";
 import { OpSyntaxKind, SyntaxKind, TokenSyntaxKind, isOp } from "./syntax_kind/generated.js";
 import { Token } from "./types/syntax_node.js";
-import { GetTokenKind } from "./types/token_data.js";
+import { getTokenKind } from "./types/token_data.js";
 
 export class Lexer {
     data: string;
@@ -86,6 +86,21 @@ export class Lexer {
         return token;
     }
 
+    blockComment(): Token<SyntaxKind.BLOCK_COMMENT> {
+        const token = this.start(SyntaxKind.BLOCK_COMMENT);
+
+        while (this.moreData() && (this.char !== "*" || this.nth(1) !== "/")) {
+            this.nextToBuf();
+        }
+
+        this.nextToBuf();
+        this.nextToBuf();
+
+        this.finish(token);
+
+        return token;
+    }
+
     str(): Token<SyntaxKind.STRING> {
         const token = this.start(SyntaxKind.STRING);
 
@@ -134,7 +149,7 @@ export class Lexer {
             this.nextToBuf();
         }
 
-        const kind = GetTokenKind(this.buf.toString().toLowerCase());
+        const kind = getTokenKind(this.buf.toString().toLowerCase());
         token.kind = kind !== SyntaxKind.UNKNOWN ? kind : SyntaxKind.IDENT;
 
         return this.finish(token);
@@ -182,8 +197,8 @@ export class Lexer {
         const nextChar = this.nth(1);
         if (nextChar != undefined) {
             const operator = this.char + nextChar;
-            if (isOp(GetTokenKind(operator))) {
-                const token = this.start(GetTokenKind(operator));
+            if (isOp(getTokenKind(operator))) {
+                const token = this.start(getTokenKind(operator));
 
                 this.nextToBuf();
                 this.nextToBuf();
@@ -192,8 +207,8 @@ export class Lexer {
             }
         }
 
-        if (isOp(GetTokenKind(this.char))) {
-            const token = this.start(GetTokenKind(this.char));
+        if (isOp(getTokenKind(this.char))) {
+            const token = this.start(getTokenKind(this.char));
             this.nextToBuf();
 
             return this.finish(token) as Token<OpSyntaxKind>;
@@ -216,6 +231,8 @@ export class Lexer {
                 token = this.newline();
             } else if (this.char === ";") {
                 token = this.comment();
+            } else if (this.char === "/" && this.nth(1) === "*") {
+                token = this.blockComment();
             } else if (/["']/.test(this.char)) {
                 token = this.str();
             } else if (this.char === "." && this.isNumber(1)) {

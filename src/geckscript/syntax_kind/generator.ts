@@ -15,12 +15,11 @@ function syntaxKindNames(data: SyntaxKindData): string {
         .join(",\n    ");
 }
 
-function syntaxKindTypeUnion(data: SyntaxKindData, typeName: string, funcName: string): string {
+function syntaxKindTypeUnion(data: SyntaxKindData, typeName: string): string {
     return `export type ${typeName}SyntaxKind =
-    | ${data[0].map((e) => `SyntaxKind.${e + data[1]}`).join("\n    | ")}
-    ;
+    | ${data[0].map((e) => `SyntaxKind.${e + data[1]}`).join("\n    | ")};
 
-export function is_${funcName}(kind: SyntaxKind): kind is ${typeName}SyntaxKind {
+export function is${typeName}(kind: SyntaxKind): kind is ${typeName}SyntaxKind {
     return (
         ${data[0].map((e) => `kind == SyntaxKind.${e + data[1]}`).join(" ||\n        ")}
     );
@@ -38,6 +37,7 @@ export const OTHER: SyntaxKindData = [
 
             "WHITESPACE",
             "COMMENT",
+            "BLOCK_COMMENT",
 
             "EOF",
             "NEWLINE",
@@ -80,6 +80,7 @@ export const KEYWORD: SyntaxKindData = [
         "SET",
         "TO",
         "LET",
+        "FUNCTION",
     ],
     "_KW",
 ];
@@ -145,12 +146,12 @@ export const OP: SyntaxKindData = [
 export const LIST: SyntaxKindData = [["VAR_OR_VAR_DECL", "PRIMARY_EXPR", "EXPR", "STMT"], "_LIST"];
 
 export const EXPR: SyntaxKindData = [
-    ["LAMBDA", "LAMBDA_INLINE", "UNARY", "BIN", "MEMBER", "FUNC"],
+    ["LAMBDA", "LAMBDA_INLINE", "UNARY", "BIN", "MEMBER", "FUNC", "LET"],
     "_EXPR",
 ];
 
 export const STMT: SyntaxKindData = [
-    ["VAR_DECL", "SET", "LET", "BEGIN", "IF", "WHILE", "FOREACH"],
+    ["VAR_DECL", "SET", "BEGIN", "IF", "WHILE", "FOREACH"],
     "_STMT",
 ];
 
@@ -165,7 +166,7 @@ export function generate(): string {
     ${syntaxKinds(STMT)},
 }
 
-export const syntax_kindNames = {
+export const syntaxKindNames = {
     ${syntaxKindNames(OTHER)},
     ${syntaxKindNames(TYPE)},
     ${syntaxKindNames(KEYWORD)},
@@ -175,27 +176,28 @@ export const syntax_kindNames = {
     ${syntaxKindNames(STMT)},
 };
 
-export function syntax_kindName(kind: SyntaxKind): string {
-    return syntax_kindNames[kind] ?? "UNKNOWN";
+export function syntaxKindName(kind: SyntaxKind): string {
+    return syntaxKindNames[kind] ?? "UNKNOWN";
 }
 
-${syntaxKindTypeUnion(TYPE, "Type", "type")}
-${syntaxKindTypeUnion(KEYWORD, "Keyword", "keyword")}
-${syntaxKindTypeUnion(SIMPLE_ASSIGNMENT_OP, "SimpleAssignmentOp", "simpleAssignmentOp")}
-${syntaxKindTypeUnion(ASSIGNMENT_OP, "AssignmentOp", "assignmentOp")}
-${syntaxKindTypeUnion(UNARY_OP, "UnaryOp", "unaryOp")}
-${syntaxKindTypeUnion(OP, "Op", "op")}
-${syntaxKindTypeUnion(PRIMARY_EXPR, "PrimaryExpr", "primaryExpr")}
+${syntaxKindTypeUnion(TYPE, "Type")}
+${syntaxKindTypeUnion(KEYWORD, "Keyword")}
+${syntaxKindTypeUnion(SIMPLE_ASSIGNMENT_OP, "SimpleAssignmentOp")}
+${syntaxKindTypeUnion(ASSIGNMENT_OP, "AssignmentOp")}
+${syntaxKindTypeUnion(UNARY_OP, "UnaryOp")}
+${syntaxKindTypeUnion(OP, "Op")}
+${syntaxKindTypeUnion(PRIMARY_EXPR, "PrimaryExpr")}
 
-${syntaxKindTypeUnion(VAR_OR_VAR_DECL, "VarOrVarDecl", "varOrVarDecl")}
-${syntaxKindTypeUnion(LIST, "List", "list")}
-${syntaxKindTypeUnion(EXPR, "Expr", "expr")}
-${syntaxKindTypeUnion(STMT, "Stmt", "stmt")}
+${syntaxKindTypeUnion(VAR_OR_VAR_DECL, "VarOrVarDecl")}
+${syntaxKindTypeUnion(LIST, "List")}
+${syntaxKindTypeUnion(EXPR, "Expr")}
+${syntaxKindTypeUnion(STMT, "Stmt")}
 
 export type TokenSyntaxKind =
     | SyntaxKind.UNKNOWN
     | SyntaxKind.WHITESPACE
     | SyntaxKind.COMMENT
+    | SyntaxKind.BLOCK_COMMENT
     | SyntaxKind.EOF
     | SyntaxKind.NEWLINE
     | SyntaxKind.NUMBER_INT
@@ -203,8 +205,7 @@ export type TokenSyntaxKind =
     | SyntaxKind.IDENT
     | TypeSyntaxKind
     | KeywordSyntaxKind
-    | OpSyntaxKind
-    ;
+    | OpSyntaxKind;
 
 export type NodeSyntaxKind =
     | SyntaxKind.TOMBSTONE
@@ -218,8 +219,7 @@ export type NodeSyntaxKind =
     | SyntaxKind.SCRIPT
     | ListSyntaxKind
     | ExprSyntaxKind
-    | StmtSyntaxKind
-    ;`;
+    | StmtSyntaxKind;`;
 }
 
 console.log(generate());

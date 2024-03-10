@@ -66,7 +66,7 @@ export function buildSemanticTokens(parsed: ParsedString): SemanticTokens {
             push(TokenType.TYPE, TokenModifier.NONE);
         } else if (isKeyword(node.kind)) {
             push(TokenType.KEYWORD, TokenModifier.NONE);
-        } else if (node.kind === SyntaxKind.COMMENT) {
+        } else if (node.kind === SyntaxKind.COMMENT || node.kind === SyntaxKind.BLOCK_COMMENT) {
             push(TokenType.COMMENT, TokenModifier.NONE);
         } else if (node.kind === SyntaxKind.STRING) {
             push(TokenType.STRING, TokenModifier.NONE);

@@ -116,7 +116,14 @@ export function VarOrVarDecl(
             return new VarDecl(green as Node<SyntaxKind.VAR_DECL>);
     }
 }
-export type Expr = UnaryExpr | BinExpr | MemberExpr | FuncExpr | LambdaInlineExpr | LambdaExpr;
+export type Expr =
+    | UnaryExpr
+    | BinExpr
+    | MemberExpr
+    | FuncExpr
+    | LetExpr
+    | LambdaInlineExpr
+    | LambdaExpr;
 
 export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined {
     if (green == undefined) {
@@ -132,13 +139,15 @@ export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined 
             return new MemberExpr(green as Node<SyntaxKind.MEMBER_EXPR>);
         case SyntaxKind.FUNC_EXPR:
             return new FuncExpr(green as Node<SyntaxKind.FUNC_EXPR>);
+        case SyntaxKind.LET_EXPR:
+            return new LetExpr(green as Node<SyntaxKind.LET_EXPR>);
         case SyntaxKind.LAMBDA_INLINE_EXPR:
             return new LambdaInlineExpr(green as Node<SyntaxKind.LAMBDA_INLINE_EXPR>);
         case SyntaxKind.LAMBDA_EXPR:
             return new LambdaExpr(green as Node<SyntaxKind.LAMBDA_EXPR>);
     }
 }
-export type Stmt = VarDeclStmt | SetStmt | LetStmt | BeginStmt | ForeachStmt | WhileStmt | IfStmt;
+export type Stmt = VarDeclStmt | SetStmt | BeginStmt | ForeachStmt | WhileStmt | IfStmt;
 
 export function Stmt(green: Node<StmtSyntaxKind> | undefined): Stmt | undefined {
     if (green == undefined) {
@@ -150,8 +159,6 @@ export function Stmt(green: Node<StmtSyntaxKind> | undefined): Stmt | undefined 
             return new VarDeclStmt(green as Node<SyntaxKind.VAR_DECL_STMT>);
         case SyntaxKind.SET_STMT:
             return new SetStmt(green as Node<SyntaxKind.SET_STMT>);
-        case SyntaxKind.LET_STMT:
-            return new LetStmt(green as Node<SyntaxKind.LET_STMT>);
         case SyntaxKind.BEGIN_STMT:
             return new BeginStmt(green as Node<SyntaxKind.BEGIN_STMT>);
         case SyntaxKind.FOREACH_STMT:
@@ -276,6 +283,24 @@ export class FuncExpr extends AstNode<SyntaxKind.FUNC_EXPR> {
                 ((k) => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST
             )
         );
+    }
+}
+
+export class LetExpr extends AstNode<SyntaxKind.LET_EXPR> {
+    let(): Token<SyntaxKind.LET_KW> | undefined {
+        return token(
+            this,
+            ((k) => k === SyntaxKind.LET_KW) as (k: SyntaxKind) => k is SyntaxKind.LET_KW
+        );
+    }
+    var(): VarOrVarDecl | undefined {
+        return VarOrVarDecl(child(this, isVarOrVarDecl));
+    }
+    op(): Token<OpSyntaxKind> | undefined {
+        return token(this, isOp);
+    }
+    expr(): Expr | undefined {
+        return Expr(child(this, isExpr));
     }
 }
 
@@ -415,24 +440,6 @@ export class SetStmt extends AstNode<SyntaxKind.SET_STMT> {
                 ((k) => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF
             )
         );
-    }
-    expr(): Expr | undefined {
-        return Expr(child(this, isExpr));
-    }
-}
-
-export class LetStmt extends AstNode<SyntaxKind.LET_STMT> {
-    let(): Token<SyntaxKind.LET_KW> | undefined {
-        return token(
-            this,
-            ((k) => k === SyntaxKind.LET_KW) as (k: SyntaxKind) => k is SyntaxKind.LET_KW
-        );
-    }
-    var(): VarOrVarDecl | undefined {
-        return VarOrVarDecl(child(this, isVarOrVarDecl));
-    }
-    op(): Token<OpSyntaxKind> | undefined {
-        return token(this, isOp);
     }
     expr(): Expr | undefined {
         return Expr(child(this, isExpr));

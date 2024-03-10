@@ -3,7 +3,7 @@ import { Position } from "vscode-languageserver-textdocument";
 
 import * as ast from "../geckscript/ast.js";
 import { visibleSymbols } from "../geckscript/hir/api.js";
-import { FileDatabase, ParsedString, SymbolKind, UnresolvedSymbol } from "../geckscript/hir/hir.js";
+import { FileDatabase, ParsedString, SymbolKind } from "../geckscript/hir/hir.js";
 import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
 import { TokenData } from "../geckscript/types/token_data.js";
 
@@ -17,6 +17,7 @@ export function completionItems(
     if (
         token === undefined ||
         token.kind === SyntaxKind.COMMENT ||
+        token.kind === SyntaxKind.BLOCK_COMMENT ||
         token.kind === SyntaxKind.STRING
     ) {
         return null;

@@ -18,8 +18,10 @@ export const TokenData = (() => {
         float: SyntaxKind.FLOAT_TYPE,
         ref: SyntaxKind.REFERENCE_TYPE,
         reference: SyntaxKind.REFERENCE_TYPE,
-        stringVar: SyntaxKind.STRING_VAR_TYPE,
-        arrayVar: SyntaxKind.ARRAY_VAR_TYPE,
+        // eslint-disable-next-line camelcase
+        string_var: SyntaxKind.STRING_VAR_TYPE,
+        // eslint-disable-next-line camelcase
+        array_var: SyntaxKind.ARRAY_VAR_TYPE,
 
         // Keywords
         scn: SyntaxKind.SCRIPTNAME_KW,
@@ -39,6 +41,8 @@ export const TokenData = (() => {
         set: SyntaxKind.SET_KW,
         to: SyntaxKind.TO_KW,
         let: SyntaxKind.LET_KW,
+        function: SyntaxKind.FUNCTION_KW,
+        _function: SyntaxKind.FUNCTION_KW,
 
         // Operators
         "=": SyntaxKind.EQ,
@@ -96,6 +100,6 @@ export const TokenData = (() => {
     return map;
 })();
 
-export function GetTokenKind(tokenName: string): TokenSyntaxKind {
+export function getTokenKind(tokenName: string): TokenSyntaxKind {
     return TokenData[tokenName]?.kind ?? SyntaxKind.UNKNOWN;
 }
