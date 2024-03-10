@@ -1,0 +1,8 @@
+scn Test13
+
+begin Test
+    (begin function {a, b, c}
+        set foo to 123
+    end)
+end
+

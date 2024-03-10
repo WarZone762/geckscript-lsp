@@ -9,7 +9,7 @@ export function formatDoc(
     parsed: ParsedString,
     opts: FormattingOptions,
     config: ServerConfig
-): TextEdit[] | null {
+): TextEdit[] {
     const f = new Formatter(parsed, { serverOpts: opts, keywordStyle: config.keywordStyle });
 
     return [f.format()];
@@ -59,16 +59,21 @@ class Formatter {
         );
     }
 
+    // TODO: define formatting rules per node
     formatNode(n: Node) {
         const newChildren: NodeOrToken[] = [];
 
-        for (let i = 0; i < n.children.length - 1; ++i) {
-            const child = n.children[i];
-            const next = n.children[i + 1];
+        const childrenNoWhitespace = n.children.filter((n) => n.kind !== SyntaxKind.WHITESPACE);
+
+        for (let i = 0; i < childrenNoWhitespace.length - 1; ++i) {
+            const child = childrenNoWhitespace[i];
+            const next = childrenNoWhitespace[i + 1];
 
             if (child.kind !== SyntaxKind.WHITESPACE) {
                 newChildren.push(child);
                 if (
+                    child.kind !== SyntaxKind.LPAREN &&
+                    child.kind !== SyntaxKind.LBRACK &&
                     !isAny(
                         child,
                         next,
@@ -76,16 +81,16 @@ class Formatter {
                             n.kind === SyntaxKind.NEWLINE ||
                             n.kind === SyntaxKind.STMT_LIST ||
                             n.kind === SyntaxKind.BRANCH ||
-                            n.kind === SyntaxKind.LPAREN ||
-                            n.kind === SyntaxKind.RPAREN ||
-                            n.kind === SyntaxKind.LBRACK ||
-                            n.kind === SyntaxKind.RBRACK ||
                             n.kind === SyntaxKind.LSQBRACK ||
                             n.kind === SyntaxKind.RSQBRACK ||
                             n.kind === SyntaxKind.COLON2 ||
                             n.kind === SyntaxKind.DOT ||
                             n.kind === SyntaxKind.RARROW
-                    )
+                    ) &&
+                    n.kind !== SyntaxKind.UNARY_EXPR &&
+                    next.kind !== SyntaxKind.COMMA &&
+                    next.kind !== SyntaxKind.RPAREN &&
+                    next.kind !== SyntaxKind.RBRACK
                 ) {
                     const t = Token(SyntaxKind.WHITESPACE);
                     t.text = " ";
@@ -101,8 +106,8 @@ class Formatter {
             }
         }
 
-        if (n.children.length > 0) {
-            newChildren.push(n.children.at(-1)!);
+        if (childrenNoWhitespace.length > 0) {
+            newChildren.push(childrenNoWhitespace.at(-1)!);
         }
 
         n.children = newChildren;
@@ -123,14 +128,18 @@ class Formatter {
             if (child.kind === SyntaxKind.COMMENT) {
                 if (i !== 0 && n.children[i - 1].kind === SyntaxKind.WHITESPACE) {
                     newChildren.push(n.children[i - 1]);
-                } else {
+                } else if (i !== 0 && n.children[i - 1].kind !== SyntaxKind.NEWLINE) {
                     const t = Token(SyntaxKind.WHITESPACE);
                     t.text = " ";
                     newChildren.push(t);
                 }
                 newChildren.push(child);
             } else if (child.kind !== SyntaxKind.WHITESPACE) {
-                if (child.kind !== SyntaxKind.NEWLINE) {
+                if (
+                    child.kind !== SyntaxKind.NEWLINE &&
+                    (i === 0 || n.children.at(i - 1)?.kind !== SyntaxKind.LPAREN) &&
+                    child.kind !== SyntaxKind.RPAREN
+                ) {
                     const t = Token(SyntaxKind.WHITESPACE);
                     t.text = this.indentStr.repeat(this.indent);
                     newChildren.push(t);

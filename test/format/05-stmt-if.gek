@@ -1,0 +1,10 @@
+scn Test05
+
+begin Test
+
+    if 1
+        set foo to 123
+    endif
+
+end
+

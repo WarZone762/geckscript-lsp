@@ -1,0 +1,5 @@
+scn Test03
+
+begin Test
+    set foo to "123"
+end

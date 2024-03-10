@@ -1,0 +1,8 @@
+scn Test08
+
+begin Test
+    continue
+    break
+    return
+end
+

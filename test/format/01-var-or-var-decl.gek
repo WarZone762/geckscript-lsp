@@ -1,0 +1,5 @@
+scn Test01
+
+int foo
+ref bar
+float baz

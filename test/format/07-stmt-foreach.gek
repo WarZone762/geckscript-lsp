@@ -1,0 +1,8 @@
+scn Test07
+
+begin Test
+    foreach e <- iter
+        set foo to 123
+    loop
+end
+
