@@ -14,7 +14,7 @@ Provides various language features for the scripting language used by GECK for F
 - [x] semantic tokens
 - [ ] static analysis
 - [ ] selection range
-- [-] code completion (currently only basic without function docs)
+- [ ] proper code completion (currently only basic without function docs)
 - [ ] hover
 - [ ] signature help
 - [ ] code actions
@@ -25,6 +25,24 @@ Provides various language features for the scripting language used by GECK for F
 [VSCode](https://github.com/WarZone762/vscode-geckscript)
 
 [Neovim](https://github.com/WarZone762/geckscript.nvim)
+
+## Configuration
+
+The server can be configured in `geckrc.json` or `.geckrc.json` file.
+
+### Configuration options
+
+| Name           | Possible Values                     | Explanation                                                                                                  |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `keywordStyle` | `"lower"`, `"upper"` or `"capital"` | Enforce keyword naming convention: *lowercase* (`begin`), *UPPERCASE* (`BEGIN`) or *Capital* (`Begin`) |
+
+### Example
+
+```json
+{
+    "keywordStyle": "lower"
+}
+```
 
 ## Credits
 
