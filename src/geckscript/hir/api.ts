@@ -1,4 +1,4 @@
-import { ancestors, forEachChildRecursive } from "../ast.js";
+import * as ast from "../ast.js";
 import { LambdaExpr, LambdaInlineExpr, NameRef, Script, StmtList } from "../ast/generated.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
 import { NodeOrToken, Token } from "../types/syntax_node.js";
@@ -44,9 +44,9 @@ export function findDefinitionFromToken(token: Token, db: FileDatabase): Symbol 
 export function findReferences(symbol: Symbol, db: FileDatabase): NameRef[] {
     const refs: NameRef[] = [];
 
-    if (symbol.parent.parent?.node.green.kind === SyntaxKind.SCRIPT) {
-        for (const script of db.scripts.values()) {
-            forEachChildRecursive(script.node.green, (n) => {
+    if (symbol.parent.parent?.node instanceof Script) {
+        for (const script of db.files.values()) {
+            ast.forEachChildRecursive(script.root.green, (n) => {
                 if (n.kind === SyntaxKind.NAME_REF) {
                     const nameRef = new NameRef(n);
                     if (nameRef.nameRef()?.text === symbol.name) {
@@ -56,7 +56,7 @@ export function findReferences(symbol: Symbol, db: FileDatabase): NameRef[] {
             });
         }
     } else {
-        forEachChildRecursive(symbol.parent.node.green, (n) => {
+        ast.forEachChildRecursive(symbol.parent.node.green, (n) => {
             if (n.kind === SyntaxKind.NAME_REF) {
                 const nameRef = new NameRef(n);
                 if (nameRef.nameRef()?.text === symbol.name) {
@@ -75,6 +75,7 @@ export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefi
         return;
     }
 
+    // search the symbol in the current file
     const symbol = (() => {
         let st = nodeSymbolTable(node.green, db);
         if (st === undefined) {
@@ -82,7 +83,6 @@ export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefi
         }
 
         while (st !== undefined) {
-            console.error("st while");
             const symbol = st.symbols.get(name);
             if (symbol !== undefined) {
                 return symbol;
@@ -94,14 +94,9 @@ export function findDefinition(node: NameRef, db: FileDatabase): Symbol | undefi
         return symbol;
     }
 
-    const script = db.scripts.get(name)?.symbols.get(name);
-    if (script !== undefined) {
-        return script;
-    }
-
     if (node.green.parent?.kind === SyntaxKind.MEMBER_EXPR) {
-        for (const script of db.scripts.values()) {
-            const symbol = script.children.at(-1)?.symbols.get(name);
+        for (const script of db.files.values()) {
+            const symbol = script.symbolTable.children.at(-1)?.symbols.get(name);
             if (symbol !== undefined) {
                 return symbol;
             }
@@ -125,12 +120,8 @@ export function scopeSymbolTable(scope: ScopeNode, db: FileDatabase): SymbolTabl
         if (!(scope instanceof Script)) {
             return;
         }
-        const scriptName = scope.name()?.name()?.text;
-        if (scriptName === undefined) {
-            return;
-        }
 
-        return db.scripts.get(scriptName);
+        return db.findScript(scope.green)?.symbolTable;
     }
 
     const parentScope = findContainingScope(scope.green.parent);
@@ -153,7 +144,7 @@ export function scopeSymbolTable(scope: ScopeNode, db: FileDatabase): SymbolTabl
 
 /** Get the nearest scope node that contains `node` */
 export function findContainingScope(node: NodeOrToken): ScopeNode | undefined {
-    for (const a of ancestors(node)) {
+    for (const a of ast.ancestors(node)) {
         if (a.kind === SyntaxKind.STMT_LIST) {
             return new StmtList(a);
         } else if (a.kind === SyntaxKind.SCRIPT) {

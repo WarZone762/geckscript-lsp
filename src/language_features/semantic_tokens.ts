@@ -10,7 +10,6 @@ import * as ast from "../geckscript/ast.js";
 import { FuncExpr } from "../geckscript/ast/generated.js";
 import { ParsedString } from "../geckscript/hir/hir.js";
 import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
-import { Node } from "../geckscript/types/syntax_node.js";
 
 export const LEGEND: SemanticTokensLegend = {
     tokenTypes: [
@@ -89,23 +88,6 @@ export function buildSemanticTokens(parsed: ParsedString): SemanticTokens {
             builder.push(pos.line, pos.character, node.len(), type, mod);
         }
     }
-
-    // for (const func of [...ast.descendantsDf(parsed.root.green)].filter(
-    //     (n) => n.kind === SyntaxKind.FUNC_EXPR
-    // )) {
-    //     const node = new FuncExpr(func as Node<SyntaxKind.FUNC_EXPR>);
-    //     const name = node.name();
-    //     if (name != undefined) {
-    //         const pos = parsed.posAt(name.green.offset);
-    //         builder.push(
-    //             pos.line,
-    //             pos.character,
-    //             name.green.len(),
-    //             TokenType.FUNC,
-    //             TokenModifier.NONE
-    //         );
-    //     }
-    // }
 
     return builder.build();
 }

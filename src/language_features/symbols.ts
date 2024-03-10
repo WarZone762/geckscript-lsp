@@ -1,22 +1,12 @@
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
 
-import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
+import { ParsedString } from "../geckscript/hir/hir.js";
 import * as hir from "../geckscript/hir/hir.js";
 
-export function symbols(db: FileDatabase, parsed: ParsedString): SymbolInformation[] | null {
+export function symbols(parsed: ParsedString): SymbolInformation[] | null {
     const symbols: SymbolInformation[] = [];
 
-    const scriptName = parsed.root.name()?.name()?.text;
-    if (scriptName === undefined) {
-        return null;
-    }
-
-    const symbolTable = db.scripts.get(scriptName);
-    if (symbolTable === undefined) {
-        return null;
-    }
-
-    const stack = [symbolTable];
+    const stack = [parsed.symbolTable];
 
     while (stack.length !== 0) {
         const top = stack.pop()!;

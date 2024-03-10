@@ -5,24 +5,28 @@ import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 
-import { LambdaExpr, LambdaInlineExpr, Name, Script, StmtList, VarDecl } from "../ast/generated.js";
+import * as ast from "../ast.js";
+import {
+    FuncExpr,
+    LambdaExpr,
+    LambdaInlineExpr,
+    Name,
+    NameRef,
+    Script,
+    StmtList,
+    VarDecl,
+} from "../ast/generated.js";
 import * as parsing from "../parsing.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
 import { Node, NodeOrToken } from "../types/syntax_node.js";
+import { findDefinition } from "./api.js";
 
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
-    scripts: Map<string, SymbolTable> = new Map();
 
     parseDoc(doc: TextDocument): ParsedString {
         const [node, errors] = parsing.parseStr(doc.getText());
         assert.strictEqual(node.kind, SyntaxKind.SCRIPT);
-
-        const script = new Script(node);
-        const scriptName = script.name()?.name()?.text;
-        if (scriptName !== undefined) {
-            this.scripts.set(scriptName, new SymbolTable(script));
-        }
 
         const diagnostics: Diagnostic[] = [];
         for (const e of errors) {
@@ -39,10 +43,45 @@ export class FileDatabase {
             });
         }
 
+        const script = new Script(node);
+
         const parsed = new ParsedString(doc, script, diagnostics);
         this.files.set(doc.uri, parsed);
 
+        ast.forEachChildRecursive(node, (n) => {
+            if (n.kind === SyntaxKind.NAME_REF) {
+                const nameRef = new NameRef(n);
+                const def = findDefinition(nameRef, this);
+                if (def === undefined) {
+                    const name = nameRef.nameRef()?.text;
+                    if (name === undefined) {
+                        return;
+                    }
+
+                    let kind: SymbolKind = SymbolKind.Variable;
+                    if (
+                        nameRef.green.parent?.kind === SyntaxKind.FUNC_EXPR &&
+                        new FuncExpr(nameRef.green.parent).name()?.green === n
+                    ) {
+                        kind = SymbolKind.Function;
+                    }
+                    parsed.unresolvedSymbols.set(
+                        name.toLowerCase(),
+                        new UnresolvedSymbol(kind, name)
+                    );
+                }
+            }
+        });
+
         return parsed;
+    }
+
+    findScript(script: Node<SyntaxKind.SCRIPT>): ParsedString | undefined {
+        for (const parsed of this.files.values()) {
+            if (parsed.root.green === script) {
+                return parsed;
+            }
+        }
     }
 
     scriptToUri(name: string): ParsedString | undefined {
@@ -78,11 +117,14 @@ export class FileDatabase {
 export class ParsedString {
     doc: TextDocument;
     root: Script;
+    symbolTable: SymbolTable;
+    unresolvedSymbols: Map<string, UnresolvedSymbol> = new Map();
     diagnostics: Diagnostic[];
 
     constructor(doc: TextDocument, root: Script, diagnostics: Diagnostic[]) {
         this.doc = doc;
         this.root = root;
+        this.symbolTable = new SymbolTable(root);
         this.diagnostics = diagnostics;
     }
 
@@ -96,6 +138,16 @@ export class ParsedString {
 
     offsetAt(pos: Position): number {
         return this.doc.offsetAt(pos);
+    }
+}
+
+export class UnresolvedSymbol {
+    kind: SymbolKind;
+    name: string;
+
+    constructor(kind: SymbolKind, name: string) {
+        this.kind = kind;
+        this.name = name;
     }
 }
 

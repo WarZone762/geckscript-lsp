@@ -35,7 +35,7 @@ export function rename(
     }
 
     const refs = findReferences(def, db);
-    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.decl.green), newText: newName }];
+    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.nameNode().green), newText: newName }];
     for (const ref of refs) {
         changes.push({ range: parsed.rangeOf(ref.green), newText: newName });
     }

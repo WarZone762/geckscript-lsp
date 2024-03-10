@@ -1,16 +1,9 @@
 #!/bin/env node
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
-    CompletionParams,
-    DefinitionParams,
     DiagnosticSeverity,
-    DidChangeTextDocumentParams,
-    DocumentHighlightParams,
-    HoverParams,
     InitializeResult,
     ProposedFeatures,
-    ReferenceParams,
-    RenameParams,
     SemanticTokensRequest,
     TextDocumentSyncKind,
     WorkspaceFolder,
@@ -48,16 +41,15 @@ if (checkIndex !== -1) {
 }
 
 /** Helper to create a document reqest handler function */
-function handler<RP extends { textDocument: { uri: string } }, T extends unknown[], R>(
-    f: (parsed: ParsedString, ...params: T) => R,
-    applied: (f: (...params: T) => R, requestParams: RP) => R
+function handler<RP extends { textDocument: { uri: string } }, R>(
+    f: (parsed: ParsedString, params: RP) => Promise<R>
 ): (requestParams: RP) => Promise<R | null> {
     return async (requestParams) => {
         const parsed = DB.files.get(requestParams.textDocument.uri);
         if (parsed == null) {
             return null;
         }
-        return applied((...params) => f(parsed, ...params), requestParams);
+        return await f(parsed, requestParams);
     };
 }
 
@@ -80,7 +72,7 @@ connection.onInitialize(async (params) => {
             referencesProvider: true,
             renameProvider: { prepareProvider: true },
             selectionRangeProvider: true,
-            textDocumentSync: TextDocumentSyncKind.Incremental,
+            textDocumentSync: TextDocumentSyncKind.Full,
         },
     };
 
@@ -93,7 +85,8 @@ connection.onInitialize(async (params) => {
                 },
             ],
             legend: features.LEGEND,
-            full: true,
+            range: false,
+            full: { delta: false },
         };
     }
 
@@ -101,10 +94,6 @@ connection.onInitialize(async (params) => {
         console.log("Running tree view server");
         treeViewServer = new TreeViewServer.TreeViewServer(8000, "localhost");
     }
-
-    // if (process.argv.find((arg) => arg === "--update-functions") !== undefined) {
-    //     await FD.PopulateFunctionData(true);
-    // }
 
     return result;
 });
@@ -129,26 +118,18 @@ connection.onDidOpenTextDocument(async (params) => {
 });
 
 connection.onDidChangeTextDocument(
-    handler(
-        (parsed, params: DidChangeTextDocumentParams) => {
-            TextDocument.update(parsed.doc, params.contentChanges, params.textDocument.version);
-            parsed = DB.parseDoc(parsed.doc);
+    handler(async (parsed, params) => {
+        TextDocument.update(parsed.doc, params.contentChanges, params.textDocument.version);
+        parsed = DB.parseDoc(parsed.doc);
 
-            treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
+        treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
 
-            connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
-        },
-        (f, p) => f(p)
-    )
+        connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
+    })
 );
 
 connection.onCompletion(
-    handler(
-        (parsed, params: CompletionParams) => {
-            return features.completionItems(DB, parsed, params.position);
-        },
-        (f, p) => f(p)
-    )
+    handler(async (parsed, params) => features.completionItems(DB, parsed, params.position))
 );
 
 // connection.onCompletionResolve(
@@ -158,72 +139,41 @@ connection.onCompletion(
 // );
 
 connection.onDefinition(
-    handler(
-        (parsed, params: DefinitionParams) => {
-            return features.gotoDef(DB, parsed, params.position);
-        },
-        (f, p) => f(p)
-    )
+    handler(async (parsed, params) => features.gotoDef(DB, parsed, params.position))
 );
-connection.onDocumentFormatting(handler(features.formatDoc, (f, p) => f(p.options)));
+connection.onDocumentFormatting(
+    handler(async (parsed, params) => features.formatDoc(parsed, params.options))
+);
 connection.onDocumentHighlight(
-    handler(
-        (parsed, params: DocumentHighlightParams) => {
-            return features.getHighlight(DB, parsed, params.position);
-        },
-        (f, p) => f(p)
-    )
+    handler(async (parsed, params) => features.getHighlight(DB, parsed, params.position))
 );
-connection.onDocumentSymbol(
-    handler(
-        (parsed) => {
-            return features.symbols(DB, parsed);
-        },
-        (f) => f()
-    )
-);
+connection.onDocumentSymbol(handler(async (parsed) => features.symbols(parsed)));
 connection.onHover(
-    handler(
-        (parsed, params: HoverParams) => {
-            const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(params.position));
-            if (token == undefined) {
-                return null;
-            }
+    handler(async (parsed, params) => {
+        const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(params.position));
+        if (token == undefined) {
+            return null;
+        }
 
-            return {
-                contents: token.text,
-                range: { start: parsed.posAt(token.offset), end: parsed.posAt(token.end()) },
-            };
-        },
-        (f, p) => f(p)
-    )
+        return {
+            contents: token.text,
+            range: { start: parsed.posAt(token.offset), end: parsed.posAt(token.end()) },
+        };
+    })
 );
 connection.onReferences(
-    handler(
-        (parsed, params: ReferenceParams) => {
-            return features.refs(DB, parsed, params.position);
-        },
-        (f, p) => f(p)
-    )
+    handler(async (parsed, params) => features.refs(DB, parsed, params.position))
 );
-connection.onPrepareRename(handler(features.prepareRename, (f, p) => f(p.position)));
+connection.onPrepareRename(
+    handler(async (parsed, params) => features.prepareRename(parsed, params.position))
+);
 connection.onRenameRequest(
-    handler(
-        (parsed, params: RenameParams) => {
-            return features.rename(DB, parsed, params.newName, params.position);
-        },
-        (f, p) => f(p)
-    )
+    handler(async (parsed, params) => features.rename(DB, parsed, params.newName, params.position))
 );
-connection.onSelectionRanges(
-    handler(
-        () => null,
-        (f) => f()
-    )
-);
+connection.onSelectionRanges(handler(async () => null));
 connection.onRequest(
     SemanticTokensRequest.method,
-    handler(features.buildSemanticTokens, (f) => f())
+    handler(async (parsed) => features.buildSemanticTokens(parsed))
 );
 
 // connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));
