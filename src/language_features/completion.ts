@@ -53,15 +53,7 @@ export function completionItems(
         });
     }
 
-    const unresolvedItems: Map<string, UnresolvedSymbol> = new Map();
-
-    for (const file of db.files.values()) {
-        for (const [k, v] of file.unresolvedSymbols.entries()) {
-            unresolvedItems.set(k, v);
-        }
-    }
-
-    for (const item of unresolvedItems.values()) {
+    for (const item of db.globalSymbols.values()) {
         completionItems.push({
             label: item.name,
             detail: item.name,

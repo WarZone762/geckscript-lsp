@@ -23,6 +23,7 @@ import { findDefinition } from "./api.js";
 
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
+    globalSymbols: Map<string, UnresolvedSymbol> = new Map();
 
     parseDoc(doc: TextDocument): ParsedString {
         const [node, errors] = parsing.parseStr(doc.getText());
@@ -45,6 +46,18 @@ export class FileDatabase {
 
         const script = new Script(node);
 
+        // remove old file from global symbols it references
+        const oldParsed = this.files.get(doc.uri);
+        if (oldParsed !== undefined) {
+            for (const symbolName of oldParsed.unresolvedSymbols) {
+                const symbol = this.globalSymbols.get(symbolName);
+                symbol?.referencingFiles.delete(doc.uri);
+                if (symbol?.referencingFiles.size === 0) {
+                    this.globalSymbols.delete(symbolName);
+                }
+            }
+        }
+
         const parsed = new ParsedString(doc, script, diagnostics);
         this.files.set(doc.uri, parsed);
 
@@ -58,17 +71,23 @@ export class FileDatabase {
                         return;
                     }
 
-                    let kind: SymbolKind = SymbolKind.Variable;
-                    if (
-                        nameRef.green.parent?.kind === SyntaxKind.FUNC_EXPR &&
-                        new FuncExpr(nameRef.green.parent).name()?.green === n
-                    ) {
-                        kind = SymbolKind.Function;
+                    parsed.unresolvedSymbols.add(name);
+                    const symbol = this.globalSymbols.get(name);
+                    if (symbol !== undefined) {
+                        symbol.referencingFiles.add(doc.uri);
+                    } else {
+                        let kind: SymbolKind = SymbolKind.Variable;
+                        if (
+                            nameRef.green.parent?.kind === SyntaxKind.FUNC_EXPR &&
+                            new FuncExpr(nameRef.green.parent).name()?.green === n
+                        ) {
+                            kind = SymbolKind.Function;
+                        }
+
+                        const symbol = new UnresolvedSymbol(kind, name);
+                        symbol.referencingFiles.add(doc.uri);
+                        this.globalSymbols.set(name, symbol);
                     }
-                    parsed.unresolvedSymbols.set(
-                        name.toLowerCase(),
-                        new UnresolvedSymbol(kind, name)
-                    );
                 }
             }
         });
@@ -118,7 +137,7 @@ export class ParsedString {
     doc: TextDocument;
     root: Script;
     symbolTable: SymbolTable;
-    unresolvedSymbols: Map<string, UnresolvedSymbol> = new Map();
+    unresolvedSymbols: Set<string> = new Set();
     diagnostics: Diagnostic[];
 
     constructor(doc: TextDocument, root: Script, diagnostics: Diagnostic[]) {
@@ -144,6 +163,7 @@ export class ParsedString {
 export class UnresolvedSymbol {
     kind: SymbolKind;
     name: string;
+    referencingFiles: Set<string> = new Set();
 
     constructor(kind: SymbolKind, name: string) {
         this.kind = kind;
