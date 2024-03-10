@@ -1,27 +1,30 @@
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
 
 import { forEachChildRecursive, toString } from "../geckscript/ast.js";
-import { ParsedString } from "../geckscript/hir/hir.js";
+import { ParsedString, ServerConfig } from "../geckscript/hir/hir.js";
 import { SyntaxKind, isKeyword } from "../geckscript/syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node.js";
 
-export function formatDoc(parsed: ParsedString, opts: FormattingOptions): TextEdit[] | null {
-    const b = new Builder(parsed, new Options(opts, KeywordCase.LOWER));
+export function formatDoc(
+    parsed: ParsedString,
+    opts: FormattingOptions,
+    config: ServerConfig
+): TextEdit[] | null {
+    const f = new Formatter(parsed, { serverOpts: opts, keywordStyle: config.keywordStyle });
 
-    return [b.format()];
+    return [f.format()];
 }
 
-class Builder {
+class Formatter {
     parsed: ParsedString;
     pos: number = 0;
     opts: Options;
     indent: number = 0;
     indentStr: string;
-    lastWhitespace: Token<SyntaxKind.WHITESPACE> | undefined;
 
-    constructor(parsed: ParsedString, opts?: Options) {
+    constructor(parsed: ParsedString, opts: Options) {
         this.parsed = parsed;
-        this.opts = opts ?? new Options();
+        this.opts = opts;
 
         this.indentStr = this.opts.serverOpts.insertSpaces
             ? " ".repeat(this.opts.serverOpts.tabSize)
@@ -40,9 +43,6 @@ class Builder {
                         this.formatNode(n);
                     }
                 } else {
-                    if (n.kind === SyntaxKind.WHITESPACE) {
-                        this.lastWhitespace = n;
-                    }
                     this.formatToken(n);
                 }
             },
@@ -144,14 +144,14 @@ class Builder {
 
     formatToken(t: Token) {
         if (isKeyword(t.kind)) {
-            switch (this.opts.keywordCase) {
-                case KeywordCase.LOWER:
+            switch (this.opts.keywordStyle) {
+                case KeywordStyle.LOWER:
                     t.text = t.text.toLowerCase();
                     break;
-                case KeywordCase.UPPER:
+                case KeywordStyle.UPPER:
                     t.text = t.text.toUpperCase();
                     break;
-                case KeywordCase.CAPITAL:
+                case KeywordStyle.CAPITAL:
                     t.text = t.text.toLowerCase();
                     t.text = t.text[0].toUpperCase() + t.text.substring(1);
                     break;
@@ -164,17 +164,12 @@ class Builder {
     }
 }
 
-class Options {
+interface Options {
     serverOpts: FormattingOptions;
-    keywordCase: KeywordCase;
-
-    constructor(serverOpts?: FormattingOptions, keywordCase?: KeywordCase) {
-        this.serverOpts = serverOpts ?? FormattingOptions.create(4, true);
-        this.keywordCase = keywordCase ?? KeywordCase.LOWER;
-    }
+    keywordStyle: KeywordStyle;
 }
 
-const enum KeywordCase {
+export const enum KeywordStyle {
     LOWER,
     UPPER,
     CAPITAL,

@@ -142,7 +142,7 @@ connection.onDefinition(
     handler(async (parsed, params) => features.gotoDef(DB, parsed, params.position))
 );
 connection.onDocumentFormatting(
-    handler(async (parsed, params) => features.formatDoc(parsed, params.options))
+    handler(async (parsed, params) => features.formatDoc(parsed, params.options, DB.config))
 );
 connection.onDocumentHighlight(
     handler(async (parsed, params) => features.getHighlight(DB, parsed, params.position))

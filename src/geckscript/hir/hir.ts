@@ -1,10 +1,12 @@
 import assert from "assert";
+import * as fsSync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 
+import { KeywordStyle } from "../../language_features/format.js";
 import * as ast from "../ast.js";
 import {
     FuncExpr,
@@ -24,6 +26,39 @@ import { findDefinition } from "./api.js";
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
     globalSymbols: Map<string, UnresolvedSymbol> = new Map();
+    config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
+
+    async loadFolder(dirPath: string) {
+        const files = await fs.readdir(dirPath, { recursive: true });
+        for (const file of files) {
+            const fullPath = path.resolve(path.join(dirPath, file));
+            const stat = await fs.stat(fullPath);
+
+            if (!stat.isDirectory() && file.endsWith("geckrc.json")) {
+                this.loadConfig(file);
+                fsSync.watch(file, undefined, (eventType) => {
+                    if (eventType === "change") {
+                        this.loadConfig(file);
+                    }
+                });
+
+                continue;
+            }
+
+            if (stat.isDirectory() || (!file.endsWith(".gek") && !file.endsWith(".geck"))) {
+                continue;
+            }
+
+            const content = await fs.readFile(fullPath);
+            const doc = TextDocument.create(
+                URI.file(fullPath).toString(),
+                "geckscript",
+                0,
+                content.toString()
+            );
+            this.parseDoc(doc);
+        }
+    }
 
     parseDoc(doc: TextDocument): ParsedString {
         const [node, errors] = parsing.parseStr(doc.getText());
@@ -111,24 +146,18 @@ export class FileDatabase {
         }
     }
 
-    async loadFolder(dirPath: string) {
-        const files = await fs.readdir(dirPath, { recursive: true });
-        for (const file of files) {
-            const fullPath = path.resolve(path.join(dirPath, file));
-            const stat = await fs.stat(fullPath);
-
-            if (stat.isDirectory() || (!file.endsWith(".gek") && !file.endsWith(".geck"))) {
-                continue;
-            }
-
-            const content = await fs.readFile(fullPath);
-            const doc = TextDocument.create(
-                URI.file(fullPath).toString(),
-                "geckscript",
-                0,
-                content.toString()
-            );
-            this.parseDoc(doc);
+    async loadConfig(configPath: string) {
+        const config = JSON.parse((await fs.readFile(configPath)).toString());
+        switch (config.keywordStyle) {
+            case "lower":
+                this.config.keywordStyle = KeywordStyle.LOWER;
+                break;
+            case "upper":
+                this.config.keywordStyle = KeywordStyle.UPPER;
+                break;
+            case "capital":
+                this.config.keywordStyle = KeywordStyle.CAPITAL;
+                break;
         }
     }
 }
@@ -157,17 +186,6 @@ export class ParsedString {
 
     offsetAt(pos: Position): number {
         return this.doc.offsetAt(pos);
-    }
-}
-
-export class UnresolvedSymbol {
-    kind: SymbolKind;
-    name: string;
-    referencingFiles: Set<string> = new Set();
-
-    constructor(kind: SymbolKind, name: string) {
-        this.kind = kind;
-        this.name = name;
     }
 }
 
@@ -280,6 +298,17 @@ export class SymbolTable {
     }
 }
 
+export class UnresolvedSymbol {
+    kind: SymbolKind;
+    name: string;
+    referencingFiles: Set<string> = new Set();
+
+    constructor(kind: SymbolKind, name: string) {
+        this.kind = kind;
+        this.name = name;
+    }
+}
+
 export class Symbol {
     name: string;
     kind: SymbolKind;
@@ -336,6 +365,10 @@ export class Symbol {
             return `${type} ${this.name}`;
         }
     }
+}
+
+export interface ServerConfig {
+    keywordStyle: KeywordStyle;
 }
 
 export type ScopeNode = Script | StmtList | LambdaExpr | LambdaInlineExpr;
