@@ -2,7 +2,7 @@ SCRIPT 0..71
   SCRIPTNAME_KW 0..3 "scn"
   WHITESPACE 3..4 " "
   NAME 4..10
-    IDENT 4..10 "Test10"
+    IDENT 4..10 "Test09"
   NEWLINE 10..12 "\n\n"
   STMT_LIST 12..71
     BEGIN_STMT 12..70

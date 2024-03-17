@@ -1,6 +1,5 @@
-scn Test11
+scn Test10
 
 begin Test
     call 1
 end
-

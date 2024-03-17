@@ -1,10 +1,10 @@
-SCRIPT 0..63
+SCRIPT 0..62
   SCRIPTNAME_KW 0..3 "scn"
   WHITESPACE 3..4 " "
   NAME 4..10
-    IDENT 4..10 "Test09"
+    IDENT 4..10 "Test08"
   NEWLINE 10..12 "\n\n"
-  STMT_LIST 12..63
+  STMT_LIST 12..62
     BEGIN_STMT 12..61
       BEGIN_KW 12..17 "begin"
       WHITESPACE 17..18 " "
@@ -34,4 +34,4 @@ SCRIPT 0..63
             NUMBER_INT 52..57 "123.0"
         NEWLINE 57..58 "\n"
       END_KW 58..61 "end"
-    NEWLINE 61..63 "\n\n"
+    NEWLINE 61..62 "\n"

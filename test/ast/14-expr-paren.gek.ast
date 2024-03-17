@@ -17,35 +17,38 @@ SCRIPT 0..63
           NAME_REF 27..31
             IDENT 27..31 "call"
           WHITESPACE 31..32 " "
-          LITERAL 32..33
-            NUMBER_INT 32..33 "1"
-          WHITESPACE 33..34 " "
-          LPAREN 34..35 "("
-          FUNC_EXPR 35..56
-            NAME_REF 35..39
-              IDENT 35..39 "call"
-            WHITESPACE 39..40 " "
-            LITERAL 40..41
-              NUMBER_INT 40..41 "2"
-            WHITESPACE 41..42 " "
-            LITERAL 42..43
-              NUMBER_INT 42..43 "3"
-            WHITESPACE 43..44 " "
-            LPAREN 44..45 "("
-            FUNC_EXPR 45..55
-              NAME_REF 45..49
-                IDENT 45..49 "call"
-              WHITESPACE 49..50 " "
-              NAME_REF 50..51
-                IDENT 50..51 "a"
-              WHITESPACE 51..52 " "
-              NAME_REF 52..53
-                IDENT 52..53 "b"
-              WHITESPACE 53..54 " "
-              NAME_REF 54..55
-                IDENT 54..55 "c"
-            RPAREN 55..56 ")"
-          RPAREN 56..57 ")"
+          EXPR_LIST 32..57
+            LITERAL 32..33
+              NUMBER_INT 32..33 "1"
+            WHITESPACE 33..34 " "
+            LPAREN 34..35 "("
+            FUNC_EXPR 35..56
+              NAME_REF 35..39
+                IDENT 35..39 "call"
+              WHITESPACE 39..40 " "
+              EXPR_LIST 40..56
+                LITERAL 40..41
+                  NUMBER_INT 40..41 "2"
+                WHITESPACE 41..42 " "
+                LITERAL 42..43
+                  NUMBER_INT 42..43 "3"
+                WHITESPACE 43..44 " "
+                LPAREN 44..45 "("
+                FUNC_EXPR 45..55
+                  NAME_REF 45..49
+                    IDENT 45..49 "call"
+                  WHITESPACE 49..50 " "
+                  EXPR_LIST 50..55
+                    NAME_REF 50..51
+                      IDENT 50..51 "a"
+                    WHITESPACE 51..52 " "
+                    NAME_REF 52..53
+                      IDENT 52..53 "b"
+                    WHITESPACE 53..54 " "
+                    NAME_REF 54..55
+                      IDENT 54..55 "c"
+                RPAREN 55..56 ")"
+            RPAREN 56..57 ")"
         NEWLINE 57..58 "\n"
       END_KW 58..61 "end"
     NEWLINE 61..63 "\n\n"

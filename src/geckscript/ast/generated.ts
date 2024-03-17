@@ -2,7 +2,6 @@ import {
     ExprSyntaxKind,
     NodeSyntaxKind,
     OpSyntaxKind,
-    PrimaryExprSyntaxKind,
     StmtSyntaxKind,
     SyntaxKind,
     TokenSyntaxKind,
@@ -10,7 +9,6 @@ import {
     VarOrVarDeclSyntaxKind,
     isExpr,
     isOp,
-    isPrimaryExpr,
     isStmt,
     isType,
     isVarOrVarDecl,
@@ -79,26 +77,7 @@ function* children<T extends SyntaxKind>(
 export type Type = Token<TypeSyntaxKind>;
 export type Op = Token<OpSyntaxKind>;
 
-export type PrimaryExpr = Token<SyntaxKind.NUMBER_INT> | Token<SyntaxKind.STRING> | NameRef;
-
-export function PrimaryExpr(
-    green: NodeOrToken<PrimaryExprSyntaxKind> | undefined
-): PrimaryExpr | undefined {
-    if (green == undefined) {
-        return undefined;
-    }
-
-    switch (green.kind) {
-        case SyntaxKind.NUMBER_INT:
-            return green as Token<SyntaxKind.NUMBER_INT>;
-        case SyntaxKind.STRING:
-            return green as Token<SyntaxKind.STRING>;
-        case SyntaxKind.NAME_REF:
-            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
-    }
-}
-
-export type VarOrVarDecl = Name | NameRef | VarDecl;
+export type VarOrVarDecl = VarDecl | Name | NameRef;
 
 export function VarOrVarDecl(
     green: Node<VarOrVarDeclSyntaxKind> | undefined
@@ -108,12 +87,12 @@ export function VarOrVarDecl(
     }
 
     switch (green.kind) {
+        case SyntaxKind.VAR_DECL:
+            return new VarDecl(green as Node<SyntaxKind.VAR_DECL>);
         case SyntaxKind.NAME:
             return new Name(green as Node<SyntaxKind.NAME>);
         case SyntaxKind.NAME_REF:
             return new NameRef(green as Node<SyntaxKind.NAME_REF>);
-        case SyntaxKind.VAR_DECL:
-            return new VarDecl(green as Node<SyntaxKind.VAR_DECL>);
     }
 }
 export type Expr =
@@ -123,7 +102,9 @@ export type Expr =
     | FuncExpr
     | LetExpr
     | LambdaInlineExpr
-    | LambdaExpr;
+    | LambdaExpr
+    | NameRef
+    | Literal;
 
 export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined {
     if (green == undefined) {
@@ -145,6 +126,10 @@ export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined 
             return new LambdaInlineExpr(green as Node<SyntaxKind.LAMBDA_INLINE_EXPR>);
         case SyntaxKind.LAMBDA_EXPR:
             return new LambdaExpr(green as Node<SyntaxKind.LAMBDA_EXPR>);
+        case SyntaxKind.NAME_REF:
+            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
+        case SyntaxKind.LITERAL:
+            return new Literal(green as Node<SyntaxKind.LITERAL>);
     }
 }
 export type Stmt = VarDeclStmt | SetStmt | BeginStmt | ForeachStmt | WhileStmt | IfStmt;
@@ -170,13 +155,6 @@ export function Stmt(green: Node<StmtSyntaxKind> | undefined): Stmt | undefined 
     }
 }
 
-export class PrimaryExprList extends AstNode<SyntaxKind.PRIMARY_EXPR_LIST> {
-    *iter() {
-        for (const child of children(this, isPrimaryExpr)) {
-            yield PrimaryExpr(child);
-        }
-    }
-}
 export class VarOrVarDeclList extends AstNode<SyntaxKind.VAR_OR_VAR_DECL_LIST> {
     *iter() {
         for (const child of children(this, isVarOrVarDecl)) {
@@ -199,6 +177,88 @@ export class StmtList extends AstNode<SyntaxKind.STMT_LIST> {
     }
 }
 
+export class BlocktypeDesig extends AstNode<SyntaxKind.BLOCKTYPE_DESIG> {
+    blocktype(): Token<SyntaxKind.IDENT> | undefined {
+        return token(
+            this,
+            ((k) => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT
+        );
+    }
+    args(): ExprList | undefined {
+        return ExprList.fromGreen(
+            child(
+                this,
+                ((k) => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST
+            )
+        );
+    }
+}
+
+export class Branch extends AstNode<SyntaxKind.BRANCH> {
+    elseif(): Token<SyntaxKind.ELSEIF_KW | SyntaxKind.ELSE_KW> | undefined {
+        return token(
+            this,
+            ((k) => k === SyntaxKind.ELSEIF_KW || k === SyntaxKind.ELSE_KW) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.ELSEIF_KW | SyntaxKind.ELSE_KW
+        );
+    }
+    cond(): Expr | undefined {
+        return Expr(child(this, isExpr));
+    }
+    trueBranch(): StmtList | undefined {
+        return StmtList.fromGreen(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
+    }
+    falseBranch(): Branch | undefined {
+        return Branch.fromGreen(
+            child(
+                this,
+                ((k) => k === SyntaxKind.BRANCH) as (k: SyntaxKind) => k is SyntaxKind.BRANCH
+            )
+        );
+    }
+}
+
+export class Script extends AstNode<SyntaxKind.SCRIPT> {
+    scriptname(): Token<SyntaxKind.SCRIPTNAME_KW> | undefined {
+        return token(
+            this,
+            ((k) => k === SyntaxKind.SCRIPTNAME_KW) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.SCRIPTNAME_KW
+        );
+    }
+    name(): Name | undefined {
+        return Name.fromGreen(
+            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+        );
+    }
+    body(): StmtList | undefined {
+        return StmtList.fromGreen(
+            child(
+                this,
+                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
+            )
+        );
+    }
+}
+
+export class VarDecl extends AstNode<SyntaxKind.VAR_DECL> {
+    type(): Token<TypeSyntaxKind> | undefined {
+        return token(this, isType);
+    }
+    ident(): Name | undefined {
+        return Name.fromGreen(
+            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+        );
+    }
+}
+
 export class Name extends AstNode<SyntaxKind.NAME> {
     name(): Token<SyntaxKind.IDENT> | undefined {
         return token(
@@ -213,17 +273,6 @@ export class NameRef extends AstNode<SyntaxKind.NAME_REF> {
         return token(
             this,
             ((k) => k === SyntaxKind.IDENT) as (k: SyntaxKind) => k is SyntaxKind.IDENT
-        );
-    }
-}
-
-export class VarDecl extends AstNode<SyntaxKind.VAR_DECL> {
-    type(): Token<TypeSyntaxKind> | undefined {
-        return token(this, isType);
-    }
-    ident(): Name | undefined {
-        return Name.fromGreen(
-            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
         );
     }
 }
@@ -245,7 +294,7 @@ export class BinExpr extends AstNode<SyntaxKind.BIN_EXPR> {
         return token(this, isOp);
     }
     rhs(): Expr | undefined {
-        return Expr(child(this, isExpr));
+        return Expr(child(this, isExpr, 1));
     }
 }
 
@@ -263,7 +312,7 @@ export class MemberExpr extends AstNode<SyntaxKind.MEMBER_EXPR> {
         );
     }
     rhs(): Expr | undefined {
-        return Expr(child(this, isExpr));
+        return Expr(child(this, isExpr, 1));
     }
 }
 
@@ -391,20 +440,13 @@ export class LambdaExpr extends AstNode<SyntaxKind.LAMBDA_EXPR> {
     }
 }
 
-export class BlocktypeDesig extends AstNode<SyntaxKind.BLOCKTYPE_DESIG> {
-    blocktype(): Name | undefined {
-        return Name.fromGreen(
-            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
-        );
-    }
-    args(): PrimaryExprList | undefined {
-        return PrimaryExprList.fromGreen(
-            child(
-                this,
-                ((k) => k === SyntaxKind.PRIMARY_EXPR_LIST) as (
-                    k: SyntaxKind
-                ) => k is SyntaxKind.PRIMARY_EXPR_LIST
-            )
+export class Literal extends AstNode<SyntaxKind.LITERAL> {
+    literal(): Token<SyntaxKind.STRING | SyntaxKind.NUMBER_INT> | undefined {
+        return token(
+            this,
+            ((k) => k === SyntaxKind.STRING || k === SyntaxKind.NUMBER_INT) as (
+                k: SyntaxKind
+            ) => k is SyntaxKind.STRING | SyntaxKind.NUMBER_INT
         );
     }
 }
@@ -433,16 +475,11 @@ export class SetStmt extends AstNode<SyntaxKind.SET_STMT> {
             ((k) => k === SyntaxKind.SET_KW) as (k: SyntaxKind) => k is SyntaxKind.SET_KW
         );
     }
-    var(): NameRef | undefined {
-        return NameRef.fromGreen(
-            child(
-                this,
-                ((k) => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF
-            )
-        );
+    var(): Expr | undefined {
+        return Expr(child(this, isExpr));
     }
     expr(): Expr | undefined {
-        return Expr(child(this, isExpr));
+        return Expr(child(this, isExpr, 1));
     }
 }
 
@@ -486,9 +523,12 @@ export class ForeachStmt extends AstNode<SyntaxKind.FOREACH_STMT> {
             ((k) => k === SyntaxKind.FOREACH_KW) as (k: SyntaxKind) => k is SyntaxKind.FOREACH_KW
         );
     }
-    ident(): Name | undefined {
-        return Name.fromGreen(
-            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
+    ident(): NameRef | undefined {
+        return NameRef.fromGreen(
+            child(
+                this,
+                ((k) => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF
+            )
         );
     }
     larrow(): Token<SyntaxKind.LARROW> | undefined {
@@ -572,60 +612,6 @@ export class IfStmt extends AstNode<SyntaxKind.IF_STMT> {
         return token(
             this,
             ((k) => k === SyntaxKind.ENDIF_KW) as (k: SyntaxKind) => k is SyntaxKind.ENDIF_KW
-        );
-    }
-}
-
-export class Branch extends AstNode<SyntaxKind.BRANCH> {
-    elseif(): Token<SyntaxKind.ELSEIF_KW | SyntaxKind.ELSE_KW> | undefined {
-        return token(
-            this,
-            ((k) => k === SyntaxKind.ELSEIF_KW || k === SyntaxKind.ELSE_KW) as (
-                k: SyntaxKind
-            ) => k is SyntaxKind.ELSEIF_KW | SyntaxKind.ELSE_KW
-        );
-    }
-    cond(): Expr | undefined {
-        return Expr(child(this, isExpr));
-    }
-    trueBranch(): StmtList | undefined {
-        return StmtList.fromGreen(
-            child(
-                this,
-                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
-            )
-        );
-    }
-    falseBranch(): Branch | undefined {
-        return Branch.fromGreen(
-            child(
-                this,
-                ((k) => k === SyntaxKind.BRANCH) as (k: SyntaxKind) => k is SyntaxKind.BRANCH
-            )
-        );
-    }
-}
-
-export class Script extends AstNode<SyntaxKind.SCRIPT> {
-    scriptname(): Token<SyntaxKind.SCRIPTNAME_KW> | undefined {
-        return token(
-            this,
-            ((k) => k === SyntaxKind.SCRIPTNAME_KW) as (
-                k: SyntaxKind
-            ) => k is SyntaxKind.SCRIPTNAME_KW
-        );
-    }
-    name(): Name | undefined {
-        return Name.fromGreen(
-            child(this, ((k) => k === SyntaxKind.NAME) as (k: SyntaxKind) => k is SyntaxKind.NAME)
-        );
-    }
-    body(): StmtList | undefined {
-        return StmtList.fromGreen(
-            child(
-                this,
-                ((k) => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST
-            )
         );
     }
 }

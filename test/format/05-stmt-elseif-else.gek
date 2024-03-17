@@ -1,4 +1,4 @@
-scn Test06
+scn Test05
 
 begin Test
     if 1
@@ -9,4 +9,3 @@ begin Test
         set baz to 345
     endif
 end
-

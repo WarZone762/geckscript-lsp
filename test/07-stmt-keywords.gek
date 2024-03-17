@@ -1,8 +1,7 @@
-scn Test08
+scn Test07
 
 begin Test
     continue
     break
     return
 end
-

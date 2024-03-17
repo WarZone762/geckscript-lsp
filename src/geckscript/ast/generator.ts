@@ -1,161 +1,277 @@
 #!/bin/env -S node --loader ts-node/esm
-import assert from "assert";
-
-class NodeInfo {
-    syntaxKind: string;
-
-    members: { [key: string]: MemberInfo } = {};
-
-    constructor(syntaxKind: string) {
-        this.syntaxKind = syntaxKind;
-    }
-
-    funcs(): string {
-        return `${Object.entries(this.members)
-            .map((m) =>
-                `
-    ${m[0]}(): ${m[1].retType()} {
-        return ${m[1].ret()};
-    }
-    `.trim()
-            )
-            .join("\n    ")}`;
-    }
-}
 
 type InfoMap = { [key: string]: NodeInfo };
 
-const VAR_OR_VAR_DECL_INFO_MAP: InfoMap = {};
-const EXPR_INFO_MAP: InfoMap = {};
-const STMT_INFO_MAP: InfoMap = {};
-const LIST_INFO_MAP: InfoMap = {
-    VarOrVarDeclList: new NodeInfo("VAR_OR_VAR_DECL_LIST"),
-    PrimaryExprList: new NodeInfo("PRIMARY_EXPR_LIST"),
-    ExprList: new NodeInfo("EXPR_LIST"),
-    StmtList: new NodeInfo("STMT_LIST"),
-};
-const NODE_INFO_MAP: InfoMap = {};
+interface NodeInfo {
+    syntaxKind: string;
+    members: { [key: string]: string[] };
+}
 
-class MemberInfo {
-    args: string[] = [];
+function funcs(info: NodeInfo): string {
+    return `${Object.entries(info.members)
+        .map((m) =>
+            `
+    ${m[0]}(): ${retType(m[1])} {
+        return ${ret(m[1])};
+    }
+    `.trim()
+        )
+        .join("\n    ")}`;
+}
 
-    ret(): string {
-        switch (this.args[0]) {
-            case "Token": {
-                const predBody = this.args
-                    .slice(1)
-                    .map((d) => `k === SyntaxKind.${d}`)
-                    .join(" || ");
-                const predTypeRet = this.args
-                    .slice(1)
-                    .map((d) => `SyntaxKind.${d}`)
-                    .join(" | ");
+function ret(info: string[]): string {
+    switch (info[0]) {
+        case "Token": {
+            const predBody = info
+                .slice(1)
+                .map((d) => `k === SyntaxKind.${d}`)
+                .join(" || ");
+            const predTypeRet = info
+                .slice(1)
+                .map((d) => `SyntaxKind.${d}`)
+                .join(" | ");
 
-                return `token(this, (k => ${predBody}) as (k: SyntaxKind) => k is ${predTypeRet})`;
-            }
-            case "Type":
-                return "token(this, isType)";
-            case "Op":
-                return "token(this, isOp)";
-            case "VarOrVarDecl":
-                return "VarOrVarDecl(child(this, isVarOrVarDecl))";
-            case "Expr":
+            return `token(this, (k => ${predBody}) as (k: SyntaxKind) => k is ${predTypeRet})`;
+        }
+        case "Type":
+            return "token(this, isType)";
+        case "Op":
+            return "token(this, isOp)";
+        case "VarOrVarDecl":
+            return "VarOrVarDecl(child(this, isVarOrVarDecl))";
+        case "Expr":
+            if (info.at(1) !== undefined) {
+                return `Expr(child(this, isExpr, ${info[1]}))`;
+            } else {
                 return "Expr(child(this, isExpr))";
-            case "Stmt":
-                return "Stmt(child(this, isStmt))";
-            default: {
-                const syntaxKind =
-                    NODE_INFO_MAP[this.args[0]]?.syntaxKind ??
-                    LIST_INFO_MAP[this.args[0]]?.syntaxKind;
-                return `${this.args[0]}.fromGreen(child(this, (k => k === SyntaxKind.${syntaxKind}) as (k: SyntaxKind) => k is SyntaxKind.${syntaxKind}))`;
             }
-        }
-    }
-
-    retType(): string {
-        switch (this.args[0]) {
-            case "Token": {
-                const predTypeRet = this.args
-                    .slice(1)
-                    .map((d) => `SyntaxKind.${d}`)
-                    .join(" | ");
-
-                return `Token<${predTypeRet}> | undefined`;
-            }
-            case "Type":
-                return "Token<TypeSyntaxKind> | undefined";
-            case "Op":
-                return "Token<OpSyntaxKind> | undefined";
-            case "VarOrVarDecl":
-                return "VarOrVarDecl | undefined";
-            case "Expr":
-                return "Expr | undefined";
-            case "Stmt":
-                return "Stmt | undefined";
-            default: {
-                return `${this.args[0]} | undefined`;
-            }
+        case "Stmt":
+            return "Stmt(child(this, isStmt))";
+        default: {
+            const syntaxKind =
+                NODE_INFO_MAP[info[0]]?.syntaxKind ?? LIST_INFO_MAP[info[0]]?.syntaxKind;
+            return `${info[0]}.fromGreen(child(this, (k => k === SyntaxKind.${syntaxKind}) as (k: SyntaxKind) => k is SyntaxKind.${syntaxKind}))`;
         }
     }
 }
 
-function parseData(data: string) {
-    let pos = 0;
-    const ts = tokens();
+function retType(info: string[]): string {
+    switch (info[0]) {
+        case "Token": {
+            const predTypeRet = info
+                .slice(1)
+                .map((d) => `SyntaxKind.${d}`)
+                .join(" | ");
 
-    const infos: InfoMap = {};
-
-    while (pos < ts.length) {
-        const [name, info] = parseNode();
-        infos[name] = info;
-    }
-
-    return infos;
-
-    function tokens(): string[] {
-        return data
-            .trim()
-            .split(/\s+/)
-            .flatMap((e) => e.split(/\b/));
-    }
-
-    function parseNode(): [string, NodeInfo] {
-        const name = next();
-        next(":");
-        const syntaxKind = next();
-        const info = new NodeInfo(syntaxKind);
-        next("{");
-
-        while (cur() !== "}") {
-            const memName = next();
-            const memInfo = new MemberInfo();
-            next(":");
-
-            while (cur() !== ",") {
-                memInfo.args.push(next());
-            }
-            next(",");
-
-            info.members[memName] = memInfo;
+            return `Token<${predTypeRet}> | undefined`;
         }
-        next("}");
-
-        return [name, info];
-
-        function cur(): string {
-            return ts[pos];
-        }
-
-        function next(s?: string): string {
-            const t = ts[pos++];
-            if (s != undefined) {
-                assert.strictEqual(t, s);
-            }
-
-            return t;
+        case "Type":
+            return "Token<TypeSyntaxKind> | undefined";
+        case "Op":
+            return "Token<OpSyntaxKind> | undefined";
+        case "VarOrVarDecl":
+            return "VarOrVarDecl | undefined";
+        case "Expr":
+            return "Expr | undefined";
+        case "Stmt":
+            return "Stmt | undefined";
+        default: {
+            return `${info[0]} | undefined`;
         }
     }
 }
+
+const VAR_OR_VAR_DECL_INFO_MAP: InfoMap = {
+    VarDecl: {
+        syntaxKind: "VAR_DECL",
+        members: {
+            type: ["Type"],
+            ident: ["Name"],
+        },
+    },
+    Name: {
+        syntaxKind: "NAME",
+        members: {
+            name: ["Token", "IDENT"],
+        },
+    },
+    NameRef: {
+        syntaxKind: "NAME_REF",
+        members: {
+            nameRef: ["Token", "IDENT"],
+        },
+    },
+};
+
+const EXPR_INFO_MAP: InfoMap = {
+    UnaryExpr: {
+        syntaxKind: "UNARY_EXPR",
+        members: {
+            op: ["Op"],
+            operand: ["Expr"],
+        },
+    },
+    BinExpr: {
+        syntaxKind: "BIN_EXPR",
+        members: {
+            lhs: ["Expr"],
+            op: ["Op"],
+            rhs: ["Expr", "1"],
+        },
+    },
+    MemberExpr: {
+        syntaxKind: "MEMBER_EXPR",
+        members: {
+            lhs: ["Expr"],
+            leftOp: ["Token", "LSQBRACK", "RARROW", "DOT"],
+            rhs: ["Expr", "1"],
+        },
+    },
+    FuncExpr: {
+        syntaxKind: "FUNC_EXPR",
+        members: {
+            name: ["NameRef"],
+            args: ["ExprList"],
+        },
+    },
+    LetExpr: {
+        syntaxKind: "LET_EXPR",
+        members: {
+            let: ["Token", "LET_KW"],
+            var: ["VarOrVarDecl"],
+            op: ["Op"],
+            expr: ["Expr"],
+        },
+    },
+    LambdaInlineExpr: {
+        syntaxKind: "LAMBDA_INLINE_EXPR",
+        members: {
+            lbrack: ["Token", "LBRACK"],
+            params: ["VarOrVarDeclList"],
+            rbrack: ["Token", "RBRACK"],
+            arrow: ["Token", "EQGT"],
+            expr: ["Expr"],
+        },
+    },
+    LambdaExpr: {
+        syntaxKind: "LAMBDA_EXPR",
+        members: {
+            begin: ["Token", "BEGIN_KW"],
+            funcKw: ["NameRef"],
+            lbrack: ["Token", "LBRACK"],
+            params: ["VarOrVarDeclList"],
+            rbrack: ["Token", "RBRACK"],
+            body: ["StmtList"],
+            end: ["Token", "END_KW"],
+        },
+    },
+    NameRef: {
+        syntaxKind: "NAME_REF",
+        members: {
+            nameRef: ["Token", "IDENT"],
+        },
+    },
+    Literal: {
+        syntaxKind: "LITERAL",
+        members: {
+            literal: ["Token", "STRING", "NUMBER_INT"],
+        },
+    },
+};
+
+const STMT_INFO_MAP: InfoMap = {
+    VarDeclStmt: {
+        syntaxKind: "VAR_DECL_STMT",
+        members: {
+            var: ["VarDecl"],
+            op: ["Op"],
+            expr: ["Expr"],
+        },
+    },
+    SetStmt: {
+        syntaxKind: "SET_STMT",
+        members: {
+            set: ["Token", "SET_KW"],
+            var: ["Expr"],
+            expr: ["Expr", "1"],
+        },
+    },
+    BeginStmt: {
+        syntaxKind: "BEGIN_STMT",
+        members: {
+            begin: ["Token", "BEGIN_KW"],
+            blocktype: ["BlocktypeDesig"],
+            body: ["StmtList"],
+            end: ["Token", "END_KW"],
+        },
+    },
+    ForeachStmt: {
+        syntaxKind: "FOREACH_STMT",
+        members: {
+            foreach: ["Token", "FOREACH_KW"],
+            ident: ["NameRef"],
+            larrow: ["Token", "LARROW"],
+            iterable: ["Expr"],
+            body: ["StmtList"],
+            loop: ["Token", "LOOP_KW"],
+        },
+    },
+    WhileStmt: {
+        syntaxKind: "WHILE_STMT",
+        members: {
+            while: ["Token", "WHILE_KW"],
+            cond: ["Expr"],
+            body: ["StmtList"],
+            loop: ["Token", "LOOP_KW"],
+        },
+    },
+    IfStmt: {
+        syntaxKind: "IF_STMT",
+        members: {
+            if: ["Token", "IF_KW"],
+            cond: ["Expr"],
+            trueBranch: ["StmtList"],
+            falseBranch: ["Branch"],
+            endif: ["Token", "ENDIF_KW"],
+        },
+    },
+};
+const LIST_INFO_MAP: InfoMap = {
+    VarOrVarDeclList: { syntaxKind: "VAR_OR_VAR_DECL_LIST", members: {} },
+    ExprList: { syntaxKind: "EXPR_LIST", members: {} },
+    StmtList: { syntaxKind: "STMT_LIST", members: {} },
+};
+
+const NODE_INFO_MAP: InfoMap = {
+    BlocktypeDesig: {
+        syntaxKind: "BLOCKTYPE_DESIG",
+        members: {
+            blocktype: ["Token", "IDENT"],
+            args: ["ExprList"],
+        },
+    },
+    Branch: {
+        syntaxKind: "BRANCH",
+        members: {
+            elseif: ["Token", "ELSEIF_KW", "ELSE_KW"],
+            cond: ["Expr"],
+            trueBranch: ["StmtList"],
+            falseBranch: ["Branch"],
+        },
+    },
+    Script: {
+        syntaxKind: "SCRIPT",
+        members: {
+            scriptname: ["Token", "SCRIPTNAME_KW"],
+            name: ["Name"],
+            body: ["StmtList"],
+        },
+    },
+};
+
+Object.assign(NODE_INFO_MAP, VAR_OR_VAR_DECL_INFO_MAP);
+Object.assign(NODE_INFO_MAP, EXPR_INFO_MAP);
+Object.assign(NODE_INFO_MAP, STMT_INFO_MAP);
 
 function listType(name: string, syntaxKind: string, predicate: string): string {
     return `
@@ -195,12 +311,22 @@ export function ${name}(green: Node<${name}SyntaxKind> | undefined): ${name} | u
 }
 
 function generate(): string {
-    Object.assign(VAR_OR_VAR_DECL_INFO_MAP, parseData(VAR_OR_VAR_DECL_DATA));
-    Object.assign(EXPR_INFO_MAP, parseData(EXPR_DATA));
-    Object.assign(STMT_INFO_MAP, parseData(STMT_DATA));
-    Object.assign(NODE_INFO_MAP, parseData(NODE_DATA));
     return `
-import { ExprSyntaxKind, isExpr, isOp, isPrimaryExpr, isStmt, isType, isVarOrVarDecl, NodeSyntaxKind, OpSyntaxKind, PrimaryExprSyntaxKind, StmtSyntaxKind, SyntaxKind, TokenSyntaxKind, TypeSyntaxKind, VarOrVarDeclSyntaxKind } from "../syntax_kind/generated.js";
+import {
+    ExprSyntaxKind,
+    NodeSyntaxKind,
+    OpSyntaxKind,
+    StmtSyntaxKind,
+    SyntaxKind,
+    TokenSyntaxKind,
+    TypeSyntaxKind,
+    VarOrVarDeclSyntaxKind,
+    isExpr,
+    isOp,
+    isStmt,
+    isType,
+    isVarOrVarDecl,
+} from "../syntax_kind/generated.js";
 import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
@@ -251,32 +377,10 @@ function* children<T extends SyntaxKind>(node: AstNode, predicate: (kind: Syntax
 export type Type = Token<TypeSyntaxKind>;
 export type Op = Token<OpSyntaxKind>;
 
-export type PrimaryExpr =
-    | Token<SyntaxKind.NUMBER_INT>
-    | Token<SyntaxKind.STRING>
-    | NameRef
-    ;
-
-export function PrimaryExpr(green: NodeOrToken<PrimaryExprSyntaxKind> | undefined): PrimaryExpr | undefined {
-    if (green == undefined) {
-        return undefined;
-    }
-
-    switch (green.kind) {
-        case SyntaxKind.NUMBER_INT:
-            return green as Token<SyntaxKind.NUMBER_INT>;
-        case SyntaxKind.STRING:
-            return green as Token<SyntaxKind.STRING>;
-        case SyntaxKind.NAME_REF:
-            return new NameRef(green as Node<SyntaxKind.NAME_REF>);
-    }
-}
-
 ${enumType("VarOrVarDecl", VAR_OR_VAR_DECL_INFO_MAP)}
 ${enumType("Expr", EXPR_INFO_MAP)}
 ${enumType("Stmt", STMT_INFO_MAP)}
 
-${listType("PrimaryExpr", "PRIMARY_EXPR", "isPrimaryExpr")}
 ${listType("VarOrVarDecl", "VAR_OR_VAR_DECL", "isVarOrVarDecl")}
 ${listType("Expr", "EXPR", "isExpr")}
 ${listType("Stmt", "STMT", "isStmt")}
@@ -285,148 +389,12 @@ ${Object.entries(NODE_INFO_MAP)
     .map((n) =>
         `
 export class ${n[0]} extends AstNode<SyntaxKind.${n[1].syntaxKind}> {
-    ${n[1].funcs()}
+    ${funcs(n[1])}
 }
 `.trim()
     )
     .join("\n\n")}
 `.trim();
 }
-
-const VAR_OR_VAR_DECL_DATA = `
-Name: NAME {
-    name: Token IDENT,
-}
-
-NameRef: NAME_REF {
-    nameRef: Token IDENT,
-}
-
-VarDecl: VAR_DECL {
-    type: Type,
-    ident: Name,
-}
-`.trim();
-
-const EXPR_DATA = `
-UnaryExpr: UNARY_EXPR {
-    op: Op,
-    operand: Expr,
-}
-
-BinExpr: BIN_EXPR {
-    lhs: Expr,
-    op: Op,
-    rhs: Expr 1,
-}
-
-MemberExpr: MEMBER_EXPR {
-    lhs: Expr,
-    leftOp: Token LSQBRACK RARROW DOT,
-    rhs: Expr 1,
-}
-
-FuncExpr: FUNC_EXPR {
-    name: NameRef,
-    args: ExprList,
-}
-
-LetExpr: LET_EXPR {
-    let: Token LET_KW,
-    var: VarOrVarDecl,
-    op: Op,
-    expr: Expr,
-}
-
-LambdaInlineExpr: LAMBDA_INLINE_EXPR {
-    lbrack: Token LBRACK,
-    params: VarOrVarDeclList,
-    rbrack: Token RBRACK,
-    arrow: Token EQGT,
-    expr: Expr,
-}
-
-LambdaExpr: LAMBDA_EXPR {
-    begin: Token BEGIN_KW,
-    funcKw: NameRef,
-    lbrack: Token LBRACK,
-    params: VarOrVarDeclList,
-    rbrack: Token RBRACK,
-    body: StmtList,
-    end: Token END_KW,
-}
-`.trim();
-
-const STMT_DATA = `
-VarDeclStmt: VAR_DECL_STMT {
-    var: VarDecl,
-    op: Op,
-    expr: Expr,
-}
-
-SetStmt: SET_STMT {
-    set: Token SET_KW,
-    var: NameRef,
-    expr: Expr,
-}
-
-BeginStmt: BEGIN_STMT {
-    begin: Token BEGIN_KW,
-    blocktype: BlocktypeDesig,
-    body: StmtList,
-    end: Token END_KW,
-}
-
-ForeachStmt: FOREACH_STMT {
-    foreach: Token FOREACH_KW,
-    ident: Name,
-    larrow: Token LARROW,
-    iterable: Expr,
-    body: StmtList,
-    loop: Token LOOP_KW,
-}
-
-WhileStmt: WHILE_STMT {
-    while: Token WHILE_KW,
-    cond: Expr,
-    body: StmtList,
-    loop: Token LOOP_KW,
-}
-
-IfStmt: IF_STMT {
-    if: Token IF_KW,
-    cond: Expr,
-    trueBranch: StmtList,
-    falseBranch: Branch,
-    endif: Token ENDIF_KW,
-}
-`.trim();
-
-const NODE_DATA = `
-
-${VAR_OR_VAR_DECL_DATA}
-
-${EXPR_DATA}
-
-BlocktypeDesig: BLOCKTYPE_DESIG {
-    blocktype: Name,
-    args: PrimaryExprList,
-}
-
-${STMT_DATA}
-
-Branch: BRANCH {
-    elseif: Token ELSEIF_KW ELSE_KW,
-    cond: Expr,
-    trueBranch: StmtList,
-    falseBranch: Branch,
-}
-
-Script: SCRIPT {
-    scriptname: Token SCRIPTNAME_KW,
-    name: Name,
-    body: StmtList,
-}
-`;
 
 console.log(generate());

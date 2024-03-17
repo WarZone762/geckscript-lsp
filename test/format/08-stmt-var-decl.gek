@@ -1,7 +1,6 @@
-scn Test09
+scn Test08
 
 begin Test
     int foo
     float bar := 123.0
 end
-

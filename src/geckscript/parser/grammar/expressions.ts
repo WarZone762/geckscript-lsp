@@ -1,7 +1,7 @@
 import { SyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax_kind/generated.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
-import { nameRef, varDeclR, varOrVarDeclR } from "./other.js";
+import { nameRef, nameRefR, varDeclR, varOrVarDeclR } from "./other.js";
 import { stmtList } from "./statements.js";
 
 export function literal(p: Parser): CompletedMarker | undefined {
@@ -84,12 +84,16 @@ export function exprLet(p: Parser) {
 
     if (isType(p.cur())) {
         varDeclR(p, ASSIGNMENT_OP);
-        if (isAssignmentOp(p.cur())) {
-            p.nextAny();
-        } else {
-            p.errRecover("expected assignment operator", EXPR_FIRST);
-        }
+    } else {
+        nameRefR(p, ASSIGNMENT_OP);
     }
+
+    if (isAssignmentOp(p.cur())) {
+        p.nextAny();
+    } else {
+        p.errRecover("expected assignment operator", EXPR_FIRST);
+    }
+
     expr(p);
 
     return m.complete(p, SyntaxKind.LET_EXPR);
@@ -106,10 +110,12 @@ export function exprNameRefOrFunc(p: Parser, noFunc: boolean): CompletedMarker |
     const cond = () => p.atTs(EXPR_FIRST);
 
     if (cond() && !noFunc) {
+        const exprList = p.start();
         do {
             exprBpImpl(p, 7, true);
             p.opt(SyntaxKind.COMMA);
         } while (cond());
+        exprList.complete(p, SyntaxKind.EXPR_LIST);
     } else {
         m.abandon(p);
         return ident;

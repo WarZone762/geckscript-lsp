@@ -1,7 +1,7 @@
-scn Test10
+scn Test06
 
 begin Test
-    while 1
+    foreach e <- iter
         set foo to 123
     loop
 end
