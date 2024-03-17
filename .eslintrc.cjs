@@ -9,6 +9,7 @@ module.exports = {
         camelcase: "warn",
         "no-inner-declarations": "off",
         "no-constant-condition": ["error", { checkLoops: false }],
+        "object-shorthand": "warn",
         curly: ["error", "all"],
         "brace-style": ["error", "1tbs", { allowSingleLine: false }],
         "@typescript-eslint/no-unused-vars": "warn",

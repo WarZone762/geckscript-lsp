@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { GetFunctionDocumentation, GetFunctions } from "../wiki/functions.js";
-import { ExprType, Symbol, SymbolKind } from "./hir/hir.js";
+import { GetFunctions } from "../wiki/functions.js";
+import { Symbol } from "./hir/hir.js";
 
 export interface FunctionInfo {
     name: string;
@@ -75,7 +75,7 @@ export async function PopulateFunctionData(update = false) {
         const name = canoncialName.toLowerCase();
 
         FunctionData[name] = {
-            name: name,
+            name,
             canonicalName: canoncialName,
             wikiPageName: func,
         };

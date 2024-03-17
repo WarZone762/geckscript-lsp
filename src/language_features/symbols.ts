@@ -28,7 +28,7 @@ export function symbols(parsed: ParsedString): SymbolInformation[] | null {
             symbols.push({
                 name: symbol.name,
                 location: { uri: parsed.doc.uri, range: parsed.rangeOf(symbol.decl.green) },
-                kind: kind,
+                kind,
             });
         }
 

@@ -182,7 +182,7 @@ export async function GetFunctionDocumentation(
     const template = page.template("function")?.json() as FunctionTemplate;
 
     return {
-        template: template,
+        template,
         text: (page as unknown as { markdown: Function }).markdown().trim(),
     };
 }
