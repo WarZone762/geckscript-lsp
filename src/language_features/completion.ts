@@ -3,8 +3,7 @@ import { Position } from "vscode-languageserver-textdocument";
 
 import * as ast from "../geckscript/ast.js";
 import { ExprKind, FileDatabase, ParsedString, visibleSymbols } from "../geckscript/hir.js";
-import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
-import { TokenData } from "../geckscript/types/token_data.js";
+import { SyntaxKind, TokenData, isKeyword, isOp, isType } from "../geckscript/syntax.js";
 
 export function completionItems(
     db: FileDatabase,

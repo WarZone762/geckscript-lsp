@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { GetFunctions } from "../wiki/functions.js";
-import { Symbol } from "./hir/hir.js";
+import { Symbol } from "./hir.js";
 
 export interface FunctionInfo {
     name: string;

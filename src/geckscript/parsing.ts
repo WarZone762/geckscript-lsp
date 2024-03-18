@@ -1,11 +1,10 @@
 import assert from "assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
 
-import { Lexer } from "./lexer.js";
 import { AnyEvent, EventDiagnostic, EventKind, EventStart } from "./parser/event.js";
+import { Lexer } from "./parser/lexer.js";
 import { Input, parse } from "./parser/parser.js";
-import { NodeSyntaxKind, SyntaxKind } from "./syntax_kind/generated.js";
-import { Node, NodeOrToken, Token } from "./types/syntax_node.js";
+import { Node, NodeOrToken, NodeSyntaxKind, SyntaxKind, Token } from "./syntax.js";
 
 export function parseStr(str: string): [Node, Diagnostic[]] {
     const l = new Lexer(str);

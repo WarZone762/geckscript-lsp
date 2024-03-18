@@ -6,7 +6,7 @@ import * as path from "path";
 import * as url from "url";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { FileDatabase } from "../geckscript/hir/hir.js";
+import { FileDatabase } from "../geckscript/hir.js";
 import { KeywordStyle, formatDoc } from "../language_features/format.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);

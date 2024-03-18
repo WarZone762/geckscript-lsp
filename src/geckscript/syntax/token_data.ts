@@ -1,4 +1,4 @@
-import { SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
+import { SyntaxKind, TokenSyntaxKind } from "./generated.js";
 
 export interface TokenInfo {
     name: string;

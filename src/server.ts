@@ -12,7 +12,7 @@ import {
 import { URI } from "vscode-uri";
 
 import * as ast from "./geckscript/ast.js";
-import { FileDatabase, ParsedString } from "./geckscript/hir/hir.js";
+import { FileDatabase, ParsedString } from "./geckscript/hir.js";
 import * as features from "./language_features/features.js";
 import * as TreeViewServer from "./tree_view/server.js";
 

@@ -1,9 +1,8 @@
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
 
 import { forEachChildRecursive, toString } from "../geckscript/ast.js";
-import { ParsedString, ServerConfig } from "../geckscript/hir/hir.js";
-import { SyntaxKind, isKeyword } from "../geckscript/syntax_kind/generated.js";
-import { Node, NodeOrToken, Token } from "../geckscript/types/syntax_node.js";
+import { ParsedString, ServerConfig } from "../geckscript/hir.js";
+import { Node, NodeOrToken, SyntaxKind, Token, isKeyword } from "../geckscript/syntax.js";
 
 export function formatDoc(
     parsed: ParsedString,

@@ -1,7 +1,5 @@
-import { StringBuffer } from "../common.js";
-import { OpSyntaxKind, SyntaxKind, TokenSyntaxKind, isOp } from "./syntax_kind/generated.js";
-import { Token } from "./types/syntax_node.js";
-import { getTokenKind } from "./types/token_data.js";
+import { StringBuffer } from "../../common.js";
+import { OpSyntaxKind, SyntaxKind, Token, TokenSyntaxKind, getTokenKind, isOp } from "../syntax.js";
 
 export class Lexer {
     data: string;

@@ -1,7 +1,6 @@
 import { Location } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
-import { tokenAtOffset } from "../geckscript/ast.js";
 import * as ast from "../geckscript/ast.js";
 import {
     FileDatabase,
@@ -12,7 +11,7 @@ import {
 } from "../geckscript/hir.js";
 
 export function gotoDef(db: FileDatabase, parsed: ParsedString, pos: Position): Location | null {
-    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token === undefined) {
         return null;
     }
@@ -37,7 +36,7 @@ export function gotoDef(db: FileDatabase, parsed: ParsedString, pos: Position): 
 }
 
 export function refs(db: FileDatabase, parsed: ParsedString, pos: Position): Location[] | null {
-    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return null;
     }

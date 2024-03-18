@@ -9,7 +9,7 @@ import {
     findDefinitionFromToken,
     findReferences,
 } from "../geckscript/hir.js";
-import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
+import { SyntaxKind } from "../geckscript/syntax.js";
 
 export function prepareRename(
     parsed: ParsedString,

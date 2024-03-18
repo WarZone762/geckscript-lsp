@@ -1,4 +1,4 @@
-import { SyntaxKind, isType } from "../../syntax_kind/generated.js";
+import { SyntaxKind, isType } from "../../syntax.js";
 import { CompletedMarker, Parser } from "../parser.js";
 import { EXPR_FIRST, TokenSet } from "../token_set.js";
 import { exprNoFunc, exprPrimary } from "./expressions.js";

@@ -1,4 +1,4 @@
-import { NodeSyntaxKind, SyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
+import { NodeSyntaxKind, SyntaxKind, TokenSyntaxKind } from "./generated.js";
 
 export abstract class NodeCommon<T extends SyntaxKind> {
     kind: T;

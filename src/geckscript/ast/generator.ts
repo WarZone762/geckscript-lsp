@@ -314,10 +314,13 @@ function generate(): string {
     return `
 import {
     ExprSyntaxKind,
+    Node,
+    NodeOrToken,
     NodeSyntaxKind,
     OpSyntaxKind,
     StmtSyntaxKind,
     SyntaxKind,
+    Token,
     TokenSyntaxKind,
     TypeSyntaxKind,
     VarOrVarDeclSyntaxKind,
@@ -326,8 +329,7 @@ import {
     isStmt,
     isType,
     isVarOrVarDecl,
-} from "../syntax_kind/generated.js";
-import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
+} from "../syntax.js";
 
 export class AstNode<T extends NodeSyntaxKind = NodeSyntaxKind> {
     green: Node<T>;

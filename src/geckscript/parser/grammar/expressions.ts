@@ -1,4 +1,4 @@
-import { SyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax_kind/generated.js";
+import { SyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
 import { nameRef, nameRefR, varDeclR, varOrVarDeclR } from "./other.js";

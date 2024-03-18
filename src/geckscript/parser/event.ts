@@ -1,6 +1,6 @@
 import { DiagnosticSeverity } from "vscode-languageserver";
 
-import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax_kind/generated.js";
+import { NodeSyntaxKind, TokenSyntaxKind } from "../syntax.js";
 
 export const enum EventKind {
     Tombstone,

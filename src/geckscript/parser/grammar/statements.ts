@@ -1,4 +1,4 @@
-import { SyntaxKind, isAssignmentOp, isKeyword, isType } from "../../syntax_kind/generated.js";
+import { SyntaxKind, isAssignmentOp, isKeyword, isType } from "../../syntax.js";
 import { Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, TokenSet } from "../token_set.js";
 import { expr, exprBp, exprLambda, exprNoFunc } from "./expressions.js";

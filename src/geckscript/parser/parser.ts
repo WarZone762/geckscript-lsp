@@ -1,12 +1,7 @@
 import assert from "assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
 
-import {
-    NodeSyntaxKind,
-    SyntaxKind,
-    TokenSyntaxKind,
-    syntaxKindName,
-} from "../syntax_kind/generated.js";
+import { NodeSyntaxKind, SyntaxKind, TokenSyntaxKind, syntaxKindName } from "../syntax.js";
 import {
     AnyEvent,
     EventDiagnostic,

@@ -1,8 +1,7 @@
 import { Diagnostic } from "vscode-languageserver/node.js";
 
-import * as ast from "../ast/generated.js";
-import { SyntaxKind, TypeSyntaxKind } from "../syntax_kind/generated.js";
-import { Token } from "../types/syntax_node.js";
+import * as ast from "../ast.js";
+import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 import {
     BeginStmt,
     BinExpr,

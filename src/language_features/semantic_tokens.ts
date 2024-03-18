@@ -7,9 +7,8 @@ import {
 } from "vscode-languageserver/node.js";
 
 import * as ast from "../geckscript/ast.js";
-import { FuncExpr } from "../geckscript/ast/generated.js";
-import { ParsedString } from "../geckscript/hir/hir.js";
-import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
+import { ParsedString } from "../geckscript/hir.js";
+import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax.js";
 
 export const LEGEND: SemanticTokensLegend = {
     tokenTypes: [
@@ -50,7 +49,7 @@ export function buildSemanticTokens(parsed: ParsedString): SemanticTokens {
         if (node.kind === SyntaxKind.IDENT) {
             if (
                 node.parent?.parent?.kind === SyntaxKind.FUNC_EXPR &&
-                new FuncExpr(node.parent.parent).name()?.nameRef() === node
+                new ast.FuncExpr(node.parent.parent).name()?.nameRef() === node
             ) {
                 push(TokenType.FUNC, TokenModifier.NONE);
             } else if (node.parent?.kind === SyntaxKind.BLOCKTYPE_DESIG) {
