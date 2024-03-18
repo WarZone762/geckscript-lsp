@@ -7,26 +7,18 @@ import { Position, Range, TextDocument } from "vscode-languageserver-textdocumen
 import { URI } from "vscode-uri";
 
 import { KeywordStyle } from "../../language_features/format.js";
-import * as ast from "../ast.js";
-import {
-    FuncExpr,
-    LambdaExpr,
-    LambdaInlineExpr,
-    Name,
-    NameRef,
-    Script,
-    StmtList,
-    VarDecl,
-} from "../ast/generated.js";
+import * as ast from "../ast/generated.js";
 import * as parsing from "../parsing.js";
 import { SyntaxKind } from "../syntax_kind/generated.js";
-import { Node, NodeOrToken } from "../types/syntax_node.js";
-import { findDefinition } from "./api.js";
+import { Node, NodeOrToken, Token } from "../types/syntax_node.js";
+import { Analyzer } from "./api.js";
+import { LowerContext } from "./lower.js";
 
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
-    globalSymbols: Map<string, UnresolvedSymbol> = new Map();
+    globalSymbols: Map<string, GlobalSymbol> = new Map();
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
+    scriptCache: Map<Node<SyntaxKind.SCRIPT>, ParsedString> = new Map();
 
     async loadFolder(dirPath: string) {
         const files = await fs.readdir(dirPath, { recursive: true });
@@ -69,17 +61,10 @@ export class FileDatabase {
             const start = doc.positionAt(e.offset);
             const end = doc.positionAt(e.offset + e.len);
 
-            diagnostics.push({
-                message: e.msg,
-                severity: e.severity,
-                range: {
-                    start: start,
-                    end: end,
-                },
-            });
+            diagnostics.push({ message: e.msg, severity: e.severity, range: { start, end } });
         }
 
-        const script = new Script(node);
+        const script = new ast.Script(node);
 
         // remove old file from global symbols it references
         const oldParsed = this.files.get(doc.uri);
@@ -95,47 +80,18 @@ export class FileDatabase {
 
         const parsed = new ParsedString(doc, script, diagnostics);
         this.files.set(doc.uri, parsed);
+        this.scriptCache.set(node, parsed);
 
-        ast.forEachChildRecursive(node, (n) => {
-            if (n.kind === SyntaxKind.NAME_REF) {
-                const nameRef = new NameRef(n);
-                const def = findDefinition(nameRef, this);
-                if (def === undefined) {
-                    const name = nameRef.nameRef()?.text;
-                    if (name === undefined) {
-                        return;
-                    }
-
-                    parsed.unresolvedSymbols.add(name);
-                    const symbol = this.globalSymbols.get(name);
-                    if (symbol !== undefined) {
-                        symbol.referencingFiles.add(doc.uri);
-                    } else {
-                        let kind: SymbolKind = SymbolKind.Variable;
-                        if (
-                            nameRef.green.parent?.kind === SyntaxKind.FUNC_EXPR &&
-                            new FuncExpr(nameRef.green.parent).name()?.green === n
-                        ) {
-                            kind = SymbolKind.Function;
-                        }
-
-                        const symbol = new UnresolvedSymbol(kind, name);
-                        symbol.referencingFiles.add(doc.uri);
-                        this.globalSymbols.set(name, symbol);
-                    }
-                }
-            }
-        });
+        if (parsed.hir !== undefined) {
+            const analyzer = new Analyzer(this, parsed);
+            analyzer.analyze(parsed.hir);
+        }
 
         return parsed;
     }
 
     findScript(script: Node<SyntaxKind.SCRIPT>): ParsedString | undefined {
-        for (const parsed of this.files.values()) {
-            if (parsed.root.green === script) {
-                return parsed;
-            }
-        }
+        return this.scriptCache.get(script);
     }
 
     scriptToUri(name: string): ParsedString | undefined {
@@ -164,15 +120,16 @@ export class FileDatabase {
 
 export class ParsedString {
     doc: TextDocument;
-    root: Script;
-    symbolTable: SymbolTable;
+    root: ast.Script;
+    hir?: Script;
     unresolvedSymbols: Set<string> = new Set();
     diagnostics: Diagnostic[];
 
-    constructor(doc: TextDocument, root: Script, diagnostics: Diagnostic[]) {
+    constructor(doc: TextDocument, root: ast.Script, diagnostics: Diagnostic[]) {
         this.doc = doc;
         this.root = root;
-        this.symbolTable = new SymbolTable(root);
+        const lower = new LowerContext();
+        this.hir = lower.script(root);
         this.diagnostics = diagnostics;
     }
 
@@ -189,220 +146,360 @@ export class ParsedString {
     }
 }
 
-export class SymbolTable {
-    node: ScopeNode;
-    symbols: Map<string, Symbol> = new Map();
-    parent?: SymbolTable;
-    children: SymbolTable[] = [];
-
-    constructor(node: ScopeNode) {
-        this.node = node;
-
-        if (node instanceof Script) {
-            this.lowerScript(node);
-        } else if (node instanceof StmtList) {
-            this.lowerStmtList(node.green);
-        } else if (node instanceof LambdaExpr) {
-            this.lowerLambda(node);
-        } else if (node instanceof LambdaInlineExpr) {
-            this.lowerLambdaInline(node);
-        }
-    }
-
-    lowerScript(script: Script) {
-        this.addSymbol(script);
-
-        const body = script.body();
-        if (body !== undefined) {
-            const table = new SymbolTable(body);
-            this.pushChild(table);
-        }
-    }
-
-    lowerStmtList(stmtList: Node) {
-        for (const child of stmtList.children) {
-            if (child.kind === SyntaxKind.VAR_DECL) {
-                const name = new VarDecl(child);
-                this.addSymbol(name);
-            } else if (child.kind === SyntaxKind.STMT_LIST) {
-                const table = new SymbolTable(new StmtList(child));
-                this.pushChild(table);
-            } else if (child.kind === SyntaxKind.LAMBDA_EXPR) {
-                const table = new SymbolTable(new LambdaExpr(child));
-                this.pushChild(table);
-            } else if (child.kind === SyntaxKind.LAMBDA_INLINE_EXPR) {
-                const table = new SymbolTable(new LambdaInlineExpr(child));
-                this.pushChild(table);
-            } else if (child.isNode()) {
-                this.lowerStmtList(child);
-            }
-        }
-    }
-
-    lowerLambda(lambda: LambdaExpr) {
-        const params = lambda.params();
-        if (params !== undefined) {
-            for (const param of params.iter()) {
-                if (param instanceof VarDecl) {
-                    this.addSymbol(param);
-                }
-            }
-        }
-
-        const body = lambda.body();
-        if (body !== undefined) {
-            this.lowerStmtList(body.green);
-        }
-    }
-
-    lowerLambdaInline(lambda: LambdaInlineExpr) {
-        const params = lambda.params();
-        if (params !== undefined) {
-            for (const param of params.iter()) {
-                if (param instanceof VarDecl) {
-                    this.addSymbol(param);
-                }
-            }
-        }
-    }
-
-    pushChild(child: SymbolTable) {
-        child.parent = this;
-        this.children.push(child);
-    }
-
-    addSymbol(decl: Script | VarDecl) {
-        const symbol = Symbol.new(decl, this);
-        if (symbol === undefined) {
-            return;
-        }
-
-        // TODO: check if already exists, and emit an error
-        this.symbols.set(symbol.name, symbol);
-    }
-
-    toDebug(indent: number = 0): string {
-        let out = "    ".repeat(indent) + "SymbolTable {";
-        for (const [k, v] of this.symbols.entries()) {
-            out += "\n" + "    ".repeat(indent + 1) + `${k}: ${v.name}`;
-        }
-
-        for (const child of this.children) {
-            out += "\n";
-            out += child.toDebug(indent + 1);
-        }
-
-        out += (out.at(-1) === "{" ? "" : "\n" + "    ".repeat(indent)) + "}";
-
-        return out;
-    }
-}
-
-export class UnresolvedSymbol {
-    kind: SymbolKind;
-    name: string;
-    referencingFiles: Set<string> = new Set();
-
-    constructor(kind: SymbolKind, name: string) {
-        this.kind = kind;
-        this.name = name;
-    }
-}
-
-export class Symbol {
-    name: string;
-    kind: SymbolKind;
-    decl: Script | VarDecl;
-    parent: SymbolTable;
-
-    constructor(
-        name: string,
-        kind: SymbolKind,
-        declaration: Script | VarDecl,
-        parent: SymbolTable
-    ) {
-        this.name = name;
-        this.kind = kind;
-        this.decl = declaration;
-        this.parent = parent;
-    }
-
-    static new(decl: Script | VarDecl, parent: SymbolTable): Symbol | undefined {
-        let name: string | undefined;
-        let kind: SymbolKind | undefined;
-        if (decl instanceof Script) {
-            name = decl.name()?.name()?.text;
-            if (name === undefined) {
-                return;
-            }
-
-            kind = SymbolKind.Script;
-        } else {
-            name = decl.ident()?.name()?.text;
-            if (name === undefined) {
-                return;
-            }
-
-            kind = SymbolKind.Variable;
-        }
-
-        return new Symbol(name, kind, decl, parent);
-    }
-
-    nameNode(): Name {
-        if (this.decl instanceof Script) {
-            return this.decl.name()!;
-        } else {
-            return this.decl.ident()!;
-        }
-    }
-
-    completionDetail(): string {
-        if (this.decl instanceof Script) {
-            return `scriptname ${this.name}`;
-        } else {
-            const type = this.decl.type()?.text;
-            return `${type} ${this.name}`;
-        }
-    }
-}
-
 export interface ServerConfig {
     keywordStyle: KeywordStyle;
 }
 
-export type ScopeNode = Script | StmtList | LambdaExpr | LambdaInlineExpr;
+export type HirNode =
+    | Script
+    | StmtList
+    | Stmt
+    | Expr
+    | VarOrVarDeclList
+    | VarOrVarDecl
+    | Blocktype
+    | String
+    | Number;
 
-export const enum SymbolKind {
-    Unknown,
-
-    Variable,
-    Function,
-    Script,
+export class Script {
+    constructor(
+        public name: string,
+        public stmtList: StmtList,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.Script
+    ) {}
 }
 
-export const enum ExprType {
+export class StmtList {
+    constructor(
+        public stmts: Stmt[],
+        public node: ast.StmtList
+    ) {}
+}
+
+export type Stmt = IfStmt | WhileStmt | BeginStmt | ForeachStmt | SetStmt | VarDeclStmt | Expr;
+
+export class IfStmt {
+    constructor(
+        public cond: Expr,
+        public trueBranch: StmtList,
+        public falseBranch: IfStmt | undefined,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.IfStmt | ast.Branch
+    ) {}
+}
+
+export class WhileStmt {
+    constructor(
+        public cond: Expr,
+        public stmtList: StmtList,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.WhileStmt
+    ) {}
+}
+
+export class BeginStmt {
+    constructor(
+        public blocktype: Blocktype,
+        public stmtList: StmtList,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.BeginStmt
+    ) {}
+}
+
+export class Blocktype {
+    constructor(
+        public name: string,
+        public args: Expr[],
+        public node: ast.BlocktypeDesig
+    ) {}
+}
+
+export class ForeachStmt {
+    constructor(
+        public nameRef: NameRef,
+        public iter: Expr,
+        public stmtList: StmtList,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.ForeachStmt
+    ) {}
+}
+
+export class SetStmt {
+    constructor(
+        public var_: Expr,
+        public value: Expr,
+        public node: ast.SetStmt
+    ) {}
+}
+
+export class VarDeclStmt {
+    constructor(
+        public name: Name,
+        public value: Expr | undefined,
+        public node: ast.VarDeclStmt
+    ) {}
+}
+
+export type Expr =
+    | UnaryExpr
+    | BinExpr
+    | MemberExpr
+    | FuncExpr
+    | LetExpr
+    | LambdaInlineExpr
+    | LambdaExpr
+    | Literal
+    | NameRef;
+
+export class UnaryExpr {
+    constructor(
+        public type: ExprType,
+        public op: UnaryExprOp,
+        public operand: Expr,
+        public node: ast.UnaryExpr
+    ) {}
+}
+
+export const enum UnaryExprOp {
+    Not,
+}
+
+export class BinExpr {
+    constructor(
+        public type: ExprType,
+        public op: BinExprOp,
+        public lhs: Expr,
+        public rhs: Expr,
+        public node: ast.BinExpr
+    ) {}
+}
+
+export const enum BinExprOp {
+    Plus,
+    Minus,
+    Asterisk,
+    Slash,
+    Percent,
+    Eq,
+}
+
+export class MemberExpr {
+    constructor(
+        public type: ExprType,
+        public op: MemberExprOp,
+        public lhs: Expr,
+        public rhs: Expr,
+        public node: ast.MemberExpr
+    ) {}
+}
+
+export const enum MemberExprOp {
+    Dot,
+    RArrow,
+    SQBracket,
+}
+
+export class FuncExpr {
+    constructor(
+        public type: ExprType,
+        public func: Expr,
+        public args: Expr[],
+        public node: ast.FuncExpr
+    ) {}
+}
+
+export class LetExpr {
+    constructor(
+        public type: ExprType,
+        public varOrVarDecl: VarOrVarDecl,
+        public op: BinExprOp,
+        public expr: Expr,
+        public node: ast.LetExpr
+    ) {}
+}
+
+export class LambdaInlineExpr {
+    constructor(
+        public type: ExprType,
+        public params: VarOrVarDeclList,
+        public expr: Expr,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.LambdaInlineExpr
+    ) {}
+}
+
+export class LambdaExpr {
+    constructor(
+        public type: ExprType,
+        public params: VarOrVarDeclList,
+        public stmtList: StmtList,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.LambdaExpr
+    ) {}
+}
+
+export class VarOrVarDeclList {
+    constructor(
+        public list: VarOrVarDecl[],
+        public node: ast.VarOrVarDeclList
+    ) {}
+}
+
+export type VarOrVarDecl = Name | NameRef;
+
+export class Name {
+    symbol: Symbol;
+
+    constructor(
+        name: string,
+        type: ExprType,
+        public node: ast.Name
+    ) {
+        this.symbol = new Symbol(name, type, this);
+    }
+}
+
+export class NameRef {
+    constructor(
+        public symbol: Symbol | GlobalSymbol,
+        public node: ast.NameRef
+    ) {}
+}
+
+export class Literal {
+    constructor(
+        public literal: String | Number,
+        public type: ExprType,
+        public node: ast.Literal
+    ) {}
+}
+
+export class String {
+    constructor(
+        public value: string,
+        public node: Token<SyntaxKind.STRING>
+    ) {}
+}
+
+export class Number {
+    constructor(
+        public value: number,
+        public node: Token<SyntaxKind.NUMBER_INT>
+    ) {}
+}
+
+export class ExprTypeSimple {
+    kind: Exclude<ExprKind, ExprKind.Function>;
+
+    constructor(kind: Exclude<ExprKind, ExprKind.Function>) {
+        this.kind = kind;
+    }
+
+    toString(): string {
+        switch (this.kind) {
+            case ExprKind.Unknown:
+                return "unknown";
+            case ExprKind.Ambiguous:
+                return "Ambiguous";
+            case ExprKind.Void:
+                return "void";
+            case ExprKind.Form:
+                return "form";
+            case ExprKind.Script:
+                return "script";
+            case ExprKind.Integer:
+                return "int";
+            case ExprKind.Float:
+                return "float";
+            case ExprKind.Reference:
+                return "reference";
+            case ExprKind.String:
+                return "string";
+            case ExprKind.Array:
+                return "array";
+        }
+    }
+}
+
+export class ExprTypeFunction {
+    kind = ExprKind.Function as const;
+    signature: Signature;
+
+    constructor(signature: Signature) {
+        this.signature = signature;
+    }
+
+    toString(): string {
+        return "A";
+    }
+}
+
+export type ExprType = ExprTypeSimple | ExprTypeFunction;
+
+export const enum ExprKind {
     Unknown,
     Ambiguous,
+    Void,
+    Function,
+    Form,
+    Script,
+
     Integer,
     Float,
-    Form,
     Reference,
     String,
     Array,
 }
 
-const EXPR_TYPE_NAME_MAP: { [key in ExprType]?: string } = {
-    [ExprType.Unknown]: "unknown",
-    [ExprType.Ambiguous]: "ambiguous",
-    [ExprType.Integer]: "integer",
-    [ExprType.Float]: "float",
-    [ExprType.Form]: "form",
-    [ExprType.Reference]: "reference",
-    [ExprType.String]: "string",
-    [ExprType.Array]: "array",
+const EXPR_TYPE_NAME_MAP: { [key in ExprKind]?: string } = {
+    [ExprKind.Unknown]: "unknown",
+    [ExprKind.Ambiguous]: "ambiguous",
+    [ExprKind.Void]: "void",
+    [ExprKind.Function]: "function",
+    [ExprKind.Integer]: "integer",
+    [ExprKind.Float]: "float",
+    [ExprKind.Form]: "form",
+    [ExprKind.Reference]: "reference",
+    [ExprKind.String]: "string",
+    [ExprKind.Array]: "array",
 };
 
-export function exprTypeName(type: ExprType): string {
+export function exprTypeName(type: ExprKind): string {
     return EXPR_TYPE_NAME_MAP[type] ?? "unable to find Type name";
+}
+
+export class GlobalSymbol {
+    referencingFiles: Set<string> = new Set();
+
+    constructor(
+        public name: string,
+        public type: ExprType
+    ) {}
+}
+
+export class Symbol {
+    constructor(
+        public name: string,
+        public type: ExprType,
+        public decl: Name
+    ) {}
+}
+
+export class Signature {
+    ret: ExprType;
+    args: ExprType[];
+
+    constructor(ret: ExprType, args?: ExprType[]) {
+        this.ret = ret;
+        this.args = args ?? [];
+    }
+
+    toString(): string {
+        if (this.args.length !== 0) {
+            return this.ret.toString();
+        } else {
+            return `${this.ret} ${this.args.join(", ")}`;
+        }
+    }
 }

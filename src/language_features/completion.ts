@@ -2,8 +2,7 @@ import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
 import * as ast from "../geckscript/ast.js";
-import { visibleSymbols } from "../geckscript/hir/api.js";
-import { FileDatabase, ParsedString, SymbolKind } from "../geckscript/hir/hir.js";
+import { ExprKind, FileDatabase, ParsedString, visibleSymbols } from "../geckscript/hir.js";
 import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax_kind/generated.js";
 import { TokenData } from "../geckscript/types/token_data.js";
 
@@ -25,13 +24,13 @@ export function completionItems(
 
     const completionItems: CompletionItem[] = [];
 
-    for (const symbol of Object.values(visibleSymbols(token, db))) {
+    for (const symbol of Object.values(visibleSymbols(db, token))) {
         completionItems.push({
             label: symbol.name,
             data: symbol.name,
-            detail: symbol.completionDetail(),
+            detail: symbol.type.toString(),
             kind:
-                symbol.kind === SymbolKind.Script
+                symbol.type.kind === ExprKind.Script
                     ? CompletionItemKind.File
                     : CompletionItemKind.Variable,
         });
@@ -59,9 +58,9 @@ export function completionItems(
             label: item.name,
             detail: item.name,
             kind:
-                item.kind === SymbolKind.Variable
-                    ? CompletionItemKind.Variable
-                    : CompletionItemKind.Function,
+                item.type.kind === ExprKind.Function
+                    ? CompletionItemKind.Function
+                    : CompletionItemKind.Variable,
         });
     }
 

@@ -1,38 +1,39 @@
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
 
-import { ParsedString } from "../geckscript/hir/hir.js";
-import * as hir from "../geckscript/hir/hir.js";
+import { ExprKind, ParsedString, visit } from "../geckscript/hir.js";
 
 export function symbols(parsed: ParsedString): SymbolInformation[] | null {
     const symbols: SymbolInformation[] = [];
 
-    const stack = [parsed.symbolTable];
+    if (parsed.hir === undefined) {
+        return null;
+    }
 
-    while (stack.length !== 0) {
-        const top = stack.pop()!;
-        for (const symbol of top.symbols.values()) {
-            let kind: SymbolKind;
-            switch (symbol.kind) {
-                case hir.SymbolKind.Function:
-                    kind = SymbolKind.Function;
-                    break;
-                case hir.SymbolKind.Script:
-                    kind = SymbolKind.File;
-                    break;
-                case hir.SymbolKind.Variable:
-                    kind = SymbolKind.Variable;
-                    break;
-                default:
-                    continue;
+    for (const child of visit(parsed.hir)) {
+        if ("symbolTable" in child) {
+            for (const symbol of child.symbolTable.values()) {
+                let kind: SymbolKind;
+                switch (symbol.type.kind) {
+                    case ExprKind.Function:
+                        kind = SymbolKind.Function;
+                        break;
+                    case ExprKind.Script:
+                        kind = SymbolKind.File;
+                        break;
+                    default:
+                        kind = SymbolKind.Variable;
+                        break;
+                }
+                symbols.push({
+                    name: symbol.name,
+                    location: {
+                        uri: parsed.doc.uri,
+                        range: parsed.rangeOf(symbol.decl.node.green),
+                    },
+                    kind,
+                });
             }
-            symbols.push({
-                name: symbol.name,
-                location: { uri: parsed.doc.uri, range: parsed.rangeOf(symbol.decl.green) },
-                kind,
-            });
         }
-
-        stack.push(...top.children);
     }
 
     return symbols;

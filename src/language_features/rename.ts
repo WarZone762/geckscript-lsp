@@ -2,8 +2,13 @@ import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver"
 import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 
 import { tokenAtOffset } from "../geckscript/ast.js";
-import { findDefinitionFromToken, findReferences } from "../geckscript/hir/api.js";
-import { FileDatabase, ParsedString } from "../geckscript/hir/hir.js";
+import {
+    FileDatabase,
+    GlobalSymbol,
+    ParsedString,
+    findDefinitionFromToken,
+    findReferences,
+} from "../geckscript/hir.js";
 import { SyntaxKind } from "../geckscript/syntax_kind/generated.js";
 
 export function prepareRename(
@@ -30,14 +35,14 @@ export function rename(
     }
 
     const def = findDefinitionFromToken(token, db);
-    if (def === undefined) {
+    if (def === undefined || def instanceof GlobalSymbol) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = findReferences(def, db);
-    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.nameNode().green), newText: newName }];
+    const refs = findReferences(db, def);
+    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.decl.node.green), newText: newName }];
     for (const ref of refs) {
-        changes.push({ range: parsed.rangeOf(ref.green), newText: newName });
+        changes.push({ range: parsed.rangeOf(ref.node.green), newText: newName });
     }
 
     return { changes: { [parsed.doc.uri]: changes } };
