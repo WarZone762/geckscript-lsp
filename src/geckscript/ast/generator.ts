@@ -235,6 +235,7 @@ const STMT_INFO_MAP: InfoMap = {
             endif: ["Token", "ENDIF_KW"],
         },
     },
+    ...EXPR_INFO_MAP,
 };
 const LIST_INFO_MAP: InfoMap = {
     VarOrVarDeclList: { syntaxKind: "VAR_OR_VAR_DECL_LIST", members: {} },

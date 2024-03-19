@@ -86,6 +86,12 @@ export const enum SyntaxKind {
     VAR_OR_VAR_DECL_LIST,
     EXPR_LIST,
     STMT_LIST,
+    VAR_DECL_STMT,
+    SET_STMT,
+    BEGIN_STMT,
+    IF_STMT,
+    WHILE_STMT,
+    FOREACH_STMT,
     LAMBDA_EXPR,
     LAMBDA_INLINE_EXPR,
     UNARY_EXPR,
@@ -95,12 +101,6 @@ export const enum SyntaxKind {
     LET_EXPR,
     LITERAL,
     NAME_REF,
-    VAR_DECL_STMT,
-    SET_STMT,
-    BEGIN_STMT,
-    IF_STMT,
-    WHILE_STMT,
-    FOREACH_STMT,
 }
 
 export const syntaxKindNames = {
@@ -191,6 +191,12 @@ export const syntaxKindNames = {
     [SyntaxKind.VAR_OR_VAR_DECL_LIST]: "VAR_OR_VAR_DECL_LIST",
     [SyntaxKind.EXPR_LIST]: "EXPR_LIST",
     [SyntaxKind.STMT_LIST]: "STMT_LIST",
+    [SyntaxKind.VAR_DECL_STMT]: "VAR_DECL_STMT",
+    [SyntaxKind.SET_STMT]: "SET_STMT",
+    [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
+    [SyntaxKind.IF_STMT]: "IF_STMT",
+    [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
+    [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
     [SyntaxKind.LAMBDA_EXPR]: "LAMBDA_EXPR",
     [SyntaxKind.LAMBDA_INLINE_EXPR]: "LAMBDA_INLINE_EXPR",
     [SyntaxKind.UNARY_EXPR]: "UNARY_EXPR",
@@ -200,12 +206,6 @@ export const syntaxKindNames = {
     [SyntaxKind.LET_EXPR]: "LET_EXPR",
     [SyntaxKind.LITERAL]: "LITERAL",
     [SyntaxKind.NAME_REF]: "NAME_REF",
-    [SyntaxKind.VAR_DECL_STMT]: "VAR_DECL_STMT",
-    [SyntaxKind.SET_STMT]: "SET_STMT",
-    [SyntaxKind.BEGIN_STMT]: "BEGIN_STMT",
-    [SyntaxKind.IF_STMT]: "IF_STMT",
-    [SyntaxKind.WHILE_STMT]: "WHILE_STMT",
-    [SyntaxKind.FOREACH_STMT]: "FOREACH_STMT",
 };
 
 export function syntaxKindName(kind: SyntaxKind): string {
@@ -463,7 +463,16 @@ export type StmtSyntaxKind =
     | SyntaxKind.BEGIN_STMT
     | SyntaxKind.IF_STMT
     | SyntaxKind.WHILE_STMT
-    | SyntaxKind.FOREACH_STMT;
+    | SyntaxKind.FOREACH_STMT
+    | SyntaxKind.LAMBDA_EXPR
+    | SyntaxKind.LAMBDA_INLINE_EXPR
+    | SyntaxKind.UNARY_EXPR
+    | SyntaxKind.BIN_EXPR
+    | SyntaxKind.MEMBER_EXPR
+    | SyntaxKind.FUNC_EXPR
+    | SyntaxKind.LET_EXPR
+    | SyntaxKind.LITERAL
+    | SyntaxKind.NAME_REF;
 
 export function isStmt(kind: SyntaxKind): kind is StmtSyntaxKind {
     return (
@@ -472,7 +481,16 @@ export function isStmt(kind: SyntaxKind): kind is StmtSyntaxKind {
         kind == SyntaxKind.BEGIN_STMT ||
         kind == SyntaxKind.IF_STMT ||
         kind == SyntaxKind.WHILE_STMT ||
-        kind == SyntaxKind.FOREACH_STMT
+        kind == SyntaxKind.FOREACH_STMT ||
+        kind == SyntaxKind.LAMBDA_EXPR ||
+        kind == SyntaxKind.LAMBDA_INLINE_EXPR ||
+        kind == SyntaxKind.UNARY_EXPR ||
+        kind == SyntaxKind.BIN_EXPR ||
+        kind == SyntaxKind.MEMBER_EXPR ||
+        kind == SyntaxKind.FUNC_EXPR ||
+        kind == SyntaxKind.LET_EXPR ||
+        kind == SyntaxKind.LITERAL ||
+        kind == SyntaxKind.NAME_REF
     );
 }
 

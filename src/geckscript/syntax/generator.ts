@@ -26,29 +26,26 @@ export function is${typeName}(kind: SyntaxKind): kind is ${typeName}SyntaxKind {
 export const VAR_OR_VAR_DECL = ["NAME", "NAME_REF", "VAR_DECL"];
 
 export const OTHER = [
-    ...new Set([
-        "UNKNOWN",
+    "UNKNOWN",
 
-        "WHITESPACE",
-        "COMMENT",
-        "BLOCK_COMMENT",
+    "WHITESPACE",
+    "COMMENT",
+    "BLOCK_COMMENT",
 
-        "EOF",
-        "NEWLINE",
+    "EOF",
+    "NEWLINE",
 
-        "NUMBER_INT",
-        "STRING",
-        "NAME",
+    "NUMBER_INT",
+    "STRING",
+    "NAME",
 
-        "TOMBSTONE",
-        "ERROR",
-        "IDENT",
-        "NAME",
-        "VAR_DECL",
-        "BLOCKTYPE_DESIG",
-        "BRANCH",
-        "SCRIPT",
-    ]),
+    "TOMBSTONE",
+    "ERROR",
+    "IDENT",
+    "VAR_DECL",
+    "BLOCKTYPE_DESIG",
+    "BRANCH",
+    "SCRIPT",
 ];
 
 export const TYPE = [
@@ -151,6 +148,7 @@ export const STMT = [
     "IF_STMT",
     "WHILE_STMT",
     "FOREACH_STMT",
+    ...EXPR,
 ];
 
 export function generate(): string {
@@ -160,7 +158,6 @@ export function generate(): string {
     ${syntaxKinds(KEYWORD)},
     ${syntaxKinds(OP)},
     ${syntaxKinds(LIST)},
-    ${syntaxKinds(EXPR)},
     ${syntaxKinds(STMT)},
 }
 
@@ -170,7 +167,6 @@ export const syntaxKindNames = {
     ${syntaxKindNames(KEYWORD)},
     ${syntaxKindNames(OP)},
     ${syntaxKindNames(LIST)},
-    ${syntaxKindNames(EXPR)},
     ${syntaxKindNames(STMT)},
 };
 

@@ -25,6 +25,7 @@ import {
     NameRef,
     Script,
     SetStmt,
+    Signature,
     StmtList,
     Symbol,
     UnaryExpr,
@@ -110,6 +111,15 @@ export class Analyzer {
             const func = this.analyzeExpr(node.func);
             if (func instanceof ExprTypeFunction) {
                 node.type = func.signature.ret;
+            } else if (func.kind === ExprKind.Unknown) {
+                const type = new ExprTypeFunction(
+                    new Signature(new ExprTypeSimple(ExprKind.Unknown))
+                );
+                for (const arg of node.args) {
+                    type.signature.args.push(this.analyzeExpr(arg));
+                }
+
+                this.propagateType(node.func, type);
             } else {
                 // TODO: emit error
                 node.type = func;
@@ -126,7 +136,7 @@ export class Analyzer {
             return node.type;
         } else if (node instanceof NameRef) {
             const symbol = findDefinition(this.db, node);
-            if (symbol !== undefined) {
+            if (symbol instanceof Symbol) {
                 node.symbol = symbol;
             } else {
                 this.parsed.diagnostics.push({
@@ -135,17 +145,54 @@ export class Analyzer {
                     severity: DiagnosticSeverity.Warning,
                 });
 
-                const globalSymbol = new GlobalSymbol(
-                    node.symbol.name,
-                    new ExprTypeSimple(ExprKind.Unknown)
-                );
-                globalSymbol.referencingFiles.add(this.parsed.doc.uri);
+                if (node.symbol instanceof GlobalSymbol) {
+                    this.db.globalSymbols.set(node.symbol.name, node.symbol);
+                } else {
+                    const globalSymbol = new GlobalSymbol(
+                        node.symbol.name,
+                        new ExprTypeSimple(ExprKind.Unknown)
+                    );
+                    globalSymbol.referencingFiles.add(this.parsed.doc.uri);
 
-                this.db.globalSymbols.set(node.symbol.name, globalSymbol);
+                    this.db.globalSymbols.set(node.symbol.name, globalSymbol);
+                }
             }
             return node.symbol.type;
         }
         return new ExprTypeSimple(ExprKind.Unknown);
+    }
+
+    propagateType(expr: Expr, type: ExprType) {
+        if (
+            ("type" in expr && expr.type.kind !== ExprKind.Unknown) ||
+            (!("type" in expr) && expr.symbol.type.kind !== ExprKind.Unknown)
+        ) {
+            console.error("tried to infer resolved type of", expr, `to ${type}`);
+            return;
+        }
+
+        if (expr instanceof BinExpr) {
+            expr.type = type;
+            this.propagateType(expr.lhs, type);
+            this.propagateType(expr.rhs, type);
+        } else if (expr instanceof UnaryExpr) {
+            expr.type = type;
+            this.propagateType(expr.operand, type);
+        } else if (expr instanceof MemberExpr) {
+            expr.type = type;
+            this.propagateType(expr.rhs, type);
+        } else if (expr instanceof FuncExpr) {
+            expr.type = type;
+        } else if (expr instanceof LetExpr) {
+            expr.type = type;
+            this.propagateType(expr.expr, type);
+        } else if (expr instanceof LambdaInlineExpr) {
+            expr.type = type;
+        } else if (expr instanceof LambdaExpr) {
+            expr.type = type;
+        } else if (expr instanceof NameRef) {
+            expr.symbol.type = type;
+        }
     }
 }
 
@@ -212,12 +259,6 @@ export function findReferences(db: FileDatabase, symbol: Symbol | GlobalSymbol):
             return refs;
         }
         for (const child of visit(scope)) {
-            if (child instanceof NameRef && child.symbol instanceof Symbol) {
-                // console.error(child.symbol);
-                // console.error(symbol);
-                // console.error(child.symbol === symbol);
-                // console.error();
-            }
             if (child instanceof NameRef && child.symbol === symbol) {
                 refs.push(child);
             }

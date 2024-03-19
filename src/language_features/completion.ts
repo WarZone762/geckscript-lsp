@@ -27,7 +27,7 @@ export function completionItems(
         completionItems.push({
             label: symbol.name,
             data: symbol.name,
-            detail: symbol.type.toString(),
+            detail: symbol.type.toStringWithName(symbol.name),
             kind:
                 symbol.type.kind === ExprKind.Script
                     ? CompletionItemKind.File
@@ -55,7 +55,7 @@ export function completionItems(
     for (const item of db.globalSymbols.values()) {
         completionItems.push({
             label: item.name,
-            detail: item.name,
+            detail: item.type.toStringWithName(item.name),
             kind:
                 item.type.kind === ExprKind.Function
                     ? CompletionItemKind.Function

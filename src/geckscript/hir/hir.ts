@@ -271,6 +271,10 @@ export class ExprTypeSimple {
                 return "array";
         }
     }
+
+    toStringWithName(name: string): string {
+        return `${this.toString()} ${name}`;
+    }
 }
 
 export class ExprTypeFunction {
@@ -282,7 +286,11 @@ export class ExprTypeFunction {
     }
 
     toString(): string {
-        return "A";
+        return this.signature.toString();
+    }
+
+    toStringWithName(name: string): string {
+        return this.signature.toStringWithName(name);
     }
 }
 
@@ -348,9 +356,17 @@ export class Signature {
 
     toString(): string {
         if (this.args.length !== 0) {
-            return this.ret.toString();
+            return `(${this.ret}) ${this.args.join(" ")}`;
         } else {
-            return `${this.ret} ${this.args.join(", ")}`;
+            return this.ret.toString();
+        }
+    }
+
+    toStringWithName(name: string): string {
+        if (this.args.length !== 0) {
+            return `(${this.ret}) ${name} ${this.args.join(" ")}`;
+        } else {
+            return this.ret.toStringWithName(name);
         }
     }
 }
