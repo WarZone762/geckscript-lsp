@@ -1,7 +1,5 @@
 import { DiagnosticSeverity } from "vscode-languageserver";
 
-import { FileDatabase, ParsedString } from "../hir.js";
-import { NodeOrToken, SyntaxKind, Token } from "../syntax.js";
 import {
     BeginStmt,
     BinExpr,
@@ -11,6 +9,7 @@ import {
     ExprType,
     ExprTypeFunction,
     ExprTypeSimple,
+    FileDatabase,
     ForeachStmt,
     FuncExpr,
     GlobalSymbol,
@@ -23,6 +22,7 @@ import {
     MemberExpr,
     Name,
     NameRef,
+    ParsedString,
     Script,
     SetStmt,
     Signature,
@@ -32,7 +32,8 @@ import {
     VarDeclStmt,
     VarOrVarDeclList,
     WhileStmt,
-} from "./hir.js";
+} from "../hir.js";
+import { NodeOrToken, SyntaxKind, Token } from "../syntax.js";
 
 export class Analyzer {
     constructor(

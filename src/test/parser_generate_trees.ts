@@ -3,7 +3,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as url from "url";
 
-import { toDebug } from "../geckscript/ast.js";
+import { ast } from "../geckscript.js";
 import { parseStr } from "../geckscript/parsing.js";
 
 const _Dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -17,7 +17,7 @@ for (const f of await fs.readdir(testDir, { withFileTypes: true })) {
 
         const astPath = path.resolve(path.join(testDir, "ast", f.name));
         const out = await fs.open(`${astPath}.ast`, "w");
-        out.write(toDebug(parsed[0]));
+        out.write(ast.toDebug(parsed[0]));
         out.close();
     }
 }

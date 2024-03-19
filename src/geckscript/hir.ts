@@ -8,9 +8,7 @@ import { URI } from "vscode-uri";
 
 import { KeywordStyle } from "../language_features/format.js";
 import * as ast from "./ast.js";
-import { Analyzer } from "./hir/api.js";
-import { GlobalSymbol, Script } from "./hir/hir.js";
-import { LowerContext } from "./hir/lower.js";
+import { Analyzer, GlobalSymbol, LowerContext, Script } from "./hir.js";
 import * as parsing from "./parsing.js";
 import { Node, NodeOrToken, SyntaxKind } from "./syntax.js";
 

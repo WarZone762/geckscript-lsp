@@ -1,5 +1,5 @@
+import { Script } from "../ast.js";
 import { Node, NodeOrToken, SyntaxKind, Token, syntaxKindName } from "../syntax.js";
-import { Script } from "./generated.js";
 
 export function forEachChild(node: Node, func: (node: NodeOrToken) => unknown): void {
     for (const child of node.children) {

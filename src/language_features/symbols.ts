@@ -1,23 +1,23 @@
 import { SymbolInformation, SymbolKind } from "vscode-languageserver";
 
-import { ExprKind, ParsedString, visit } from "../geckscript/hir.js";
+import { hir } from "../geckscript.js";
 
-export function symbols(parsed: ParsedString): SymbolInformation[] | null {
+export function symbols(parsed: hir.ParsedString): SymbolInformation[] | null {
     const symbols: SymbolInformation[] = [];
 
     if (parsed.hir === undefined) {
         return null;
     }
 
-    for (const child of visit(parsed.hir)) {
+    for (const child of hir.visit(parsed.hir)) {
         if ("symbolTable" in child) {
             for (const symbol of child.symbolTable.values()) {
                 let kind: SymbolKind;
                 switch (symbol.type.kind) {
-                    case ExprKind.Function:
+                    case hir.ExprKind.Function:
                         kind = SymbolKind.Function;
                         break;
-                    case ExprKind.Script:
+                    case hir.ExprKind.Script:
                         kind = SymbolKind.File;
                         break;
                     default:

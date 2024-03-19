@@ -1,21 +1,13 @@
 import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver";
 import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 
-import { tokenAtOffset } from "../geckscript/ast.js";
-import {
-    FileDatabase,
-    GlobalSymbol,
-    ParsedString,
-    findDefinitionFromToken,
-    findReferences,
-} from "../geckscript/hir.js";
-import { SyntaxKind } from "../geckscript/syntax.js";
+import { SyntaxKind, ast, hir } from "../geckscript.js";
 
 export function prepareRename(
-    parsed: ParsedString,
+    parsed: hir.ParsedString,
     pos: Position
 ): Range | { range: Range; placeholder: string } | ResponseError | null {
-    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token?.kind !== SyntaxKind.IDENT) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
@@ -24,22 +16,22 @@ export function prepareRename(
 }
 
 export function rename(
-    db: FileDatabase,
-    parsed: ParsedString,
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString,
     newName: string,
     pos: Position
 ): WorkspaceEdit | ResponseError | null {
-    const token = tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const def = findDefinitionFromToken(token, db);
-    if (def === undefined || def instanceof GlobalSymbol) {
+    const def = hir.findDefinitionFromToken(token, db);
+    if (def === undefined || def instanceof hir.GlobalSymbol) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = findReferences(db, def);
+    const refs = hir.findReferences(db, def);
     const changes: TextEdit[] = [{ range: parsed.rangeOf(def.decl.node.green), newText: newName }];
     for (const ref of refs) {
         changes.push({ range: parsed.rangeOf(ref.node.green), newText: newName });

@@ -1,18 +1,11 @@
 import { DocumentHighlight, DocumentHighlightKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
-import * as ast from "../geckscript/ast.js";
-import {
-    FileDatabase,
-    ParsedString,
-    Symbol,
-    findDefinitionFromToken,
-    findReferences,
-} from "../geckscript/hir.js";
+import { ast, hir } from "../geckscript.js";
 
 export function getHighlight(
-    db: FileDatabase,
-    parsed: ParsedString,
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString,
     pos: Position
 ): DocumentHighlight[] | null {
     const highlights: DocumentHighlight[] = [];
@@ -22,14 +15,14 @@ export function getHighlight(
         return null;
     }
 
-    const def = findDefinitionFromToken(token, db);
+    const def = hir.findDefinitionFromToken(token, db);
 
-    if (def instanceof Symbol) {
+    if (def instanceof hir.Symbol) {
         highlights.push({
             range: parsed.rangeOf(def.decl.node.green),
             kind: DocumentHighlightKind.Text,
         });
-        for (const ref of findReferences(db, def)) {
+        for (const ref of hir.findReferences(db, def)) {
             highlights.push({
                 range: parsed.rangeOf(ref.node.green),
                 kind: DocumentHighlightKind.Text,

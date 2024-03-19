@@ -6,13 +6,13 @@ import * as path from "path";
 import * as url from "url";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { FileDatabase } from "../geckscript/hir.js";
+import { hir } from "../geckscript.js";
 import { KeywordStyle, formatDoc } from "../language_features/format.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;
 
-const DB = new FileDatabase();
+const DB = new hir.FileDatabase();
 
 if (isMain) {
     main();

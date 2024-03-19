@@ -1,13 +1,11 @@
 import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
-import * as ast from "../geckscript/ast.js";
-import { ExprKind, FileDatabase, ParsedString, visibleSymbols } from "../geckscript/hir.js";
-import { SyntaxKind, TokenData, isKeyword, isOp, isType } from "../geckscript/syntax.js";
+import { SyntaxKind, TokenData, ast, hir, isKeyword, isOp, isType } from "../geckscript.js";
 
 export function completionItems(
-    db: FileDatabase,
-    parsed: ParsedString,
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString,
     pos: Position
 ): CompletionItem[] | null {
     const token = ast.nearestToken(parsed.root.green, parsed.offsetAt(pos));
@@ -23,13 +21,13 @@ export function completionItems(
 
     const completionItems: CompletionItem[] = [];
 
-    for (const symbol of Object.values(visibleSymbols(db, token))) {
+    for (const symbol of Object.values(hir.visibleSymbols(db, token))) {
         completionItems.push({
             label: symbol.name,
             data: symbol.name,
             detail: symbol.type.toStringWithName(symbol.name),
             kind:
-                symbol.type.kind === ExprKind.Script
+                symbol.type.kind === hir.ExprKind.Script
                     ? CompletionItemKind.File
                     : CompletionItemKind.Variable,
         });
@@ -57,7 +55,7 @@ export function completionItems(
             label: item.name,
             detail: item.type.toStringWithName(item.name),
             kind:
-                item.type.kind === ExprKind.Function
+                item.type.kind === hir.ExprKind.Function
                     ? CompletionItemKind.Function
                     : CompletionItemKind.Variable,
         });

@@ -5,7 +5,7 @@ import test from "node:test";
 import * as path from "path";
 import * as url from "url";
 
-import { toDebug } from "../geckscript/ast.js";
+import { ast } from "../geckscript.js";
 import { parseStr } from "../geckscript/parsing.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
@@ -38,5 +38,5 @@ export async function testFile(file: string, astFile: string) {
 }
 
 export async function tree(file: string): Promise<string> {
-    return toDebug(parseStr((await fs.readFile(file)).toString())[0]);
+    return ast.toDebug(parseStr((await fs.readFile(file)).toString())[0]);
 }

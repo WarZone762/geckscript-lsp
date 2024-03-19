@@ -2,8 +2,7 @@ import * as d3 from "d3";
 import * as http from "http";
 import * as jsdom from "jsdom";
 
-import { TreeData } from "../geckscript/ast.js";
-import * as ast from "../geckscript/ast.js";
+import { ast } from "../geckscript.js";
 
 export class TreeViewServer {
     server: http.Server;
@@ -53,7 +52,7 @@ export class TreeViewServer {
         console.log("TreeViewServer running");
     }
 
-    writeTreeData(treeData: TreeData) {
+    writeTreeData(treeData: ast.TreeData) {
         this.treeData = treeData;
         for (const client of this.clients) {
             client.write(`data: ${this.render()}\n\n`);

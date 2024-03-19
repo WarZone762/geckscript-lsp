@@ -6,9 +6,7 @@ import {
     SemanticTokensLegend,
 } from "vscode-languageserver/node.js";
 
-import * as ast from "../geckscript/ast.js";
-import { ParsedString } from "../geckscript/hir.js";
-import { SyntaxKind, isKeyword, isOp, isType } from "../geckscript/syntax.js";
+import { SyntaxKind, ast, hir, isKeyword, isOp, isType } from "../geckscript.js";
 
 export const LEGEND: SemanticTokensLegend = {
     tokenTypes: [
@@ -41,7 +39,7 @@ const enum TokenModifier {
     READONLY = 1 << 1,
 }
 
-export function buildSemanticTokens(parsed: ParsedString): SemanticTokens {
+export function buildSemanticTokens(parsed: hir.ParsedString): SemanticTokens {
     const builder = new SemanticTokensBuilder();
 
     for (const node of ast.descendantsDf(parsed.root.green)) {

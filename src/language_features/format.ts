@@ -1,13 +1,11 @@
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
 
-import { forEachChildRecursive, toString } from "../geckscript/ast.js";
-import { ParsedString, ServerConfig } from "../geckscript/hir.js";
-import { Node, NodeOrToken, SyntaxKind, Token, isKeyword } from "../geckscript/syntax.js";
+import { Node, NodeOrToken, SyntaxKind, Token, ast, hir, isKeyword } from "../geckscript.js";
 
 export function formatDoc(
-    parsed: ParsedString,
+    parsed: hir.ParsedString,
     opts: FormattingOptions,
-    config: ServerConfig
+    config: hir.ServerConfig
 ): TextEdit[] {
     const f = new Formatter(parsed, { serverOpts: opts, keywordStyle: config.keywordStyle });
 
@@ -15,13 +13,13 @@ export function formatDoc(
 }
 
 class Formatter {
-    parsed: ParsedString;
+    parsed: hir.ParsedString;
     pos: number = 0;
     opts: Options;
     indent: number = 0;
     indentStr: string;
 
-    constructor(parsed: ParsedString, opts: Options) {
+    constructor(parsed: hir.ParsedString, opts: Options) {
         this.parsed = parsed;
         this.opts = opts;
 
@@ -31,7 +29,7 @@ class Formatter {
     }
 
     format(): TextEdit {
-        forEachChildRecursive(
+        ast.forEachChildRecursive(
             this.parsed.root.green,
             (n) => {
                 if (n.isNode()) {
@@ -54,7 +52,7 @@ class Formatter {
 
         return TextEdit.replace(
             this.parsed.rangeOf(this.parsed.root.green),
-            toString(this.parsed.root.green)
+            ast.toString(this.parsed.root.green)
         );
     }
 

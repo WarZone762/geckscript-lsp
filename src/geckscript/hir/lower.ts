@@ -1,7 +1,6 @@
 import { Diagnostic } from "vscode-languageserver/node.js";
 
 import * as ast from "../ast.js";
-import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 import {
     BeginStmt,
     BinExpr,
@@ -35,7 +34,8 @@ import {
     VarOrVarDecl,
     VarOrVarDeclList,
     WhileStmt,
-} from "./hir.js";
+} from "../hir.js";
+import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 
 export class LowerContext {
     diagnostics: Diagnostic[] = [];

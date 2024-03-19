@@ -1,24 +1,21 @@
 import { Location } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
-import * as ast from "../geckscript/ast.js";
-import {
-    FileDatabase,
-    ParsedString,
-    Symbol,
-    findDefinitionFromToken,
-    findReferences,
-} from "../geckscript/hir.js";
+import { ast, hir } from "../geckscript.js";
 
-export function gotoDef(db: FileDatabase, parsed: ParsedString, pos: Position): Location | null {
+export function gotoDef(
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString,
+    pos: Position
+): Location | null {
     const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token === undefined) {
         return null;
     }
 
-    const def = findDefinitionFromToken(token, db);
+    const def = hir.findDefinitionFromToken(token, db);
 
-    if (!(def instanceof Symbol)) {
+    if (!(def instanceof hir.Symbol)) {
         return null;
     }
 
@@ -35,19 +32,23 @@ export function gotoDef(db: FileDatabase, parsed: ParsedString, pos: Position): 
     return { uri: defParsed.doc.uri, range: defParsed.rangeOf(def.decl.node.green) };
 }
 
-export function refs(db: FileDatabase, parsed: ParsedString, pos: Position): Location[] | null {
+export function refs(
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString,
+    pos: Position
+): Location[] | null {
     const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
     if (token == undefined) {
         return null;
     }
 
-    const def = findDefinitionFromToken(token, db);
+    const def = hir.findDefinitionFromToken(token, db);
     if (def === undefined) {
         return null;
     }
 
     const locs: Location[] = [];
-    for (const ref of findReferences(db, def)) {
+    for (const ref of hir.findReferences(db, def)) {
         const script = ast.root(ref.node.green)?.green;
         if (script === undefined) {
             continue;

@@ -11,12 +11,11 @@ import {
 } from "vscode-languageserver/node.js";
 import { URI } from "vscode-uri";
 
-import * as ast from "./geckscript/ast.js";
-import { FileDatabase, ParsedString } from "./geckscript/hir.js";
-import * as features from "./language_features/features.js";
+import * as features from "./features.js";
+import { ast, hir } from "./geckscript.js";
 import * as TreeViewServer from "./tree_view/server.js";
 
-const DB = new FileDatabase();
+const DB = new hir.FileDatabase();
 
 const checkIndex = process.argv.indexOf("--check");
 if (checkIndex !== -1) {
@@ -42,7 +41,7 @@ if (checkIndex !== -1) {
 
 /** Helper to create a document reqest handler function */
 function handler<RP extends { textDocument: { uri: string } }, R>(
-    f: (parsed: ParsedString, params: RP) => Promise<R>
+    f: (parsed: hir.ParsedString, params: RP) => Promise<R>
 ): (requestParams: RP) => Promise<R | null> {
     return async (requestParams) => {
         const parsed = DB.files.get(requestParams.textDocument.uri);
@@ -100,7 +99,7 @@ connection.onInitialize(async (params) => {
 
 connection.onInitialized(async () => {
     for (const dir of rootDirs) {
-        // await DB.loadFolder(URI.parse(dir.uri).fsPath);
+        await DB.loadFolder(URI.parse(dir.uri).fsPath);
     }
 
     for (const file of DB.files.values()) {
