@@ -100,7 +100,7 @@ connection.onInitialize(async (params) => {
 
 connection.onInitialized(async () => {
     for (const dir of rootDirs) {
-        await DB.loadFolder(URI.parse(dir.uri).fsPath);
+        // await DB.loadFolder(URI.parse(dir.uri).fsPath);
     }
 
     for (const file of DB.files.values()) {
@@ -148,19 +148,7 @@ connection.onDocumentHighlight(
     handler(async (parsed, params) => features.getHighlight(DB, parsed, params.position))
 );
 connection.onDocumentSymbol(handler(async (parsed) => features.symbols(parsed)));
-connection.onHover(
-    handler(async (parsed, params) => {
-        const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(params.position));
-        if (token == undefined) {
-            return null;
-        }
-
-        return {
-            contents: token.text,
-            range: { start: parsed.posAt(token.offset), end: parsed.posAt(token.end()) },
-        };
-    })
-);
+connection.onHover(handler(async (parsed, params) => features.hover(DB, parsed, params.position)));
 connection.onReferences(
     handler(async (parsed, params) => features.refs(DB, parsed, params.position))
 );
