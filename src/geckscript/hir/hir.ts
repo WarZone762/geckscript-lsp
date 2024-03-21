@@ -1,4 +1,5 @@
 import * as ast from "../ast.js";
+import { FunctionData } from "../function_data.js";
 import { SyntaxKind, Token } from "../syntax.js";
 
 export type HirNode =
@@ -95,7 +96,8 @@ export class VarDeclStmt {
 export type Expr =
     | UnaryExpr
     | BinExpr
-    | MemberExpr
+    | FieldExpr
+    | IndexExpr
     | FuncExpr
     | LetExpr
     | LambdaInlineExpr
@@ -135,20 +137,28 @@ export const enum BinExprOp {
     Eq,
 }
 
-export class MemberExpr {
+export class FieldExpr {
     constructor(
         public type: ExprType,
-        public op: MemberExprOp,
+        public op: FieldExprOp,
         public lhs: Expr,
-        public rhs: Expr,
-        public node: ast.MemberExpr
+        public field: Expr,
+        public node: ast.FieldExpr
     ) {}
 }
 
-export const enum MemberExprOp {
+export class IndexExpr {
+    constructor(
+        public type: ExprType,
+        public lhs: Expr,
+        public index: Expr,
+        public node: ast.IndexExpr
+    ) {}
+}
+
+export const enum FieldExprOp {
     Dot,
     RArrow,
-    SQBracket,
 }
 
 export class FuncExpr {
@@ -212,8 +222,12 @@ export class Name {
 }
 
 export class NameRef {
+    public get type(): ExprType {
+        return this.symbol.type;
+    }
+
     constructor(
-        public symbol: Symbol | GlobalSymbol,
+        public symbol: Symbol | GlobalSymbol | FunctionData,
         public node: ast.NameRef
     ) {}
 }
@@ -241,35 +255,10 @@ export class Number {
 }
 
 export class ExprTypeSimple {
-    kind: Exclude<ExprKind, ExprKind.Function>;
-
-    constructor(kind: Exclude<ExprKind, ExprKind.Function>) {
-        this.kind = kind;
-    }
+    constructor(public kind: Exclude<ExprKind, "Function"> = "<unknown>") {}
 
     toString(): string {
-        switch (this.kind) {
-            case ExprKind.Unknown:
-                return "unknown";
-            case ExprKind.Ambiguous:
-                return "Ambiguous";
-            case ExprKind.Void:
-                return "void";
-            case ExprKind.Form:
-                return "form";
-            case ExprKind.Script:
-                return "script";
-            case ExprKind.Integer:
-                return "int";
-            case ExprKind.Float:
-                return "float";
-            case ExprKind.Reference:
-                return "reference";
-            case ExprKind.String:
-                return "string";
-            case ExprKind.Array:
-                return "array";
-        }
+        return this.kind;
     }
 
     toStringWithName(name: string): string {
@@ -278,62 +267,213 @@ export class ExprTypeSimple {
 }
 
 export class ExprTypeFunction {
-    kind = ExprKind.Function as const;
-    signature: Signature;
+    kind = "Function" as const;
 
-    constructor(signature: Signature) {
-        this.signature = signature;
-    }
+    constructor(
+        public ret: ExprType,
+        public args: ExprType[] = []
+    ) {}
 
     toString(): string {
-        return this.signature.toString();
+        if (this.args.length !== 0) {
+            return `(${this.ret}) ${this.args.join(" ")}`;
+        } else {
+            return this.ret.toString();
+        }
     }
 
     toStringWithName(name: string): string {
-        return this.signature.toStringWithName(name);
+        if (this.args.length !== 0) {
+            return `(${this.ret}) ${name} ${this.args.join(" ")}`;
+        } else {
+            return this.ret.toStringWithName(name);
+        }
     }
 }
 
 export type ExprType = ExprTypeSimple | ExprTypeFunction;
 
-export const enum ExprKind {
-    Unknown,
-    Ambiguous,
-    Void,
-    Function,
-    Form,
-    Script,
+export type ExprKind = ExprKindEngine | ExprKindCustom;
 
-    Integer,
-    Float,
-    Reference,
-    String,
-    Array,
+export type ExprKindEngine =
+    | "1/0"
+    | "<unknown>"
+    | "AIPackage"
+    | "Actor"
+    | "ActorBase"
+    | "ActorValue"
+    | "Alignment"
+    | "Ambiguous"
+    | "AnimationGroup"
+    | "AnyForm"
+    | "AnyType"
+    | "Array index"
+    | "Array"
+    | "Axis"
+    | "Bool"
+    | "CaravanDeck"
+    | "Casino"
+    | "Cell"
+    | "Challenge"
+    | "Class"
+    | "CombatStyle"
+    | "Container"
+    | "CrimeType"
+    | "CriticalStage"
+    | "Double"
+    | "EffectShader"
+    | "EncounterZone"
+    | "EquipType"
+    | "Faction"
+    | "Float"
+    | "Form"
+    | "FormList"
+    | "FormType"
+    | "Furniture"
+    | "Global"
+    | "IdleForm"
+    | "ImageSpace"
+    | "ImageSpaceModifier"
+    | "Integer"
+    | "InvObjectOrFormList"
+    | "LeveledChar"
+    | "LeveledCreature"
+    | "LeveledItem"
+    | "LeveledOrBaseChar"
+    | "LeveledOrBaseCreature"
+    | "MagicEffect"
+    | "MagicItem"
+    | "MapMarker"
+    | "Message"
+    | "MiscStat"
+    | "NPC"
+    | "NonFormList"
+    | "Note"
+    | "Number"
+    | "Object"
+    | "ObjectID"
+    | "ObjectRef"
+    | "Owner"
+    | "Pair"
+    | "Perk"
+    | "Quest"
+    | "QuestStage"
+    | "Race"
+    | "Region"
+    | "Reputation"
+    | "ScriptVar"
+    | "Sex"
+    | "Slice"
+    | "Sound"
+    | "SoundFile"
+    | "SpellItem"
+    | "String"
+    | "StringOrNumber"
+    | "StringVar"
+    | "Topic"
+    | "Variable"
+    | "VariableName"
+    | "WeatherID"
+    | "WorldSpace"
+    | "unk2E";
+
+export function isExprKindEngine(str: string): str is ExprKindEngine {
+    switch (str) {
+        case "1/0":
+        case "<unknown>":
+        case "AIPackage":
+        case "Actor":
+        case "ActorBase":
+        case "ActorValue":
+        case "Alignment":
+        case "Ambiguous":
+        case "AnimationGroup":
+        case "AnyForm":
+        case "AnyType":
+        case "Array index":
+        case "Array":
+        case "Axis":
+        case "Bool":
+        case "CaravanDeck":
+        case "Casino":
+        case "Cell":
+        case "Challenge":
+        case "Class":
+        case "CombatStyle":
+        case "Container":
+        case "CrimeType":
+        case "CriticalStage":
+        case "Double":
+        case "EffectShader":
+        case "EncounterZone":
+        case "EquipType":
+        case "Faction":
+        case "Float":
+        case "Form":
+        case "FormList":
+        case "FormType":
+        case "Furniture":
+        case "Global":
+        case "IdleForm":
+        case "ImageSpace":
+        case "ImageSpaceModifier":
+        case "Integer":
+        case "InvObjectOrFormList":
+        case "LeveledChar":
+        case "LeveledCreature":
+        case "LeveledItem":
+        case "LeveledOrBaseChar":
+        case "LeveledOrBaseCreature":
+        case "MagicEffect":
+        case "MagicItem":
+        case "MapMarker":
+        case "Message":
+        case "MiscStat":
+        case "NPC":
+        case "NonFormList":
+        case "Note":
+        case "Number":
+        case "Object":
+        case "ObjectID":
+        case "ObjectRef":
+        case "Owner":
+        case "Pair":
+        case "Perk":
+        case "Quest":
+        case "QuestStage":
+        case "Race":
+        case "Region":
+        case "Reputation":
+        case "ScriptVar":
+        case "Sex":
+        case "Slice":
+        case "Sound":
+        case "SoundFile":
+        case "SpellItem":
+        case "String":
+        case "StringOrNumber":
+        case "StringVar":
+        case "Topic":
+        case "Variable":
+        case "VariableName":
+        case "WeatherID":
+        case "WorldSpace":
+        case "unk2E":
+            return true;
+        default:
+            return false;
+    }
 }
 
-const EXPR_TYPE_NAME_MAP: { [key in ExprKind]?: string } = {
-    [ExprKind.Unknown]: "unknown",
-    [ExprKind.Ambiguous]: "ambiguous",
-    [ExprKind.Void]: "void",
-    [ExprKind.Function]: "function",
-    [ExprKind.Integer]: "integer",
-    [ExprKind.Float]: "float",
-    [ExprKind.Form]: "form",
-    [ExprKind.Reference]: "reference",
-    [ExprKind.String]: "string",
-    [ExprKind.Array]: "array",
-};
-
-export function exprTypeName(type: ExprKind): string {
-    return EXPR_TYPE_NAME_MAP[type] ?? "unable to find Type name";
-}
+export type ExprKindCustom = "Function";
 
 export class GlobalSymbol {
     referencingFiles: Set<string> = new Set();
 
     constructor(
         public name: string,
-        public type: ExprType
+        public type: ExprType,
+        public buildtin?: FunctionData
     ) {}
 }
 

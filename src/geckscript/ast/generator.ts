@@ -119,18 +119,27 @@ const EXPR_INFO_MAP: InfoMap = {
             rhs: ["Expr", "1"],
         },
     },
-    MemberExpr: {
-        syntaxKind: "MEMBER_EXPR",
+    FieldExpr: {
+        syntaxKind: "FIELD_EXPR",
         members: {
             lhs: ["Expr"],
-            leftOp: ["Token", "LSQBRACK", "RARROW", "DOT"],
-            rhs: ["Expr", "1"],
+            op: ["Token", "RARROW", "DOT"],
+            field: ["Expr", "1"],
+        },
+    },
+    IndexExpr: {
+        syntaxKind: "INDEX_EXPR",
+        members: {
+            lhs: ["Expr"],
+            leftBracket: ["Token", "LSQBRACK"],
+            index: ["Expr", "1"],
+            rightBracket: ["Token", "LSQBRACK"],
         },
     },
     FuncExpr: {
         syntaxKind: "FUNC_EXPR",
         members: {
-            name: ["NameRef"],
+            func: ["Expr"],
             args: ["ExprList"],
         },
     },

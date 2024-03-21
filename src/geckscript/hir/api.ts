@@ -1,31 +1,31 @@
 import { DiagnosticSeverity } from "vscode-languageserver";
 
+import { FunctionData } from "../function_data.js";
 import {
     BeginStmt,
     BinExpr,
     Blocktype,
     Expr,
-    ExprKind,
     ExprType,
     ExprTypeFunction,
     ExprTypeSimple,
+    FieldExpr,
     FileDatabase,
     ForeachStmt,
     FuncExpr,
     GlobalSymbol,
     HirNode,
     IfStmt,
+    IndexExpr,
     LambdaExpr,
     LambdaInlineExpr,
     LetExpr,
     Literal,
-    MemberExpr,
     Name,
     NameRef,
     ParsedString,
     Script,
     SetStmt,
-    Signature,
     StmtList,
     Symbol,
     UnaryExpr,
@@ -62,7 +62,8 @@ export class Analyzer {
             } else if (
                 child instanceof UnaryExpr ||
                 child instanceof BinExpr ||
-                child instanceof MemberExpr ||
+                child instanceof FieldExpr ||
+                child instanceof IndexExpr ||
                 child instanceof FuncExpr ||
                 child instanceof LetExpr ||
                 child instanceof LambdaInlineExpr ||
@@ -76,7 +77,7 @@ export class Analyzer {
             } else if (child instanceof Name) {
                 continue;
             } else if (child instanceof NameRef) {
-                continue;
+                this.analyzeExpr(child);
             } else if (child instanceof Blocktype) {
                 continue;
             } else if (child instanceof String) {
@@ -94,30 +95,42 @@ export class Analyzer {
         } else if (node instanceof BinExpr) {
             const lhs = this.analyzeExpr(node.lhs);
             const rhs = this.analyzeExpr(node.rhs);
-            // TODO: proper equality
             if (lhs.kind === rhs.kind) {
                 node.type = lhs;
             } else {
-                this.parsed.diagnostics.push({
-                    range: this.parsed.rangeOf(node.node.green),
-                    message: `ambiguous expression type: ${lhs} ${node.node.op()?.text} ${rhs}`,
-                    severity: DiagnosticSeverity.Warning,
-                });
-                node.type = new ExprTypeSimple(ExprKind.Ambiguous);
+                if (lhs.kind === "<unknown>") {
+                    this.propagateType(node.lhs, rhs);
+                } else if (rhs.kind === "<unknown>") {
+                    this.propagateType(node.rhs, lhs);
+                } else {
+                    this.parsed.diagnostics.push({
+                        range: this.parsed.rangeOf(node.node.green),
+                        message: `ambiguous expression type: ${lhs} ${node.node.op()?.text} ${rhs}`,
+                        severity: DiagnosticSeverity.Information,
+                    });
+
+                    node.type = new ExprTypeSimple("Ambiguous");
+                }
             }
             return node.type;
-        } else if (node instanceof MemberExpr) {
+        } else if (node instanceof FieldExpr) {
+            node.type = this.analyzeExpr(node.field);
+            return node.type;
+        } else if (node instanceof IndexExpr) {
             // TODO
         } else if (node instanceof FuncExpr) {
             const func = this.analyzeExpr(node.func);
             if (func instanceof ExprTypeFunction) {
-                node.type = func.signature.ret;
-            } else if (func.kind === ExprKind.Unknown) {
-                const type = new ExprTypeFunction(
-                    new Signature(new ExprTypeSimple(ExprKind.Unknown))
-                );
+                node.type = func.ret;
+                for (let i = 0; i < node.args.length; ++i) {
+                    if (node.args[i].type.kind === "<unknown>") {
+                        this.propagateType(node.args[i], func.args[i]);
+                    }
+                }
+            } else if (func.kind === "<unknown>") {
+                const type = new ExprTypeFunction(new ExprTypeSimple());
                 for (const arg of node.args) {
-                    type.signature.args.push(this.analyzeExpr(arg));
+                    type.args.push(this.analyzeExpr(arg));
                 }
 
                 this.propagateType(node.func, type);
@@ -137,40 +150,35 @@ export class Analyzer {
             return node.type;
         } else if (node instanceof NameRef) {
             const symbol = findDefinition(this.db, node);
-            if (symbol instanceof Symbol) {
+            if (symbol !== undefined) {
                 node.symbol = symbol;
             } else {
                 this.parsed.diagnostics.push({
                     range: this.parsed.rangeOf(node.node.green),
                     message: `unable to resolve symbol ${node.symbol.name}`,
-                    severity: DiagnosticSeverity.Warning,
+                    severity: DiagnosticSeverity.Information,
                 });
 
                 if (node.symbol instanceof GlobalSymbol) {
-                    this.db.globalSymbols.set(node.symbol.name, node.symbol);
+                    node.symbol.referencingFiles.add(this.parsed.doc.uri);
+                    this.parsed.unresolvedSymbols.add(node.symbol);
+                    this.db.globalSymbols.set(node.symbol.name.toLowerCase(), node.symbol);
                 } else {
-                    const globalSymbol = new GlobalSymbol(
-                        node.symbol.name,
-                        new ExprTypeSimple(ExprKind.Unknown)
-                    );
+                    const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
                     globalSymbol.referencingFiles.add(this.parsed.doc.uri);
-
-                    this.db.globalSymbols.set(node.symbol.name, globalSymbol);
+                    this.db.globalSymbols.set(node.symbol.name.toLowerCase(), globalSymbol);
                 }
             }
             return node.symbol.type;
         }
-        return new ExprTypeSimple(ExprKind.Unknown);
+        return new ExprTypeSimple();
     }
 
     propagateType(expr: Expr, type: ExprType) {
-        if (
-            ("type" in expr && expr.type.kind !== ExprKind.Unknown) ||
-            (!("type" in expr) && expr.symbol.type.kind !== ExprKind.Unknown)
-        ) {
-            console.error("tried to infer resolved type of", expr, `to ${type}`);
-            return;
-        }
+        // if (expr.type.kind !== ExprKind.Unknown) {
+        //     console.error("tried to infer resolved type of", expr, `to ${type}`);
+        //     return;
+        // }
 
         if (expr instanceof BinExpr) {
             expr.type = type;
@@ -179,11 +187,22 @@ export class Analyzer {
         } else if (expr instanceof UnaryExpr) {
             expr.type = type;
             this.propagateType(expr.operand, type);
-        } else if (expr instanceof MemberExpr) {
+        } else if (expr instanceof FieldExpr) {
             expr.type = type;
-            this.propagateType(expr.rhs, type);
+            // TODO: make container type
+            this.propagateType(expr.field, type);
+        } else if (expr instanceof IndexExpr) {
+            expr.type = type;
+            // TODO: make array type
+            // this.propagateType(expr.lhs, type);
         } else if (expr instanceof FuncExpr) {
             expr.type = type;
+
+            const fnType = new ExprTypeFunction(type);
+            for (const arg of expr.args) {
+                fnType.args.push(arg.type);
+            }
+            this.propagateType(expr.func, fnType);
         } else if (expr instanceof LetExpr) {
             expr.type = type;
             this.propagateType(expr.expr, type);
@@ -192,6 +211,12 @@ export class Analyzer {
         } else if (expr instanceof LambdaExpr) {
             expr.type = type;
         } else if (expr instanceof NameRef) {
+            if (expr.symbol instanceof FunctionData) {
+                console.error(
+                    `tired to propogate type '${type}' to global function '${expr.symbol}'`
+                );
+                return;
+            }
             expr.symbol.type = type;
         }
     }
@@ -251,7 +276,10 @@ export function visibleSymbols(db: FileDatabase, node: NodeOrToken): Symbol[] {
     return symbols;
 }
 
-export function findReferences(db: FileDatabase, symbol: Symbol | GlobalSymbol): NameRef[] {
+export function findReferences(
+    db: FileDatabase,
+    symbol: Symbol | GlobalSymbol | FunctionData
+): NameRef[] {
     const refs: NameRef[] = [];
 
     if (symbol instanceof Symbol) {
@@ -264,7 +292,7 @@ export function findReferences(db: FileDatabase, symbol: Symbol | GlobalSymbol):
                 refs.push(child);
             }
         }
-    } else if (symbol instanceof GlobalSymbol) {
+    } else if (symbol instanceof GlobalSymbol || symbol instanceof FunctionData) {
         for (const file of db.files.values()) {
             if (file.hir === undefined) {
                 continue;
@@ -283,7 +311,7 @@ export function findReferences(db: FileDatabase, symbol: Symbol | GlobalSymbol):
 export function findDefinitionFromToken(
     token: Token,
     db: FileDatabase
-): Symbol | GlobalSymbol | undefined {
+): Symbol | GlobalSymbol | FunctionData | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
         return;
     }
@@ -301,7 +329,7 @@ export function findDefinitionFromToken(
 export function findDefinition(
     db: FileDatabase,
     nameRef: NameRef
-): Symbol | GlobalSymbol | undefined {
+): Symbol | GlobalSymbol | FunctionData | undefined {
     for (const parent of ancestors(db, nameRef)) {
         if ("symbolTable" in parent) {
             const symbol = parent.symbolTable.get(nameRef.symbol.name);
@@ -313,7 +341,10 @@ export function findDefinition(
         }
     }
 
-    return db.globalSymbols.get(nameRef.symbol.name);
+    return (
+        db.globalSymbols.get(nameRef.symbol.name.toLowerCase()) ??
+        db.builtinFunctions.get(nameRef.symbol.name.toLowerCase())
+    );
 }
 
 export function findNameScope(db: FileDatabase, name: Name): HirNode | undefined {
@@ -372,9 +403,12 @@ export function* children(node: HirNode): Generator<HirNode, void, undefined> {
     } else if (node instanceof BinExpr) {
         yield node.lhs;
         yield node.rhs;
-    } else if (node instanceof MemberExpr) {
+    } else if (node instanceof FieldExpr) {
         yield node.lhs;
-        yield node.rhs;
+        yield node.field;
+    } else if (node instanceof IndexExpr) {
+        yield node.lhs;
+        yield node.index;
     } else if (node instanceof FuncExpr) {
         yield node.func;
         yield* node.args;

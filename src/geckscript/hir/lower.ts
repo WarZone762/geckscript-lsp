@@ -7,18 +7,18 @@ import {
     BinExprOp,
     Blocktype,
     Expr,
-    ExprKind,
     ExprTypeSimple,
+    FieldExpr,
+    FieldExprOp,
     ForeachStmt,
     FuncExpr,
     GlobalSymbol,
     IfStmt,
+    IndexExpr,
     LambdaExpr,
     LambdaInlineExpr,
     LetExpr,
     Literal,
-    MemberExpr,
-    MemberExprOp,
     Name,
     NameRef,
     Number,
@@ -254,8 +254,10 @@ export class LowerContext {
             return this.unaryExpr(node, symbolTable);
         } else if (node instanceof ast.BinExpr) {
             return this.binExpr(node, symbolTable);
-        } else if (node instanceof ast.MemberExpr) {
-            return this.memberExpr(node, symbolTable);
+        } else if (node instanceof ast.FieldExpr) {
+            return this.fieldExpr(node, symbolTable);
+        } else if (node instanceof ast.IndexExpr) {
+            return this.indexExpr(node, symbolTable);
         } else if (node instanceof ast.FuncExpr) {
             return this.funcExpr(node, symbolTable);
         } else if (node instanceof ast.LetExpr) {
@@ -287,7 +289,7 @@ export class LowerContext {
             return;
         }
 
-        return new UnaryExpr(new ExprTypeSimple(ExprKind.Unknown), op, operand, node);
+        return new UnaryExpr(new ExprTypeSimple(), op, operand, node);
     }
 
     binExpr(node: ast.BinExpr | undefined, symbolTable: Map<string, Symbol>): BinExpr | undefined {
@@ -308,27 +310,24 @@ export class LowerContext {
             return;
         }
 
-        return new BinExpr(new ExprTypeSimple(ExprKind.Unknown), op, lhs, rhs, node);
+        return new BinExpr(new ExprTypeSimple(), op, lhs, rhs, node);
     }
 
-    memberExpr(
-        node: ast.MemberExpr | undefined,
+    fieldExpr(
+        node: ast.FieldExpr | undefined,
         symbolTable: Map<string, Symbol>
-    ): MemberExpr | undefined {
+    ): FieldExpr | undefined {
         if (node === undefined) {
             return;
         }
 
         let op;
-        switch (node.leftOp()?.kind) {
+        switch (node.op()?.kind) {
             case SyntaxKind.DOT:
-                op = MemberExprOp.Dot;
+                op = FieldExprOp.Dot;
                 break;
             case SyntaxKind.RARROW:
-                op = MemberExprOp.RArrow;
-                break;
-            case SyntaxKind.LSQBRACK:
-                op = MemberExprOp.SQBracket;
+                op = FieldExprOp.RArrow;
                 break;
             default:
                 return;
@@ -339,12 +338,33 @@ export class LowerContext {
             return;
         }
 
-        const rhs = this.expr(node.rhs(), symbolTable);
-        if (rhs === undefined) {
+        const field = this.expr(node.field(), symbolTable);
+        if (field === undefined) {
             return;
         }
 
-        return new MemberExpr(new ExprTypeSimple(ExprKind.Unknown), op, lhs, rhs, node);
+        return new FieldExpr(new ExprTypeSimple(), op, lhs, field, node);
+    }
+
+    indexExpr(
+        node: ast.IndexExpr | undefined,
+        symbolTable: Map<string, Symbol>
+    ): IndexExpr | undefined {
+        if (node === undefined) {
+            return;
+        }
+
+        const lhs = this.expr(node.lhs(), symbolTable);
+        if (lhs === undefined) {
+            return;
+        }
+
+        const index = this.expr(node.index(), symbolTable);
+        if (index === undefined) {
+            return;
+        }
+
+        return new IndexExpr(new ExprTypeSimple(), lhs, index, node);
     }
 
     funcExpr(
@@ -355,7 +375,7 @@ export class LowerContext {
             return;
         }
 
-        const func = this.expr(node.name(), symbolTable);
+        const func = this.expr(node.func(), symbolTable);
         if (func === undefined) {
             return;
         }
@@ -372,7 +392,7 @@ export class LowerContext {
             }
         }
 
-        return new FuncExpr(new ExprTypeSimple(ExprKind.Unknown), func, args, node);
+        return new FuncExpr(new ExprTypeSimple(), func, args, node);
     }
 
     letExpr(node: ast.LetExpr | undefined, symbolTable: Map<string, Symbol>): LetExpr | undefined {
@@ -400,7 +420,7 @@ export class LowerContext {
             return;
         }
 
-        return new LetExpr(new ExprTypeSimple(ExprKind.Unknown), varOrVarDecl, op, expr, node);
+        return new LetExpr(new ExprTypeSimple(), varOrVarDecl, op, expr, node);
     }
 
     lambdaInlineExpr(
@@ -426,13 +446,7 @@ export class LowerContext {
             return;
         }
 
-        return new LambdaInlineExpr(
-            new ExprTypeSimple(ExprKind.Unknown),
-            params,
-            expr,
-            symbolTable,
-            node
-        );
+        return new LambdaInlineExpr(new ExprTypeSimple(), params, expr, symbolTable, node);
     }
 
     lambdaExpr(
@@ -453,13 +467,7 @@ export class LowerContext {
             return;
         }
 
-        return new LambdaExpr(
-            new ExprTypeSimple(ExprKind.Unknown),
-            params,
-            stmtList,
-            symbolTable,
-            node
-        );
+        return new LambdaExpr(new ExprTypeSimple(), params, stmtList, symbolTable, node);
     }
 
     varOrVarDeclList(node: ast.VarOrVarDeclList | undefined, symbolTable: Map<string, Symbol>) {
@@ -507,22 +515,22 @@ export class LowerContext {
             case SyntaxKind.SHORT_TYPE:
             case SyntaxKind.INT_TYPE:
             case SyntaxKind.LONG_TYPE:
-                type = new ExprTypeSimple(ExprKind.Integer);
+                type = new ExprTypeSimple("Integer");
                 break;
             case SyntaxKind.FLOAT_TYPE:
-                type = new ExprTypeSimple(ExprKind.Float);
+                type = new ExprTypeSimple("Float");
                 break;
             case SyntaxKind.REFERENCE_TYPE:
-                type = new ExprTypeSimple(ExprKind.Reference);
+                type = new ExprTypeSimple("ObjectRef");
                 break;
             case SyntaxKind.STRING_VAR_TYPE:
-                type = new ExprTypeSimple(ExprKind.String);
+                type = new ExprTypeSimple("StringVar");
                 break;
             case SyntaxKind.ARRAY_VAR_TYPE:
-                type = new ExprTypeSimple(ExprKind.Array);
+                type = new ExprTypeSimple("Array");
                 break;
             default:
-                type = new ExprTypeSimple(ExprKind.Unknown);
+                type = new ExprTypeSimple();
                 break;
         }
 
@@ -548,7 +556,7 @@ export class LowerContext {
             return;
         }
 
-        return new NameRef(new GlobalSymbol(name, new ExprTypeSimple(ExprKind.Unknown)), node);
+        return new NameRef(new GlobalSymbol(name, new ExprTypeSimple()), node);
     }
 
     literal(node: ast.Literal | undefined): Literal | undefined {
@@ -558,13 +566,13 @@ export class LowerContext {
 
         const literal = node.literal();
         let stringOrNumber;
-        let type_ = new ExprTypeSimple(ExprKind.Unknown);
+        let type_ = new ExprTypeSimple();
         if (literal?.kind === SyntaxKind.STRING) {
             stringOrNumber = this.string(literal);
-            type_ = new ExprTypeSimple(ExprKind.String);
+            type_ = new ExprTypeSimple("String");
         } else if (literal?.kind === SyntaxKind.NUMBER_INT) {
             stringOrNumber = this.number(literal);
-            type_ = new ExprTypeSimple(ExprKind.Integer);
+            type_ = new ExprTypeSimple("Number");
         }
 
         if (stringOrNumber !== undefined) {

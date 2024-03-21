@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import {
     SemanticTokenModifiers,
     SemanticTokenTypes,
@@ -39,22 +40,22 @@ const enum TokenModifier {
     READONLY = 1 << 1,
 }
 
-export function buildSemanticTokens(parsed: hir.ParsedString): SemanticTokens {
+export function buildSemanticTokens(
+    db: hir.FileDatabase,
+    parsed: hir.ParsedString
+): SemanticTokens {
     const builder = new SemanticTokensBuilder();
 
     for (const node of ast.descendantsDf(parsed.root.green)) {
         const pos = parsed.posAt(node.offset);
-        if (node.kind === SyntaxKind.IDENT) {
-            if (
-                node.parent?.parent?.kind === SyntaxKind.FUNC_EXPR &&
-                new ast.FuncExpr(node.parent.parent).name()?.nameRef() === node
-            ) {
-                push(TokenType.FUNC, TokenModifier.NONE);
-            } else if (node.parent?.kind === SyntaxKind.BLOCKTYPE_DESIG) {
-                push(TokenType.VAR, TokenModifier.READONLY);
-            } else {
-                if (node.parent?.kind === SyntaxKind.NAME) {
-                    push(TokenType.VAR, TokenModifier.DEF);
+        if (node.kind === SyntaxKind.NAME_REF) {
+            const hirNode = hir.syntaxToHir(db, node);
+            if (hirNode === undefined) {
+                continue;
+            }
+            if (hirNode instanceof hir.NameRef) {
+                if (hirNode.type instanceof hir.ExprTypeFunction) {
+                    push(TokenType.FUNC, TokenModifier.NONE);
                 } else {
                     push(TokenType.VAR, TokenModifier.NONE);
                 }

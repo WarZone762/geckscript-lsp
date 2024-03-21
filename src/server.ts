@@ -160,7 +160,7 @@ connection.onRenameRequest(
 connection.onSelectionRanges(handler(async () => null));
 connection.onRequest(
     SemanticTokensRequest.method,
-    handler(async (parsed) => features.buildSemanticTokens(parsed))
+    handler(async (parsed) => features.buildSemanticTokens(DB, parsed))
 );
 
 // connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));

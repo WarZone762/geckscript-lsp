@@ -14,10 +14,10 @@ export function symbols(parsed: hir.ParsedString): SymbolInformation[] | null {
             for (const symbol of child.symbolTable.values()) {
                 let kind: SymbolKind;
                 switch (symbol.type.kind) {
-                    case hir.ExprKind.Function:
+                    case "Function":
                         kind = SymbolKind.Function;
                         break;
-                    case hir.ExprKind.Script:
+                    case "ScriptVar":
                         kind = SymbolKind.File;
                         break;
                     default:

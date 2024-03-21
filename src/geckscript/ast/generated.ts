@@ -88,7 +88,8 @@ export function VarOrVarDecl(green: Node<VarOrVarDeclSyntaxKind> | undefined): V
 export type Expr =
     | UnaryExpr
     | BinExpr
-    | MemberExpr
+    | FieldExpr
+    | IndexExpr
     | FuncExpr
     | LetExpr
     | LambdaInlineExpr
@@ -107,8 +108,10 @@ export function Expr(green: Node<ExprSyntaxKind> | undefined): Expr | undefined 
             return new UnaryExpr(green as Node<SyntaxKind.UNARY_EXPR>);
         case SyntaxKind.BIN_EXPR:
             return new BinExpr(green as Node<SyntaxKind.BIN_EXPR>);
-        case SyntaxKind.MEMBER_EXPR:
-            return new MemberExpr(green as Node<SyntaxKind.MEMBER_EXPR>);
+        case SyntaxKind.FIELD_EXPR:
+            return new FieldExpr(green as Node<SyntaxKind.FIELD_EXPR>);
+        case SyntaxKind.INDEX_EXPR:
+            return new IndexExpr(green as Node<SyntaxKind.INDEX_EXPR>);
         case SyntaxKind.FUNC_EXPR:
             return new FuncExpr(green as Node<SyntaxKind.FUNC_EXPR>);
         case SyntaxKind.LET_EXPR:
@@ -132,7 +135,8 @@ export type Stmt =
     | IfStmt
     | UnaryExpr
     | BinExpr
-    | MemberExpr
+    | FieldExpr
+    | IndexExpr
     | FuncExpr
     | LetExpr
     | LambdaInlineExpr
@@ -163,8 +167,10 @@ export function Stmt(green: Node<StmtSyntaxKind> | undefined): Stmt | undefined 
             return new UnaryExpr(green as Node<SyntaxKind.UNARY_EXPR>);
         case SyntaxKind.BIN_EXPR:
             return new BinExpr(green as Node<SyntaxKind.BIN_EXPR>);
-        case SyntaxKind.MEMBER_EXPR:
-            return new MemberExpr(green as Node<SyntaxKind.MEMBER_EXPR>);
+        case SyntaxKind.FIELD_EXPR:
+            return new FieldExpr(green as Node<SyntaxKind.FIELD_EXPR>);
+        case SyntaxKind.INDEX_EXPR:
+            return new IndexExpr(green as Node<SyntaxKind.INDEX_EXPR>);
         case SyntaxKind.FUNC_EXPR:
             return new FuncExpr(green as Node<SyntaxKind.FUNC_EXPR>);
         case SyntaxKind.LET_EXPR:
@@ -280,21 +286,36 @@ export class BinExpr extends AstNode<SyntaxKind.BIN_EXPR> {
     }
 }
 
-export class MemberExpr extends AstNode<SyntaxKind.MEMBER_EXPR> {
+export class FieldExpr extends AstNode<SyntaxKind.FIELD_EXPR> {
     lhs(): Expr | undefined {
         return Expr(child(this, isExpr));
     }
-    leftOp(): Token<SyntaxKind.LSQBRACK | SyntaxKind.RARROW | SyntaxKind.DOT> | undefined {
-        return token(this, (k => k === SyntaxKind.LSQBRACK || k === SyntaxKind.RARROW || k === SyntaxKind.DOT) as (k: SyntaxKind) => k is SyntaxKind.LSQBRACK | SyntaxKind.RARROW | SyntaxKind.DOT);
+    op(): Token<SyntaxKind.RARROW | SyntaxKind.DOT> | undefined {
+        return token(this, (k => k === SyntaxKind.RARROW || k === SyntaxKind.DOT) as (k: SyntaxKind) => k is SyntaxKind.RARROW | SyntaxKind.DOT);
     }
-    rhs(): Expr | undefined {
+    field(): Expr | undefined {
         return Expr(child(this, isExpr, 1));
     }
 }
 
+export class IndexExpr extends AstNode<SyntaxKind.INDEX_EXPR> {
+    lhs(): Expr | undefined {
+        return Expr(child(this, isExpr));
+    }
+    leftBracket(): Token<SyntaxKind.LSQBRACK> | undefined {
+        return token(this, (k => k === SyntaxKind.LSQBRACK) as (k: SyntaxKind) => k is SyntaxKind.LSQBRACK);
+    }
+    index(): Expr | undefined {
+        return Expr(child(this, isExpr, 1));
+    }
+    rightBracket(): Token<SyntaxKind.LSQBRACK> | undefined {
+        return token(this, (k => k === SyntaxKind.LSQBRACK) as (k: SyntaxKind) => k is SyntaxKind.LSQBRACK);
+    }
+}
+
 export class FuncExpr extends AstNode<SyntaxKind.FUNC_EXPR> {
-    name(): NameRef | undefined {
-        return NameRef.fromGreen(child(this, (k => k === SyntaxKind.NAME_REF) as (k: SyntaxKind) => k is SyntaxKind.NAME_REF));
+    func(): Expr | undefined {
+        return Expr(child(this, isExpr));
     }
     args(): ExprList | undefined {
         return ExprList.fromGreen(child(this, (k => k === SyntaxKind.EXPR_LIST) as (k: SyntaxKind) => k is SyntaxKind.EXPR_LIST));

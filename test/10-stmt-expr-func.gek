@@ -1,5 +1,10 @@
 scn Test10
 
 begin Test
-    call 1
+    call 1 2 3
+    call 4, 5 6
+    call, 4, 5, 6,
+
+    call, 4, a 123, 6,
+    call, 4, (a 123), 6,
 end

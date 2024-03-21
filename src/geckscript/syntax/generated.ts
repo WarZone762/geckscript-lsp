@@ -96,7 +96,8 @@ export const enum SyntaxKind {
     LAMBDA_INLINE_EXPR,
     UNARY_EXPR,
     BIN_EXPR,
-    MEMBER_EXPR,
+    FIELD_EXPR,
+    INDEX_EXPR,
     FUNC_EXPR,
     LET_EXPR,
     LITERAL,
@@ -201,7 +202,8 @@ export const syntaxKindNames = {
     [SyntaxKind.LAMBDA_INLINE_EXPR]: "LAMBDA_INLINE_EXPR",
     [SyntaxKind.UNARY_EXPR]: "UNARY_EXPR",
     [SyntaxKind.BIN_EXPR]: "BIN_EXPR",
-    [SyntaxKind.MEMBER_EXPR]: "MEMBER_EXPR",
+    [SyntaxKind.FIELD_EXPR]: "FIELD_EXPR",
+    [SyntaxKind.INDEX_EXPR]: "INDEX_EXPR",
     [SyntaxKind.FUNC_EXPR]: "FUNC_EXPR",
     [SyntaxKind.LET_EXPR]: "LET_EXPR",
     [SyntaxKind.LITERAL]: "LITERAL",
@@ -272,10 +274,15 @@ export function isKeyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
         kind == SyntaxKind.FUNCTION_KW
     );
 }
-export type SimpleAssignmentOpSyntaxKind = SyntaxKind.EQ | SyntaxKind.COLONEQ;
+export type SimpleAssignmentOpSyntaxKind =
+    | SyntaxKind.EQ
+    | SyntaxKind.COLONEQ;
 
 export function isSimpleAssignmentOp(kind: SyntaxKind): kind is SimpleAssignmentOpSyntaxKind {
-    return kind == SyntaxKind.EQ || kind == SyntaxKind.COLONEQ;
+    return (
+        kind == SyntaxKind.EQ ||
+        kind == SyntaxKind.COLONEQ
+    );
 }
 export type AssignmentOpSyntaxKind =
     | SyntaxKind.EQ
@@ -416,10 +423,17 @@ export function isOp(kind: SyntaxKind): kind is OpSyntaxKind {
     );
 }
 
-export type VarOrVarDeclSyntaxKind = SyntaxKind.NAME | SyntaxKind.NAME_REF | SyntaxKind.VAR_DECL;
+export type VarOrVarDeclSyntaxKind =
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
+    | SyntaxKind.VAR_DECL;
 
 export function isVarOrVarDecl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
-    return kind == SyntaxKind.NAME || kind == SyntaxKind.NAME_REF || kind == SyntaxKind.VAR_DECL;
+    return (
+        kind == SyntaxKind.NAME ||
+        kind == SyntaxKind.NAME_REF ||
+        kind == SyntaxKind.VAR_DECL
+    );
 }
 export type ListSyntaxKind =
     | SyntaxKind.VAR_OR_VAR_DECL_LIST
@@ -438,7 +452,8 @@ export type ExprSyntaxKind =
     | SyntaxKind.LAMBDA_INLINE_EXPR
     | SyntaxKind.UNARY_EXPR
     | SyntaxKind.BIN_EXPR
-    | SyntaxKind.MEMBER_EXPR
+    | SyntaxKind.FIELD_EXPR
+    | SyntaxKind.INDEX_EXPR
     | SyntaxKind.FUNC_EXPR
     | SyntaxKind.LET_EXPR
     | SyntaxKind.LITERAL
@@ -450,7 +465,8 @@ export function isExpr(kind: SyntaxKind): kind is ExprSyntaxKind {
         kind == SyntaxKind.LAMBDA_INLINE_EXPR ||
         kind == SyntaxKind.UNARY_EXPR ||
         kind == SyntaxKind.BIN_EXPR ||
-        kind == SyntaxKind.MEMBER_EXPR ||
+        kind == SyntaxKind.FIELD_EXPR ||
+        kind == SyntaxKind.INDEX_EXPR ||
         kind == SyntaxKind.FUNC_EXPR ||
         kind == SyntaxKind.LET_EXPR ||
         kind == SyntaxKind.LITERAL ||
@@ -468,7 +484,8 @@ export type StmtSyntaxKind =
     | SyntaxKind.LAMBDA_INLINE_EXPR
     | SyntaxKind.UNARY_EXPR
     | SyntaxKind.BIN_EXPR
-    | SyntaxKind.MEMBER_EXPR
+    | SyntaxKind.FIELD_EXPR
+    | SyntaxKind.INDEX_EXPR
     | SyntaxKind.FUNC_EXPR
     | SyntaxKind.LET_EXPR
     | SyntaxKind.LITERAL
@@ -486,7 +503,8 @@ export function isStmt(kind: SyntaxKind): kind is StmtSyntaxKind {
         kind == SyntaxKind.LAMBDA_INLINE_EXPR ||
         kind == SyntaxKind.UNARY_EXPR ||
         kind == SyntaxKind.BIN_EXPR ||
-        kind == SyntaxKind.MEMBER_EXPR ||
+        kind == SyntaxKind.FIELD_EXPR ||
+        kind == SyntaxKind.INDEX_EXPR ||
         kind == SyntaxKind.FUNC_EXPR ||
         kind == SyntaxKind.LET_EXPR ||
         kind == SyntaxKind.LITERAL ||

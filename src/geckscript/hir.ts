@@ -8,7 +8,8 @@ import { URI } from "vscode-uri";
 
 import { KeywordStyle } from "../language_features/format.js";
 import * as ast from "./ast.js";
-import { Analyzer, GlobalSymbol, LowerContext, Script } from "./hir.js";
+import * as fnData from "./function_data.js";
+import { Analyzer, ExprTypeSimple, GlobalSymbol, LowerContext, Script } from "./hir.js";
 import * as parsing from "./parsing.js";
 import { Node, NodeOrToken, SyntaxKind } from "./syntax.js";
 
@@ -18,7 +19,10 @@ export * from "./hir/lower.js";
 
 export class FileDatabase {
     files: Map<string, ParsedString> = new Map();
-    globalSymbols: Map<string, GlobalSymbol> = new Map();
+    globalSymbols: Map<string, GlobalSymbol> = new Map([
+        ["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))],
+    ]);
+    builtinFunctions: Map<string, fnData.FunctionData> = fnData.loadFunctionData();
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, ParsedString> = new Map();
 
@@ -71,11 +75,11 @@ export class FileDatabase {
         // remove old file from global symbols it references
         const oldParsed = this.files.get(doc.uri);
         if (oldParsed !== undefined) {
-            for (const symbolName of oldParsed.unresolvedSymbols) {
-                const symbol = this.globalSymbols.get(symbolName);
+            for (const unresolvedSymbol of oldParsed.unresolvedSymbols.values()) {
+                const symbol = this.globalSymbols.get(unresolvedSymbol.name.toLowerCase());
                 symbol?.referencingFiles.delete(doc.uri);
                 if (symbol?.referencingFiles.size === 0) {
-                    this.globalSymbols.delete(symbolName);
+                    this.globalSymbols.delete(unresolvedSymbol.name.toLowerCase());
                 }
             }
         }
@@ -124,7 +128,7 @@ export class ParsedString {
     doc: TextDocument;
     root: ast.Script;
     hir?: Script;
-    unresolvedSymbols: Set<string> = new Set();
+    unresolvedSymbols: Set<GlobalSymbol> = new Set();
     diagnostics: Diagnostic[];
 
     constructor(doc: TextDocument, root: ast.Script, diagnostics: Diagnostic[]) {

@@ -1,4 +1,4 @@
-import { CompletionItem, CompletionItemKind } from "vscode-languageserver";
+import { CompletionItem, CompletionItemKind, MarkupKind } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
 import { SyntaxKind, TokenData, ast, hir, isKeyword, isOp, isType } from "../geckscript.js";
@@ -27,7 +27,7 @@ export function completionItems(
             data: symbol.name,
             detail: symbol.type.toStringWithName(symbol.name),
             kind:
-                symbol.type.kind === hir.ExprKind.Script
+                symbol.type.kind === "ScriptVar"
                     ? CompletionItemKind.File
                     : CompletionItemKind.Variable,
         });
@@ -55,9 +55,24 @@ export function completionItems(
             label: item.name,
             detail: item.type.toStringWithName(item.name),
             kind:
-                item.type.kind === hir.ExprKind.Function
+                item.type.kind === "Function"
                     ? CompletionItemKind.Function
                     : CompletionItemKind.Variable,
+        });
+    }
+
+    for (const fn of db.builtinFunctions.values()) {
+        completionItems.push({
+            label: fn.name,
+            labelDetails: fn.alias !== undefined ? { detail: `(alias ${fn.alias})` } : undefined,
+
+            detail: fn.signature(),
+            documentation: {
+                kind: MarkupKind.Markdown,
+                value: `${fn.desc ?? ""}\n\n\n*From: ${fn.origin}*`,
+            },
+
+            kind: fn.reqRef ? CompletionItemKind.Method : CompletionItemKind.Function,
         });
     }
 

@@ -3,7 +3,8 @@ import assert from "assert";
 import * as fs from "fs";
 import * as url from "url";
 
-import { FunctionDataJSON, FunctionParamJSON, isFunctionType } from "../function_data.js";
+import { FunctionDataJSON, FunctionParamJSON } from "../function_data.js";
+import { isExprKindEngine } from "../hir.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;
@@ -45,14 +46,14 @@ export function parseFunctionData(str: string): FunctionDataJSON[] {
 
                 if (paramStr.includes(":")) {
                     const [paramName, paramType] = paramStr.split(":");
-                    assert(isFunctionType(paramType));
+                    assert(isExprKindEngine(paramType));
                     params.push({
                         type: paramType,
                         name: (paramName.match(/(.+?) ?\([Oo]ptional\)/)?.[1] ?? paramName).trim(),
                         optional,
                     });
                 } else {
-                    assert(isFunctionType(paramStr));
+                    assert(isExprKindEngine(paramStr));
                     params.push({ type: paramStr, optional });
                 }
 
@@ -65,7 +66,7 @@ export function parseFunctionData(str: string): FunctionDataJSON[] {
             }
 
             const [retType, opcode, origin, isCondFunc, reqRef, descStr] = values;
-            assert(isFunctionType(retType));
+            assert(isExprKindEngine(retType));
             let desc = descStr.match(/"(.*)"\.?/)?.[1] ?? descStr;
             desc = desc.replace(/(?<!\.)\.$/, "");
 

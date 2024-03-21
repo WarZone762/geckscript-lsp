@@ -71,7 +71,7 @@ export function blockType(p: Parser) {
         p.errRecover("expected blocktype name", EXPR_FIRST);
     }
     while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE)) {
-        exprPrimary(p, true);
+        exprPrimary(p);
     }
 
     m.complete(p, SyntaxKind.BLOCKTYPE_DESIG);

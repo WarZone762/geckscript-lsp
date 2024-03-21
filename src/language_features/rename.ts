@@ -2,6 +2,7 @@ import { ErrorCodes, ResponseError, WorkspaceEdit } from "vscode-languageserver"
 import { Position, Range, TextEdit } from "vscode-languageserver-textdocument";
 
 import { SyntaxKind, ast, hir } from "../geckscript.js";
+import { FunctionData } from "../geckscript/function_data.js";
 
 export function prepareRename(
     parsed: hir.ParsedString,
@@ -27,7 +28,7 @@ export function rename(
     }
 
     const def = hir.findDefinitionFromToken(token, db);
-    if (def === undefined || def instanceof hir.GlobalSymbol) {
+    if (def === undefined || def instanceof hir.GlobalSymbol || def instanceof FunctionData) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
