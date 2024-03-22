@@ -18,8 +18,10 @@ export function hover(db: hir.FileDatabase, parsed: hir.ParsedString, pos: Posit
                 contents: {
                     kind: MarkupKind.Markdown,
                     value:
-                        hirNode.symbol.signatureMarkdown() +
-                        "\n\n" +
+                        "```geckscript\n" +
+                        hirNode.symbol.signature() +
+                        "\n```" +
+                        "\n" +
                         (hirNode.symbol.desc ??
                             "" +
                                 `\n\n[GECKWiki](https://geckwiki.com/index.php?title=${hirNode.symbol.name})`),

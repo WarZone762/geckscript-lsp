@@ -98,9 +98,14 @@ connection.onInitialize(async (params) => {
 });
 
 connection.onInitialized(async () => {
+    const progress = await connection.window.createWorkDoneProgress();
+    progress.begin("Loading workspace");
     for (const dir of rootDirs) {
-        await DB.loadFolder(URI.parse(dir.uri).fsPath);
+        await DB.loadFolder(URI.parse(dir.uri).fsPath, (done, total) => {
+            progress.report(Math.round((done * 100) / total), `${done} / ${total} files`);
+        });
     }
+    progress.done();
 
     for (const file of DB.files.values()) {
         connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
@@ -131,12 +136,6 @@ connection.onCompletion(
     handler(async (parsed, params) => features.completionItems(DB, parsed, params.position))
 );
 
-// connection.onCompletionResolve(
-//   async (item) => {
-//     return features.completion_doc(item);
-//   }
-// );
-
 connection.onDefinition(
     handler(async (parsed, params) => features.gotoDef(DB, parsed, params.position))
 );
@@ -158,12 +157,11 @@ connection.onRenameRequest(
     handler(async (parsed, params) => features.rename(DB, parsed, params.newName, params.position))
 );
 connection.onSelectionRanges(handler(async () => null));
+// connection.languages.semanticTokens.on(handler(async (parsed) => features.buildSemanticTokens(DB, parsed));
 connection.onRequest(
     SemanticTokensRequest.method,
     handler(async (parsed) => features.buildSemanticTokens(DB, parsed))
 );
-
-// connection.onNotification("geckscript/updateFunctionData", () => FD.PopulateFunctionData(true));
 
 connection.onExit(() => treeViewServer?.close());
 

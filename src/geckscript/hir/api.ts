@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
 
 import { FunctionData } from "../function_data.js";
@@ -69,7 +70,7 @@ export class Analyzer {
                 child instanceof LambdaInlineExpr ||
                 child instanceof LambdaExpr
             ) {
-                child.type = this.analyzeExpr(child);
+                this.analyzeExpr(child);
             } else if (child instanceof Literal) {
                 continue;
             } else if (child instanceof VarOrVarDeclList) {
@@ -88,13 +89,16 @@ export class Analyzer {
         }
     }
 
-    analyzeExpr(node: Expr): ExprType {
+    analyzeExpr(node: Expr): void {
+        if (node.type.kind !== "<unknown>") {
+            return;
+        }
+
         if (node instanceof UnaryExpr) {
-            node.type = this.analyzeExpr(node.operand);
-            return node.type;
+            node.type = node.operand.type;
         } else if (node instanceof BinExpr) {
-            const lhs = this.analyzeExpr(node.lhs);
-            const rhs = this.analyzeExpr(node.rhs);
+            const lhs = node.lhs.type;
+            const rhs = node.rhs.type;
             if (lhs.kind === rhs.kind) {
                 node.type = lhs;
             } else {
@@ -112,17 +116,15 @@ export class Analyzer {
                     node.type = new ExprTypeSimple("Ambiguous");
                 }
             }
-            return node.type;
         } else if (node instanceof FieldExpr) {
-            node.type = this.analyzeExpr(node.field);
-            return node.type;
+            node.type = node.field.type;
         } else if (node instanceof IndexExpr) {
             // TODO
         } else if (node instanceof FuncExpr) {
-            const func = this.analyzeExpr(node.func);
+            const func = node.func.type;
             if (func instanceof ExprTypeFunction) {
                 node.type = func.ret;
-                for (let i = 0; i < node.args.length; ++i) {
+                for (let i = 0; i < Math.min(node.args.length, func.args.length); ++i) {
                     if (node.args[i].type.kind === "<unknown>") {
                         this.propagateType(node.args[i], func.args[i]);
                     }
@@ -130,7 +132,7 @@ export class Analyzer {
             } else if (func.kind === "<unknown>") {
                 const type = new ExprTypeFunction(new ExprTypeSimple());
                 for (const arg of node.args) {
-                    type.args.push(this.analyzeExpr(arg));
+                    type.args.push(arg.type);
                 }
 
                 this.propagateType(node.func, type);
@@ -138,16 +140,14 @@ export class Analyzer {
                 // TODO: emit error
                 node.type = func;
             }
-            return node.type;
         } else if (node instanceof LetExpr) {
-            node.type = this.analyzeExpr(node.expr);
-            return node.type;
+            node.type = node.expr.type;
         } else if (node instanceof LambdaInlineExpr) {
             // TODO
         } else if (node instanceof LambdaExpr) {
             // TODO
         } else if (node instanceof Literal) {
-            return node.type;
+            //
         } else if (node instanceof NameRef) {
             const symbol = findDefinition(this.db, node);
             if (symbol !== undefined) {
@@ -169,9 +169,7 @@ export class Analyzer {
                     this.db.globalSymbols.set(node.symbol.name.toLowerCase(), globalSymbol);
                 }
             }
-            return node.symbol.type;
         }
-        return new ExprTypeSimple();
     }
 
     propagateType(expr: Expr, type: ExprType) {
@@ -213,7 +211,7 @@ export class Analyzer {
         } else if (expr instanceof NameRef) {
             if (expr.symbol instanceof FunctionData) {
                 console.error(
-                    `tired to propogate type '${type}' to global function '${expr.symbol}'`
+                    `tried to propogate type '${type}' to global function '${expr.symbol.signature()}'`
                 );
                 return;
             }
@@ -227,11 +225,9 @@ export function syntaxToHir<T extends NodeOrToken, H extends HirNode & { node: {
     node: T
 ): H | undefined {
     if (node.parent === undefined) {
-        for (const file of db.files.values()) {
-            if (file.hir?.node.green === node) {
-                return file.hir as H;
-            }
-        }
+        assert.strictEqual(node.kind, SyntaxKind.SCRIPT);
+        const file = db.scriptCache.get(node);
+        return file?.hir as H;
     } else {
         let parent = syntaxToHir(db, node.parent);
         if (parent === undefined) {

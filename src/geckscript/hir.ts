@@ -26,9 +26,14 @@ export class FileDatabase {
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, ParsedString> = new Map();
 
-    async loadFolder(dirPath: string) {
-        const files = await fs.readdir(dirPath, { recursive: true });
-        for (const file of files) {
+    async loadFolder(dirPath: string, cb: (done: number, total: number) => void = () => {}) {
+        const files = (await fs.readdir(dirPath, { recursive: true })).filter(
+            (e) => e.endsWith(".gek") || e.endsWith(".geck") || e.endsWith("geckrc.json")
+        );
+        const total = files.length;
+        let done = 0;
+        for await (const file of files) {
+            cb(done++, total);
             const fullPath = path.resolve(path.join(dirPath, file));
             const stat = await fs.stat(fullPath);
 
@@ -56,6 +61,7 @@ export class FileDatabase {
             );
             this.parseDoc(doc);
         }
+        cb(done, total);
     }
 
     parseDoc(doc: TextDocument): ParsedString {
