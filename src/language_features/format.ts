@@ -3,24 +3,24 @@ import { FormattingOptions, TextEdit } from "vscode-languageserver";
 import { Node, NodeOrToken, SyntaxKind, Token, ast, hir, isKeyword } from "../geckscript.js";
 
 export function formatDoc(
-    parsed: hir.ParsedString,
+    file: hir.File,
     opts: FormattingOptions,
     config: hir.ServerConfig
 ): TextEdit[] {
-    const f = new Formatter(parsed, { serverOpts: opts, keywordStyle: config.keywordStyle });
+    const f = new Formatter(file, { serverOpts: opts, keywordStyle: config.keywordStyle });
 
     return [f.format()];
 }
 
 class Formatter {
-    parsed: hir.ParsedString;
+    file: hir.File;
     pos: number = 0;
     opts: Options;
     indent: number = 0;
     indentStr: string;
 
-    constructor(parsed: hir.ParsedString, opts: Options) {
-        this.parsed = parsed;
+    constructor(file: hir.File, opts: Options) {
+        this.file = file;
         this.opts = opts;
 
         this.indentStr = this.opts.serverOpts.insertSpaces
@@ -30,7 +30,7 @@ class Formatter {
 
     format(): TextEdit {
         ast.forEachChildRecursive(
-            this.parsed.root.green,
+            this.file.root.green,
             (n) => {
                 if (n.isNode()) {
                     if (n.kind === SyntaxKind.STMT_LIST) {
@@ -51,8 +51,8 @@ class Formatter {
         );
 
         return TextEdit.replace(
-            this.parsed.rangeOf(this.parsed.root.green),
-            ast.toString(this.parsed.root.green)
+            this.file.rangeOf(this.file.root.green),
+            ast.toString(this.file.root.green)
         );
     }
 

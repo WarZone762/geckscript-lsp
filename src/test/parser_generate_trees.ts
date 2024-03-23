@@ -13,11 +13,11 @@ for (const f of await fs.readdir(testDir, { withFileTypes: true })) {
     if (f.isFile() && f.name.endsWith(".gek")) {
         const fullPath = path.resolve(path.join(testDir, f.name));
 
-        const parsed = parseStr((await fs.readFile(fullPath)).toString());
+        const file = parseStr((await fs.readFile(fullPath)).toString());
 
         const astPath = path.resolve(path.join(testDir, "ast", f.name));
         const out = await fs.open(`${astPath}.ast`, "w");
-        out.write(ast.toDebug(parsed[0]));
+        out.write(ast.toDebug(file[0]));
         out.close();
     }
 }

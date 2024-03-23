@@ -40,14 +40,11 @@ const enum TokenModifier {
     READONLY = 1 << 1,
 }
 
-export function buildSemanticTokens(
-    db: hir.FileDatabase,
-    parsed: hir.ParsedString
-): SemanticTokens {
+export function buildSemanticTokens(db: hir.FileDatabase, file: hir.File): SemanticTokens {
     const builder = new SemanticTokensBuilder();
 
-    for (const node of ast.descendantsDf(parsed.root.green)) {
-        const pos = parsed.posAt(node.offset);
+    for (const node of ast.descendantsDf(file.root.green)) {
+        const pos = file.posAt(node.offset);
         if (node.kind === SyntaxKind.NAME_REF) {
             const hirNode = hir.syntaxToHir(db, node);
             if (hirNode === undefined) {

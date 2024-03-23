@@ -9,6 +9,7 @@ import {
     WorkspaceFolder,
     createConnection,
 } from "vscode-languageserver/node.js";
+import * as vs from "vscode-languageserver/node.js";
 import { URI } from "vscode-uri";
 
 import * as features from "./features.js";
@@ -40,15 +41,16 @@ if (checkIndex !== -1) {
 }
 
 /** Helper to create a document reqest handler function */
-function handler<RP extends { textDocument: { uri: string } }, R>(
-    f: (parsed: hir.ParsedString, params: RP) => Promise<R>
-): (requestParams: RP) => Promise<R | null> {
-    return async (requestParams) => {
-        const parsed = DB.files.get(requestParams.textDocument.uri);
-        if (parsed == null) {
-            return null;
+function handler<P extends { textDocument: { uri: string } }, E, R>(
+    handler: (file: hir.File, params: P) => vs.HandlerResult<R, E>
+): (params: P) => vs.HandlerResult<R, E> {
+    return (params: P) => {
+        const file = DB.files.get(params.textDocument.uri);
+        if (file !== undefined) {
+            return handler(file, params);
         }
-        return await f(parsed, requestParams);
+
+        return new vs.ResponseError(404, "unable to find requested file");
     };
 }
 
@@ -114,54 +116,56 @@ connection.onInitialized(async () => {
 
 connection.onDidOpenTextDocument(async (params) => {
     const doc = params.textDocument;
-    const parsed = DB.parseDoc(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
+    const file = DB.parseFile(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
 
-    treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
+    treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 
-    connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
+    connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
 });
 
 connection.onDidChangeTextDocument(
-    handler(async (parsed, params) => {
-        TextDocument.update(parsed.doc, params.contentChanges, params.textDocument.version);
-        parsed = DB.parseDoc(parsed.doc);
+    handler(async (file, params) => {
+        TextDocument.update(file.doc, params.contentChanges, params.textDocument.version);
+        file = DB.parseFile(file.doc);
 
-        treeViewServer?.writeTreeData(ast.toTreeData(parsed.root.green));
+        treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 
-        connection.sendDiagnostics({ uri: parsed.doc.uri, diagnostics: parsed.diagnostics });
+        connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
     })
 );
 
 connection.onCompletion(
-    handler(async (parsed, params) => features.completionItems(DB, parsed, params.position))
+    handler(async (file, params) => features.completionItems(DB, file, params.position))
 );
 
 connection.onDefinition(
-    handler(async (parsed, params) => features.gotoDef(DB, parsed, params.position))
+    handler(async (file, params) => features.gotoDef(DB, file, params.position))
 );
 connection.onDocumentFormatting(
-    handler(async (parsed, params) => features.formatDoc(parsed, params.options, DB.config))
+    handler(async (file, params) => features.formatDoc(file, params.options, DB.config))
 );
 connection.onDocumentHighlight(
-    handler(async (parsed, params) => features.getHighlight(DB, parsed, params.position))
+    handler(async (file, params) => features.getHighlight(DB, file, params.position))
 );
-connection.onDocumentSymbol(handler(async (parsed) => features.symbols(parsed)));
-connection.onHover(handler(async (parsed, params) => features.hover(DB, parsed, params.position)));
-connection.onReferences(
-    handler(async (parsed, params) => features.refs(DB, parsed, params.position))
-);
+connection.onDocumentSymbol(handler(async (file) => features.symbols(file)));
+connection.onHover(handler(async (file, params) => features.hover(DB, file, params.position)));
+connection.onReferences(handler(async (file, params) => features.refs(DB, file, params.position)));
 connection.onPrepareRename(
-    handler(async (parsed, params) => features.prepareRename(parsed, params.position))
+    handler(async (file, params) => features.prepareRename(file, params.position))
 );
 connection.onRenameRequest(
-    handler(async (parsed, params) => features.rename(DB, parsed, params.newName, params.position))
+    handler(async (file, params) => features.rename(DB, file, params.newName, params.position))
 );
 connection.onSelectionRanges(handler(async () => null));
-// connection.languages.semanticTokens.on(handler(async (parsed) => features.buildSemanticTokens(DB, parsed));
-connection.onRequest(
-    SemanticTokensRequest.method,
-    handler(async (parsed) => features.buildSemanticTokens(DB, parsed))
+connection.languages.semanticTokens.on(
+    handler<vs.SemanticTokensParams, void, vs.SemanticTokens>(async (parsed) =>
+        features.buildSemanticTokens(DB, parsed)
+    )
 );
+// connection.onRequest(
+//     SemanticTokensRequest.method,
+//     handler(async (file) => features.buildSemanticTokens(DB, file))
+// );
 
 connection.onExit(() => treeViewServer?.close());
 

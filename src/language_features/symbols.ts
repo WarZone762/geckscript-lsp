@@ -2,14 +2,14 @@ import { SymbolInformation, SymbolKind } from "vscode-languageserver";
 
 import { hir } from "../geckscript.js";
 
-export function symbols(parsed: hir.ParsedString): SymbolInformation[] | null {
+export function symbols(file: hir.File): SymbolInformation[] | null {
     const symbols: SymbolInformation[] = [];
 
-    if (parsed.hir === undefined) {
+    if (file.hir === undefined) {
         return null;
     }
 
-    for (const child of hir.visit(parsed.hir)) {
+    for (const child of hir.visit(file.hir)) {
         if ("symbolTable" in child) {
             for (const symbol of child.symbolTable.values()) {
                 let kind: SymbolKind;
@@ -27,8 +27,8 @@ export function symbols(parsed: hir.ParsedString): SymbolInformation[] | null {
                 symbols.push({
                     name: symbol.name,
                     location: {
-                        uri: parsed.doc.uri,
-                        range: parsed.rangeOf(symbol.decl.node.green),
+                        uri: file.doc.uri,
+                        range: file.rangeOf(symbol.decl.node.green),
                     },
                     kind,
                 });

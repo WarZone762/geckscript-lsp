@@ -42,10 +42,10 @@ export async function testFile(file: string, astFile: string) {
 
 export async function format(filePath: string): Promise<string> {
     const content = await fs.readFile(filePath);
-    const parsed = DB.parseDoc(TextDocument.create("test", "geckscript", 0, content.toString()));
+    const file = DB.parseFile(TextDocument.create("test", "geckscript", 0, content.toString()));
 
     const edits = formatDoc(
-        parsed,
+        file,
         {
             tabSize: 4,
             insertSpaces: true,
@@ -56,5 +56,5 @@ export async function format(filePath: string): Promise<string> {
         { keywordStyle: KeywordStyle.LOWER }
     );
 
-    return TextDocument.applyEdits(parsed.doc, edits);
+    return TextDocument.applyEdits(file.doc, edits);
 }

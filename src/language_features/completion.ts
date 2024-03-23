@@ -5,10 +5,10 @@ import { SyntaxKind, TokenData, ast, hir, isKeyword, isOp, isType } from "../gec
 
 export function completionItems(
     db: hir.FileDatabase,
-    parsed: hir.ParsedString,
+    file: hir.File,
     pos: Position
 ): CompletionItem[] | null {
-    const token = ast.nearestToken(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.nearestToken(file.root.green, file.offsetAt(pos));
 
     if (
         token === undefined ||

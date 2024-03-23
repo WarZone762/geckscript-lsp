@@ -15,9 +15,7 @@
         "mime": "^4.0",
         "vscode-languageserver": "^9.0",
         "vscode-languageserver-textdocument": "^1.0",
-        "vscode-uri": "^3.0",
-        "wtf_wikipedia": "^10.1",
-        "wtf-plugin-markdown": "^1.0"
+        "vscode-uri": "^3.0"
     },
     "devDependencies": {
         "@trivago/prettier-plugin-sort-imports": "^4.3",

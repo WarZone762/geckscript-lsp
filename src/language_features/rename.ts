@@ -5,24 +5,24 @@ import { SyntaxKind, ast, hir } from "../geckscript.js";
 import { FunctionData } from "../geckscript/function_data.js";
 
 export function prepareRename(
-    parsed: hir.ParsedString,
+    file: hir.File,
     pos: Position
 ): Range | { range: Range; placeholder: string } | ResponseError | null {
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token?.kind !== SyntaxKind.IDENT) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    return parsed.rangeOf(token);
+    return file.rangeOf(token);
 }
 
 export function rename(
     db: hir.FileDatabase,
-    parsed: hir.ParsedString,
+    file: hir.File,
     newName: string,
     pos: Position
 ): WorkspaceEdit | ResponseError | null {
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token == undefined) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
@@ -33,10 +33,10 @@ export function rename(
     }
 
     const refs = hir.findReferences(db, def);
-    const changes: TextEdit[] = [{ range: parsed.rangeOf(def.decl.node.green), newText: newName }];
+    const changes: TextEdit[] = [{ range: file.rangeOf(def.decl.node.green), newText: newName }];
     for (const ref of refs) {
-        changes.push({ range: parsed.rangeOf(ref.node.green), newText: newName });
+        changes.push({ range: file.rangeOf(ref.node.green), newText: newName });
     }
 
-    return { changes: { [parsed.doc.uri]: changes } };
+    return { changes: { [file.doc.uri]: changes } };
 }

@@ -5,12 +5,12 @@ import { ast, hir } from "../geckscript.js";
 
 export function getHighlight(
     db: hir.FileDatabase,
-    parsed: hir.ParsedString,
+    file: hir.File,
     pos: Position
 ): DocumentHighlight[] | null {
     const highlights: DocumentHighlight[] = [];
 
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token === undefined) {
         return null;
     }
@@ -19,12 +19,12 @@ export function getHighlight(
 
     if (def instanceof hir.Symbol) {
         highlights.push({
-            range: parsed.rangeOf(def.decl.node.green),
+            range: file.rangeOf(def.decl.node.green),
             kind: DocumentHighlightKind.Text,
         });
         for (const ref of hir.findReferences(db, def)) {
             highlights.push({
-                range: parsed.rangeOf(ref.node.green),
+                range: file.rangeOf(ref.node.green),
                 kind: DocumentHighlightKind.Text,
             });
         }

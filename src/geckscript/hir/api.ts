@@ -11,6 +11,7 @@ import {
     ExprTypeFunction,
     ExprTypeSimple,
     FieldExpr,
+    File,
     FileDatabase,
     ForeachStmt,
     FuncExpr,
@@ -24,7 +25,6 @@ import {
     Literal,
     Name,
     NameRef,
-    ParsedString,
     Script,
     SetStmt,
     StmtList,
@@ -39,7 +39,7 @@ import { NodeOrToken, SyntaxKind, Token } from "../syntax.js";
 export class Analyzer {
     constructor(
         public db: FileDatabase,
-        public parsed: ParsedString
+        public file: File
     ) {}
 
     analyze(node: HirNode) {
@@ -107,8 +107,8 @@ export class Analyzer {
                 } else if (rhs.kind === "<unknown>") {
                     this.propagateType(node.rhs, lhs);
                 } else {
-                    this.parsed.diagnostics.push({
-                        range: this.parsed.rangeOf(node.node.green),
+                    this.file.diagnostics.push({
+                        range: this.file.rangeOf(node.node.green),
                         message: `ambiguous expression type: ${lhs} ${node.node.op()?.text} ${rhs}`,
                         severity: DiagnosticSeverity.Information,
                     });
@@ -153,19 +153,19 @@ export class Analyzer {
             if (symbol !== undefined) {
                 node.symbol = symbol;
             } else {
-                this.parsed.diagnostics.push({
-                    range: this.parsed.rangeOf(node.node.green),
+                this.file.diagnostics.push({
+                    range: this.file.rangeOf(node.node.green),
                     message: `unable to resolve symbol ${node.symbol.name}`,
                     severity: DiagnosticSeverity.Information,
                 });
 
                 if (node.symbol instanceof GlobalSymbol) {
-                    node.symbol.referencingFiles.add(this.parsed.doc.uri);
-                    this.parsed.unresolvedSymbols.add(node.symbol);
+                    node.symbol.referencingFiles.add(this.file.doc.uri);
+                    this.file.unresolvedSymbols.add(node.symbol);
                     this.db.globalSymbols.set(node.symbol.name.toLowerCase(), node.symbol);
                 } else {
                     const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
-                    globalSymbol.referencingFiles.add(this.parsed.doc.uri);
+                    globalSymbol.referencingFiles.add(this.file.doc.uri);
                     this.db.globalSymbols.set(node.symbol.name.toLowerCase(), globalSymbol);
                 }
             }

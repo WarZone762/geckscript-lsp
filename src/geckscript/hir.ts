@@ -18,13 +18,13 @@ export * from "./hir/hir.js";
 export * from "./hir/lower.js";
 
 export class FileDatabase {
-    files: Map<string, ParsedString> = new Map();
+    files: Map<string, File> = new Map();
     globalSymbols: Map<string, GlobalSymbol> = new Map([
         ["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))],
     ]);
     builtinFunctions: Map<string, fnData.FunctionData> = fnData.loadFunctionData();
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
-    scriptCache: Map<Node<SyntaxKind.SCRIPT>, ParsedString> = new Map();
+    scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
     async loadFolder(dirPath: string, cb: (done: number, total: number) => void = () => {}) {
         const files = (await fs.readdir(dirPath, { recursive: true })).filter(
@@ -59,12 +59,12 @@ export class FileDatabase {
                 0,
                 content.toString()
             );
-            this.parseDoc(doc);
+            this.parseFile(doc);
         }
         cb(done, total);
     }
 
-    parseDoc(doc: TextDocument): ParsedString {
+    parseFile(doc: TextDocument): File {
         const [node, errors] = parsing.parseStr(doc.getText());
         assert.strictEqual(node.kind, SyntaxKind.SCRIPT);
 
@@ -79,9 +79,9 @@ export class FileDatabase {
         const script = new ast.Script(node);
 
         // remove old file from global symbols it references
-        const oldParsed = this.files.get(doc.uri);
-        if (oldParsed !== undefined) {
-            for (const unresolvedSymbol of oldParsed.unresolvedSymbols.values()) {
+        const oldFile = this.files.get(doc.uri);
+        if (oldFile !== undefined) {
+            for (const unresolvedSymbol of oldFile.unresolvedSymbols.values()) {
                 const symbol = this.globalSymbols.get(unresolvedSymbol.name.toLowerCase());
                 symbol?.referencingFiles.delete(doc.uri);
                 if (symbol?.referencingFiles.size === 0) {
@@ -90,26 +90,26 @@ export class FileDatabase {
             }
         }
 
-        const parsed = new ParsedString(doc, script, diagnostics);
-        this.files.set(doc.uri, parsed);
-        this.scriptCache.set(node, parsed);
+        const file = new File(doc, script, diagnostics);
+        this.files.set(doc.uri, file);
+        this.scriptCache.set(node, file);
 
-        if (parsed.hir !== undefined) {
-            const analyzer = new Analyzer(this, parsed);
-            analyzer.analyze(parsed.hir);
+        if (file.hir !== undefined) {
+            const analyzer = new Analyzer(this, file);
+            analyzer.analyze(file.hir);
         }
 
-        return parsed;
+        return file;
     }
 
-    findScript(script: Node<SyntaxKind.SCRIPT>): ParsedString | undefined {
+    findScript(script: Node<SyntaxKind.SCRIPT>): File | undefined {
         return this.scriptCache.get(script);
     }
 
-    scriptToUri(name: string): ParsedString | undefined {
-        for (const parsed of this.files.values()) {
-            if (parsed.root.name()?.name()?.text === name) {
-                return parsed;
+    scriptToUri(name: string): File | undefined {
+        for (const file of this.files.values()) {
+            if (file.root.name()?.name()?.text === name) {
+                return file;
             }
         }
     }
@@ -130,7 +130,7 @@ export class FileDatabase {
     }
 }
 
-export class ParsedString {
+export class File {
     doc: TextDocument;
     root: ast.Script;
     hir?: Script;

@@ -4,8 +4,8 @@ import { Position } from "vscode-languageserver-textdocument";
 import { ast, hir } from "../geckscript.js";
 import { FunctionData } from "../geckscript/function_data.js";
 
-export function hover(db: hir.FileDatabase, parsed: hir.ParsedString, pos: Position): Hover | null {
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+export function hover(db: hir.FileDatabase, file: hir.File, pos: Position): Hover | null {
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token?.parent === undefined) {
         return null;
     }

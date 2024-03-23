@@ -3,12 +3,8 @@ import { Position } from "vscode-languageserver-textdocument";
 
 import { ast, hir } from "../geckscript.js";
 
-export function gotoDef(
-    db: hir.FileDatabase,
-    parsed: hir.ParsedString,
-    pos: Position
-): Location | null {
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Location | null {
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token === undefined) {
         return null;
     }
@@ -24,20 +20,16 @@ export function gotoDef(
         return null;
     }
 
-    const defParsed = db.findScript(script);
-    if (defParsed === undefined) {
+    const defFile = db.findScript(script);
+    if (defFile === undefined) {
         return null;
     }
 
-    return { uri: defParsed.doc.uri, range: defParsed.rangeOf(def.decl.node.green) };
+    return { uri: defFile.doc.uri, range: defFile.rangeOf(def.decl.node.green) };
 }
 
-export function refs(
-    db: hir.FileDatabase,
-    parsed: hir.ParsedString,
-    pos: Position
-): Location[] | null {
-    const token = ast.tokenAtOffset(parsed.root.green, parsed.offsetAt(pos));
+export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Location[] | null {
+    const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token == undefined) {
         return null;
     }
@@ -54,12 +46,12 @@ export function refs(
             continue;
         }
 
-        const defParsed = db.findScript(script);
-        if (defParsed === undefined) {
+        const defFile = db.findScript(script);
+        if (defFile === undefined) {
             continue;
         }
 
-        locs.push({ uri: defParsed.doc.uri, range: defParsed.rangeOf(ref.node.green) });
+        locs.push({ uri: defFile.doc.uri, range: defFile.rangeOf(ref.node.green) });
     }
 
     return locs;
