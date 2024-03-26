@@ -42,7 +42,7 @@ export async function testFile(file: string, astFile: string) {
 
 export async function format(filePath: string): Promise<string> {
     const content = await fs.readFile(filePath);
-    const file = DB.parseFile(TextDocument.create("test", "geckscript", 0, content.toString()));
+    const file = DB.loadFile(TextDocument.create("test", "geckscript", 0, content.toString()));
 
     const edits = formatDoc(
         file,

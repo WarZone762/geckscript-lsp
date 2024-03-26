@@ -39,6 +39,8 @@ function ret(info: string[]): string {
             return "token(this, isOp)";
         case "VarOrVarDecl":
             return "VarOrVarDecl(child(this, isVarOrVarDecl))";
+        case "VarDeclOrExpr":
+            return "VarDeclOrExpr(child(this, isVarDeclOrExpr))";
         case "Expr":
             if (info.at(1) !== undefined) {
                 return `Expr(child(this, isExpr, ${info[1]}))`;
@@ -71,6 +73,8 @@ function retType(info: string[]): string {
             return "Token<OpSyntaxKind> | undefined";
         case "VarOrVarDecl":
             return "VarOrVarDecl | undefined";
+        case "VarDeclOrExpr":
+            return "VarDeclOrExpr | undefined";
         case "Expr":
             return "Expr | undefined";
         case "Stmt":
@@ -147,9 +151,9 @@ const EXPR_INFO_MAP: InfoMap = {
         syntaxKind: "LET_EXPR",
         members: {
             let: ["Token", "LET_KW"],
-            var: ["VarOrVarDecl"],
+            var: ["Expr"],
             op: ["Op"],
-            expr: ["Expr"],
+            expr: ["Expr", "1"],
         },
     },
     LambdaInlineExpr: {

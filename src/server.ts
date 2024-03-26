@@ -26,7 +26,7 @@ if (checkIndex !== -1) {
         process.exit(1);
     }
 
-    await DB.loadFolder(path);
+    await DB.loadDir(path);
     for (const [uri, doc] of DB.files.entries()) {
         for (const diagnostic of doc.diagnostics) {
             if (diagnostic.severity === DiagnosticSeverity.Error) {
@@ -100,14 +100,28 @@ connection.onInitialize(async (params) => {
 });
 
 connection.onInitialized(async () => {
-    const progress = await connection.window.createWorkDoneProgress();
-    progress.begin("Loading workspace");
     for (const dir of rootDirs) {
-        await DB.loadFolder(URI.parse(dir.uri).fsPath, (done, total) => {
-            progress.report(Math.round((done * 100) / total), `${done} / ${total} files`);
-        });
+        const progressParse = await connection.window.createWorkDoneProgress();
+        const progressAnalyze = await connection.window.createWorkDoneProgress();
+        progressParse.begin("Loading workspace");
+        await DB.loadDir(
+            URI.parse(dir.uri).fsPath,
+            async (done, total) => {
+                progressParse.report(Math.round((done * 100) / total), `${done} / ${total} files`);
+            },
+            async () => {
+                progressParse.done();
+                progressAnalyze.begin("Analyzing workspace");
+            },
+            async (done, total) => {
+                progressAnalyze.report(
+                    Math.round((done * 100) / total),
+                    `${done} / ${total} files`
+                );
+            }
+        );
+        progressAnalyze.done();
     }
-    progress.done();
 
     for (const file of DB.files.values()) {
         connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
@@ -116,7 +130,7 @@ connection.onInitialized(async () => {
 
 connection.onDidOpenTextDocument(async (params) => {
     const doc = params.textDocument;
-    const file = DB.parseFile(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
+    const file = DB.loadFile(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
 
     treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 
@@ -126,7 +140,7 @@ connection.onDidOpenTextDocument(async (params) => {
 connection.onDidChangeTextDocument(
     handler(async (file, params) => {
         TextDocument.update(file.doc, params.contentChanges, params.textDocument.version);
-        file = DB.parseFile(file.doc);
+        file = DB.loadFile(file.doc);
 
         treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 

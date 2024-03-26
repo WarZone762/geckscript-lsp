@@ -12,9 +12,9 @@ Provides various language features for the scripting language used by GECK for F
 - [x] highlight ranges
 - [x] renaming
 - [x] semantic tokens
-- [ ] static analysis
+- [x] static analysis
+- [x] proper code completion
 - [ ] selection range
-- [ ] proper code completion (currently only basic without function docs)
 - [ ] hover
 - [ ] signature help
 - [ ] code actions

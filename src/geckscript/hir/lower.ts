@@ -6,6 +6,7 @@ import {
     BinExpr,
     BinExprOp,
     Blocktype,
+    Branch,
     Expr,
     ExprTypeSimple,
     FieldExpr,
@@ -100,7 +101,7 @@ export class LowerContext {
         }
     }
 
-    ifStmt(node: ast.IfStmt | ast.Branch | undefined): IfStmt | undefined {
+    ifStmt(node: ast.IfStmt | undefined): IfStmt | undefined {
         if (node === undefined) {
             return;
         }
@@ -116,9 +117,27 @@ export class LowerContext {
             return;
         }
 
-        const falseBranch = this.ifStmt(node.falseBranch());
+        const falseBranch = this.branch(node.falseBranch());
 
         return new IfStmt(cond, trueBranch, falseBranch, symbolTable, node);
+    }
+
+    branch(node: ast.Branch | undefined): Branch | undefined {
+        if (node === undefined) {
+            return;
+        }
+
+        const symbolTable = new Map();
+        const cond = this.expr(node.cond(), symbolTable);
+
+        const trueBranch = this.stmtList(node.trueBranch(), symbolTable);
+        if (trueBranch === undefined) {
+            return;
+        }
+
+        const falseBranch = this.branch(node.falseBranch());
+
+        return new Branch(cond, trueBranch, falseBranch, symbolTable, node);
     }
 
     whileStmt(node: ast.WhileStmt | undefined): WhileStmt | undefined {
@@ -341,6 +360,9 @@ export class LowerContext {
         const field = this.expr(node.field(), symbolTable);
         if (field === undefined) {
             return;
+        } else if (!(field instanceof NameRef)) {
+            // TODO: report error
+            return;
         }
 
         return new FieldExpr(new ExprTypeSimple(), op, lhs, field, node);
@@ -400,8 +422,8 @@ export class LowerContext {
             return;
         }
 
-        const varOrVarDecl = this.varOrVarDecl(node.var(), symbolTable);
-        if (varOrVarDecl === undefined) {
+        const lhs = this.expr(node.var(), symbolTable);
+        if (lhs === undefined) {
             return;
         }
 
@@ -420,7 +442,7 @@ export class LowerContext {
             return;
         }
 
-        return new LetExpr(new ExprTypeSimple(), varOrVarDecl, op, expr, node);
+        return new LetExpr(new ExprTypeSimple(), lhs, op, expr, node);
     }
 
     lambdaInlineExpr(
@@ -541,7 +563,7 @@ export class LowerContext {
 
         // TODO: error if already exists
         const nameHir = new Name(name, type, node);
-        symbolTable.set(name, nameHir.symbol);
+        symbolTable.set(name.toLowerCase(), nameHir.symbol);
 
         return nameHir;
     }

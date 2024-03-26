@@ -274,10 +274,15 @@ export function isKeyword(kind: SyntaxKind): kind is KeywordSyntaxKind {
         kind == SyntaxKind.FUNCTION_KW
     );
 }
-export type SimpleAssignmentOpSyntaxKind = SyntaxKind.EQ | SyntaxKind.COLONEQ;
+export type SimpleAssignmentOpSyntaxKind =
+    | SyntaxKind.EQ
+    | SyntaxKind.COLONEQ;
 
 export function isSimpleAssignmentOp(kind: SyntaxKind): kind is SimpleAssignmentOpSyntaxKind {
-    return kind == SyntaxKind.EQ || kind == SyntaxKind.COLONEQ;
+    return (
+        kind == SyntaxKind.EQ ||
+        kind == SyntaxKind.COLONEQ
+    );
 }
 export type AssignmentOpSyntaxKind =
     | SyntaxKind.EQ
@@ -418,10 +423,23 @@ export function isOp(kind: SyntaxKind): kind is OpSyntaxKind {
     );
 }
 
-export type VarOrVarDeclSyntaxKind = SyntaxKind.NAME | SyntaxKind.NAME_REF | SyntaxKind.VAR_DECL;
+export type VarDeclOrExprSyntaxKind = SyntaxKind.VAR_DECL | ExprSyntaxKind;
+
+export function isVarDeclOrExpr(kind: SyntaxKind): kind is VarDeclOrExprSyntaxKind {
+    return kind === SyntaxKind.VAR_DECL || isExpr(kind);
+}
+
+export type VarOrVarDeclSyntaxKind =
+    | SyntaxKind.NAME
+    | SyntaxKind.NAME_REF
+    | SyntaxKind.VAR_DECL;
 
 export function isVarOrVarDecl(kind: SyntaxKind): kind is VarOrVarDeclSyntaxKind {
-    return kind == SyntaxKind.NAME || kind == SyntaxKind.NAME_REF || kind == SyntaxKind.VAR_DECL;
+    return (
+        kind == SyntaxKind.NAME ||
+        kind == SyntaxKind.NAME_REF ||
+        kind == SyntaxKind.VAR_DECL
+    );
 }
 export type ListSyntaxKind =
     | SyntaxKind.VAR_OR_VAR_DECL_LIST

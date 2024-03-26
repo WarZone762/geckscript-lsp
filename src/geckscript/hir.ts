@@ -26,14 +26,19 @@ export class FileDatabase {
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
-    async loadFolder(dirPath: string, cb: (done: number, total: number) => void = () => {}) {
+    async loadDir(
+        dirPath: string,
+        cbParse: (done: number, total: number) => void = () => {},
+        cbParseDone: () => void = () => {},
+        cbAnalyze: (done: number, total: number) => void = () => {}
+    ) {
         const files = (await fs.readdir(dirPath, { recursive: true })).filter(
             (e) => e.endsWith(".gek") || e.endsWith(".geck") || e.endsWith("geckrc.json")
         );
         const total = files.length;
         let done = 0;
         for await (const file of files) {
-            cb(done++, total);
+            cbParse(done++, total);
             const fullPath = path.resolve(path.join(dirPath, file));
             const stat = await fs.stat(fullPath);
 
@@ -61,7 +66,26 @@ export class FileDatabase {
             );
             this.parseFile(doc);
         }
-        cb(done, total);
+        cbParse(done, total);
+        cbParseDone();
+
+        done = 0;
+        const analyzer = new Analyzer(this);
+        for (const file of this.files.values()) {
+            cbAnalyze(done++, total);
+            analyzer.analyzeFile(file);
+            // need this for progress to be sent
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        cbAnalyze(done, total);
+    }
+
+    loadFile(doc: TextDocument): File {
+        const file = this.parseFile(doc);
+        const analyzer = new Analyzer(this);
+        analyzer.analyzeFile(file);
+
+        return file;
     }
 
     parseFile(doc: TextDocument): File {
@@ -93,11 +117,6 @@ export class FileDatabase {
         const file = new File(doc, script, diagnostics);
         this.files.set(doc.uri, file);
         this.scriptCache.set(node, file);
-
-        if (file.hir !== undefined) {
-            const analyzer = new Analyzer(this, file);
-            analyzer.analyze(file.hir);
-        }
 
         return file;
     }

@@ -182,6 +182,12 @@ ${syntaxKindTypeUnion(ASSIGNMENT_OP, "AssignmentOp")}
 ${syntaxKindTypeUnion(UNARY_OP, "UnaryOp")}
 ${syntaxKindTypeUnion(OP, "Op")}
 
+export type VarDeclOrExprSyntaxKind = SyntaxKind.VAR_DECL | ExprSyntaxKind;
+
+export function isVarDeclOrExpr(kind: SyntaxKind): kind is VarDeclOrExprSyntaxKind {
+    return kind === SyntaxKind.VAR_DECL || isExpr(kind);
+}
+
 ${syntaxKindTypeUnion(VAR_OR_VAR_DECL, "VarOrVarDecl")}
 ${syntaxKindTypeUnion(LIST, "List")}
 ${syntaxKindTypeUnion(EXPR, "Expr")}

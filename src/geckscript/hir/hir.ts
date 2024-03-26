@@ -1,11 +1,13 @@
 import * as ast from "../ast.js";
 import { FunctionData } from "../function_data.js";
+import { File } from "../hir.js";
 import { SyntaxKind, Token } from "../syntax.js";
 
 export type HirNode =
     | Script
     | StmtList
     | Stmt
+    | Branch
     | Expr
     | VarOrVarDeclList
     | VarOrVarDecl
@@ -35,7 +37,17 @@ export class IfStmt {
     constructor(
         public cond: Expr,
         public trueBranch: StmtList,
-        public falseBranch: IfStmt | undefined,
+        public falseBranch: Branch | undefined,
+        public symbolTable: Map<string, Symbol>,
+        public node: ast.IfStmt | ast.Branch
+    ) {}
+}
+
+export class Branch {
+    constructor(
+        public cond: Expr | undefined,
+        public trueBranch: StmtList,
+        public falseBranch: Branch | undefined,
         public symbolTable: Map<string, Symbol>,
         public node: ast.IfStmt | ast.Branch
     ) {}
@@ -142,7 +154,7 @@ export class FieldExpr {
         public type: ExprType,
         public op: FieldExprOp,
         public lhs: Expr,
-        public field: Expr,
+        public field: NameRef,
         public node: ast.FieldExpr
     ) {}
 }
@@ -173,7 +185,7 @@ export class FuncExpr {
 export class LetExpr {
     constructor(
         public type: ExprType,
-        public varOrVarDecl: VarOrVarDecl,
+        public lhs: Expr,
         public op: BinExprOp,
         public expr: Expr,
         public node: ast.LetExpr
@@ -219,17 +231,21 @@ export class Name {
     ) {
         this.symbol = new Symbol(name, type, this);
     }
-}
 
-export class NameRef {
     public get type(): ExprType {
         return this.symbol.type;
     }
+}
 
+export class NameRef {
     constructor(
         public symbol: Symbol | GlobalSymbol | FunctionData,
         public node: ast.NameRef
     ) {}
+
+    public get type(): ExprType {
+        return this.symbol.type;
+    }
 }
 
 export class Literal {
@@ -254,11 +270,225 @@ export class Number {
     ) {}
 }
 
+export type ExprType = ExprTypeSimple | ExprTypeFunction;
+
 export class ExprTypeSimple {
+    // for script variables
+    file?: File;
+    members: (Symbol | GlobalSymbol | FunctionData)[] = [];
+
     constructor(public kind: Exclude<ExprKind, "Function"> = "<unknown>") {}
 
+    isAssignableTo(other: ExprType): boolean {
+        if (other.kind === "Function") {
+            return false;
+        }
+        const base = this.baseType();
+        const otherBase = other.baseType();
+
+        if (otherBase === "StringOrNumber") {
+            return base === "StringVar" || base === "Number";
+        }
+
+        return base === otherBase;
+    }
+
+    // isChildOf(other: ExprType): boolean {
+    //     switch (this.kind) {
+    //         case "Ambiguous":
+    //         case "AnyType":
+    //         case "<unknown>":
+    //             return true;
+    //         case "Number":
+    //         case "ObjectRef":
+    //         case "StringOrNumber":
+    //         case "StringVar":
+    //         case "Array":
+    //         case "Axis":
+    //             return false;
+    //         case "Integer":
+    //         case "Float":
+    //             return other.kind === "Number" || other.kind === "StringOrNumber";
+    //         case "Double":
+    //             return (
+    //                 other.kind === "Float" ||
+    //                 other.kind === "Number" ||
+    //                 other.kind === "StringOrNumber"
+    //             );
+    //         case "1/0":
+    //         case "Bool":
+    //         // TODO: not sure
+    //         case "AIPackage":
+    //         case "ActorBase":
+    //         case "ActorValue":
+    //         case "Alignment":
+    //         case "AnimationGroup":
+    //         case "Array index":
+    //         case "Casino":
+    //         case "Challenge":
+    //         case "Class":
+    //         case "CombatStyle":
+    //         case "CrimeType":
+    //         case "CriticalStage":
+    //         case "EffectShader":
+    //         case "EncounterZone":
+    //         case "EquipType":
+    //         case "Faction":
+    //         case "FormType":
+    //         case "Furniture":
+    //         case "Global":
+    //         case "ImageSpace":
+    //         case "ImageSpaceModifier":
+    //         case "MagicEffect":
+    //         case "MiscStat":
+    //         case "ObjectID":
+    //         case "Owner":
+    //         case "Pair":
+    //         case "Race":
+    //         case "Reputation":
+    //         case "ScriptVar":
+    //         case "Sex":
+    //         case "Slice":
+    //         case "Sound":
+    //         case "SoundFile":
+    //         case "SpellItem":
+    //         case "String":
+    //         case "Topic":
+    //         case "VariableName":
+    //         case "WeatherID":
+    //         case "unk2E":
+    //             return (
+    //                 other.kind === "Integer" ||
+    //                 other.kind === "Number" ||
+    //                 other.kind === "StringOrNumber"
+    //             );
+    //         case "Actor":
+    //         case "AnyForm":
+    //         case "CaravanDeck":
+    //         case "Cell":
+    //         case "Container":
+    //         case "Form":
+    //         case "FormList":
+    //         case "IdleForm":
+    //         case "InvObjectOrFormList":
+    //         case "LeveledChar":
+    //         case "LeveledCreature":
+    //         case "LeveledItem":
+    //         case "LeveledOrBaseChar":
+    //         case "LeveledOrBaseCreature":
+    //         case "MagicItem":
+    //         case "MapMarker":
+    //         case "Message":
+    //         case "NPC":
+    //         case "NonFormList":
+    //         case "Note":
+    //         case "Object":
+    //         case "Perk":
+    //         case "Quest":
+    //         case "QuestStage":
+    //         case "Region":
+    //         case "Variable":
+    //         case "WorldSpace":
+    //             return other.kind === "ObjectRef";
+    //     }
+    // }
+    //
+    baseType(): ExprKind {
+        switch (this.kind) {
+            case "Ambiguous":
+            case "AnyType":
+            case "<unknown>":
+            case "Number":
+            case "StringOrNumber":
+            case "StringVar":
+            case "Array":
+            case "Axis":
+                return this.kind;
+            case "String":
+                return "StringVar";
+            case "Integer":
+            case "Float":
+            case "Double":
+            case "ObjectRef":
+            case "1/0":
+            case "Bool":
+            // TODO: not sure
+            case "AIPackage":
+            case "ActorBase":
+            case "ActorValue":
+            case "Alignment":
+            case "AnimationGroup":
+            case "Array index":
+            case "Casino":
+            case "Challenge":
+            case "Class":
+            case "CombatStyle":
+            case "CrimeType":
+            case "CriticalStage":
+            case "EffectShader":
+            case "EncounterZone":
+            case "EquipType":
+            case "Faction":
+            case "FormType":
+            case "Furniture":
+            case "Global":
+            case "ImageSpace":
+            case "ImageSpaceModifier":
+            case "MagicEffect":
+            case "MiscStat":
+            case "ObjectID":
+            case "Owner":
+            case "Pair":
+            case "Race":
+            case "Reputation":
+            case "ScriptVar":
+            case "Sex":
+            case "Slice":
+            case "Sound":
+            case "SoundFile":
+            case "SpellItem":
+            case "Topic":
+            case "VariableName":
+            case "WeatherID":
+            case "unk2E":
+                return "Number";
+            case "Actor":
+            case "AnyForm":
+            case "CaravanDeck":
+            case "Cell":
+            case "Container":
+            case "Form":
+            case "FormList":
+            case "IdleForm":
+            case "InvObjectOrFormList":
+            case "LeveledChar":
+            case "LeveledCreature":
+            case "LeveledItem":
+            case "LeveledOrBaseChar":
+            case "LeveledOrBaseCreature":
+            case "MagicItem":
+            case "MapMarker":
+            case "Message":
+            case "NPC":
+            case "NonFormList":
+            case "Note":
+            case "Object":
+            case "Perk":
+            case "Quest":
+            case "QuestStage":
+            case "Region":
+            case "Variable":
+            case "WorldSpace":
+                return "Number";
+        }
+    }
+
     toString(): string {
-        return this.kind;
+        if (this.members.length === 0) {
+            return this.kind;
+        } else {
+            return `{\n    ${this.members.map((e) => e.type.toStringWithName(e.name)).join("\n    ")}\n} ${this.kind}`;
+        }
     }
 
     toStringWithName(name: string): string {
@@ -273,6 +503,22 @@ export class ExprTypeFunction {
         public ret: ExprType,
         public args: ExprType[] = []
     ) {}
+
+    isAssignableTo(other: ExprType): boolean {
+        if (other.kind !== "Function" || other.ret.kind !== this.ret.kind) {
+            return false;
+        }
+        for (let i = 0; i < Math.min(this.args.length, other.args.length); ++i) {
+            if (this.args[i].kind !== other.args[i].kind) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // isChildOf(_other: ExprType): boolean {
+    //     return false;
+    // }
 
     toString(): string {
         if (this.args.length !== 0) {
@@ -290,8 +536,6 @@ export class ExprTypeFunction {
         }
     }
 }
-
-export type ExprType = ExprTypeSimple | ExprTypeFunction;
 
 export type ExprKind = ExprKindEngine | ExprKindCustom;
 
@@ -483,30 +727,4 @@ export class Symbol {
         public type: ExprType,
         public decl: Name
     ) {}
-}
-
-export class Signature {
-    ret: ExprType;
-    args: ExprType[];
-
-    constructor(ret: ExprType, args?: ExprType[]) {
-        this.ret = ret;
-        this.args = args ?? [];
-    }
-
-    toString(): string {
-        if (this.args.length !== 0) {
-            return `(${this.ret}) ${this.args.join(" ")}`;
-        } else {
-            return this.ret.toString();
-        }
-    }
-
-    toStringWithName(name: string): string {
-        if (this.args.length !== 0) {
-            return `(${this.ret}) ${name} ${this.args.join(" ")}`;
-        } else {
-            return this.ret.toStringWithName(name);
-        }
-    }
 }
