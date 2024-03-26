@@ -32,6 +32,7 @@ import {
     StmtList,
     String,
     Symbol,
+    SymbolTable,
     UnaryExpr,
     VarDeclStmt,
     VarOrVarDeclList,
@@ -40,7 +41,7 @@ import {
 import { NodeOrToken, SyntaxKind, Token } from "../syntax.js";
 
 export class Analyzer {
-    scriptVarMap: Map<string, File[]> = new Map();
+    scriptVarMap: SymbolTable<File[]> = new SymbolTable();
     file!: File;
 
     constructor(public db: FileDatabase) {
@@ -149,13 +150,13 @@ export class Analyzer {
         } else if (node instanceof FieldExpr) {
             const lhs = this.analyzeExpr(node.lhs);
             if (!(lhs instanceof ExprTypeFunction)) {
-                const builtin = this.db.builtinFunctions.get(node.field.symbol.name.toLowerCase());
+                const builtin = this.db.builtinFunctions.get(node.field.symbol.name);
                 if (builtin !== undefined) {
                     node.type = this.analyzeExpr(node.field);
                 } else {
                     if (lhs.file === undefined) {
                         lhs.members.push(node.field.symbol);
-                        const files = this.scriptVarMap.get(node.field.symbol.name.toLowerCase());
+                        const files = this.scriptVarMap.get(node.field.symbol.name);
                         if (files === undefined) {
                             // TODO: report error 'unable to resolve symbol'
                         } else {
@@ -163,7 +164,7 @@ export class Analyzer {
                             for (const file of files) {
                                 possibleFiles.push(file);
                                 for (const symbol of lhs.members) {
-                                    if (!file.hir!.symbolTable.has(symbol.name.toLowerCase())) {
+                                    if (!file.hir!.symbolTable.has(symbol.name)) {
                                         possibleFiles.pop();
                                     }
                                 }
@@ -178,9 +179,7 @@ export class Analyzer {
                     }
 
                     if (lhs.file !== undefined) {
-                        const symbol = lhs.file.hir!.symbolTable.get(
-                            node.field.symbol.name.toLowerCase()
-                        );
+                        const symbol = lhs.file.hir!.symbolTable.get(node.field.symbol.name);
                         if (symbol !== undefined) {
                             node.field.symbol = symbol;
                             node.type = node.field.symbol.type;
@@ -236,11 +235,11 @@ export class Analyzer {
                 if (node.symbol instanceof GlobalSymbol) {
                     node.symbol.referencingFiles.add(this.file.doc.uri);
                     this.file.unresolvedSymbols.add(node.symbol);
-                    this.db.globalSymbols.set(node.symbol.name.toLowerCase(), node.symbol);
+                    this.db.globalSymbols.set(node.symbol.name, node.symbol);
                 } else {
                     const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
                     globalSymbol.referencingFiles.add(this.file.doc.uri);
-                    this.db.globalSymbols.set(node.symbol.name.toLowerCase(), globalSymbol);
+                    this.db.globalSymbols.set(node.symbol.name, globalSymbol);
                 }
             }
         }
@@ -417,7 +416,7 @@ export function findDefinition(
 ): Symbol | GlobalSymbol | FunctionData | undefined {
     for (const parent of ancestors(db, nameRef)) {
         if ("symbolTable" in parent) {
-            const symbol = parent.symbolTable.get(nameRef.symbol.name.toLowerCase());
+            const symbol = parent.symbolTable.get(nameRef.symbol.name);
             if (symbol === undefined) {
                 continue;
             }
@@ -427,8 +426,7 @@ export function findDefinition(
     }
 
     return (
-        db.globalSymbols.get(nameRef.symbol.name.toLowerCase()) ??
-        db.builtinFunctions.get(nameRef.symbol.name.toLowerCase())
+        db.globalSymbols.get(nameRef.symbol.name) ?? db.builtinFunctions.get(nameRef.symbol.name)
     );
 }
 

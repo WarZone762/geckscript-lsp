@@ -50,16 +50,17 @@ export function completionItems(
         });
     }
 
-    for (const item of db.globalSymbols.values()) {
-        completionItems.push({
-            label: item.name,
-            detail: item.type.toStringWithName(item.name),
-            kind:
-                item.type.kind === "Function"
-                    ? CompletionItemKind.Function
-                    : CompletionItemKind.Variable,
-        });
-    }
+    // FIXME: too many completion items
+    // for (const item of db.globalSymbols.values()) {
+    //     completionItems.push({
+    //         label: item.name,
+    //         detail: item.type.toStringWithName(item.name),
+    //         kind:
+    //             item.type.kind === "Function"
+    //                 ? CompletionItemKind.Function
+    //                 : CompletionItemKind.Variable,
+    //     });
+    // }
 
     for (const fn of db.builtinFunctions.values()) {
         completionItems.push({
@@ -75,6 +76,7 @@ export function completionItems(
             kind: fn.reqRef ? CompletionItemKind.Method : CompletionItemKind.Function,
         });
     }
+    console.error(completionItems.length);
 
     return completionItems;
 }

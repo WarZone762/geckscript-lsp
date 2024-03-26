@@ -4,7 +4,6 @@ import {
     DiagnosticSeverity,
     InitializeResult,
     ProposedFeatures,
-    SemanticTokensRequest,
     TextDocumentSyncKind,
     WorkspaceFolder,
     createConnection,

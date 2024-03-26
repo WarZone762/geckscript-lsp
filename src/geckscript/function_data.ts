@@ -2,16 +2,16 @@ import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
 
-import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple } from "./hir.js";
+import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, SymbolTable } from "./hir.js";
 
-export function loadFunctionData(): Map<string, FunctionData> {
+export function loadFunctionData(): SymbolTable<FunctionData> {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
     const functionDataPath = path.resolve(
         path.join(__dirname, "..", "..", "resources", "function_data.json")
     );
 
     const funcs = JSON.parse(fs.readFileSync(functionDataPath).toString()) as FunctionDataJSON[];
-    const map = new Map();
+    const map = new SymbolTable();
     for (const {
         name,
         alias,
@@ -35,7 +35,7 @@ export function loadFunctionData(): Map<string, FunctionData> {
             desc
         );
 
-        map.set(name.toLowerCase(), func);
+        map.set(name, func);
         if (alias !== undefined) {
             const newFunc = new FunctionData(
                 alias,
@@ -48,7 +48,7 @@ export function loadFunctionData(): Map<string, FunctionData> {
                 reqRef,
                 desc
             );
-            map.set(alias.toLowerCase(), newFunc);
+            map.set(alias, newFunc);
         }
     }
 

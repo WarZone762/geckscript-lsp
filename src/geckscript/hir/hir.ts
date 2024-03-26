@@ -19,7 +19,7 @@ export class Script {
     constructor(
         public name: string,
         public stmtList: StmtList,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.Script
     ) {}
 }
@@ -38,7 +38,7 @@ export class IfStmt {
         public cond: Expr,
         public trueBranch: StmtList,
         public falseBranch: Branch | undefined,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.IfStmt | ast.Branch
     ) {}
 }
@@ -48,7 +48,7 @@ export class Branch {
         public cond: Expr | undefined,
         public trueBranch: StmtList,
         public falseBranch: Branch | undefined,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.IfStmt | ast.Branch
     ) {}
 }
@@ -57,7 +57,7 @@ export class WhileStmt {
     constructor(
         public cond: Expr,
         public stmtList: StmtList,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.WhileStmt
     ) {}
 }
@@ -66,7 +66,7 @@ export class BeginStmt {
     constructor(
         public blocktype: Blocktype,
         public stmtList: StmtList,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.BeginStmt
     ) {}
 }
@@ -84,7 +84,7 @@ export class ForeachStmt {
         public nameRef: NameRef,
         public iter: Expr,
         public stmtList: StmtList,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.ForeachStmt
     ) {}
 }
@@ -197,7 +197,7 @@ export class LambdaInlineExpr {
         public type: ExprType,
         public params: VarOrVarDeclList,
         public expr: Expr,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.LambdaInlineExpr
     ) {}
 }
@@ -207,7 +207,7 @@ export class LambdaExpr {
         public type: ExprType,
         public params: VarOrVarDeclList,
         public stmtList: StmtList,
-        public symbolTable: Map<string, Symbol>,
+        public symbolTable: SymbolTable<Symbol>,
         public node: ast.LambdaExpr
     ) {}
 }
@@ -710,6 +710,35 @@ export function isExprKindEngine(str: string): str is ExprKindEngine {
 }
 
 export type ExprKindCustom = "Function";
+
+/** A map with only lowercase keys */
+export class SymbolTable<T = any> {
+    constructor(private map: Map<string, T> = new Map()) {}
+
+    has(k: string): boolean {
+        return this.map.has(k.toLowerCase());
+    }
+
+    get(k: string): T | undefined {
+        return this.map.get(k.toLowerCase());
+    }
+
+    set(k: string, v: T): Map<string, T> {
+        return this.map.set(k.toLowerCase(), v);
+    }
+
+    delete(k: string): boolean {
+        return this.map.delete(k.toLowerCase());
+    }
+
+    keys(): IterableIterator<string> {
+        return this.map.keys();
+    }
+
+    values(): IterableIterator<T> {
+        return this.map.values();
+    }
+}
 
 export class GlobalSymbol {
     referencingFiles: Set<string> = new Set();

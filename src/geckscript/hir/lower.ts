@@ -29,6 +29,7 @@ import {
     StmtList,
     String,
     Symbol,
+    SymbolTable,
     UnaryExpr,
     UnaryExprOp,
     VarDeclStmt,
@@ -51,7 +52,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const stmtList = this.stmtList(node.body(), symbolTable);
         if (stmtList === undefined) {
             return;
@@ -62,7 +63,7 @@ export class LowerContext {
 
     stmtList(
         node: ast.StmtList | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): StmtList | undefined {
         if (node === undefined) {
             return;
@@ -79,7 +80,7 @@ export class LowerContext {
         return new StmtList(stmts, node);
     }
 
-    stmt(node: ast.Stmt | undefined, symbolTable: Map<string, Symbol>): Stmt | undefined {
+    stmt(node: ast.Stmt | undefined, symbolTable: SymbolTable<Symbol>): Stmt | undefined {
         if (node === undefined) {
             return;
         }
@@ -106,7 +107,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const cond = this.expr(node.cond(), symbolTable);
         if (cond === undefined) {
             return;
@@ -127,7 +128,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const cond = this.expr(node.cond(), symbolTable);
 
         const trueBranch = this.stmtList(node.trueBranch(), symbolTable);
@@ -145,7 +146,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const cond = this.expr(node.cond(), symbolTable);
         if (cond === undefined) {
             return;
@@ -164,7 +165,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const stmtList = this.stmtList(node.body(), symbolTable);
         if (stmtList === undefined) {
             return;
@@ -180,7 +181,7 @@ export class LowerContext {
 
     blocktype(
         node: ast.BlocktypeDesig | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): Blocktype | undefined {
         if (node === undefined) {
             return;
@@ -215,7 +216,7 @@ export class LowerContext {
             return;
         }
 
-        const symbolTable = new Map();
+        const symbolTable = new SymbolTable();
         const iter = this.expr(node.iterable(), symbolTable);
         if (iter === undefined) {
             return;
@@ -229,7 +230,7 @@ export class LowerContext {
         return new ForeachStmt(nameRef, iter, stmtList, symbolTable, node);
     }
 
-    setStmt(node: ast.SetStmt | undefined, symbolTable: Map<string, Symbol>): SetStmt | undefined {
+    setStmt(node: ast.SetStmt | undefined, symbolTable: SymbolTable<Symbol>): SetStmt | undefined {
         if (node === undefined) {
             return;
         }
@@ -249,7 +250,7 @@ export class LowerContext {
 
     varDeclStmt(
         node: ast.VarDeclStmt | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): VarDeclStmt | undefined {
         if (node === undefined) {
             return;
@@ -265,7 +266,7 @@ export class LowerContext {
         return new VarDeclStmt(name, value, node);
     }
 
-    expr(node: ast.Expr | undefined, symbolTable: Map<string, Symbol>): Expr | undefined {
+    expr(node: ast.Expr | undefined, symbolTable: SymbolTable<Symbol>): Expr | undefined {
         if (node === undefined) {
             return;
         }
@@ -294,7 +295,7 @@ export class LowerContext {
 
     unaryExpr(
         node: ast.UnaryExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): UnaryExpr | undefined {
         if (node === undefined) {
             return;
@@ -311,7 +312,7 @@ export class LowerContext {
         return new UnaryExpr(new ExprTypeSimple(), op, operand, node);
     }
 
-    binExpr(node: ast.BinExpr | undefined, symbolTable: Map<string, Symbol>): BinExpr | undefined {
+    binExpr(node: ast.BinExpr | undefined, symbolTable: SymbolTable<Symbol>): BinExpr | undefined {
         if (node === undefined) {
             return;
         }
@@ -334,7 +335,7 @@ export class LowerContext {
 
     fieldExpr(
         node: ast.FieldExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): FieldExpr | undefined {
         if (node === undefined) {
             return;
@@ -370,7 +371,7 @@ export class LowerContext {
 
     indexExpr(
         node: ast.IndexExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): IndexExpr | undefined {
         if (node === undefined) {
             return;
@@ -391,7 +392,7 @@ export class LowerContext {
 
     funcExpr(
         node: ast.FuncExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): FuncExpr | undefined {
         if (node === undefined) {
             return;
@@ -417,7 +418,7 @@ export class LowerContext {
         return new FuncExpr(new ExprTypeSimple(), func, args, node);
     }
 
-    letExpr(node: ast.LetExpr | undefined, symbolTable: Map<string, Symbol>): LetExpr | undefined {
+    letExpr(node: ast.LetExpr | undefined, symbolTable: SymbolTable<Symbol>): LetExpr | undefined {
         if (node === undefined) {
             return;
         }
@@ -447,7 +448,7 @@ export class LowerContext {
 
     lambdaInlineExpr(
         node: ast.LambdaInlineExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): LambdaInlineExpr | undefined {
         if (node === undefined) {
             return;
@@ -473,7 +474,7 @@ export class LowerContext {
 
     lambdaExpr(
         node: ast.LambdaExpr | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): LambdaExpr | undefined {
         if (node === undefined) {
             return;
@@ -492,7 +493,7 @@ export class LowerContext {
         return new LambdaExpr(new ExprTypeSimple(), params, stmtList, symbolTable, node);
     }
 
-    varOrVarDeclList(node: ast.VarOrVarDeclList | undefined, symbolTable: Map<string, Symbol>) {
+    varOrVarDeclList(node: ast.VarOrVarDeclList | undefined, symbolTable: SymbolTable<Symbol>) {
         if (node === undefined) {
             return;
         }
@@ -512,7 +513,7 @@ export class LowerContext {
 
     varOrVarDecl(
         node: ast.VarOrVarDecl | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): VarOrVarDecl | undefined {
         if (node instanceof ast.Name) {
             return this.name(node, undefined, symbolTable);
@@ -526,7 +527,7 @@ export class LowerContext {
     name(
         node: ast.Name | undefined,
         typeToken: Token<TypeSyntaxKind> | undefined,
-        symbolTable: Map<string, Symbol>
+        symbolTable: SymbolTable<Symbol>
     ): Name | undefined {
         if (node === undefined) {
             return;
@@ -563,7 +564,7 @@ export class LowerContext {
 
         // TODO: error if already exists
         const nameHir = new Name(name, type, node);
-        symbolTable.set(name.toLowerCase(), nameHir.symbol);
+        symbolTable.set(name, nameHir.symbol);
 
         return nameHir;
     }

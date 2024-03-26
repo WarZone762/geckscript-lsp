@@ -9,7 +9,14 @@ import { URI } from "vscode-uri";
 import { KeywordStyle } from "../language_features/format.js";
 import * as ast from "./ast.js";
 import * as fnData from "./function_data.js";
-import { Analyzer, ExprTypeSimple, GlobalSymbol, LowerContext, Script } from "./hir.js";
+import {
+    Analyzer,
+    ExprTypeSimple,
+    GlobalSymbol,
+    LowerContext,
+    Script,
+    SymbolTable,
+} from "./hir.js";
 import * as parsing from "./parsing.js";
 import { Node, NodeOrToken, SyntaxKind } from "./syntax.js";
 
@@ -19,10 +26,10 @@ export * from "./hir/lower.js";
 
 export class FileDatabase {
     files: Map<string, File> = new Map();
-    globalSymbols: Map<string, GlobalSymbol> = new Map([
-        ["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))],
-    ]);
-    builtinFunctions: Map<string, fnData.FunctionData> = fnData.loadFunctionData();
+    globalSymbols: SymbolTable<GlobalSymbol> = new SymbolTable(
+        new Map([["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))]])
+    );
+    builtinFunctions: SymbolTable<fnData.FunctionData> = fnData.loadFunctionData();
     config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
@@ -106,10 +113,10 @@ export class FileDatabase {
         const oldFile = this.files.get(doc.uri);
         if (oldFile !== undefined) {
             for (const unresolvedSymbol of oldFile.unresolvedSymbols.values()) {
-                const symbol = this.globalSymbols.get(unresolvedSymbol.name.toLowerCase());
+                const symbol = this.globalSymbols.get(unresolvedSymbol.name);
                 symbol?.referencingFiles.delete(doc.uri);
                 if (symbol?.referencingFiles.size === 0) {
-                    this.globalSymbols.delete(unresolvedSymbol.name.toLowerCase());
+                    this.globalSymbols.delete(unresolvedSymbol.name);
                 }
             }
         }
