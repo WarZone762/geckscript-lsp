@@ -4,18 +4,18 @@ Provides various language features for the scripting language used by GECK for F
 
 ## Features
 
-- [x] parsing and error checking
+- [x] parsing and syntax error checking
+- [x] code completion
 - [x] configuration
 - [x] document symbols
 - [x] formatting
 - [x] goto definition and references
 - [x] highlight ranges
+- [x] hover
 - [x] renaming
 - [x] semantic tokens
 - [x] static analysis
-- [x] proper code completion
 - [ ] selection range
-- [ ] hover
 - [ ] signature help
 - [ ] code actions
 - [ ] inlay hints

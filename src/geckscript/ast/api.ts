@@ -168,7 +168,7 @@ export function nearestToken(root: Node, offset: number): Token | undefined {
 
     let lastLeaf = leafs_.next().value;
     for (const leaf of leafs_) {
-        if (leaf.offset > offset) {
+        if (leaf.offset >= offset) {
             return lastLeaf;
         } else {
             lastLeaf = leaf;
