@@ -1,7 +1,7 @@
 import { SyntaxKind, TokenSyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
 import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
-import { nameRef, nameRefR, varDeclR, varOrVarDeclR } from "./other.js";
+import { nameRef, nameRefR, varDeclR, varOrVarDeclList, varOrVarDeclR } from "./other.js";
 import { stmtList } from "./statements.js";
 
 export function literal(p: Parser): CompletedMarker | undefined {
@@ -25,14 +25,7 @@ export function exprNoFunc(p: Parser): boolean {
 export function exprLambdaInline(p: Parser): CompletedMarker {
     const m = p.start();
 
-    p.next(SyntaxKind.LBRACK);
-
-    while (!p.at(SyntaxKind.EOF) && !p.at(SyntaxKind.NEWLINE) && !p.at(SyntaxKind.RBRACK)) {
-        varOrVarDeclR(p, TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK])));
-        p.opt(SyntaxKind.COMMA);
-    }
-
-    p.expect(SyntaxKind.RBRACK);
+    varOrVarDeclList(p);
     if (!p.opt(SyntaxKind.EQGT)) {
         p.errRecover("expected '=>'", EXPR_FIRST);
     }
@@ -48,26 +41,7 @@ export function exprLambda(p: Parser): CompletedMarker {
     if (!p.opt(SyntaxKind.FUNCTION_KW)) {
         p.errRecover("expected 'function'", new TokenSet([SyntaxKind.LBRACK, SyntaxKind.RPAREN]));
     }
-    if (!p.opt(SyntaxKind.LBRACK)) {
-        p.errRecover(
-            "expected '{'",
-            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN]))
-        );
-    }
-
-    while (
-        !p.at(SyntaxKind.EOF) &&
-        !p.at(SyntaxKind.NEWLINE) &&
-        !p.at(SyntaxKind.RBRACK) &&
-        !p.at(SyntaxKind.RPAREN)
-    ) {
-        varOrVarDeclR(
-            p,
-            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN]))
-        );
-        p.opt(SyntaxKind.COMMA);
-    }
-    p.expect(SyntaxKind.RBRACK);
+    varOrVarDeclList(p);
     p.expect(SyntaxKind.NEWLINE);
 
     stmtList(p, new TokenSet([SyntaxKind.END_KW, SyntaxKind.RPAREN]));

@@ -47,8 +47,7 @@ export function completionItems(
                 }
             }
         }
-        // TODO: better analysis state manegment
-        db.files.delete("GECKSCRIPT-LSP-COMPLETION");
+        db.deleteFile("GECKSCRIPT-LSP-COMPLETION");
 
         for (const fn of db.builtinFunctions.values()) {
             if (fn.reqRef) {

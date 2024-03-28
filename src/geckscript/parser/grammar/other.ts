@@ -1,6 +1,6 @@
 import { SyntaxKind, isType } from "../../syntax.js";
 import { CompletedMarker, Parser } from "../parser.js";
-import { EXPR_FIRST, TokenSet } from "../token_set.js";
+import { EXPR_FIRST, TYPE, TokenSet } from "../token_set.js";
 import { exprNoFunc, exprPrimary } from "./expressions.js";
 import { stmtListRoot } from "./statements.js";
 
@@ -60,6 +60,33 @@ export function varOrVarDeclR(p: Parser, recovery: TokenSet) {
 
 export function varOrVarDecl(p: Parser) {
     varOrVarDeclR(p, new TokenSet());
+}
+
+export function varOrVarDeclList(p: Parser) {
+    const m = p.start();
+
+    if (!p.opt(SyntaxKind.LBRACK)) {
+        p.errRecover(
+            "expected '{'",
+            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RPAREN]))
+        );
+    }
+
+    while (
+        !p.at(SyntaxKind.EOF) &&
+        !p.at(SyntaxKind.NEWLINE) &&
+        !p.at(SyntaxKind.RBRACK) &&
+        !p.at(SyntaxKind.RPAREN)
+    ) {
+        varOrVarDeclR(
+            p,
+            TYPE.union(new TokenSet([SyntaxKind.IDENT, SyntaxKind.RBRACK, SyntaxKind.RPAREN]))
+        );
+        p.opt(SyntaxKind.COMMA);
+    }
+    p.expect(SyntaxKind.RBRACK);
+
+    return m.complete(p, SyntaxKind.VAR_OR_VAR_DECL_LIST);
 }
 
 export function blockType(p: Parser) {

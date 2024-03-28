@@ -116,8 +116,11 @@ export class Analyzer {
             node instanceof LambdaExpr
         ) {
             this.analyzeExpr(node);
+        } else if (node instanceof VarOrVarDeclList) {
+            for (const param of node.list) {
+                this.analyzeExpr(param);
+            }
         } else if (
-            node instanceof VarOrVarDeclList ||
             node instanceof Blocktype ||
             node instanceof Name ||
             node instanceof NameRef ||
@@ -139,7 +142,7 @@ export class Analyzer {
     }
 
     analyzeExpr(node: Expr | Name): ExprType {
-        if (node.type.kind !== "<unknown>") {
+        if (node.type.kind !== "<unknown>" && node.type.kind !== "Function") {
             return node.type;
         }
 
@@ -194,12 +197,15 @@ export class Analyzer {
                 // TODO: report error 'function can not use dot syntax'
             }
         } else if (node instanceof IndexExpr) {
-            // TODO
+            this.analyzeExpr(node.lhs);
+            this.analyzeExpr(node.index);
+            node.type = new ExprTypeSimple("Ambiguous");
         } else if (node instanceof FuncExpr) {
             const func = this.analyzeExpr(node.func);
             if (func instanceof ExprTypeFunction) {
                 node.type = func.ret;
                 for (let i = 0; i < Math.min(node.args.length, func.args.length); ++i) {
+                    this.analyzeExpr(node.args[i]);
                     if (node.args[i].type.kind === "<unknown>") {
                         this.propagateType(node.args[i], func.args[i]);
                     }
@@ -207,6 +213,7 @@ export class Analyzer {
             } else if (func.kind === "<unknown>") {
                 const type = new ExprTypeFunction(new ExprTypeSimple());
                 for (const arg of node.args) {
+                    this.analyzeExpr(arg);
                     type.args.push(arg.type);
                 }
 
@@ -218,29 +225,42 @@ export class Analyzer {
         } else if (node instanceof LetExpr) {
             node.type = this.analyzeBinOp(node.lhs, node.expr);
         } else if (node instanceof LambdaInlineExpr) {
-            // TODO
+            this.analyzeNode(node.params);
+            const ret = this.analyzeExpr(node.expr);
+            const args = [];
+            for (const arg of node.params.list) {
+                args.push(arg.type);
+            }
+            node.type.ret = ret;
+            node.type.args = args;
         } else if (node instanceof LambdaExpr) {
-            // TODO
+            this.analyzeNode(node.params);
+            this.analyzeNode(node.stmtList);
+            const args = [];
+            for (const arg of node.params.list) {
+                args.push(arg.type);
+            }
+            node.type.args = args;
         } else if (node instanceof NameRef) {
             const symbol = findDefinition(this.db, node);
-            if (symbol !== undefined) {
-                node.symbol = symbol;
-            } else {
-                this.file.diagnostics.push({
-                    range: this.file.rangeOf(node.node.green),
-                    message: `unable to resolve symbol ${node.symbol.name}`,
-                    severity: DiagnosticSeverity.Information,
-                });
+            if (
+                symbol === undefined ||
+                (symbol instanceof GlobalSymbol && symbol.referencingFiles.size !== 0)
+            ) {
+                this.reportDiagnostic(
+                    `unable to resolve symbol ${node.symbol.name}`,
+                    node,
+                    DiagnosticSeverity.Information
+                );
 
-                if (node.symbol instanceof GlobalSymbol) {
-                    node.symbol.referencingFiles.add(this.file.doc.uri);
-                    this.file.unresolvedSymbols.add(node.symbol);
-                    this.db.globalSymbols.set(node.symbol.name, node.symbol);
-                } else {
+                if (symbol === undefined) {
                     const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
-                    globalSymbol.referencingFiles.add(this.file.doc.uri);
-                    this.db.globalSymbols.set(node.symbol.name, globalSymbol);
+                    this.addUnresolvedSymbol(globalSymbol);
+                } else {
+                    this.addUnresolvedSymbol(symbol);
                 }
+            } else {
+                node.symbol = symbol;
             }
         }
 
@@ -259,7 +279,6 @@ export class Analyzer {
                 this.propagateType(expr.operand, type);
             } else if (expr instanceof FieldExpr) {
                 expr.type = type;
-                // TODO: make conatiner type
                 this.propagateType(expr.field, type);
             } else if (expr instanceof IndexExpr) {
                 expr.type = type;
@@ -276,11 +295,10 @@ export class Analyzer {
                 expr.type = type;
                 this.propagateType(expr.expr, type);
             } else if (expr instanceof LambdaInlineExpr) {
-                expr.type = type;
-                // TODO
+                this.propagateType(expr.expr, type);
+                expr.type.ret = type;
             } else if (expr instanceof LambdaExpr) {
-                expr.type = type;
-                // TODO
+                expr.type.ret = type;
             } else if (expr instanceof NameRef) {
                 if (expr.symbol instanceof FunctionData) {
                     console.error(
@@ -305,6 +323,20 @@ export class Analyzer {
         return expr.type;
         // TODO
         // return type.isChildOf(expr.type) ? expr.type : type;
+    }
+
+    addUnresolvedSymbol(symbol: GlobalSymbol) {
+        symbol.referencingFiles.add(this.file.doc.uri);
+        this.file.unresolvedSymbols.add(symbol);
+        this.db.globalSymbols.set(symbol.name, symbol);
+    }
+
+    reportDiagnostic(msg: string, node: HirNode, severity: DiagnosticSeverity) {
+        this.file.diagnostics.push({
+            range: this.file.rangeOf("green" in node.node ? node.node.green : node.node),
+            message: msg,
+            severity: severity,
+        });
     }
 }
 

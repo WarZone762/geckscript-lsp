@@ -95,6 +95,23 @@ export class FileDatabase {
         return file;
     }
 
+    deleteFile(uri: string) {
+        // remove old file from global symbols it references
+        const oldFile = this.files.get(uri);
+        if (oldFile !== undefined) {
+            for (const unresolvedSymbol of oldFile.unresolvedSymbols.values()) {
+                const symbol = this.globalSymbols.get(unresolvedSymbol.name);
+                symbol?.referencingFiles.delete(uri);
+                if (symbol?.referencingFiles.size === 0) {
+                    this.globalSymbols.delete(unresolvedSymbol.name);
+                }
+            }
+
+            this.files.delete(uri);
+            this.scriptCache.delete(oldFile.root.green);
+        }
+    }
+
     parseFile(doc: TextDocument): File {
         const [node, errors] = parsing.parseStr(doc.getText());
         assert.strictEqual(node.kind, SyntaxKind.SCRIPT);
@@ -109,26 +126,18 @@ export class FileDatabase {
 
         const script = new ast.Script(node);
 
-        // remove old file from global symbols it references
-        const oldFile = this.files.get(doc.uri);
-        if (oldFile !== undefined) {
-            for (const unresolvedSymbol of oldFile.unresolvedSymbols.values()) {
-                const symbol = this.globalSymbols.get(unresolvedSymbol.name);
-                symbol?.referencingFiles.delete(doc.uri);
-                if (symbol?.referencingFiles.size === 0) {
-                    this.globalSymbols.delete(unresolvedSymbol.name);
-                }
-            }
-        }
-
+        this.deleteFile(doc.uri);
         const file = new File(doc, script, diagnostics);
+        for (const symbol of file.unresolvedSymbols.values()) {
+            this.globalSymbols.set(symbol.name, symbol);
+        }
         this.files.set(doc.uri, file);
         this.scriptCache.set(node, file);
 
         return file;
     }
 
-    findScript(script: Node<SyntaxKind.SCRIPT>): File | undefined {
+    script(script: Node<SyntaxKind.SCRIPT>): File | undefined {
         return this.scriptCache.get(script);
     }
 
@@ -168,6 +177,9 @@ export class File {
         this.root = root;
         const lower = new LowerContext();
         this.hir = lower.script(root);
+        for (const symbol of lower.globalSymbols) {
+            this.unresolvedSymbols.add(symbol);
+        }
         this.diagnostics = diagnostics;
     }
 

@@ -8,6 +8,7 @@ import {
     Blocktype,
     Branch,
     Expr,
+    ExprTypeFunction,
     ExprTypeSimple,
     FieldExpr,
     FieldExprOp,
@@ -41,6 +42,7 @@ import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 
 export class LowerContext {
     diagnostics: Diagnostic[] = [];
+    globalSymbols: GlobalSymbol[] = [];
 
     script(node: ast.Script | undefined): Script | undefined {
         if (node === undefined) {
@@ -469,7 +471,13 @@ export class LowerContext {
             return;
         }
 
-        return new LambdaInlineExpr(new ExprTypeSimple(), params, expr, symbolTable, node);
+        return new LambdaInlineExpr(
+            new ExprTypeFunction(new ExprTypeSimple()),
+            params,
+            expr,
+            symbolTable,
+            node
+        );
     }
 
     lambdaExpr(
@@ -490,7 +498,23 @@ export class LowerContext {
             return;
         }
 
-        return new LambdaExpr(new ExprTypeSimple(), params, stmtList, symbolTable, node);
+        let type;
+        // if this lambda is top level, add it to global symbols
+        if (node.green.parent?.parent?.kind === SyntaxKind.SCRIPT) {
+            const script = new ast.Script(node.green.parent.parent);
+            const scriptName = script?.name()?.name()?.text;
+            if (scriptName !== undefined) {
+                type = new ExprTypeFunction(
+                    new ExprTypeSimple("Ambiguous"),
+                    params.list.map((e) => e.type)
+                );
+                this.globalSymbols.push(new GlobalSymbol(scriptName, type));
+            }
+        }
+
+        type ??= new ExprTypeFunction(new ExprTypeSimple());
+
+        return new LambdaExpr(type, params, stmtList, symbolTable, node);
     }
 
     varOrVarDeclList(node: ast.VarOrVarDeclList | undefined, symbolTable: SymbolTable<Symbol>) {

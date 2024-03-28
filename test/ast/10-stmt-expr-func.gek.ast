@@ -15,7 +15,7 @@ SCRIPT 0..126
       STMT_LIST 27..122
         FUNC_EXPR 27..37
           NAME_REF 27..31
-            IDENT 27..31 "call"
+            IDENT 27..31 "func"
           WHITESPACE 31..32 " "
           EXPR_LIST 32..37
             LITERAL 32..33
@@ -30,7 +30,7 @@ SCRIPT 0..126
         WHITESPACE 38..42 "    "
         FUNC_EXPR 42..53
           NAME_REF 42..46
-            IDENT 42..46 "call"
+            IDENT 42..46 "func"
           WHITESPACE 46..47 " "
           EXPR_LIST 47..53
             LITERAL 47..48
@@ -46,7 +46,7 @@ SCRIPT 0..126
         WHITESPACE 54..58 "    "
         FUNC_EXPR 58..72
           NAME_REF 58..62
-            IDENT 58..62 "call"
+            IDENT 58..62 "func"
           COMMA 62..63 ","
           WHITESPACE 63..64 " "
           EXPR_LIST 64..72
@@ -65,7 +65,7 @@ SCRIPT 0..126
         WHITESPACE 74..78 "    "
         FUNC_EXPR 78..96
           NAME_REF 78..82
-            IDENT 78..82 "call"
+            IDENT 78..82 "func"
           COMMA 82..83 ","
           WHITESPACE 83..84 " "
           EXPR_LIST 84..96
@@ -87,7 +87,7 @@ SCRIPT 0..126
         WHITESPACE 97..101 "    "
         FUNC_EXPR 101..121
           NAME_REF 101..105
-            IDENT 101..105 "call"
+            IDENT 101..105 "func"
           COMMA 105..106 ","
           WHITESPACE 106..107 " "
           EXPR_LIST 107..121

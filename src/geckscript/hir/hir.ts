@@ -194,7 +194,7 @@ export class LetExpr {
 
 export class LambdaInlineExpr {
     constructor(
-        public type: ExprType,
+        public type: ExprTypeFunction,
         public params: VarOrVarDeclList,
         public expr: Expr,
         public symbolTable: SymbolTable<Symbol>,
@@ -204,7 +204,7 @@ export class LambdaInlineExpr {
 
 export class LambdaExpr {
     constructor(
-        public type: ExprType,
+        public type: ExprTypeFunction,
         public params: VarOrVarDeclList,
         public stmtList: StmtList,
         public symbolTable: SymbolTable<Symbol>,

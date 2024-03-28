@@ -19,18 +19,19 @@ SCRIPT 0..90
           WHITESPACE 33..34 " "
           FUNCTION_KW 34..42 "function"
           WHITESPACE 42..43 " "
-          LBRACK 43..44 "{"
-          NAME_REF 44..45
-            IDENT 44..45 "a"
-          COMMA 45..46 ","
-          WHITESPACE 46..47 " "
-          NAME_REF 47..48
-            IDENT 47..48 "b"
-          COMMA 48..49 ","
-          WHITESPACE 49..50 " "
-          NAME_REF 50..51
-            IDENT 50..51 "c"
-          RBRACK 51..52 "}"
+          VAR_OR_VAR_DECL_LIST 43..52
+            LBRACK 43..44 "{"
+            NAME_REF 44..45
+              IDENT 44..45 "a"
+            COMMA 45..46 ","
+            WHITESPACE 46..47 " "
+            NAME_REF 47..48
+              IDENT 47..48 "b"
+            COMMA 48..49 ","
+            WHITESPACE 49..50 " "
+            NAME_REF 50..51
+              IDENT 50..51 "c"
+            RBRACK 51..52 "}"
           NEWLINE 52..53 "\n"
           WHITESPACE 53..61 "        "
           STMT_LIST 61..76

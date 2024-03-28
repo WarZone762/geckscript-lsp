@@ -14,18 +14,19 @@ SCRIPT 0..46
       WHITESPACE 23..27 "    "
       STMT_LIST 27..42
         LAMBDA_INLINE_EXPR 27..41
-          LBRACK 27..28 "{"
-          NAME_REF 28..29
-            IDENT 28..29 "a"
-          COMMA 29..30 ","
-          WHITESPACE 30..31 " "
-          NAME_REF 31..32
-            IDENT 31..32 "b"
-          COMMA 32..33 ","
-          WHITESPACE 33..34 " "
-          NAME_REF 34..35
-            IDENT 34..35 "c"
-          RBRACK 35..36 "}"
+          VAR_OR_VAR_DECL_LIST 27..36
+            LBRACK 27..28 "{"
+            NAME_REF 28..29
+              IDENT 28..29 "a"
+            COMMA 29..30 ","
+            WHITESPACE 30..31 " "
+            NAME_REF 31..32
+              IDENT 31..32 "b"
+            COMMA 32..33 ","
+            WHITESPACE 33..34 " "
+            NAME_REF 34..35
+              IDENT 34..35 "c"
+            RBRACK 35..36 "}"
           WHITESPACE 36..37 " "
           EQGT 37..39 "=>"
           WHITESPACE 39..40 " "

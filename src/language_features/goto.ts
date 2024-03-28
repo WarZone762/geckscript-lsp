@@ -20,7 +20,7 @@ export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Lo
         return null;
     }
 
-    const defFile = db.findScript(script);
+    const defFile = db.script(script);
     if (defFile === undefined) {
         return null;
     }
@@ -46,7 +46,7 @@ export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Locat
             continue;
         }
 
-        const defFile = db.findScript(script);
+        const defFile = db.script(script);
         if (defFile === undefined) {
             continue;
         }
