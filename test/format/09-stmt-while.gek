@@ -1,7 +1,7 @@
-scn Test09
+Scn Test09
 
-begin Test
-    while 1
-        set foo to 123
-    loop
-end
+Begin Test
+    While 1
+        Set foo To 123
+    Loop
+End

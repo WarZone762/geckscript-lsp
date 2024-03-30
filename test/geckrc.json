@@ -1,3 +1,5 @@
 {
-    "keywordStyle": "lower"
+    "$schema": "../src/geckscript/config.schema.json",
+    "keywordStyle": "capital",
+    "functionStyle": "capital"
 }

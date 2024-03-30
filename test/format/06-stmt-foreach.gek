@@ -1,7 +1,7 @@
-scn Test06
+Scn Test06
 
-begin Test
-    foreach e <- iter
-        set foo to 123
-    loop
-end
+Begin Test
+    ForEach e <- iter
+        Set foo To 123
+    Loop
+End

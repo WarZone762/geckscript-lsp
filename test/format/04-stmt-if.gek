@@ -1,9 +1,9 @@
-scn Test04
+Scn Test04
 
-begin Test
+Begin Test
 
-    if 1
-        set foo to 123
-    endif
+    If 1
+        Set foo To 123
+    EndIf
 
-end
+End

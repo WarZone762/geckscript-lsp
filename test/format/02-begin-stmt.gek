@@ -1,6 +1,6 @@
-scriptname Test02
+ScriptName Test02
 
 
-begin Test 1 0xFAF123
+Begin Test 1 0xFAF123
 
-end
+End

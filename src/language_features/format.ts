@@ -1,30 +1,40 @@
 import { FormattingOptions, TextEdit } from "vscode-languageserver";
 
-import { Node, NodeOrToken, SyntaxKind, Token, ast, hir, isKeyword } from "../geckscript.js";
+import {
+    Node,
+    NodeOrToken,
+    SyntaxKind,
+    Token,
+    TokenData,
+    ast,
+    config,
+    hir,
+    isKeyword,
+} from "../geckscript.js";
 
 export function formatDoc(
+    db: hir.FileDatabase,
     file: hir.File,
     opts: FormattingOptions,
-    config: hir.ServerConfig
+    config: config.ServerConfig
 ): TextEdit[] {
-    const f = new Formatter(file, { serverOpts: opts, keywordStyle: config.keywordStyle });
+    const f = new Formatter(db, file, { generalOpts: opts, serverOpts: config });
 
     return [f.format()];
 }
 
 class Formatter {
-    file: hir.File;
     pos: number = 0;
-    opts: Options;
     indent: number = 0;
     indentStr: string;
 
-    constructor(file: hir.File, opts: Options) {
-        this.file = file;
-        this.opts = opts;
-
-        this.indentStr = this.opts.serverOpts.insertSpaces
-            ? " ".repeat(this.opts.serverOpts.tabSize)
+    constructor(
+        public db: hir.FileDatabase,
+        public file: hir.File,
+        public opts: Options
+    ) {
+        this.indentStr = opts.generalOpts.insertSpaces
+            ? " ".repeat(opts.generalOpts.tabSize)
             : "\t";
     }
 
@@ -52,7 +62,9 @@ class Formatter {
 
         return TextEdit.replace(
             this.file.rangeOf(this.file.root.green),
-            ast.toString(this.file.root.green)
+            this.opts.generalOpts.trimFinalNewlines
+                ? ast.toString(this.file.root.green).trimEnd() + "\n"
+                : ast.toString(this.file.root.green)
         );
     }
 
@@ -150,17 +162,31 @@ class Formatter {
 
     formatToken(t: Token) {
         if (isKeyword(t.kind)) {
-            switch (this.opts.keywordStyle) {
-                case KeywordStyle.LOWER:
+            switch (this.opts.serverOpts.keywordStyle) {
+                case config.WordStyle.Lower:
                     t.text = t.text.toLowerCase();
                     break;
-                case KeywordStyle.UPPER:
+                case config.WordStyle.Upper:
                     t.text = t.text.toUpperCase();
                     break;
-                case KeywordStyle.CAPITAL:
-                    t.text = t.text.toLowerCase();
-                    t.text = t.text[0].toUpperCase() + t.text.substring(1);
+                case config.WordStyle.Capital:
+                    t.text = TokenData[t.text.toLowerCase()].canonicalName;
                     break;
+            }
+        } else if (t.kind === SyntaxKind.IDENT) {
+            const fn = this.db.builtinFunctions.get(t.text);
+            if (fn !== undefined) {
+                switch (this.opts.serverOpts.functionStyle) {
+                    case config.WordStyle.Lower:
+                        t.text = t.text.toLowerCase();
+                        break;
+                    case config.WordStyle.Upper:
+                        t.text = t.text.toUpperCase();
+                        break;
+                    case config.WordStyle.Capital:
+                        t.text = fn.name;
+                        break;
+                }
             }
         }
     }
@@ -171,12 +197,6 @@ class Formatter {
 }
 
 interface Options {
-    serverOpts: FormattingOptions;
-    keywordStyle: KeywordStyle;
-}
-
-export const enum KeywordStyle {
-    LOWER,
-    UPPER,
-    CAPITAL,
+    generalOpts: FormattingOptions;
+    serverOpts: config.ServerConfig;
 }

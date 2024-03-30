@@ -6,7 +6,8 @@ import { SyntaxKind, TokenData, ast, hir, isKeyword, isOp, isType } from "../gec
 export function completionItems(
     db: hir.FileDatabase,
     file: hir.File,
-    pos: Position
+    pos: Position,
+    triggerChar?: string
 ): CompletionItem[] | null {
     const token = ast.nearestToken(file.root.green, file.offsetAt(pos));
 
@@ -19,9 +20,11 @@ export function completionItems(
         return null;
     }
 
+    triggerChar ??= token.text;
+
     const completionItems: CompletionItem[] = [];
 
-    if (token.text === ".") {
+    if (triggerChar === ".") {
         const text =
             file.doc.getText().substring(0, token.offset + 1) +
             "GECKSCRIPTLSPCOMPLETION" +
@@ -109,21 +112,19 @@ export function completionItems(
         // }
 
         for (const fn of db.builtinFunctions.values()) {
-            if (!fn.reqRef) {
-                completionItems.push({
-                    label: fn.name,
-                    labelDetails:
-                        fn.alias !== undefined ? { detail: `(alias ${fn.alias})` } : undefined,
+            completionItems.push({
+                label: fn.name,
+                labelDetails:
+                    fn.alias !== undefined ? { detail: `(alias ${fn.alias})` } : undefined,
 
-                    detail: fn.signature(),
-                    documentation: {
-                        kind: MarkupKind.Markdown,
-                        value: `${fn.desc ?? ""}\n\n\n*From: ${fn.origin}*`,
-                    },
+                detail: fn.signature(),
+                documentation: {
+                    kind: MarkupKind.Markdown,
+                    value: `${fn.desc ?? ""}\n\n\n*From: ${fn.origin}*`,
+                },
 
-                    kind: CompletionItemKind.Function,
-                });
-            }
+                kind: fn.reqRef ? CompletionItemKind.Method : CompletionItemKind.Function,
+            });
         }
     }
 

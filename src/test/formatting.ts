@@ -6,8 +6,8 @@ import * as path from "path";
 import * as url from "url";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { hir } from "../geckscript.js";
-import { KeywordStyle, formatDoc } from "../language_features/format.js";
+import { config, hir } from "../geckscript.js";
+import { formatDoc } from "../language_features/format.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;
@@ -45,6 +45,7 @@ export async function format(filePath: string): Promise<string> {
     const file = DB.loadFile(TextDocument.create("test", "geckscript", 0, content.toString()));
 
     const edits = formatDoc(
+        DB,
         file,
         {
             tabSize: 4,
@@ -53,7 +54,7 @@ export async function format(filePath: string): Promise<string> {
             insertFinalNewline: true,
             trimTrailingWhitespace: true,
         },
-        { keywordStyle: KeywordStyle.LOWER }
+        { keywordStyle: config.WordStyle.Capital, functionStyle: config.WordStyle.Capital }
     );
 
     return TextDocument.applyEdits(file.doc, edits);

@@ -1,11 +1,10 @@
-scn Test16
+Scn Test16
 
-begin Test
+Begin Test
     !a
     -a
     $a
     #a
     *a
     &a
-end
-
+End

@@ -6,8 +6,8 @@ import { Diagnostic } from "vscode-languageserver";
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 
-import { KeywordStyle } from "../language_features/format.js";
 import * as ast from "./ast.js";
+import { ServerConfig, WordStyle, parseConfig } from "./config.js";
 import * as fnData from "./function_data.js";
 import {
     Analyzer,
@@ -30,7 +30,7 @@ export class FileDatabase {
         new Map([["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))]])
     );
     builtinFunctions: SymbolTable<fnData.FunctionData> = fnData.loadFunctionData();
-    config: ServerConfig = { keywordStyle: KeywordStyle.LOWER };
+    config: ServerConfig = { keywordStyle: WordStyle.Lower, functionStyle: WordStyle.Capital };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
     async loadDir(
@@ -50,10 +50,10 @@ export class FileDatabase {
             const stat = await fs.stat(fullPath);
 
             if (!stat.isDirectory() && file.endsWith("geckrc.json")) {
-                this.loadConfig(file);
-                fsSync.watch(file, undefined, (eventType) => {
+                this.config = await this.loadConfig(file);
+                fsSync.watch(file, undefined, async (eventType) => {
                     if (eventType === "change") {
-                        this.loadConfig(file);
+                        this.config = await this.loadConfig(file);
                     }
                 });
 
@@ -149,19 +149,8 @@ export class FileDatabase {
         }
     }
 
-    async loadConfig(configPath: string) {
-        const config = JSON.parse((await fs.readFile(configPath)).toString());
-        switch (config.keywordStyle) {
-            case "lower":
-                this.config.keywordStyle = KeywordStyle.LOWER;
-                break;
-            case "upper":
-                this.config.keywordStyle = KeywordStyle.UPPER;
-                break;
-            case "capital":
-                this.config.keywordStyle = KeywordStyle.CAPITAL;
-                break;
-        }
+    async loadConfig(configPath: string): Promise<ServerConfig> {
+        return parseConfig((await fs.readFile(configPath)).toString());
     }
 }
 
@@ -194,8 +183,4 @@ export class File {
     offsetAt(pos: Position): number {
         return this.doc.offsetAt(pos);
     }
-}
-
-export interface ServerConfig {
-    keywordStyle: KeywordStyle;
 }

@@ -1,7 +1,6 @@
-scn Test18 ; 123
+Scn Test18 ; 123
 
-begin Test ; 123
-    set a to 123 ; 123
-    set a to 123   ; 123
-end ; 123
-
+Begin Test ; 123
+    Set a To 123 ; 123
+    Set a To 123   ; 123
+End ; 123

@@ -1,6 +1,6 @@
-scn Test17
+Scn Test17
 
-begin Test
+Begin Test
     a[0] 1 2 3
     a->b 1 2 3
     a.b 1 2 4
@@ -11,4 +11,4 @@ begin Test
     a.a[a]->a
     a->a[a].a
     a->a.a[a]
-end
+End

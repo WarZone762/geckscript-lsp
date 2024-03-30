@@ -1,6 +1,5 @@
-scn Test14
+Scn Test14
 
-begin Test
-    call 1 (call 2 3 (call a b c))
-end
-
+Begin Test
+    Call 1 (Call 2 3 (Call a b c))
+End

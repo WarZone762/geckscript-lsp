@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Config",
+    "description": "geckscript-lsp config",
+    "type": "object",
+    "properties": {
+        "keywordStyle": {
+            "enum": [
+                "lower",
+                "upper",
+                "capital"
+            ]
+        },
+        "functionStyle": {
+            "enum": [
+                "lower",
+                "upper",
+                "capital"
+            ]
+        }
+    }
+}

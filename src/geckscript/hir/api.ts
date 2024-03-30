@@ -128,6 +128,7 @@ export class Analyzer {
             node instanceof String ||
             node instanceof Number
         ) {
+            undefined;
         }
     }
 

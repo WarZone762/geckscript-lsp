@@ -63,7 +63,7 @@ connection.onInitialize(async (params) => {
 
     const result: InitializeResult = {
         capabilities: {
-            completionProvider: {},
+            completionProvider: { triggerCharacters: ["."] },
             definitionProvider: true,
             documentFormattingProvider: true,
             documentHighlightProvider: true,
@@ -149,14 +149,16 @@ connection.onDidChangeTextDocument(
 );
 
 connection.onCompletion(
-    handler(async (file, params) => features.completionItems(DB, file, params.position))
+    handler(async (file, params) =>
+        features.completionItems(DB, file, params.position, params.context?.triggerCharacter)
+    )
 );
 
 connection.onDefinition(
     handler(async (file, params) => features.gotoDef(DB, file, params.position))
 );
 connection.onDocumentFormatting(
-    handler(async (file, params) => features.formatDoc(file, params.options, DB.config))
+    handler(async (file, params) => features.formatDoc(DB, file, params.options, DB.config))
 );
 connection.onDocumentHighlight(
     handler(async (file, params) => features.getHighlight(DB, file, params.position))

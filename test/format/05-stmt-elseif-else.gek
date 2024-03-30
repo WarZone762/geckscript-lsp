@@ -1,11 +1,11 @@
-scn Test05
+Scn Test05
 
-begin Test
-    if 1
-        set foo to 123
-    elseif 2
-        set bar to 234
-    else
-        set baz to 345
-    endif
-end
+Begin Test
+    If 1
+        Set foo To 123
+    ElseIf 2
+        Set bar To 234
+    Else
+        Set baz To 345
+    EndIf
+End

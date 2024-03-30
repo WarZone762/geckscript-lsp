@@ -2,16 +2,16 @@
 ; 123
 
 ; 123
-scn Test19
+Scn Test19
 
 ; 123
 ; 123
-begin Test
+Begin Test
 ; 123
 ; 123
-    set foo to 123
+    Set foo To 123
 ; 123
 ; 123
-end
+End
 ; 123
 ; 123

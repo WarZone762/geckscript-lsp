@@ -6,18 +6,15 @@ Provides various language features for the scripting language used by GECK for F
 
 - [x] parsing and syntax error checking
 - [x] code completion
-- [x] configuration
-- [x] document symbols
 - [x] formatting
 - [x] goto definition and references
-- [x] highlight ranges
 - [x] hover
 - [x] renaming
 - [x] semantic tokens
-- [x] static analysis
-- [ ] selection range
+- [ ] static analysis
 - [ ] signature help
 - [ ] code actions
+- [ ] code lens
 - [ ] inlay hints
 
 ## Installation
@@ -38,15 +35,18 @@ The server can be configured in `geckrc.json` or `.geckrc.json` file.
 
 ### Configuration options
 
-| Name           | Possible Values                     | Explanation                                                                                                  |
-| -------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `keywordStyle` | `"lower"`, `"upper"` or `"capital"` | Enforce keyword naming convention: *lowercase* (`begin`), *UPPERCASE* (`BEGIN`) or *Capital* (`Begin`) |
+| Name            | Possible Values                     | Explanation                                                                                                                  |
+| --------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `keywordStyle`  | `"lower"`, `"upper"` or `"capital"` | Enforce keyword naming convention: *lowercase* (`begin`), *UPPERCASE* (`BEGIN`) or *Capital* (`Begin`)                       |
+| `functionStyle` | `"lower"`, `"upper"` or `"capital"` | Enforce function naming convention: *lowercase* (`getitemcount`), *UPPERCASE* (`GETITEMCOUNT`) or *Capital* (`GetItemCount`) |
 
 ### Example
 
 ```json
 {
-    "keywordStyle": "lower"
+    "$schema": "https://raw.githubusercontent.com/WarZone762/geckscript-lsp/dev/src/geckscript/config.schema.json",
+    "keywordStyle": "lower",
+    "functionStyle": "capital"
 }
 ```
 

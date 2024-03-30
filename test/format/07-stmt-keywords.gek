@@ -1,7 +1,7 @@
-scn Test07
+Scn Test07
 
-begin Test
-    continue
-    break
-    return
-end
+Begin Test
+    Continue
+    Break
+    Return
+End

@@ -1,5 +1,5 @@
-scn Test03
+Scn Test03
 
-begin Test
-    set foo to "123"
-end
+Begin Test
+    Set foo To "123"
+End

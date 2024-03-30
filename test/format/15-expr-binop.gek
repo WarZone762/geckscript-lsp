@@ -1,6 +1,6 @@
-scn Test15
+Scn Test15
 
-begin Test
+Begin Test
     1 + 2
     1 - 2
     1 * 2
@@ -22,47 +22,47 @@ begin Test
     1 : 2
     1::2
 
-    call 1 + 2
-    call 1 - 2
-    call 1 * 2
-    call 1 / 2
-    call 1 % 2
-    call 1 ^ 2
-    call 1 >> 2
-    call 1 << 2
-    call 1 & 2
-    call 1 | 2
-    call 1 < 2
-    call 1 <= 2
-    call 1 == 2
-    call 1 != 2
-    call 1 > 2
-    call 1 >= 2
-    call 1 && 2
-    call 1 || 2
-    call 1 : 2
-    call 1::2
+    Call 1 + 2
+    Call 1 - 2
+    Call 1 * 2
+    Call 1 / 2
+    Call 1 % 2
+    Call 1 ^ 2
+    Call 1 >> 2
+    Call 1 << 2
+    Call 1 & 2
+    Call 1 | 2
+    Call 1 < 2
+    Call 1 <= 2
+    Call 1 == 2
+    Call 1 != 2
+    Call 1 > 2
+    Call 1 >= 2
+    Call 1 && 2
+    Call 1 || 2
+    Call 1 : 2
+    Call 1::2
 
-    call + 2
-    call - 2
-    call * 2
-    call / 2
-    call % 2
-    call ^ 2
-    call >> 2
-    call << 2
-    call & 2
-    call | 2
-    call < 2
-    call <= 2
-    call == 2
-    call != 2
-    call > 2
-    call >= 2
-    call && 2
-    call || 2
-    call : 2
-    call::2
+    Call + 2
+    Call - 2
+    Call * 2
+    Call / 2
+    Call % 2
+    Call ^ 2
+    Call >> 2
+    Call << 2
+    Call & 2
+    Call | 2
+    Call < 2
+    Call <= 2
+    Call == 2
+    Call != 2
+    Call > 2
+    Call >= 2
+    Call && 2
+    Call || 2
+    Call : 2
+    Call::2
 
     foo = 1
     foo := 1
@@ -74,4 +74,4 @@ begin Test
     foo ^= 1
     foo &= 1
     foo |= 1
-end
+End
