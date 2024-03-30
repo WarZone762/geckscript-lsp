@@ -72,6 +72,7 @@ connection.onInitialize(async (params) => {
             referencesProvider: true,
             renameProvider: { prepareProvider: true },
             selectionRangeProvider: true,
+            signatureHelpProvider: { triggerCharacters: [" ", ","] },
             textDocumentSync: TextDocumentSyncKind.Full,
         },
     };
@@ -175,11 +176,9 @@ connection.languages.semanticTokens.on(
         features.buildSemanticTokens(DB, parsed)
     )
 );
-// connection.onRequest(
-//     SemanticTokensRequest.method,
-//     handler(async (file) => features.buildSemanticTokens(DB, file))
-// );
-
+connection.onSignatureHelp(
+    handler(async (file, params) => features.signatureHelp(DB, file, params.position))
+);
 connection.onExit(() => treeViewServer?.close());
 
 connection.listen();

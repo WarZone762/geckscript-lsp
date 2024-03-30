@@ -247,11 +247,12 @@ export class Analyzer {
                 symbol === undefined ||
                 (symbol instanceof GlobalSymbol && symbol.referencingFiles.size !== 0)
             ) {
-                this.reportDiagnostic(
-                    `unable to resolve symbol ${node.symbol.name}`,
-                    node,
-                    DiagnosticSeverity.Information
-                );
+                // TODO
+                // this.reportDiagnostic(
+                //     `unable to resolve symbol ${node.symbol.name}`,
+                //     node,
+                //     DiagnosticSeverity.Information
+                // );
 
                 if (symbol === undefined) {
                     const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
