@@ -198,13 +198,7 @@ export function exprPostfix(p: Parser, lhs: CompletedMarker, noFunc: boolean): C
 }
 
 export function exprNameRefOrFunc(p: Parser, lhs: CompletedMarker): CompletedMarker {
-    const cond = () =>
-        p.atTs(EXPR_FIRST) &&
-        !p.at(SyntaxKind.MINUS) &&
-        !p.at(SyntaxKind.AMPERSAND) &&
-        !p.at(SyntaxKind.ASTERISK);
-
-    if (cond() || p.at(SyntaxKind.COMMA)) {
+    if (p.atTs(EXPR_FIRST) || p.at(SyntaxKind.COMMA)) {
         const m = lhs.precede(p);
         p.opt(SyntaxKind.COMMA);
 
@@ -212,7 +206,7 @@ export function exprNameRefOrFunc(p: Parser, lhs: CompletedMarker): CompletedMar
         do {
             exprBpImpl(p, 7, true);
             p.opt(SyntaxKind.COMMA);
-        } while (cond());
+        } while (p.atTs(EXPR_FIRST));
 
         exprList.complete(p, SyntaxKind.EXPR_LIST);
         return m.complete(p, SyntaxKind.FUNC_EXPR);

@@ -6,8 +6,8 @@ import * as path from "path";
 import * as url from "url";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { config, hir } from "../geckscript.js";
-import { formatDoc } from "../language_features/format.js";
+import { config, hir } from "../src/geckscript.js";
+import { formatDoc } from "../src/language_features/format.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;
@@ -20,7 +20,7 @@ if (isMain) {
 
 export async function main() {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-    const testDir = path.resolve(path.join(__dirname, "..", "..", "test"));
+    const testDir = path.resolve(path.join(__dirname, "cases"));
 
     test("Formatting", async (t) => {
         for (const f of await fs.readdir(testDir, { withFileTypes: true })) {

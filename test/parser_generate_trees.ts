@@ -3,11 +3,11 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as url from "url";
 
-import { ast } from "../geckscript.js";
-import { parseStr } from "../geckscript/parsing.js";
+import { ast } from "../src/geckscript.js";
+import { parseStr } from "../src/geckscript/parsing.js";
 
-const _Dirname = url.fileURLToPath(new URL(".", import.meta.url));
-const testDir = path.resolve(path.join(_Dirname, "..", "..", "test"));
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const testDir = path.resolve(path.join(__dirname, "cases"));
 
 for (const f of await fs.readdir(testDir, { withFileTypes: true })) {
     if (f.isFile() && f.name.endsWith(".gek")) {

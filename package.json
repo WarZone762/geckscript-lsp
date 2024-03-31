@@ -48,7 +48,7 @@
         "tsc-compile": "tsc -b",
         "tsc-watch": "tsc -b -w",
         "lint": "eslint ./src --ext .js,.ts,.tsx",
-        "test": "src/test/all.ts",
+        "test": "test/all.ts",
         "clean": "rm -rf ./lib"
     }
 }

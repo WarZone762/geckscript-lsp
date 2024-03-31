@@ -5,8 +5,8 @@ import test from "node:test";
 import * as path from "path";
 import * as url from "url";
 
-import { ast } from "../geckscript.js";
-import { parseStr } from "../geckscript/parsing.js";
+import { ast } from "../src/geckscript.js";
+import { parseStr } from "../src/geckscript/parsing.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
 const isMain = process.argv[1] === modulePath;
@@ -17,7 +17,7 @@ if (isMain) {
 
 export async function main() {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-    const testDir = path.resolve(path.join(__dirname, "..", "..", "test"));
+    const testDir = path.resolve(path.join(__dirname, "cases"));
 
     test("Parsing", async (t) => {
         for (const f of await fs.readdir(testDir, { withFileTypes: true })) {

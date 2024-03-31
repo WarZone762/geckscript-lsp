@@ -44,14 +44,14 @@ Begin Test
     Call 1::2
 
     Call + 2
-    Call - 2
-    Call * 2
+    Call -2
+    Call *2
     Call / 2
     Call % 2
     Call ^ 2
     Call >> 2
     Call << 2
-    Call & 2
+    Call &2
     Call | 2
     Call < 2
     Call <= 2
