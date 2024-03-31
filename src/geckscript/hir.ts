@@ -50,10 +50,10 @@ export class FileDatabase {
             const stat = await fs.stat(fullPath);
 
             if (!stat.isDirectory() && file.endsWith("geckrc.json")) {
-                this.config = await this.loadConfig(file);
-                fsSync.watch(file, undefined, async (eventType) => {
+                this.config = await this.loadConfig(fullPath);
+                fsSync.watch(fullPath, undefined, async (eventType) => {
                     if (eventType === "change") {
-                        this.config = await this.loadConfig(file);
+                        this.config = await this.loadConfig(fullPath);
                     }
                 });
 
