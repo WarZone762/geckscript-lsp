@@ -11,8 +11,8 @@ Provides various language features for the scripting language used by GECK for F
 - [x] hover
 - [x] renaming
 - [x] semantic tokens
+- [x] signature help
 - [ ] static analysis
-- [ ] signature help
 - [ ] code actions
 - [ ] code lens
 - [ ] inlay hints

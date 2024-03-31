@@ -27,6 +27,7 @@ import {
     Name,
     NameRef,
     Number,
+    ParamType,
     Script,
     SetStmt,
     StmtList,
@@ -208,14 +209,14 @@ export class Analyzer {
                 for (let i = 0; i < Math.min(node.args.length, func.args.length); ++i) {
                     this.analyzeExpr(node.args[i]);
                     if (node.args[i].type.kind === "<unknown>") {
-                        this.propagateType(node.args[i], func.args[i]);
+                        this.propagateType(node.args[i], func.args[i].type);
                     }
                 }
             } else if (func.kind === "<unknown>") {
-                const type = new ExprTypeFunction(new ExprTypeSimple());
+                const type = new ExprTypeFunction(undefined, undefined, new ExprTypeSimple());
                 for (const arg of node.args) {
                     this.analyzeExpr(arg);
-                    type.args.push(arg.type);
+                    type.args.push(new ParamType(undefined, arg.type));
                 }
 
                 this.propagateType(node.func, type);
@@ -230,7 +231,7 @@ export class Analyzer {
             const ret = this.analyzeExpr(node.expr);
             const args = [];
             for (const arg of node.params.list) {
-                args.push(arg.type);
+                args.push(new ParamType(arg.symbol.name, arg.type));
             }
             node.type.ret = ret;
             node.type.args = args;
@@ -239,7 +240,7 @@ export class Analyzer {
             this.analyzeNode(node.stmtList);
             const args = [];
             for (const arg of node.params.list) {
-                args.push(arg.type);
+                args.push(new ParamType(arg.symbol.name, arg.type));
             }
             node.type.args = args;
         } else if (node instanceof NameRef) {
@@ -288,9 +289,9 @@ export class Analyzer {
             } else if (expr instanceof FuncExpr) {
                 expr.type = type;
 
-                const fnType = new ExprTypeFunction(type);
+                const fnType = new ExprTypeFunction(undefined, undefined, type);
                 for (const arg of expr.args) {
-                    fnType.args.push(arg.type);
+                    fnType.args.push(new ParamType(undefined, arg.type));
                 }
                 this.propagateType(expr.func, fnType);
             } else if (expr instanceof LetExpr) {
@@ -337,7 +338,7 @@ export class Analyzer {
         this.file.diagnostics.push({
             range: this.file.rangeOf("green" in node.node ? node.node.green : node.node),
             message: msg,
-            severity: severity,
+            severity,
         });
     }
 }

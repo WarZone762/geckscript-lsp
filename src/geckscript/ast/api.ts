@@ -178,6 +178,26 @@ export function nearestToken(root: Node, offset: number): Token | undefined {
     return lastLeaf;
 }
 
+export function nearestTokenPredicate(
+    root: Node,
+    offset: number,
+    pred: (token: Token) => boolean
+): Token | undefined {
+    let lastLeaf;
+    for (const leaf of leafs(root)) {
+        if (!pred(leaf)) {
+            continue;
+        }
+        if (leaf.offset >= offset) {
+            return lastLeaf;
+        } else {
+            lastLeaf = leaf;
+        }
+    }
+
+    return lastLeaf;
+}
+
 export function tokenAtOffset(root: Node, offset: number): Token | undefined {
     for (const leaf of leafs(root)) {
         if (leaf.offset <= offset && offset < leaf.end()) {
@@ -185,7 +205,7 @@ export function tokenAtOffset(root: Node, offset: number): Token | undefined {
         }
     }
 
-    return undefined;
+    return;
 }
 
 export function* strOccurences(node: Node, str: string): Generator<Token> {

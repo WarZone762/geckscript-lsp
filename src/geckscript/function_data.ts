@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
 
-import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, SymbolTable } from "./hir.js";
+import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, ParamType, SymbolTable } from "./hir.js";
 
 export function loadFunctionData(): SymbolTable<FunctionData> {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -103,9 +103,9 @@ export class FunctionData {
     }
 
     get type(): ExprTypeFunction {
-        const type = new ExprTypeFunction(new ExprTypeSimple(this.retType));
+        const type = new ExprTypeFunction(this.name, this.desc, new ExprTypeSimple(this.retType));
         for (const param of this.params) {
-            type.args.push(new ExprTypeSimple(param.type));
+            type.args.push(new ParamType(param.name, new ExprTypeSimple(param.type)));
         }
 
         return type;

@@ -24,6 +24,7 @@ import {
     Name,
     NameRef,
     Number,
+    ParamType,
     Script,
     SetStmt,
     Stmt,
@@ -472,7 +473,7 @@ export class LowerContext {
         }
 
         return new LambdaInlineExpr(
-            new ExprTypeFunction(new ExprTypeSimple()),
+            new ExprTypeFunction(undefined, undefined, new ExprTypeSimple()),
             params,
             expr,
             symbolTable,
@@ -505,14 +506,16 @@ export class LowerContext {
             const scriptName = script?.name()?.name()?.text;
             if (scriptName !== undefined) {
                 type = new ExprTypeFunction(
+                    scriptName,
+                    undefined,
                     new ExprTypeSimple("Ambiguous"),
-                    params.list.map((e) => e.type)
+                    params.list.map((e) => new ParamType(e.symbol.name, e.type))
                 );
                 this.globalSymbols.push(new GlobalSymbol(scriptName, type));
             }
         }
 
-        type ??= new ExprTypeFunction(new ExprTypeSimple());
+        type ??= new ExprTypeFunction(undefined, undefined, new ExprTypeSimple());
 
         return new LambdaExpr(type, params, stmtList, symbolTable, node);
     }

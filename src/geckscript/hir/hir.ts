@@ -500,8 +500,10 @@ export class ExprTypeFunction {
     kind = "Function" as const;
 
     constructor(
+        public name: string | undefined,
+        public desc: string | undefined,
         public ret: ExprType,
-        public args: ExprType[] = []
+        public args: ParamType[] = []
     ) {}
 
     isAssignableTo(other: ExprType): boolean {
@@ -509,7 +511,7 @@ export class ExprTypeFunction {
             return false;
         }
         for (let i = 0; i < Math.min(this.args.length, other.args.length); ++i) {
-            if (this.args[i].kind !== other.args[i].kind) {
+            if (this.args[i].type.kind !== other.args[i].type.kind) {
                 return false;
             }
         }
@@ -533,6 +535,25 @@ export class ExprTypeFunction {
             return `(${this.ret}) ${name} ${this.args.join(" ")}`;
         } else {
             return this.ret.toStringWithName(name);
+        }
+    }
+}
+
+export class ParamType {
+    constructor(
+        public name: string | undefined,
+        public type: ExprType,
+        public optional: boolean = false
+    ) {}
+
+    toString(): string {
+        const str =
+            this.name !== undefined ? `${this.name}:${this.type.toString()}` : this.type.toString();
+
+        if (this.optional) {
+            return `[${str}]`;
+        } else {
+            return str;
         }
     }
 }
