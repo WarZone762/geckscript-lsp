@@ -1,7 +1,7 @@
-import { SyntaxKind, TokenSyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax.js";
+import { SyntaxKind, isAssignmentOp, isType, isUnaryOp } from "../../syntax.js";
 import { CompletedMarker, Marker, Parser } from "../parser.js";
-import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TYPE, TokenSet } from "../token_set.js";
-import { nameRef, nameRefR, varDeclR, varOrVarDeclList, varOrVarDeclR } from "./other.js";
+import { ASSIGNMENT_OP, EXPR_FIRST, LITERAL, TokenSet } from "../token_set.js";
+import { nameRef, varDeclR, varOrVarDeclList } from "./other.js";
 import { stmtList } from "./statements.js";
 
 export function literal(p: Parser): CompletedMarker | undefined {

@@ -131,6 +131,8 @@ connection.onInitialized(async () => {
 connection.onDidOpenTextDocument(async (params) => {
     const doc = params.textDocument;
     const file = DB.loadFile(TextDocument.create(doc.uri, doc.languageId, doc.version, doc.text));
+    DB.updateOpenFiles();
+    DB.openFiles.add(doc.uri);
 
     treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 
@@ -141,10 +143,18 @@ connection.onDidChangeTextDocument(
     handler(async (file, params) => {
         TextDocument.update(file.doc, params.contentChanges, params.textDocument.version);
         file = DB.loadFile(file.doc);
+        DB.updateOpenFiles();
+        DB.openFiles.add(file.doc.uri);
 
         treeViewServer?.writeTreeData(ast.toTreeData(file.root.green));
 
         connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
+    })
+);
+
+connection.onDidCloseTextDocument(
+    handler(async (file) => {
+        DB.openFiles.delete(file.doc.uri);
     })
 );
 

@@ -19,9 +19,8 @@ Provides various language features for the scripting language used by GECK for F
 
 ## Installation
 
-[VSCode](https://github.com/WarZone762/vscode-geckscript)
-
-[Neovim](https://github.com/WarZone762/geckscript.nvim)
+- [VSCode](https://github.com/WarZone762/vscode-geckscript)
+- [Neovim](https://github.com/WarZone762/geckscript.nvim)
 
 Works best with [Hot Reload](https://www.nexusmods.com/newvegas/mods/70962) plugin
 

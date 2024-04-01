@@ -26,6 +26,7 @@ export * from "./hir/lower.js";
 
 export class FileDatabase {
     files: Map<string, File> = new Map();
+    openFiles: Set<string> = new Set();
     globalSymbols: SymbolTable<GlobalSymbol> = new SymbolTable(
         new Map([["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))]])
     );
@@ -135,6 +136,14 @@ export class FileDatabase {
         this.scriptCache.set(node, file);
 
         return file;
+    }
+
+    updateOpenFiles() {
+        const analyzer = new Analyzer(this);
+        for (const uri of this.openFiles.values()) {
+            const file = this.parseFile(this.files.get(uri)!.doc);
+            analyzer.analyzeFile(file);
+        }
     }
 
     script(script: Node<SyntaxKind.SCRIPT>): File | undefined {

@@ -412,7 +412,6 @@ export class ExprTypeSimple {
             case "ObjectRef":
             case "1/0":
             case "Bool":
-            // TODO: not sure
             case "AIPackage":
             case "ActorBase":
             case "ActorValue":
@@ -733,6 +732,7 @@ export function isExprKindEngine(str: string): str is ExprKindEngine {
 export type ExprKindCustom = "Function";
 
 /** A map with only lowercase keys */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SymbolTable<T = any> {
     constructor(private map: Map<string, T> = new Map()) {}
 

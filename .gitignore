@@ -2,6 +2,6 @@ node_modules/
 package-lock.json
 
 lib/
-test/Scripts/
+test/cases/Scripts/
 cache.json
 function_page_cache.json

@@ -435,6 +435,14 @@ export class LowerContext {
         switch (node.op()?.kind) {
             case SyntaxKind.EQ:
             case SyntaxKind.COLONEQ:
+            case SyntaxKind.PLUSEQ:
+            case SyntaxKind.MINUSEQ:
+            case SyntaxKind.ASTERISKEQ:
+            case SyntaxKind.SLASHEQ:
+            case SyntaxKind.PERCENTEQ:
+            case SyntaxKind.CIRCUMFLEXEQ:
+            case SyntaxKind.VBAREQ:
+            case SyntaxKind.AMPERSANDEQ:
                 op = BinExprOp.Eq;
                 break;
             default:
