@@ -16,6 +16,7 @@ import {
     LowerContext,
     Script,
     SymbolTable,
+    UnresolvedSymbol,
 } from "./hir.js";
 import * as parsing from "./parsing.js";
 import { Node, NodeOrToken, SyntaxKind } from "./syntax.js";
@@ -27,12 +28,18 @@ export * from "./hir/lower.js";
 export class FileDatabase {
     files: Map<string, File> = new Map();
     openFiles: Set<string> = new Set();
-    globalSymbols: SymbolTable<GlobalSymbol> = new SymbolTable(
-        new Map([["player", new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"))]])
-    );
-    builtinFunctions: SymbolTable<fnData.FunctionData> = fnData.loadFunctionData();
+    unresolvedSymbols: SymbolTable<UnresolvedSymbol> = new SymbolTable();
+    globalSymbols: SymbolTable<GlobalSymbol | fnData.GlobalFunction>;
     config: ServerConfig = { keywordStyle: WordStyle.Lower, functionStyle: WordStyle.Capital };
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
+
+    constructor() {
+        this.globalSymbols = fnData.loadFunctionData();
+        this.globalSymbols.set(
+            "player",
+            new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"), "Referenc to the player")
+        );
+    }
 
     async loadDir(
         dirPath: string,
@@ -101,10 +108,10 @@ export class FileDatabase {
         const oldFile = this.files.get(uri);
         if (oldFile !== undefined) {
             for (const unresolvedSymbol of oldFile.unresolvedSymbols.values()) {
-                const symbol = this.globalSymbols.get(unresolvedSymbol.name);
+                const symbol = this.unresolvedSymbols.get(unresolvedSymbol.name);
                 symbol?.referencingFiles.delete(uri);
                 if (symbol?.referencingFiles.size === 0) {
-                    this.globalSymbols.delete(unresolvedSymbol.name);
+                    this.unresolvedSymbols.delete(unresolvedSymbol.name);
                 }
             }
 
@@ -130,7 +137,7 @@ export class FileDatabase {
         this.deleteFile(doc.uri);
         const file = new File(doc, script, diagnostics);
         for (const symbol of file.unresolvedSymbols.values()) {
-            this.globalSymbols.set(symbol.name, symbol);
+            this.unresolvedSymbols.set(symbol.name, symbol);
         }
         this.files.set(doc.uri, file);
         this.scriptCache.set(node, file);
@@ -167,7 +174,7 @@ export class File {
     doc: TextDocument;
     root: ast.Script;
     hir?: Script;
-    unresolvedSymbols: Set<GlobalSymbol> = new Set();
+    unresolvedSymbols: Set<UnresolvedSymbol> = new Set();
     diagnostics: Diagnostic[];
 
     constructor(doc: TextDocument, root: ast.Script, diagnostics: Diagnostic[]) {

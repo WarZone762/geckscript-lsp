@@ -174,8 +174,8 @@ class Formatter {
                     break;
             }
         } else if (t.kind === SyntaxKind.IDENT) {
-            const fn = this.db.builtinFunctions.get(t.text);
-            if (fn !== undefined) {
+            const globalSymbol = this.db.globalSymbols.get(t.text);
+            if (globalSymbol !== undefined) {
                 switch (this.opts.serverOpts.functionStyle) {
                     case config.WordStyle.Lower:
                         t.text = t.text.toLowerCase();
@@ -184,7 +184,7 @@ class Formatter {
                         t.text = t.text.toUpperCase();
                         break;
                     case config.WordStyle.Capital:
-                        t.text = fn.name;
+                        t.text = globalSymbol.name;
                         break;
                 }
             }

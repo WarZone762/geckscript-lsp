@@ -4,7 +4,7 @@ import * as url from "url";
 
 import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, ParamType, SymbolTable } from "./hir.js";
 
-export function loadFunctionData(): SymbolTable<FunctionData> {
+export function loadFunctionData(): SymbolTable<GlobalFunction> {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
     const functionDataPath = path.resolve(
         path.join(__dirname, "..", "..", "resources", "function_data.json")
@@ -23,10 +23,10 @@ export function loadFunctionData(): SymbolTable<FunctionData> {
         reqRef,
         desc,
     } of funcs) {
-        const func = new FunctionData(
+        const func = new GlobalFunction(
             name,
             alias,
-            params.map(({ type, name, optional }) => new FunctionParam(type, name, optional)),
+            params.map(({ type, name, optional }) => new GlobalFunctionParam(type, name, optional)),
             retType,
             opcode,
             origin,
@@ -37,7 +37,7 @@ export function loadFunctionData(): SymbolTable<FunctionData> {
 
         map.set(name, func);
         if (alias !== undefined) {
-            const newFunc = new FunctionData(
+            const newFunc = new GlobalFunction(
                 alias,
                 name,
                 func.params,
@@ -55,13 +55,13 @@ export function loadFunctionData(): SymbolTable<FunctionData> {
     return map;
 }
 
-export class FunctionData {
+export class GlobalFunction {
     alias?: string;
 
     constructor(
         public name: string,
         alias: string | undefined,
-        public params: FunctionParam[],
+        public params: GlobalFunctionParam[],
         public retType: ExprKindEngine,
         public opcode: number,
         public origin: string,
@@ -112,7 +112,7 @@ export class FunctionData {
     }
 }
 
-export class FunctionParam {
+export class GlobalFunctionParam {
     constructor(
         public type: ExprKindEngine,
         public name?: string,

@@ -2,6 +2,7 @@ import { CompletionItem, CompletionItemKind, MarkupKind } from "vscode-languages
 import { Position, TextDocument } from "vscode-languageserver-textdocument";
 
 import { SyntaxKind, TokenData, ast, hir, isKeyword, isOp, isType } from "../geckscript.js";
+import { GlobalFunction } from "../geckscript/function_data.js";
 
 export function completionItems(
     db: hir.FileDatabase,
@@ -52,20 +53,30 @@ export function completionItems(
         }
         db.deleteFile("GECKSCRIPT-LSP-COMPLETION");
 
-        for (const fn of db.builtinFunctions.values()) {
-            if (fn.reqRef) {
+        for (const globalSymbol of db.globalSymbols.values()) {
+            if (globalSymbol instanceof GlobalFunction) {
+                if (globalSymbol.reqRef) {
+                    completionItems.push({
+                        label: globalSymbol.name,
+                        labelDetails:
+                            globalSymbol.alias !== undefined
+                                ? { detail: `(alias ${globalSymbol.alias})` }
+                                : undefined,
+
+                        detail: globalSymbol.signature(),
+                        documentation: {
+                            kind: MarkupKind.Markdown,
+                            value: `${globalSymbol.desc ?? ""}\n\n\n*From: ${globalSymbol.origin}*`,
+                        },
+
+                        kind: CompletionItemKind.Method,
+                    });
+                }
+            } else if (globalSymbol instanceof hir.GlobalSymbol) {
                 completionItems.push({
-                    label: fn.name,
-                    labelDetails:
-                        fn.alias !== undefined ? { detail: `(alias ${fn.alias})` } : undefined,
-
-                    detail: fn.signature(),
-                    documentation: {
-                        kind: MarkupKind.Markdown,
-                        value: `${fn.desc ?? ""}\n\n\n*From: ${fn.origin}*`,
-                    },
-
-                    kind: CompletionItemKind.Method,
+                    label: globalSymbol.name,
+                    detail: globalSymbol.type.toStringWithName(globalSymbol.name),
+                    kind: CompletionItemKind.Constant,
                 });
             }
         }
@@ -111,20 +122,33 @@ export function completionItems(
         //     });
         // }
 
-        for (const fn of db.builtinFunctions.values()) {
-            completionItems.push({
-                label: fn.name,
-                labelDetails:
-                    fn.alias !== undefined ? { detail: `(alias ${fn.alias})` } : undefined,
+        for (const globalSymbol of db.globalSymbols.values()) {
+            if (globalSymbol instanceof GlobalFunction) {
+                completionItems.push({
+                    label: globalSymbol.name,
+                    labelDetails:
+                        globalSymbol.alias !== undefined
+                            ? { detail: `(alias ${globalSymbol.alias})` }
+                            : undefined,
 
-                detail: fn.signature(),
-                documentation: {
-                    kind: MarkupKind.Markdown,
-                    value: `${fn.desc ?? ""}\n\n\n*From: ${fn.origin}*`,
-                },
+                    detail: globalSymbol.signature(),
+                    documentation: {
+                        kind: MarkupKind.Markdown,
+                        value: `${globalSymbol.desc ?? ""}\n\n\n*From: ${globalSymbol.origin}*`,
+                    },
 
-                kind: fn.reqRef ? CompletionItemKind.Method : CompletionItemKind.Function,
-            });
+                    kind: globalSymbol.reqRef
+                        ? CompletionItemKind.Method
+                        : CompletionItemKind.Function,
+                });
+            } else if (globalSymbol instanceof hir.GlobalSymbol) {
+                completionItems.push({
+                    label: globalSymbol.name,
+                    detail: globalSymbol.type.toStringWithName(globalSymbol.name),
+                    documentation: globalSymbol.desc,
+                    kind: CompletionItemKind.Constant,
+                });
+            }
         }
     }
 

@@ -14,7 +14,6 @@ import {
     FieldExprOp,
     ForeachStmt,
     FuncExpr,
-    GlobalSymbol,
     IfStmt,
     IndexExpr,
     LambdaExpr,
@@ -34,6 +33,7 @@ import {
     SymbolTable,
     UnaryExpr,
     UnaryExprOp,
+    UnresolvedSymbol,
     VarDeclStmt,
     VarOrVarDecl,
     VarOrVarDeclList,
@@ -43,7 +43,7 @@ import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 
 export class LowerContext {
     diagnostics: Diagnostic[] = [];
-    globalSymbols: GlobalSymbol[] = [];
+    globalSymbols: UnresolvedSymbol[] = [];
 
     script(node: ast.Script | undefined): Script | undefined {
         if (node === undefined) {
@@ -519,7 +519,7 @@ export class LowerContext {
                     new ExprTypeSimple("Ambiguous"),
                     params.list.map((e) => new ParamType(e.symbol.name, e.type))
                 );
-                this.globalSymbols.push(new GlobalSymbol(scriptName, type));
+                this.globalSymbols.push(new UnresolvedSymbol(scriptName, type));
             }
         }
 
@@ -614,7 +614,7 @@ export class LowerContext {
             return;
         }
 
-        return new NameRef(new GlobalSymbol(name, new ExprTypeSimple()), node);
+        return new NameRef(new UnresolvedSymbol(name, new ExprTypeSimple()), node);
     }
 
     literal(node: ast.Literal | undefined): Literal | undefined {

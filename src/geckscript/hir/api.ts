@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
 
-import { FunctionData } from "../function_data.js";
+import { GlobalFunction } from "../function_data.js";
 import {
     BeginStmt,
     BinExpr,
@@ -35,6 +35,7 @@ import {
     Symbol,
     SymbolTable,
     UnaryExpr,
+    UnresolvedSymbol,
     VarDeclStmt,
     VarOrVarDeclList,
     WhileStmt,
@@ -155,8 +156,8 @@ export class Analyzer {
         } else if (node instanceof FieldExpr) {
             const lhs = this.analyzeExpr(node.lhs);
             if (!(lhs instanceof ExprTypeFunction)) {
-                const builtin = this.db.builtinFunctions.get(node.field.symbol.name);
-                if (builtin !== undefined) {
+                const globalSymbol = this.db.globalSymbols.get(node.field.symbol.name);
+                if (globalSymbol !== undefined) {
                     node.type = this.analyzeExpr(node.field);
                 } else {
                     if (lhs.file === undefined) {
@@ -247,7 +248,7 @@ export class Analyzer {
             const symbol = findDefinition(this.db, node);
             if (
                 symbol === undefined ||
-                (symbol instanceof GlobalSymbol && symbol.referencingFiles.size !== 0)
+                (symbol instanceof UnresolvedSymbol && symbol.referencingFiles.size !== 0)
             ) {
                 // TODO
                 // this.reportDiagnostic(
@@ -257,8 +258,11 @@ export class Analyzer {
                 // );
 
                 if (symbol === undefined) {
-                    const globalSymbol = new GlobalSymbol(node.symbol.name, new ExprTypeSimple());
-                    this.addUnresolvedSymbol(globalSymbol);
+                    const unresolvedSymbol = new UnresolvedSymbol(
+                        node.symbol.name,
+                        new ExprTypeSimple()
+                    );
+                    this.addUnresolvedSymbol(unresolvedSymbol);
                 } else {
                     this.addUnresolvedSymbol(symbol);
                 }
@@ -303,7 +307,7 @@ export class Analyzer {
             } else if (expr instanceof LambdaExpr) {
                 expr.type.ret = type;
             } else if (expr instanceof NameRef) {
-                if (expr.symbol instanceof FunctionData) {
+                if (expr.symbol instanceof GlobalFunction) {
                     console.error(
                         `tried to propogate type '${type}' to global function '${expr.symbol.signature()}'`
                     );
@@ -328,10 +332,10 @@ export class Analyzer {
         // return type.isChildOf(expr.type) ? expr.type : type;
     }
 
-    addUnresolvedSymbol(symbol: GlobalSymbol) {
+    addUnresolvedSymbol(symbol: UnresolvedSymbol) {
         symbol.referencingFiles.add(this.file.doc.uri);
         this.file.unresolvedSymbols.add(symbol);
-        this.db.globalSymbols.set(symbol.name, symbol);
+        this.db.unresolvedSymbols.set(symbol.name, symbol);
     }
 
     reportDiagnostic(msg: string, node: HirNode, severity: DiagnosticSeverity) {
@@ -397,7 +401,7 @@ export function visibleSymbols(db: FileDatabase, node: NodeOrToken): Symbol[] {
 
 export function findReferences(
     db: FileDatabase,
-    symbol: Symbol | GlobalSymbol | FunctionData
+    symbol: Symbol | UnresolvedSymbol | GlobalFunction | GlobalSymbol
 ): NameRef[] {
     const refs: NameRef[] = [];
 
@@ -411,7 +415,11 @@ export function findReferences(
                 refs.push(child);
             }
         }
-    } else if (symbol instanceof GlobalSymbol || symbol instanceof FunctionData) {
+    } else if (
+        symbol instanceof UnresolvedSymbol ||
+        symbol instanceof GlobalFunction ||
+        symbol instanceof GlobalSymbol
+    ) {
         for (const file of db.files.values()) {
             if (file.hir === undefined) {
                 continue;
@@ -430,7 +438,7 @@ export function findReferences(
 export function findDefinitionFromToken(
     token: Token,
     db: FileDatabase
-): Symbol | GlobalSymbol | FunctionData | undefined {
+): Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
         return;
     }
@@ -448,7 +456,7 @@ export function findDefinitionFromToken(
 export function findDefinition(
     db: FileDatabase,
     nameRef: NameRef
-): Symbol | GlobalSymbol | FunctionData | undefined {
+): Symbol | UnresolvedSymbol | GlobalFunction | GlobalSymbol | undefined {
     for (const parent of ancestors(db, nameRef)) {
         if ("symbolTable" in parent) {
             const symbol = parent.symbolTable.get(nameRef.symbol.name);
@@ -461,7 +469,7 @@ export function findDefinition(
     }
 
     return (
-        db.globalSymbols.get(nameRef.symbol.name) ?? db.builtinFunctions.get(nameRef.symbol.name)
+        db.unresolvedSymbols.get(nameRef.symbol.name) ?? db.globalSymbols.get(nameRef.symbol.name)
     );
 }
 

@@ -1,5 +1,5 @@
 import * as ast from "../ast.js";
-import { FunctionData } from "../function_data.js";
+import { GlobalFunction } from "../function_data.js";
 import { File } from "../hir.js";
 import { SyntaxKind, Token } from "../syntax.js";
 
@@ -239,7 +239,7 @@ export class Name {
 
 export class NameRef {
     constructor(
-        public symbol: Symbol | GlobalSymbol | FunctionData,
+        public symbol: Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction,
         public node: ast.NameRef
     ) {}
 
@@ -275,7 +275,7 @@ export type ExprType = ExprTypeSimple | ExprTypeFunction;
 export class ExprTypeSimple {
     // for script variables
     file?: File;
-    members: (Symbol | GlobalSymbol | FunctionData)[] = [];
+    members: (Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction)[] = [];
 
     constructor(public kind: Exclude<ExprKind, "Function"> = "<unknown>") {}
 
@@ -761,13 +761,21 @@ export class SymbolTable<T = any> {
     }
 }
 
-export class GlobalSymbol {
+export class UnresolvedSymbol {
     referencingFiles: Set<string> = new Set();
 
     constructor(
         public name: string,
+        public type: ExprType
+    ) {}
+}
+
+export class GlobalSymbol {
+    constructor(
+        public name: string,
         public type: ExprType,
-        public buildtin?: FunctionData
+        public desc?: string,
+        public decl?: Name
     ) {}
 }
 
