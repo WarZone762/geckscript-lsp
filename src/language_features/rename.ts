@@ -20,22 +20,47 @@ export function rename(
     file: hir.File,
     newName: string,
     pos: Position
-): WorkspaceEdit | ResponseError | null {
+): WorkspaceEdit | ResponseError | undefined {
     const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token == undefined) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
     const def = hir.defFromToken(token, db);
-    if (!(def instanceof hir.LocalSymbol)) {
+    // TODO: add script renaming
+    if (def === undefined || def instanceof hir.Script) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = hir.references(db, def);
-    const changes: TextEdit[] = [{ range: file.rangeOf(def.def.node.green), newText: newName }];
+    const defScript = ast.root(def.node.green);
+    if (defScript === undefined) {
+        return;
+    }
+    const defFile = db.script(defScript.green);
+    if (defFile === undefined) {
+        return;
+    }
+    const changes: { [key: string]: TextEdit[] } = {
+        [defFile.doc.uri]: [{ range: defFile.rangeOf(def.node.green), newText: newName }],
+    };
+
+    const refs = hir.references(db, def.symbol);
     for (const ref of refs) {
-        changes.push({ range: file.rangeOf(ref.node.green), newText: newName });
+        const script = ast.root(ref.node.green);
+        if (script === undefined) {
+            continue;
+        }
+        const refFile = db.script(script.green);
+        if (refFile === undefined) {
+            continue;
+        }
+        const change = { range: refFile.rangeOf(ref.node.green), newText: newName };
+        if (changes[refFile.doc.uri] !== undefined) {
+            changes[refFile.doc.uri].push(change);
+        } else {
+            changes[refFile.doc.uri] = [change];
+        }
     }
 
-    return { changes: { [file.doc.uri]: changes } };
+    return { changes };
 }
