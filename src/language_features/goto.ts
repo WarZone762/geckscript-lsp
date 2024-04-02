@@ -9,13 +9,19 @@ export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Lo
         return null;
     }
 
-    const def = hir.findDefinitionFromToken(token, db);
+    const def = hir.defFromToken(token, db);
 
-    if (!(def instanceof hir.Symbol)) {
+    if (def === undefined) {
         return null;
     }
 
-    const script = ast.root(def.decl.node.green)?.green;
+    let script;
+    if (def instanceof hir.Script) {
+        script = def.node.green;
+    } else if (def instanceof hir.Name) {
+        script = ast.root(def.node.green)?.green;
+    }
+
     if (script === undefined) {
         return null;
     }
@@ -25,7 +31,7 @@ export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Lo
         return null;
     }
 
-    return { uri: defFile.doc.uri, range: defFile.rangeOf(def.decl.node.green) };
+    return { uri: defFile.doc.uri, range: defFile.rangeOf(def.node.green) };
 }
 
 export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Location[] | null {
@@ -34,13 +40,16 @@ export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Locat
         return null;
     }
 
-    const def = hir.findDefinitionFromToken(token, db);
-    if (def === undefined) {
-        return null;
+    let symbol = hir.symbolFromToken(token, db);
+    if (symbol instanceof hir.ScriptVar) {
+        symbol = symbol.def(db)?.symbol;
+    }
+    if (symbol === undefined) {
+        return [];
     }
 
     const locs: Location[] = [];
-    for (const ref of hir.findReferences(db, def)) {
+    for (const ref of hir.references(db, symbol)) {
         const script = ast.root(ref.node.green)?.green;
         if (script === undefined) {
             continue;

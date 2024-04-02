@@ -28,7 +28,7 @@ export function symbols(file: hir.File): SymbolInformation[] | null {
                     name: symbol.name,
                     location: {
                         uri: file.doc.uri,
-                        range: file.rangeOf(symbol.decl.node.green),
+                        range: file.rangeOf(symbol.def.node.green),
                     },
                     kind,
                 });

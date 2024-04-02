@@ -15,14 +15,14 @@ export function getHighlight(
         return null;
     }
 
-    const def = hir.findDefinitionFromToken(token, db);
+    const def = hir.defFromToken(token, db);
 
-    if (def instanceof hir.Symbol) {
+    if (def instanceof hir.LocalSymbol) {
         highlights.push({
-            range: file.rangeOf(def.decl.node.green),
+            range: file.rangeOf(def.def.node.green),
             kind: DocumentHighlightKind.Text,
         });
-        for (const ref of hir.findReferences(db, def)) {
+        for (const ref of hir.references(db, def)) {
             highlights.push({
                 range: file.rangeOf(ref.node.green),
                 kind: DocumentHighlightKind.Text,

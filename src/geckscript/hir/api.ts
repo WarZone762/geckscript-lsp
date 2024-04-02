@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { DiagnosticSeverity } from "vscode-languageserver";
 
+import * as ast from "../ast.js";
 import { GlobalFunction } from "../function_data.js";
 import {
     BeginStmt,
@@ -24,11 +25,13 @@ import {
     LambdaInlineExpr,
     LetExpr,
     Literal,
+    LocalSymbol,
     Name,
     NameRef,
     Number,
     ParamType,
     Script,
+    ScriptVar,
     SetStmt,
     StmtList,
     String,
@@ -187,7 +190,11 @@ export class Analyzer {
                     if (lhs.file !== undefined) {
                         const symbol = lhs.file.hir!.symbolTable.get(node.field.symbol.name);
                         if (symbol !== undefined) {
-                            node.field.symbol = symbol;
+                            node.field.symbol = new ScriptVar(
+                                symbol.name,
+                                symbol.type,
+                                lhs.file.doc.uri
+                            );
                             node.type = node.field.symbol.type;
                         } else {
                             //TODO: report error 'unable to resolve symbol'
@@ -245,7 +252,7 @@ export class Analyzer {
             }
             node.type.args = args;
         } else if (node instanceof NameRef) {
-            const symbol = findDefinition(this.db, node);
+            const symbol = resolveSymbol(this.db, node);
             if (
                 symbol === undefined ||
                 (symbol instanceof UnresolvedSymbol && symbol.referencingFiles.size !== 0)
@@ -377,7 +384,7 @@ export function syntaxToHir<T extends NodeOrToken, H extends HirNode & { node: {
 }
 
 /** Get all symbols that are visible from `node` */
-export function visibleSymbols(db: FileDatabase, node: NodeOrToken): Symbol[] {
+export function visibleSymbols(db: FileDatabase, node: NodeOrToken): LocalSymbol[] {
     let hirNode;
     if (!node.isNode() && node.parent !== undefined) {
         hirNode = syntaxToHir(db, node.parent);
@@ -388,7 +395,7 @@ export function visibleSymbols(db: FileDatabase, node: NodeOrToken): Symbol[] {
         return [];
     }
 
-    const symbols: Symbol[] = [];
+    const symbols: LocalSymbol[] = [];
 
     for (const parent of ancestors(db, hirNode)) {
         if ("symbolTable" in parent) {
@@ -399,14 +406,14 @@ export function visibleSymbols(db: FileDatabase, node: NodeOrToken): Symbol[] {
     return symbols;
 }
 
-export function findReferences(
+export function references(
     db: FileDatabase,
-    symbol: Symbol | UnresolvedSymbol | GlobalFunction | GlobalSymbol
+    symbol: LocalSymbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction
 ): NameRef[] {
     const refs: NameRef[] = [];
 
-    if (symbol instanceof Symbol) {
-        const scope = findNameScope(db, symbol.decl);
+    if (symbol instanceof LocalSymbol) {
+        const scope = findNameScope(db, symbol.def);
         if (scope === undefined) {
             return refs;
         }
@@ -415,17 +422,52 @@ export function findReferences(
                 refs.push(child);
             }
         }
-    } else if (
-        symbol instanceof UnresolvedSymbol ||
-        symbol instanceof GlobalFunction ||
-        symbol instanceof GlobalSymbol
-    ) {
+        if (scope.node instanceof ast.Script) {
+            const defFile = db.script(scope.node.green);
+            if (defFile === undefined) {
+                return refs;
+            }
+            for (const file of db.files.values()) {
+                if (file.hir === undefined) {
+                    continue;
+                }
+                for (const child of visit(file.hir)) {
+                    if (
+                        child instanceof FieldExpr &&
+                        child.field.symbol.name === symbol.name &&
+                        child.lhs.type instanceof ExprTypeSimple &&
+                        child.lhs.type.file?.doc.uri === defFile.doc.uri
+                    ) {
+                        refs.push(child.field);
+                    }
+                }
+            }
+        }
+    } else if (symbol instanceof UnresolvedSymbol || symbol instanceof GlobalSymbol) {
         for (const file of db.files.values()) {
             if (file.hir === undefined) {
                 continue;
             }
             for (const child of visit(file.hir)) {
-                if (child instanceof NameRef && child.symbol === symbol) {
+                if (
+                    child instanceof NameRef &&
+                    child.node.green.parent?.kind !== SyntaxKind.FIELD_EXPR &&
+                    child.symbol.name.toLowerCase() === symbol.name.toLowerCase()
+                ) {
+                    refs.push(child);
+                }
+            }
+        }
+    } else if (symbol instanceof GlobalFunction) {
+        for (const file of db.files.values()) {
+            if (file.hir === undefined) {
+                continue;
+            }
+            for (const child of visit(file.hir)) {
+                if (
+                    child instanceof NameRef &&
+                    child.symbol.name.toLowerCase() === symbol.name.toLowerCase()
+                ) {
                     refs.push(child);
                 }
             }
@@ -435,10 +477,7 @@ export function findReferences(
     return refs;
 }
 
-export function findDefinitionFromToken(
-    token: Token,
-    db: FileDatabase
-): Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction | undefined {
+export function symbolFromToken(token: Token, db: FileDatabase): Symbol | undefined {
     if (token.kind !== SyntaxKind.IDENT) {
         return;
     }
@@ -453,10 +492,18 @@ export function findDefinitionFromToken(
     }
 }
 
-export function findDefinition(
-    db: FileDatabase,
-    nameRef: NameRef
-): Symbol | UnresolvedSymbol | GlobalFunction | GlobalSymbol | undefined {
+export function defFromToken(token: Token, db: FileDatabase): Name | Script | undefined {
+    const symbol = symbolFromToken(token, db);
+    if (symbol instanceof UnresolvedSymbol || symbol instanceof GlobalFunction) {
+        return;
+    } else if (symbol instanceof LocalSymbol) {
+        return symbol.def;
+    } else if (symbol instanceof GlobalSymbol || symbol instanceof ScriptVar) {
+        return symbol.def(db);
+    }
+}
+
+export function resolveSymbol(db: FileDatabase, nameRef: NameRef): Symbol | undefined {
     for (const parent of ancestors(db, nameRef)) {
         if ("symbolTable" in parent) {
             const symbol = parent.symbolTable.get(nameRef.symbol.name);

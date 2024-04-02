@@ -1,6 +1,6 @@
 import * as ast from "../ast.js";
 import { GlobalFunction } from "../function_data.js";
-import { File } from "../hir.js";
+import { File, FileDatabase } from "../hir.js";
 import { SyntaxKind, Token } from "../syntax.js";
 
 export type HirNode =
@@ -19,7 +19,7 @@ export class Script {
     constructor(
         public name: string,
         public stmtList: StmtList,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.Script
     ) {}
 }
@@ -38,7 +38,7 @@ export class IfStmt {
         public cond: Expr,
         public trueBranch: StmtList,
         public falseBranch: Branch | undefined,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.IfStmt | ast.Branch
     ) {}
 }
@@ -48,7 +48,7 @@ export class Branch {
         public cond: Expr | undefined,
         public trueBranch: StmtList,
         public falseBranch: Branch | undefined,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.IfStmt | ast.Branch
     ) {}
 }
@@ -57,7 +57,7 @@ export class WhileStmt {
     constructor(
         public cond: Expr,
         public stmtList: StmtList,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.WhileStmt
     ) {}
 }
@@ -66,7 +66,7 @@ export class BeginStmt {
     constructor(
         public blocktype: Blocktype,
         public stmtList: StmtList,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.BeginStmt
     ) {}
 }
@@ -84,7 +84,7 @@ export class ForeachStmt {
         public nameRef: NameRef,
         public iter: Expr,
         public stmtList: StmtList,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.ForeachStmt
     ) {}
 }
@@ -197,7 +197,7 @@ export class LambdaInlineExpr {
         public type: ExprTypeFunction,
         public params: VarOrVarDeclList,
         public expr: Expr,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.LambdaInlineExpr
     ) {}
 }
@@ -207,7 +207,7 @@ export class LambdaExpr {
         public type: ExprTypeFunction,
         public params: VarOrVarDeclList,
         public stmtList: StmtList,
-        public symbolTable: SymbolTable<Symbol>,
+        public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.LambdaExpr
     ) {}
 }
@@ -222,14 +222,14 @@ export class VarOrVarDeclList {
 export type VarOrVarDecl = Name | NameRef;
 
 export class Name {
-    symbol: Symbol;
+    symbol: LocalSymbol;
 
     constructor(
         name: string,
         type: ExprType,
         public node: ast.Name
     ) {
-        this.symbol = new Symbol(name, type, this);
+        this.symbol = new LocalSymbol(name, type, this);
     }
 
     public get type(): ExprType {
@@ -239,7 +239,7 @@ export class Name {
 
 export class NameRef {
     constructor(
-        public symbol: Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction,
+        public symbol: Symbol,
         public node: ast.NameRef
     ) {}
 
@@ -275,7 +275,7 @@ export type ExprType = ExprTypeSimple | ExprTypeFunction;
 export class ExprTypeSimple {
     // for script variables
     file?: File;
-    members: (Symbol | UnresolvedSymbol | GlobalSymbol | GlobalFunction)[] = [];
+    members: Symbol[] = [];
 
     constructor(public kind: Exclude<ExprKind, "Function"> = "<unknown>") {}
 
@@ -761,6 +761,8 @@ export class SymbolTable<T = any> {
     }
 }
 
+export type Symbol = GlobalSymbol | GlobalFunction | UnresolvedSymbol | ScriptVar | LocalSymbol;
+
 export class UnresolvedSymbol {
     referencingFiles: Set<string> = new Set();
 
@@ -774,15 +776,42 @@ export class GlobalSymbol {
     constructor(
         public name: string,
         public type: ExprType,
-        public desc?: string,
-        public decl?: Name
+        public hasDef: boolean,
+        public desc?: string
     ) {}
+
+    def(db: FileDatabase): Script | undefined {
+        if (!this.hasDef) {
+            return;
+        }
+        for (const file of db.files.values()) {
+            if (file.hir?.name.toLowerCase() === this.name.toLowerCase()) {
+                return file.hir;
+            }
+        }
+    }
 }
 
-export class Symbol {
+export class LocalSymbol {
     constructor(
         public name: string,
         public type: ExprType,
-        public decl: Name
+        public def: Name
     ) {}
+}
+
+export class ScriptVar {
+    constructor(
+        public name: string,
+        public type: ExprType,
+        public file: string
+    ) {}
+
+    def(db: FileDatabase): Name | undefined {
+        const file = db.files.get(this.file);
+        if (file === undefined) {
+            return;
+        }
+        return file.hir?.symbolTable.get(this.name)?.def;
+    }
 }

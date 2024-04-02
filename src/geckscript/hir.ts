@@ -37,7 +37,12 @@ export class FileDatabase {
         this.globalSymbols = fnData.loadFunctionData();
         this.globalSymbols.set(
             "player",
-            new GlobalSymbol("player", new ExprTypeSimple("ObjectRef"), "Referenc to the player")
+            new GlobalSymbol(
+                "player",
+                new ExprTypeSimple("ObjectRef"),
+                false,
+                "Referenc to the player"
+            )
         );
     }
 

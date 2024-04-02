@@ -26,13 +26,13 @@ export function rename(
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const def = hir.findDefinitionFromToken(token, db);
-    if (!(def instanceof hir.Symbol)) {
+    const def = hir.defFromToken(token, db);
+    if (!(def instanceof hir.LocalSymbol)) {
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const refs = hir.findReferences(db, def);
-    const changes: TextEdit[] = [{ range: file.rangeOf(def.decl.node.green), newText: newName }];
+    const refs = hir.references(db, def);
+    const changes: TextEdit[] = [{ range: file.rangeOf(def.def.node.green), newText: newName }];
     for (const ref of refs) {
         changes.push({ range: file.rangeOf(ref.node.green), newText: newName });
     }

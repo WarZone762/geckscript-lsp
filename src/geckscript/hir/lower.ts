@@ -20,6 +20,7 @@ import {
     LambdaInlineExpr,
     LetExpr,
     Literal,
+    LocalSymbol,
     Name,
     NameRef,
     Number,
@@ -29,7 +30,6 @@ import {
     Stmt,
     StmtList,
     String,
-    Symbol,
     SymbolTable,
     UnaryExpr,
     UnaryExprOp,
@@ -66,7 +66,7 @@ export class LowerContext {
 
     stmtList(
         node: ast.StmtList | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): StmtList | undefined {
         if (node === undefined) {
             return;
@@ -83,7 +83,7 @@ export class LowerContext {
         return new StmtList(stmts, node);
     }
 
-    stmt(node: ast.Stmt | undefined, symbolTable: SymbolTable<Symbol>): Stmt | undefined {
+    stmt(node: ast.Stmt | undefined, symbolTable: SymbolTable<LocalSymbol>): Stmt | undefined {
         if (node === undefined) {
             return;
         }
@@ -184,7 +184,7 @@ export class LowerContext {
 
     blocktype(
         node: ast.BlocktypeDesig | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): Blocktype | undefined {
         if (node === undefined) {
             return;
@@ -233,7 +233,10 @@ export class LowerContext {
         return new ForeachStmt(nameRef, iter, stmtList, symbolTable, node);
     }
 
-    setStmt(node: ast.SetStmt | undefined, symbolTable: SymbolTable<Symbol>): SetStmt | undefined {
+    setStmt(
+        node: ast.SetStmt | undefined,
+        symbolTable: SymbolTable<LocalSymbol>
+    ): SetStmt | undefined {
         if (node === undefined) {
             return;
         }
@@ -253,7 +256,7 @@ export class LowerContext {
 
     varDeclStmt(
         node: ast.VarDeclStmt | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): VarDeclStmt | undefined {
         if (node === undefined) {
             return;
@@ -269,7 +272,7 @@ export class LowerContext {
         return new VarDeclStmt(name, value, node);
     }
 
-    expr(node: ast.Expr | undefined, symbolTable: SymbolTable<Symbol>): Expr | undefined {
+    expr(node: ast.Expr | undefined, symbolTable: SymbolTable<LocalSymbol>): Expr | undefined {
         if (node === undefined) {
             return;
         }
@@ -298,7 +301,7 @@ export class LowerContext {
 
     unaryExpr(
         node: ast.UnaryExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): UnaryExpr | undefined {
         if (node === undefined) {
             return;
@@ -315,7 +318,10 @@ export class LowerContext {
         return new UnaryExpr(new ExprTypeSimple(), op, operand, node);
     }
 
-    binExpr(node: ast.BinExpr | undefined, symbolTable: SymbolTable<Symbol>): BinExpr | undefined {
+    binExpr(
+        node: ast.BinExpr | undefined,
+        symbolTable: SymbolTable<LocalSymbol>
+    ): BinExpr | undefined {
         if (node === undefined) {
             return;
         }
@@ -338,7 +344,7 @@ export class LowerContext {
 
     fieldExpr(
         node: ast.FieldExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): FieldExpr | undefined {
         if (node === undefined) {
             return;
@@ -374,7 +380,7 @@ export class LowerContext {
 
     indexExpr(
         node: ast.IndexExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): IndexExpr | undefined {
         if (node === undefined) {
             return;
@@ -395,7 +401,7 @@ export class LowerContext {
 
     funcExpr(
         node: ast.FuncExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): FuncExpr | undefined {
         if (node === undefined) {
             return;
@@ -421,7 +427,10 @@ export class LowerContext {
         return new FuncExpr(new ExprTypeSimple(), func, args, node);
     }
 
-    letExpr(node: ast.LetExpr | undefined, symbolTable: SymbolTable<Symbol>): LetExpr | undefined {
+    letExpr(
+        node: ast.LetExpr | undefined,
+        symbolTable: SymbolTable<LocalSymbol>
+    ): LetExpr | undefined {
         if (node === undefined) {
             return;
         }
@@ -459,7 +468,7 @@ export class LowerContext {
 
     lambdaInlineExpr(
         node: ast.LambdaInlineExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): LambdaInlineExpr | undefined {
         if (node === undefined) {
             return;
@@ -491,7 +500,7 @@ export class LowerContext {
 
     lambdaExpr(
         node: ast.LambdaExpr | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): LambdaExpr | undefined {
         if (node === undefined) {
             return;
@@ -528,7 +537,10 @@ export class LowerContext {
         return new LambdaExpr(type, params, stmtList, symbolTable, node);
     }
 
-    varOrVarDeclList(node: ast.VarOrVarDeclList | undefined, symbolTable: SymbolTable<Symbol>) {
+    varOrVarDeclList(
+        node: ast.VarOrVarDeclList | undefined,
+        symbolTable: SymbolTable<LocalSymbol>
+    ) {
         if (node === undefined) {
             return;
         }
@@ -548,7 +560,7 @@ export class LowerContext {
 
     varOrVarDecl(
         node: ast.VarOrVarDecl | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): VarOrVarDecl | undefined {
         if (node instanceof ast.Name) {
             return this.name(node, undefined, symbolTable);
@@ -562,7 +574,7 @@ export class LowerContext {
     name(
         node: ast.Name | undefined,
         typeToken: Token<TypeSyntaxKind> | undefined,
-        symbolTable: SymbolTable<Symbol>
+        symbolTable: SymbolTable<LocalSymbol>
     ): Name | undefined {
         if (node === undefined) {
             return;
