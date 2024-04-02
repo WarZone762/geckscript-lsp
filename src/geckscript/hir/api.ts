@@ -423,7 +423,7 @@ export function references(
             }
         }
         if (scope.node instanceof ast.Script) {
-            const defFile = db.script(scope.node.green);
+            const defFile = db.scriptToFile(scope.node.green);
             if (defFile === undefined) {
                 return refs;
             }
@@ -526,6 +526,14 @@ export function findNameScope(db: FileDatabase, name: Name): HirNode | undefined
             return parent;
         }
     }
+}
+
+export function containingFile(db: FileDatabase, hirNode: HirNode): File | undefined {
+    const script = ast.root("green" in hirNode.node ? hirNode.node.green : hirNode.node);
+    if (script === undefined) {
+        return;
+    }
+    return db.scriptToFile(script.green);
 }
 
 export function* visit(node: HirNode): Generator<HirNode> {

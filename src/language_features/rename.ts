@@ -32,11 +32,7 @@ export function rename(
         return new ResponseError(ErrorCodes.InvalidRequest, "Cannont rename this");
     }
 
-    const defScript = ast.root(def.node.green);
-    if (defScript === undefined) {
-        return;
-    }
-    const defFile = db.script(defScript.green);
+    const defFile = hir.containingFile(db, def);
     if (defFile === undefined) {
         return;
     }
@@ -46,11 +42,7 @@ export function rename(
 
     const refs = hir.references(db, def.symbol);
     for (const ref of refs) {
-        const script = ast.root(ref.node.green);
-        if (script === undefined) {
-            continue;
-        }
-        const refFile = db.script(script.green);
+        const refFile = hir.containingFile(db, ref);
         if (refFile === undefined) {
             continue;
         }

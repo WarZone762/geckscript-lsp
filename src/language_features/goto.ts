@@ -3,41 +3,30 @@ import { Position } from "vscode-languageserver-textdocument";
 
 import { ast, hir } from "../geckscript.js";
 
-export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Location | null {
+export function gotoDef(db: hir.FileDatabase, file: hir.File, pos: Position): Location | undefined {
     const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token === undefined) {
-        return null;
+        return;
     }
 
     const def = hir.defFromToken(token, db);
 
     if (def === undefined) {
-        return null;
+        return;
     }
 
-    let script;
-    if (def instanceof hir.Script) {
-        script = def.node.green;
-    } else if (def instanceof hir.Name) {
-        script = ast.root(def.node.green)?.green;
-    }
-
-    if (script === undefined) {
-        return null;
-    }
-
-    const defFile = db.script(script);
+    const defFile = hir.containingFile(db, def);
     if (defFile === undefined) {
-        return null;
+        return;
     }
 
     return { uri: defFile.doc.uri, range: defFile.rangeOf(def.node.green) };
 }
 
-export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Location[] | null {
+export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Location[] | undefined {
     const token = ast.tokenAtOffset(file.root.green, file.offsetAt(pos));
     if (token == undefined) {
-        return null;
+        return;
     }
 
     let symbol = hir.symbolFromToken(token, db);
@@ -45,17 +34,12 @@ export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Locat
         symbol = symbol.def(db)?.symbol;
     }
     if (symbol === undefined) {
-        return [];
+        return;
     }
 
     const locs: Location[] = [];
     for (const ref of hir.references(db, symbol)) {
-        const script = ast.root(ref.node.green)?.green;
-        if (script === undefined) {
-            continue;
-        }
-
-        const defFile = db.script(script);
+        const defFile = hir.containingFile(db, ref);
         if (defFile === undefined) {
             continue;
         }

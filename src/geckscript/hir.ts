@@ -158,11 +158,11 @@ export class FileDatabase {
         }
     }
 
-    script(script: Node<SyntaxKind.SCRIPT>): File | undefined {
+    scriptToFile(script: Node<SyntaxKind.SCRIPT>): File | undefined {
         return this.scriptCache.get(script);
     }
 
-    scriptToUri(name: string): File | undefined {
+    uriToFile(name: string): File | undefined {
         for (const file of this.files.values()) {
             if (file.root.name()?.name()?.text === name) {
                 return file;
