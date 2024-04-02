@@ -273,7 +273,7 @@ export class Number {
 export type ExprType = ExprTypeSimple | ExprTypeFunction;
 
 export class ExprTypeSimple {
-    // for script variables
+    // for quest variables
     file?: File;
     members: Symbol[] = [];
 
@@ -761,7 +761,7 @@ export class SymbolTable<T = any> {
     }
 }
 
-export type Symbol = GlobalSymbol | GlobalFunction | UnresolvedSymbol | ScriptVar | LocalSymbol;
+export type Symbol = GlobalSymbol | GlobalFunction | UnresolvedSymbol | QuestVar | LocalSymbol;
 
 export class UnresolvedSymbol {
     referencingFiles: Set<string> = new Set();
@@ -800,7 +800,7 @@ export class LocalSymbol {
     ) {}
 }
 
-export class ScriptVar {
+export class QuestVar {
     constructor(
         public name: string,
         public type: ExprType,

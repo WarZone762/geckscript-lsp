@@ -30,8 +30,8 @@ import {
     NameRef,
     Number,
     ParamType,
+    QuestVar,
     Script,
-    ScriptVar,
     SetStmt,
     StmtList,
     String,
@@ -190,7 +190,7 @@ export class Analyzer {
                     if (lhs.file !== undefined) {
                         const symbol = lhs.file.hir!.symbolTable.get(node.field.symbol.name);
                         if (symbol !== undefined) {
-                            node.field.symbol = new ScriptVar(
+                            node.field.symbol = new QuestVar(
                                 symbol.name,
                                 symbol.type,
                                 lhs.file.doc.uri
@@ -498,7 +498,7 @@ export function defFromToken(token: Token, db: FileDatabase): Name | Script | un
         return;
     } else if (symbol instanceof LocalSymbol) {
         return symbol.def;
-    } else if (symbol instanceof GlobalSymbol || symbol instanceof ScriptVar) {
+    } else if (symbol instanceof GlobalSymbol || symbol instanceof QuestVar) {
         return symbol.def(db);
     }
 }

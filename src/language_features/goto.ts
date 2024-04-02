@@ -41,7 +41,7 @@ export function refs(db: hir.FileDatabase, file: hir.File, pos: Position): Locat
     }
 
     let symbol = hir.symbolFromToken(token, db);
-    if (symbol instanceof hir.ScriptVar) {
+    if (symbol instanceof hir.QuestVar) {
         symbol = symbol.def(db)?.symbol;
     }
     if (symbol === undefined) {
