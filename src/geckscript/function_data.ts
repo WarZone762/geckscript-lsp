@@ -4,14 +4,13 @@ import * as url from "url";
 
 import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, ParamType, SymbolTable } from "./hir.js";
 
-export function loadFunctionData(): SymbolTable<GlobalFunction> {
+export function loadFunctionData(symbolTable: SymbolTable) {
     const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
     const functionDataPath = path.resolve(
         path.join(__dirname, "..", "..", "resources", "function_data.json")
     );
 
     const funcs = JSON.parse(fs.readFileSync(functionDataPath).toString()) as FunctionDataJSON[];
-    const map = new SymbolTable();
     for (const {
         name,
         alias,
@@ -35,7 +34,7 @@ export function loadFunctionData(): SymbolTable<GlobalFunction> {
             desc
         );
 
-        map.set(name, func);
+        symbolTable.set(name, func);
         if (alias !== undefined) {
             const newFunc = new GlobalFunction(
                 alias,
@@ -48,11 +47,9 @@ export function loadFunctionData(): SymbolTable<GlobalFunction> {
                 reqRef,
                 desc
             );
-            map.set(alias, newFunc);
+            symbolTable.set(alias, newFunc);
         }
     }
-
-    return map;
 }
 
 export class GlobalFunction {

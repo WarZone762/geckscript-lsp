@@ -110,17 +110,18 @@ export function completionItems(
             });
         }
 
-        // FIXME: too many completion items
-        // for (const item of db.globalSymbols.values()) {
-        //     completionItems.push({
-        //         label: item.name,
-        //         detail: item.type.toStringWithName(item.name),
-        //         kind:
-        //             item.type.kind === "Function"
-        //                 ? CompletionItemKind.Function
-        //                 : CompletionItemKind.Variable,
-        //     });
-        // }
+        for (const item of db.unresolvedSymbols.values()) {
+            completionItems.push({
+                label: item.name,
+                labelDetails: { detail: "inferred" },
+                detail: item.type.toStringWithName(item.name),
+                kind:
+                    item.type.kind === "Function"
+                        ? CompletionItemKind.Function
+                        : CompletionItemKind.Variable,
+                documentation: "Inferred automatically",
+            });
+        }
 
         for (const globalSymbol of db.globalSymbols.values()) {
             if (globalSymbol instanceof GlobalFunction) {

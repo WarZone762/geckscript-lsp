@@ -9,6 +9,7 @@ import { URI } from "vscode-uri";
 import * as ast from "./ast.js";
 import { ServerConfig, WordStyle, parseConfig } from "./config.js";
 import * as fnData from "./function_data.js";
+import * as globals from "./globals.js";
 import {
     Analyzer,
     ExprTypeSimple,
@@ -34,7 +35,10 @@ export class FileDatabase {
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
     constructor() {
-        this.globalSymbols = fnData.loadFunctionData();
+        this.globalSymbols = new SymbolTable();
+        fnData.loadFunctionData(this.globalSymbols);
+        globals.loadGlobals(this.globalSymbols);
+
         this.globalSymbols.set(
             "player",
             new GlobalSymbol(
