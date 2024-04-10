@@ -30,7 +30,7 @@ like [FNVEdit](https://www.nexusmods.com/newvegas/mods/34703)
 
 ## Configuration
 
-The server can be configured in `geckrc.json` or `.geckrc.json` file.
+The server can be configured in `geckrc.json` or `.geckrc.json` file at the root of your project.
 
 ### Configuration options
 
