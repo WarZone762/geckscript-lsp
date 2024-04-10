@@ -1,4 +1,5 @@
 #!/bin/env node
+import open from "open";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     DiagnosticSeverity,
@@ -63,6 +64,8 @@ connection.onInitialize(async (params) => {
 
     const result: InitializeResult = {
         capabilities: {
+            executeCommandProvider: { commands: ["open"] },
+            codeActionProvider: true,
             completionProvider: { triggerCharacters: ["."] },
             definitionProvider: true,
             documentFormattingProvider: true,
@@ -156,6 +159,16 @@ connection.onDidCloseTextDocument(
     handler(async (file) => {
         DB.openFiles.delete(file.doc.uri);
     })
+);
+
+connection.onExecuteCommand(async ({ command, arguments: args }) => {
+    if (command === "open" && args !== undefined) {
+        open(`https://geckwiki.com/index.php?title=${args[0]}`);
+    }
+});
+
+connection.onCodeAction(
+    handler(async (file, params) => features.codeAction(DB, file, params.range))
 );
 
 connection.onCompletion(

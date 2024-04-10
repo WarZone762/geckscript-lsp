@@ -1,3 +1,4 @@
+export * from "./language_features/code_action.js";
 export * from "./language_features/completion.js";
 export * from "./language_features/format.js";
 export * from "./language_features/goto.js";

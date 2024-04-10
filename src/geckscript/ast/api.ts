@@ -198,6 +198,18 @@ export function nearestTokenPredicate(
     return lastLeaf;
 }
 
+export function tokensInRange(root: Node, start: number, end: number): Token[] {
+    const tokens = [];
+
+    for (const leaf of leafs(root)) {
+        if (start <= leaf.end() && leaf.offset <= end) {
+            tokens.push(leaf);
+        }
+    }
+
+    return tokens;
+}
+
 export function tokenAtOffset(root: Node, offset: number): Token | undefined {
     for (const leaf of leafs(root)) {
         if (leaf.offset <= offset && offset < leaf.end()) {

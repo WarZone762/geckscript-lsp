@@ -13,6 +13,7 @@
         "d3": "^7.8",
         "jsdom": "^24.0",
         "mime": "^4.0",
+        "open": "^10.1.0",
         "vscode-languageserver": "^9.0",
         "vscode-languageserver-textdocument": "^1.0",
         "vscode-uri": "^3.0"
