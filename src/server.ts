@@ -13,7 +13,7 @@ import * as vs from "vscode-languageserver/node.js";
 import { URI } from "vscode-uri";
 
 import * as features from "./features.js";
-import { ast, hir } from "./geckscript.js";
+import { ast, config, hir } from "./geckscript.js";
 import * as TreeViewServer from "./tree_view/server.js";
 
 const DB = new hir.FileDatabase();
@@ -103,6 +103,10 @@ connection.onInitialize(async (params) => {
 });
 
 connection.onInitialized(async () => {
+    connection.client.register(vs.DidChangeConfigurationNotification.type, {
+        section: "geckscript-lsp",
+    });
+
     for (const dir of rootDirs) {
         const progressParse = await connection.window.createWorkDoneProgress();
         const progressAnalyze = await connection.window.createWorkDoneProgress();
@@ -129,6 +133,11 @@ connection.onInitialized(async () => {
     for (const file of DB.files.values()) {
         connection.sendDiagnostics({ uri: file.doc.uri, diagnostics: file.diagnostics });
     }
+});
+
+connection.onDidChangeConfiguration(async (params) => {
+    DB.clientConfig = params.settings["geckscript-lsp"] as config.ServerConfig;
+    Object.assign(DB.config, DB.clientConfig);
 });
 
 connection.onDidOpenTextDocument(async (params) => {

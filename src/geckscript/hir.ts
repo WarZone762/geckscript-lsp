@@ -7,7 +7,7 @@ import { Position, Range, TextDocument } from "vscode-languageserver-textdocumen
 import { URI } from "vscode-uri";
 
 import * as ast from "./ast.js";
-import { ServerConfig, WordStyle, parseConfig } from "./config.js";
+import { ServerConfig, parseConfig } from "./config.js";
 import * as fnData from "./function_data.js";
 import * as globals from "./globals.js";
 import {
@@ -31,7 +31,8 @@ export class FileDatabase {
     openFiles: Set<string> = new Set();
     unresolvedSymbols: SymbolTable<UnresolvedSymbol> = new SymbolTable();
     globalSymbols: SymbolTable<GlobalSymbol | fnData.GlobalFunction>;
-    config: ServerConfig = { keywordStyle: WordStyle.Lower, functionStyle: WordStyle.Capital };
+    config: ServerConfig = { keywordStyle: "lower", functionStyle: "capital" };
+    clientConfig: Partial<ServerConfig> = {};
     scriptCache: Map<Node<SyntaxKind.SCRIPT>, File> = new Map();
 
     constructor() {
@@ -178,7 +179,9 @@ export class FileDatabase {
     }
 
     async loadConfig(configPath: string): Promise<ServerConfig> {
-        return parseConfig((await fs.readFile(configPath)).toString());
+        const geckrcConfig = parseConfig((await fs.readFile(configPath)).toString());
+        Object.assign(geckrcConfig, this.clientConfig);
+        return geckrcConfig;
     }
 }
 

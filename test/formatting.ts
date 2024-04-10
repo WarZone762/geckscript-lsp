@@ -6,7 +6,7 @@ import * as path from "path";
 import * as url from "url";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { config, hir } from "../src/geckscript.js";
+import { hir } from "../src/geckscript.js";
 import { formatDoc } from "../src/language_features/format.js";
 
 const modulePath = url.fileURLToPath(import.meta.url);
@@ -54,7 +54,7 @@ export async function format(filePath: string): Promise<string> {
             insertFinalNewline: true,
             trimTrailingWhitespace: true,
         },
-        { keywordStyle: config.WordStyle.Capital, functionStyle: config.WordStyle.Capital }
+        { keywordStyle: "capital", functionStyle: "capital" }
     );
 
     return TextDocument.applyEdits(file.doc, edits);

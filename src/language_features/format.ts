@@ -163,13 +163,13 @@ class Formatter {
     formatToken(t: Token) {
         if (isKeyword(t.kind)) {
             switch (this.opts.serverOpts.keywordStyle) {
-                case config.WordStyle.Lower:
+                case "lower":
                     t.text = t.text.toLowerCase();
                     break;
-                case config.WordStyle.Upper:
+                case "upper":
                     t.text = t.text.toUpperCase();
                     break;
-                case config.WordStyle.Capital:
+                case "capital":
                     t.text = TokenData[t.text.toLowerCase()].canonicalName;
                     break;
             }
@@ -177,13 +177,13 @@ class Formatter {
             const globalSymbol = this.db.globalSymbols.get(t.text);
             if (globalSymbol !== undefined) {
                 switch (this.opts.serverOpts.functionStyle) {
-                    case config.WordStyle.Lower:
+                    case "lower":
                         t.text = t.text.toLowerCase();
                         break;
-                    case config.WordStyle.Upper:
+                    case "upper":
                         t.text = t.text.toUpperCase();
                         break;
-                    case config.WordStyle.Capital:
+                    case "capital":
                         t.text = globalSymbol.name;
                         break;
                 }
