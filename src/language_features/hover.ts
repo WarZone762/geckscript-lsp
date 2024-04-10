@@ -22,9 +22,7 @@ export function hover(db: hir.FileDatabase, file: hir.File, pos: Position): Hove
                         hirNode.symbol.signature() +
                         "\n```" +
                         "\n" +
-                        (hirNode.symbol.desc ??
-                            "" +
-                                `\n\n[GECKWiki](https://geckwiki.com/index.php?title=${hirNode.symbol.name})`),
+                        hirNode.symbol.docs(),
                 },
             };
         } else if (hirNode.symbol instanceof hir.GlobalSymbol) {
@@ -33,10 +31,10 @@ export function hover(db: hir.FileDatabase, file: hir.File, pos: Position): Hove
                     kind: MarkupKind.Markdown,
                     value:
                         "```geckscript\n" +
-                            hirNode.symbol.type.toStringWithName(hirNode.symbol.name) +
-                            "\n```" +
-                            "\n" +
-                            hirNode.symbol.desc ?? "",
+                        hirNode.symbol.type.toStringWithName(hirNode.symbol.name) +
+                        "\n```" +
+                        "\n" +
+                        (hirNode.symbol.desc ?? ""),
                 },
             };
         } else {

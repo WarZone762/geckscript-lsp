@@ -66,7 +66,7 @@ export function completionItems(
                         detail: globalSymbol.signature(),
                         documentation: {
                             kind: MarkupKind.Markdown,
-                            value: `${globalSymbol.desc ?? ""}\n\n\n*From: ${globalSymbol.origin}*`,
+                            value: globalSymbol.docs(),
                         },
 
                         kind: CompletionItemKind.Method,
@@ -135,7 +135,7 @@ export function completionItems(
                     detail: globalSymbol.signature(),
                     documentation: {
                         kind: MarkupKind.Markdown,
-                        value: `${globalSymbol.desc ?? ""}\n\n\n*From: ${globalSymbol.origin}*`,
+                        value: globalSymbol.docs(),
                     },
 
                     kind: globalSymbol.reqRef

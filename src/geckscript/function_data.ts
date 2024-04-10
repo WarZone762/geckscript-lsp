@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
+import { MarkupContent } from "vscode-languageserver";
 
 import { ExprKindEngine, ExprTypeFunction, ExprTypeSimple, ParamType, SymbolTable } from "./hir.js";
 
@@ -97,6 +98,14 @@ export class GlobalFunction {
         } else {
             return `(**${this.retType}**) ${name}`;
         }
+    }
+
+    docs(): string {
+        return (
+            (this.desc ?? "") +
+            `\n\n\n*From: ${this.origin}*` +
+            `\n\n[GECKWiki](https://geckwiki.com/index.php?title=${this.name})`
+        );
     }
 
     get type(): ExprTypeFunction {
