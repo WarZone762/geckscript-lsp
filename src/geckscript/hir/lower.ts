@@ -14,6 +14,7 @@ import {
     FieldExprOp,
     ForeachStmt,
     FuncExpr,
+    GlobalSymbol,
     IfStmt,
     IndexExpr,
     LambdaExpr,
@@ -26,6 +27,7 @@ import {
     Number,
     ParamType,
     Script,
+    ScriptName,
     SetStmt,
     Stmt,
     StmtList,
@@ -43,15 +45,16 @@ import { SyntaxKind, Token, TypeSyntaxKind } from "../syntax.js";
 
 export class LowerContext {
     diagnostics: Diagnostic[] = [];
-    globalSymbols: UnresolvedSymbol[] = [];
+    unresolvedSymbols: UnresolvedSymbol[] = [];
+    globalSymbols: SymbolTable<GlobalSymbol> = new SymbolTable();
 
     script(node: ast.Script | undefined): Script | undefined {
         if (node === undefined) {
             return;
         }
 
-        const name = node.name()?.name()?.text;
-        if (name === undefined) {
+        const scriptName = this.scriptName(node.name());
+        if (scriptName === undefined) {
             return;
         }
 
@@ -61,7 +64,23 @@ export class LowerContext {
             return;
         }
 
-        return new Script(name, stmtList, symbolTable, node);
+        return new Script(scriptName, stmtList, symbolTable, node);
+    }
+
+    scriptName(node: ast.Name | undefined): ScriptName | undefined {
+        if (node === undefined) {
+            return;
+        }
+
+        const name = node.name()?.text;
+        if (name === undefined) {
+            return;
+        }
+
+        const nameHir = new ScriptName(name, node);
+        this.globalSymbols.set(name, nameHir.symbol);
+
+        return nameHir;
     }
 
     stmtList(
@@ -517,18 +536,19 @@ export class LowerContext {
         }
 
         let type;
-        // if this lambda is top level, add it to global symbols
         if (node.green.parent?.parent?.kind === SyntaxKind.SCRIPT) {
             const script = new ast.Script(node.green.parent.parent);
             const scriptName = script?.name()?.name()?.text;
-            if (scriptName !== undefined) {
+            if (scriptName !== undefined && this.globalSymbols.has(scriptName)) {
+                const globalSymbol = this.globalSymbols.get(scriptName)!;
                 type = new ExprTypeFunction(
                     scriptName,
                     undefined,
                     new ExprTypeSimple("Ambiguous"),
                     params.list.map((e) => new ParamType(e.symbol.name, e.type))
                 );
-                this.globalSymbols.push(new UnresolvedSymbol(scriptName, type));
+                globalSymbol.type = type;
+                globalSymbol.desc = "User Defined Function";
             }
         }
 
@@ -574,7 +594,7 @@ export class LowerContext {
     name(
         node: ast.Name | undefined,
         typeToken: Token<TypeSyntaxKind> | undefined,
-        symbolTable: SymbolTable<LocalSymbol>
+        symbolTable: SymbolTable
     ): Name | undefined {
         if (node === undefined) {
             return;

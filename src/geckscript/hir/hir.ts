@@ -5,6 +5,7 @@ import { SyntaxKind, Token } from "../syntax.js";
 
 export type HirNode =
     | Script
+    | ScriptName
     | StmtList
     | Stmt
     | Branch
@@ -17,11 +18,21 @@ export type HirNode =
 
 export class Script {
     constructor(
-        public name: string,
+        public name: ScriptName,
         public stmtList: StmtList,
         public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.Script
     ) {}
+}
+
+export class ScriptName {
+    symbol: GlobalSymbol;
+    constructor(
+        name: string,
+        public node: ast.Name
+    ) {
+        this.symbol = new GlobalSymbol(name, new ExprTypeSimple("Form"), true);
+    }
 }
 
 export class StmtList {
@@ -785,7 +796,7 @@ export class GlobalSymbol {
             return;
         }
         for (const file of db.files.values()) {
-            if (file.hir?.name.toLowerCase() === this.name.toLowerCase()) {
+            if (file.hir?.name.symbol.name.toLowerCase() === this.name.toLowerCase()) {
                 return file.hir;
             }
         }

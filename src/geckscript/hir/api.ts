@@ -487,7 +487,7 @@ export function symbolFromToken(token: Token, db: FileDatabase): Symbol | undefi
     }
 
     const hir = syntaxToHir(db, token.parent);
-    if (hir instanceof NameRef || hir instanceof Name) {
+    if (hir !== undefined && "symbol" in hir) {
         return hir.symbol;
     }
 }
@@ -552,6 +552,7 @@ export function* visitPost(node: HirNode): Generator<HirNode> {
 
 export function* children(node: HirNode): Generator<HirNode, void, undefined> {
     if (node instanceof Script) {
+        yield node.name;
         yield node.stmtList;
     } else if (node instanceof StmtList) {
         yield* node.stmts;

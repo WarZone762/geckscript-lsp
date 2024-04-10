@@ -45,7 +45,7 @@ export class FileDatabase {
                 "player",
                 new ExprTypeSimple("ObjectRef"),
                 false,
-                "Referenc to the player"
+                "Reference to the player"
             )
         );
     }
@@ -148,6 +148,9 @@ export class FileDatabase {
         for (const symbol of file.unresolvedSymbols.values()) {
             this.unresolvedSymbols.set(symbol.name, symbol);
         }
+        for (const symbol of file.globalSymbols.values()) {
+            this.globalSymbols.set(symbol.name, symbol);
+        }
         this.files.set(doc.uri, file);
         this.scriptCache.set(node, file);
 
@@ -184,6 +187,7 @@ export class File {
     root: ast.Script;
     hir?: Script;
     unresolvedSymbols: Set<UnresolvedSymbol> = new Set();
+    globalSymbols: Set<GlobalSymbol> = new Set();
     diagnostics: Diagnostic[];
 
     constructor(doc: TextDocument, root: ast.Script, diagnostics: Diagnostic[]) {
@@ -191,8 +195,11 @@ export class File {
         this.root = root;
         const lower = new LowerContext();
         this.hir = lower.script(root);
-        for (const symbol of lower.globalSymbols) {
+        for (const symbol of lower.unresolvedSymbols) {
             this.unresolvedSymbols.add(symbol);
+        }
+        for (const symbol of lower.globalSymbols.values()) {
+            this.globalSymbols.add(symbol);
         }
         this.diagnostics = diagnostics;
     }
