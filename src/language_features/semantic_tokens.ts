@@ -12,20 +12,30 @@ export const LEGEND: SemanticTokensLegend = {
     tokenTypes: [
         SemanticTokenTypes.type,
         SemanticTokenTypes.variable,
+        SemanticTokenTypes.property,
+        SemanticTokenTypes.enumMember,
         SemanticTokenTypes.function,
+        SemanticTokenTypes.method,
         SemanticTokenTypes.keyword,
         SemanticTokenTypes.comment,
         SemanticTokenTypes.string,
         SemanticTokenTypes.number,
         SemanticTokenTypes.operator,
     ],
-    tokenModifiers: [SemanticTokenModifiers.definition, SemanticTokenModifiers.readonly],
+    tokenModifiers: [
+        SemanticTokenModifiers.definition,
+        SemanticTokenModifiers.declaration,
+        SemanticTokenModifiers.readonly,
+    ],
 };
 
 const enum TokenType {
     TYPE,
     VAR,
+    PROP,
+    ENUM_MEMBER,
     FUNC,
+    METHOD,
     KEYWORD,
     COMMENT,
     STRING,
@@ -36,7 +46,8 @@ const enum TokenType {
 const enum TokenModifier {
     NONE = 0,
     DEF = 1 << 0,
-    READONLY = 1 << 1,
+    DECL = 1 << 1,
+    READONLY = 1 << 2,
 }
 
 export function buildSemanticTokens(db: hir.FileDatabase, file: hir.File): SemanticTokens {
@@ -51,11 +62,26 @@ export function buildSemanticTokens(db: hir.FileDatabase, file: hir.File): Seman
             }
             if (hirNode instanceof hir.NameRef) {
                 if (hirNode.type instanceof hir.ExprTypeFunction) {
-                    push(TokenType.FUNC, TokenModifier.NONE);
+                    if (node.parent !== undefined) {
+                        const parent = hir.syntaxToHir(db, node.parent);
+                        if (parent instanceof hir.FieldExpr) {
+                            push(TokenType.METHOD, TokenModifier.NONE);
+                        } else {
+                            push(TokenType.FUNC, TokenModifier.NONE);
+                        }
+                    } else {
+                        push(TokenType.FUNC, TokenModifier.NONE);
+                    }
+                } else if (hirNode.symbol instanceof hir.GlobalSymbol) {
+                    push(TokenType.ENUM_MEMBER, TokenModifier.READONLY);
+                } else if (hirNode.symbol instanceof hir.QuestVar) {
+                    push(TokenType.PROP, TokenModifier.NONE);
                 } else {
                     push(TokenType.VAR, TokenModifier.NONE);
                 }
             }
+        } else if (node.kind === SyntaxKind.NAME) {
+            push(TokenType.VAR, TokenModifier.DECL);
         } else if (isType(node.kind)) {
             push(TokenType.TYPE, TokenModifier.NONE);
         } else if (isKeyword(node.kind)) {
