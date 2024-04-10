@@ -5,6 +5,7 @@ Provides various language features for the scripting language used by GECK for F
 ## Features
 
 - [x] parsing and syntax error checking
+- [x] code actions
 - [x] code completion
 - [x] formatting
 - [x] goto definition and references
@@ -13,7 +14,6 @@ Provides various language features for the scripting language used by GECK for F
 - [x] semantic tokens
 - [x] signature help
 - [ ] static analysis
-- [ ] code actions
 - [ ] code lens
 - [ ] inlay hints
 
