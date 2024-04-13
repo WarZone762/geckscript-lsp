@@ -27,7 +27,7 @@ export function codeAction(
 
         if ("symbol" in hirNode && hirNode.symbol instanceof GlobalFunction) {
             actions.set(hirNode.symbol.name, {
-                title: `Open '${hirNode.symbol.name}' on GECKWiki`,
+                title: `Open '${hirNode.symbol.name}' on GECK Wiki`,
                 command: { title: "Open", command: "open", arguments: [hirNode.symbol.name] },
             });
         }

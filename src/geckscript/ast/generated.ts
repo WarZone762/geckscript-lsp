@@ -435,7 +435,7 @@ export class ForeachStmt extends AstNode<SyntaxKind.FOREACH_STMT> {
         return token(this, (k => k === SyntaxKind.LARROW) as (k: SyntaxKind) => k is SyntaxKind.LARROW);
     }
     iterable(): Expr | undefined {
-        return Expr(child(this, isExpr));
+        return Expr(child(this, isExpr, 1));
     }
     body(): StmtList | undefined {
         return StmtList.fromGreen(child(this, (k => k === SyntaxKind.STMT_LIST) as (k: SyntaxKind) => k is SyntaxKind.STMT_LIST));

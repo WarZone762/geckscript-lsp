@@ -224,7 +224,7 @@ const STMT_INFO_MAP: InfoMap = {
             foreach: ["Token", "FOREACH_KW"],
             ident: ["NameRef"],
             larrow: ["Token", "LARROW"],
-            iterable: ["Expr"],
+            iterable: ["Expr", "1"],
             body: ["StmtList"],
             loop: ["Token", "LOOP_KW"],
         },
