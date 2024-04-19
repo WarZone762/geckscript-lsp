@@ -14,7 +14,7 @@ import { URI } from "vscode-uri";
 
 import * as features from "./features.js";
 import { ast, config, hir } from "./geckscript.js";
-import * as TreeViewServer from "./tree_view/server.js";
+import { TreeViewServer } from "./tree_view/server.js";
 
 const DB = new hir.FileDatabase();
 
@@ -55,7 +55,7 @@ function handler<P extends { textDocument: { uri: string } }, E, R>(
 }
 
 const connection = createConnection(ProposedFeatures.all);
-let treeViewServer: TreeViewServer.TreeViewServer | undefined;
+let treeViewServer: TreeViewServer | undefined;
 let rootDirs: WorkspaceFolder[] = [];
 
 connection.onInitialize(async (params) => {
@@ -96,7 +96,7 @@ connection.onInitialize(async (params) => {
 
     if (process.argv.find((e) => e === "--tree-view-server") !== undefined) {
         console.log("Running tree view server");
-        treeViewServer = new TreeViewServer.TreeViewServer(8000, "localhost");
+        treeViewServer = new TreeViewServer(8000, "localhost");
     }
 
     return result;

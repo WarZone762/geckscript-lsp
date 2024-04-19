@@ -2,11 +2,9 @@
     "compilerOptions": {
         "target": "esnext",
         "lib": [
-            "es2022",
-            "DOM"
+            "es2022"
         ],
         "module": "nodenext",
-        "moduleResolution": "nodenext",
         "sourceMap": true,
         "strict": true,
         "skipLibCheck": true,

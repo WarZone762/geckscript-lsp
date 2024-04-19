@@ -25,7 +25,6 @@ export function loadGlobals(symbolTable: SymbolTable) {
         combinedMap.set(edid, combined);
     }
 
-    // for (const { type, edid, origin, script } of globalsData) {
     for (const { type, edid, origins, script } of combinedMap.values()) {
         let globalSymbol;
         if (script !== undefined) {
