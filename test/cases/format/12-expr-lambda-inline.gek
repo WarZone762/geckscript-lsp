@@ -1,5 +1,5 @@
 Scn Test12
 
-Begin Test
+Begin test
     {a, b, c} => 1
 End

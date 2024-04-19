@@ -1,6 +1,6 @@
 Scn Test17
 
-Begin Test
+Begin test
     a[0] 1 2 3
     a->b 1 2 3
     a.b 1 2 4

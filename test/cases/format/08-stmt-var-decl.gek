@@ -1,6 +1,6 @@
 Scn Test08
 
-Begin Test
+Begin test
     int foo
     float bar := 123.0
 End

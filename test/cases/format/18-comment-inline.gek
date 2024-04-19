@@ -1,6 +1,6 @@
 Scn Test18 ; 123
 
-Begin Test ; 123
+Begin test ; 123
     Set a To 123 ; 123
     Set a To 123   ; 123
 End ; 123

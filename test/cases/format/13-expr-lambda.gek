@@ -1,6 +1,6 @@
 Scn Test13
 
-Begin Test
+Begin test
     (Begin Function {a, b, c}
         Set foo To 123
     End)

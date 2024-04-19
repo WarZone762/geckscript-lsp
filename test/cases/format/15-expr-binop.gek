@@ -1,6 +1,6 @@
 Scn Test15
 
-Begin Test
+Begin test
     1 + 2
     1 - 2
     1 * 2
@@ -22,36 +22,36 @@ Begin Test
     1 : 2
     1::2
 
-    Call 1 + 2
-    Call 1 - 2
-    Call 1 * 2
-    Call 1 / 2
-    Call 1 % 2
-    Call 1 ^ 2
-    Call 1 >> 2
-    Call 1 << 2
-    Call 1 & 2
-    Call 1 | 2
-    Call 1 < 2
-    Call 1 <= 2
-    Call 1 == 2
-    Call 1 != 2
-    Call 1 > 2
-    Call 1 >= 2
+    Call 1 + 2 a
+    Call 1 - 2 a
+    Call 1 * 2 a
+    Call 1 / 2 a
+    Call 1 % 2 a
+    Call 1 ^ 2 a
+    Call 1 >> 2 a
+    Call 1 << 2 a
+    Call 1 & 2 a
+    Call 1 | 2 a
+    Call 1 < 2 a
+    Call 1 <= 2 a
+    Call 1 == 2 a
+    Call 1 != 2 a
+    Call 1 > 2 a
+    Call 1 >= 2 a
     Call 1 && 2
     Call 1 || 2
-    Call 1 : 2
-    Call 1::2
+    Call 1 : 2 a
+    Call 1::2 a
 
     Call + 2
-    Call -2
-    Call *2
+    Call -2 a
+    Call *2 a
     Call / 2
     Call % 2
     Call ^ 2
     Call >> 2
     Call << 2
-    Call &2
+    Call &2 a
     Call | 2
     Call < 2
     Call <= 2

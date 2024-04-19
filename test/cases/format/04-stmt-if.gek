@@ -1,6 +1,6 @@
 Scn Test04
 
-Begin Test
+Begin test
 
     If 1
         Set foo To 123

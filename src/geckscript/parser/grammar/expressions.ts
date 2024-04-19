@@ -133,7 +133,7 @@ function exprBpImpl(p: Parser, minBp: number, noFunc: boolean): CompletedMarker 
 
         const m: Marker = lhs.precede(p);
         p.nextAny();
-        exprBp(p, bp + 1);
+        exprBpImpl(p, bp + 1, noFunc);
 
         lhs = m.complete(p, SyntaxKind.BIN_EXPR);
     }

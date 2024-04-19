@@ -1,5 +1,5 @@
 Scn Test14
 
-Begin Test
+Begin test
     Call 1 (Call 2 3 (Call a b c))
 End

@@ -1,6 +1,6 @@
 Scn Test05
 
-Begin Test
+Begin test
     If 1
         Set foo To 123
     ElseIf 2

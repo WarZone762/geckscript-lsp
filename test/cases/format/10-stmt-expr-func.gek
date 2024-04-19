@@ -1,6 +1,6 @@
 Scn Test10
 
-Begin Test
+Begin test
     func 1 2 3
     func 4, 5 6
     func, 4, 5, 6,

@@ -6,7 +6,7 @@ Scn Test19
 
 ; 123
 ; 123
-Begin Test
+Begin test
 ; 123
 ; 123
     Set foo To 123

@@ -46,7 +46,7 @@ export class FileDatabase {
                 "player",
                 new ExprTypeSimple("ObjectRef"),
                 false,
-                "Reference to the player"
+                "A unique Actor reference which moves with the camera as it is controlled by the human; which carries all the properties and stats; which is the target for all relevant scripts and effects; which has the health, etc that are visible in the UI to represent the main character; and which is the container for the inventory items. Specifically, it is a specialcased instance of an NPC type."
             )
         );
     }

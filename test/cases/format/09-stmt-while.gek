@@ -1,6 +1,6 @@
 Scn Test09
 
-Begin Test
+Begin test
     While 1
         Set foo To 123
     Loop

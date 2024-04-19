@@ -1,6 +1,6 @@
 Scn Test16
 
-Begin Test
+Begin test
     !a
     -a
     $a

@@ -1,5 +1,5 @@
 Scn Test11
 
-Begin Test
+Begin test
     Let foo := abc
 End

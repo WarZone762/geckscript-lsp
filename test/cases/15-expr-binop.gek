@@ -22,47 +22,47 @@ begin Test
     1 : 2
     1::2
 
-    call 1 + 2
-    call 1 - 2
-    call 1 * 2
-    call 1 / 2
-    call 1 % 2
-    call 1 ^ 2
-    call 1 >> 2
-    call 1 << 2
-    call 1 & 2
-    call 1 | 2
-    call 1 < 2
-    call 1 <= 2
-    call 1 == 2
-    call 1 != 2
-    call 1 > 2
-    call 1 >= 2
+    call 1 + 2 a
+    call 1 - 2 a
+    call 1 * 2 a
+    call 1 / 2 a
+    call 1 % 2 a
+    call 1 ^ 2 a
+    call 1 >> 2 a
+    call 1 << 2 a
+    call 1 & 2 a
+    call 1 | 2 a
+    call 1 < 2 a
+    call 1 <= 2 a
+    call 1 == 2 a
+    call 1 != 2 a
+    call 1 > 2 a
+    call 1 >= 2 a
     call 1 && 2
     call 1 || 2
-    call 1 : 2
-    call 1::2
+    call 1 : 2 a
+    call 1::2 a
 
-    call + 2
-    call -2
-    call *2
-    call / 2
-    call % 2
-    call ^ 2
-    call >> 2
-    call << 2
-    call &2
-    call | 2
-    call < 2
-    call <= 2
-    call == 2
-    call != 2
-    call > 2
-    call >= 2
-    call && 2
-    call || 2
-    call : 2
-    call::2
+    call + 2  
+    call -2 a
+    call *2 a
+    call / 2  
+    call % 2  
+    call ^ 2  
+    call >> 2 
+    call << 2 
+    call &2 a
+    call | 2  
+    call < 2  
+    call <= 2 
+    call == 2 
+    call != 2 
+    call > 2  
+    call >= 2 
+    call && 2 
+    call || 2 
+    call : 2  
+    call::2   
 
     foo = 1
     foo := 1

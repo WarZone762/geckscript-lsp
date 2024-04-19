@@ -1,6 +1,6 @@
 Scn Test06
 
-Begin Test
+Begin test
     ForEach e <- iter
         Set foo To 123
     Loop
