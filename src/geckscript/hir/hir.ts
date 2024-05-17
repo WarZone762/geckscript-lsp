@@ -18,7 +18,7 @@ export type HirNode =
 
 export class Script {
     constructor(
-        public name: ScriptName,
+        public name: ScriptName | undefined,
         public stmtList: StmtList,
         public symbolTable: SymbolTable<LocalSymbol>,
         public node: ast.Script
@@ -796,7 +796,7 @@ export class GlobalSymbol {
             return;
         }
         for (const file of db.files.values()) {
-            if (file.hir?.name.symbol.name.toLowerCase() === this.name.toLowerCase()) {
+            if (file.hir?.name?.symbol.name.toLowerCase() === this.name.toLowerCase()) {
                 return file.hir;
             }
         }

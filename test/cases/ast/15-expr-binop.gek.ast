@@ -1,18 +1,18 @@
-SCRIPT 0..937
+SCRIPT 0..1006
   SCRIPTNAME_KW 0..3 "scn"
   WHITESPACE 3..4 " "
   NAME 4..10
     IDENT 4..10 "Test15"
   NEWLINE 10..12 "\n\n"
-  STMT_LIST 12..937
-    BEGIN_STMT 12..936
+  STMT_LIST 12..1006
+    BEGIN_STMT 12..1005
       BEGIN_KW 12..17 "begin"
       WHITESPACE 17..18 " "
       BLOCKTYPE_DESIG 18..22
         IDENT 18..22 "Test"
       NEWLINE 22..23 "\n"
       WHITESPACE 23..27 "    "
-      STMT_LIST 27..933
+      STMT_LIST 27..1002
         BIN_EXPR 27..32
           LITERAL 27..28
             NUMBER_INT 27..28 "1"
@@ -211,11 +211,11 @@ SCRIPT 0..937
             NUMBER_INT 228..229 "2"
         NEWLINE 229..231 "\n\n"
         WHITESPACE 231..235 "    "
-        FUNC_EXPR 235..245
+        FUNC_EXPR 235..247
           NAME_REF 235..239
             IDENT 235..239 "call"
           WHITESPACE 239..240 " "
-          EXPR_LIST 240..245
+          EXPR_LIST 240..247
             BIN_EXPR 240..245
               LITERAL 240..241
                 NUMBER_INT 240..241 "1"
@@ -224,590 +224,670 @@ SCRIPT 0..937
               WHITESPACE 243..244 " "
               LITERAL 244..245
                 NUMBER_INT 244..245 "2"
-        NEWLINE 245..246 "\n"
-        WHITESPACE 246..250 "    "
-        FUNC_EXPR 250..260
-          NAME_REF 250..254
-            IDENT 250..254 "call"
-          WHITESPACE 254..255 " "
-          EXPR_LIST 255..260
-            BIN_EXPR 255..260
-              LITERAL 255..256
-                NUMBER_INT 255..256 "1"
-              WHITESPACE 256..257 " "
-              MINUS 257..258 "-"
+            WHITESPACE 245..246 " "
+            NAME_REF 246..247
+              IDENT 246..247 "a"
+        NEWLINE 247..248 "\n"
+        WHITESPACE 248..252 "    "
+        FUNC_EXPR 252..264
+          NAME_REF 252..256
+            IDENT 252..256 "call"
+          WHITESPACE 256..257 " "
+          EXPR_LIST 257..264
+            BIN_EXPR 257..262
+              LITERAL 257..258
+                NUMBER_INT 257..258 "1"
               WHITESPACE 258..259 " "
-              LITERAL 259..260
-                NUMBER_INT 259..260 "2"
-        NEWLINE 260..261 "\n"
-        WHITESPACE 261..265 "    "
-        FUNC_EXPR 265..275
-          NAME_REF 265..269
-            IDENT 265..269 "call"
-          WHITESPACE 269..270 " "
-          EXPR_LIST 270..275
-            BIN_EXPR 270..275
-              LITERAL 270..271
-                NUMBER_INT 270..271 "1"
-              WHITESPACE 271..272 " "
-              ASTERISK 272..273 "*"
-              WHITESPACE 273..274 " "
+              MINUS 259..260 "-"
+              WHITESPACE 260..261 " "
+              LITERAL 261..262
+                NUMBER_INT 261..262 "2"
+            WHITESPACE 262..263 " "
+            NAME_REF 263..264
+              IDENT 263..264 "a"
+        NEWLINE 264..265 "\n"
+        WHITESPACE 265..269 "    "
+        FUNC_EXPR 269..281
+          NAME_REF 269..273
+            IDENT 269..273 "call"
+          WHITESPACE 273..274 " "
+          EXPR_LIST 274..281
+            BIN_EXPR 274..279
               LITERAL 274..275
-                NUMBER_INT 274..275 "2"
-        NEWLINE 275..276 "\n"
-        WHITESPACE 276..280 "    "
-        FUNC_EXPR 280..290
-          NAME_REF 280..284
-            IDENT 280..284 "call"
-          WHITESPACE 284..285 " "
-          EXPR_LIST 285..290
-            BIN_EXPR 285..290
-              LITERAL 285..286
-                NUMBER_INT 285..286 "1"
-              WHITESPACE 286..287 " "
-              SLASH 287..288 "/"
-              WHITESPACE 288..289 " "
-              LITERAL 289..290
-                NUMBER_INT 289..290 "2"
-        NEWLINE 290..291 "\n"
-        WHITESPACE 291..295 "    "
-        FUNC_EXPR 295..305
-          NAME_REF 295..299
-            IDENT 295..299 "call"
-          WHITESPACE 299..300 " "
-          EXPR_LIST 300..305
-            BIN_EXPR 300..305
-              LITERAL 300..301
-                NUMBER_INT 300..301 "1"
-              WHITESPACE 301..302 " "
-              PERCENT 302..303 "%"
-              WHITESPACE 303..304 " "
-              LITERAL 304..305
-                NUMBER_INT 304..305 "2"
-        NEWLINE 305..306 "\n"
-        WHITESPACE 306..310 "    "
-        FUNC_EXPR 310..320
-          NAME_REF 310..314
-            IDENT 310..314 "call"
-          WHITESPACE 314..315 " "
-          EXPR_LIST 315..320
-            BIN_EXPR 315..320
-              LITERAL 315..316
-                NUMBER_INT 315..316 "1"
-              WHITESPACE 316..317 " "
-              CIRCUMFLEX 317..318 "^"
-              WHITESPACE 318..319 " "
-              LITERAL 319..320
-                NUMBER_INT 319..320 "2"
-        NEWLINE 320..321 "\n"
-        WHITESPACE 321..325 "    "
-        FUNC_EXPR 325..336
-          NAME_REF 325..329
-            IDENT 325..329 "call"
-          WHITESPACE 329..330 " "
-          EXPR_LIST 330..336
-            BIN_EXPR 330..336
-              LITERAL 330..331
-                NUMBER_INT 330..331 "1"
-              WHITESPACE 331..332 " "
-              GT2 332..334 ">>"
-              WHITESPACE 334..335 " "
-              LITERAL 335..336
-                NUMBER_INT 335..336 "2"
-        NEWLINE 336..337 "\n"
-        WHITESPACE 337..341 "    "
-        FUNC_EXPR 341..352
-          NAME_REF 341..345
-            IDENT 341..345 "call"
-          WHITESPACE 345..346 " "
-          EXPR_LIST 346..352
-            BIN_EXPR 346..352
-              LITERAL 346..347
-                NUMBER_INT 346..347 "1"
-              WHITESPACE 347..348 " "
-              LT2 348..350 "<<"
-              WHITESPACE 350..351 " "
-              LITERAL 351..352
-                NUMBER_INT 351..352 "2"
-        NEWLINE 352..353 "\n"
-        WHITESPACE 353..357 "    "
-        FUNC_EXPR 357..367
-          NAME_REF 357..361
-            IDENT 357..361 "call"
-          WHITESPACE 361..362 " "
-          EXPR_LIST 362..367
-            BIN_EXPR 362..367
-              LITERAL 362..363
-                NUMBER_INT 362..363 "1"
-              WHITESPACE 363..364 " "
-              AMPERSAND 364..365 "&"
-              WHITESPACE 365..366 " "
-              LITERAL 366..367
-                NUMBER_INT 366..367 "2"
-        NEWLINE 367..368 "\n"
-        WHITESPACE 368..372 "    "
-        FUNC_EXPR 372..382
-          NAME_REF 372..376
-            IDENT 372..376 "call"
-          WHITESPACE 376..377 " "
-          EXPR_LIST 377..382
-            BIN_EXPR 377..382
-              LITERAL 377..378
-                NUMBER_INT 377..378 "1"
-              WHITESPACE 378..379 " "
-              VBAR 379..380 "|"
-              WHITESPACE 380..381 " "
-              LITERAL 381..382
-                NUMBER_INT 381..382 "2"
-        NEWLINE 382..383 "\n"
-        WHITESPACE 383..387 "    "
-        FUNC_EXPR 387..397
-          NAME_REF 387..391
-            IDENT 387..391 "call"
-          WHITESPACE 391..392 " "
-          EXPR_LIST 392..397
-            BIN_EXPR 392..397
-              LITERAL 392..393
-                NUMBER_INT 392..393 "1"
-              WHITESPACE 393..394 " "
-              LT 394..395 "<"
-              WHITESPACE 395..396 " "
-              LITERAL 396..397
-                NUMBER_INT 396..397 "2"
-        NEWLINE 397..398 "\n"
-        WHITESPACE 398..402 "    "
-        FUNC_EXPR 402..413
-          NAME_REF 402..406
-            IDENT 402..406 "call"
-          WHITESPACE 406..407 " "
-          EXPR_LIST 407..413
-            BIN_EXPR 407..413
-              LITERAL 407..408
-                NUMBER_INT 407..408 "1"
-              WHITESPACE 408..409 " "
-              LTEQ 409..411 "<="
-              WHITESPACE 411..412 " "
+                NUMBER_INT 274..275 "1"
+              WHITESPACE 275..276 " "
+              ASTERISK 276..277 "*"
+              WHITESPACE 277..278 " "
+              LITERAL 278..279
+                NUMBER_INT 278..279 "2"
+            WHITESPACE 279..280 " "
+            NAME_REF 280..281
+              IDENT 280..281 "a"
+        NEWLINE 281..282 "\n"
+        WHITESPACE 282..286 "    "
+        FUNC_EXPR 286..298
+          NAME_REF 286..290
+            IDENT 286..290 "call"
+          WHITESPACE 290..291 " "
+          EXPR_LIST 291..298
+            BIN_EXPR 291..296
+              LITERAL 291..292
+                NUMBER_INT 291..292 "1"
+              WHITESPACE 292..293 " "
+              SLASH 293..294 "/"
+              WHITESPACE 294..295 " "
+              LITERAL 295..296
+                NUMBER_INT 295..296 "2"
+            WHITESPACE 296..297 " "
+            NAME_REF 297..298
+              IDENT 297..298 "a"
+        NEWLINE 298..299 "\n"
+        WHITESPACE 299..303 "    "
+        FUNC_EXPR 303..315
+          NAME_REF 303..307
+            IDENT 303..307 "call"
+          WHITESPACE 307..308 " "
+          EXPR_LIST 308..315
+            BIN_EXPR 308..313
+              LITERAL 308..309
+                NUMBER_INT 308..309 "1"
+              WHITESPACE 309..310 " "
+              PERCENT 310..311 "%"
+              WHITESPACE 311..312 " "
+              LITERAL 312..313
+                NUMBER_INT 312..313 "2"
+            WHITESPACE 313..314 " "
+            NAME_REF 314..315
+              IDENT 314..315 "a"
+        NEWLINE 315..316 "\n"
+        WHITESPACE 316..320 "    "
+        FUNC_EXPR 320..332
+          NAME_REF 320..324
+            IDENT 320..324 "call"
+          WHITESPACE 324..325 " "
+          EXPR_LIST 325..332
+            BIN_EXPR 325..330
+              LITERAL 325..326
+                NUMBER_INT 325..326 "1"
+              WHITESPACE 326..327 " "
+              CIRCUMFLEX 327..328 "^"
+              WHITESPACE 328..329 " "
+              LITERAL 329..330
+                NUMBER_INT 329..330 "2"
+            WHITESPACE 330..331 " "
+            NAME_REF 331..332
+              IDENT 331..332 "a"
+        NEWLINE 332..333 "\n"
+        WHITESPACE 333..337 "    "
+        FUNC_EXPR 337..350
+          NAME_REF 337..341
+            IDENT 337..341 "call"
+          WHITESPACE 341..342 " "
+          EXPR_LIST 342..350
+            BIN_EXPR 342..348
+              LITERAL 342..343
+                NUMBER_INT 342..343 "1"
+              WHITESPACE 343..344 " "
+              GT2 344..346 ">>"
+              WHITESPACE 346..347 " "
+              LITERAL 347..348
+                NUMBER_INT 347..348 "2"
+            WHITESPACE 348..349 " "
+            NAME_REF 349..350
+              IDENT 349..350 "a"
+        NEWLINE 350..351 "\n"
+        WHITESPACE 351..355 "    "
+        FUNC_EXPR 355..368
+          NAME_REF 355..359
+            IDENT 355..359 "call"
+          WHITESPACE 359..360 " "
+          EXPR_LIST 360..368
+            BIN_EXPR 360..366
+              LITERAL 360..361
+                NUMBER_INT 360..361 "1"
+              WHITESPACE 361..362 " "
+              LT2 362..364 "<<"
+              WHITESPACE 364..365 " "
+              LITERAL 365..366
+                NUMBER_INT 365..366 "2"
+            WHITESPACE 366..367 " "
+            NAME_REF 367..368
+              IDENT 367..368 "a"
+        NEWLINE 368..369 "\n"
+        WHITESPACE 369..373 "    "
+        FUNC_EXPR 373..385
+          NAME_REF 373..377
+            IDENT 373..377 "call"
+          WHITESPACE 377..378 " "
+          EXPR_LIST 378..385
+            BIN_EXPR 378..383
+              LITERAL 378..379
+                NUMBER_INT 378..379 "1"
+              WHITESPACE 379..380 " "
+              AMPERSAND 380..381 "&"
+              WHITESPACE 381..382 " "
+              LITERAL 382..383
+                NUMBER_INT 382..383 "2"
+            WHITESPACE 383..384 " "
+            NAME_REF 384..385
+              IDENT 384..385 "a"
+        NEWLINE 385..386 "\n"
+        WHITESPACE 386..390 "    "
+        FUNC_EXPR 390..402
+          NAME_REF 390..394
+            IDENT 390..394 "call"
+          WHITESPACE 394..395 " "
+          EXPR_LIST 395..402
+            BIN_EXPR 395..400
+              LITERAL 395..396
+                NUMBER_INT 395..396 "1"
+              WHITESPACE 396..397 " "
+              VBAR 397..398 "|"
+              WHITESPACE 398..399 " "
+              LITERAL 399..400
+                NUMBER_INT 399..400 "2"
+            WHITESPACE 400..401 " "
+            NAME_REF 401..402
+              IDENT 401..402 "a"
+        NEWLINE 402..403 "\n"
+        WHITESPACE 403..407 "    "
+        FUNC_EXPR 407..419
+          NAME_REF 407..411
+            IDENT 407..411 "call"
+          WHITESPACE 411..412 " "
+          EXPR_LIST 412..419
+            BIN_EXPR 412..417
               LITERAL 412..413
-                NUMBER_INT 412..413 "2"
-        NEWLINE 413..414 "\n"
-        WHITESPACE 414..418 "    "
-        FUNC_EXPR 418..429
-          NAME_REF 418..422
-            IDENT 418..422 "call"
-          WHITESPACE 422..423 " "
-          EXPR_LIST 423..429
-            BIN_EXPR 423..429
-              LITERAL 423..424
-                NUMBER_INT 423..424 "1"
-              WHITESPACE 424..425 " "
-              EQ2 425..427 "=="
-              WHITESPACE 427..428 " "
-              LITERAL 428..429
-                NUMBER_INT 428..429 "2"
-        NEWLINE 429..430 "\n"
-        WHITESPACE 430..434 "    "
-        FUNC_EXPR 434..445
-          NAME_REF 434..438
-            IDENT 434..438 "call"
-          WHITESPACE 438..439 " "
-          EXPR_LIST 439..445
-            BIN_EXPR 439..445
-              LITERAL 439..440
-                NUMBER_INT 439..440 "1"
-              WHITESPACE 440..441 " "
-              EXCLAMATIONEQ 441..443 "!="
-              WHITESPACE 443..444 " "
-              LITERAL 444..445
-                NUMBER_INT 444..445 "2"
-        NEWLINE 445..446 "\n"
-        WHITESPACE 446..450 "    "
-        FUNC_EXPR 450..460
-          NAME_REF 450..454
-            IDENT 450..454 "call"
-          WHITESPACE 454..455 " "
-          EXPR_LIST 455..460
-            BIN_EXPR 455..460
-              LITERAL 455..456
-                NUMBER_INT 455..456 "1"
-              WHITESPACE 456..457 " "
-              GT 457..458 ">"
-              WHITESPACE 458..459 " "
-              LITERAL 459..460
-                NUMBER_INT 459..460 "2"
-        NEWLINE 460..461 "\n"
-        WHITESPACE 461..465 "    "
-        FUNC_EXPR 465..476
-          NAME_REF 465..469
-            IDENT 465..469 "call"
-          WHITESPACE 469..470 " "
-          EXPR_LIST 470..476
-            BIN_EXPR 470..476
+                NUMBER_INT 412..413 "1"
+              WHITESPACE 413..414 " "
+              LT 414..415 "<"
+              WHITESPACE 415..416 " "
+              LITERAL 416..417
+                NUMBER_INT 416..417 "2"
+            WHITESPACE 417..418 " "
+            NAME_REF 418..419
+              IDENT 418..419 "a"
+        NEWLINE 419..420 "\n"
+        WHITESPACE 420..424 "    "
+        FUNC_EXPR 424..437
+          NAME_REF 424..428
+            IDENT 424..428 "call"
+          WHITESPACE 428..429 " "
+          EXPR_LIST 429..437
+            BIN_EXPR 429..435
+              LITERAL 429..430
+                NUMBER_INT 429..430 "1"
+              WHITESPACE 430..431 " "
+              LTEQ 431..433 "<="
+              WHITESPACE 433..434 " "
+              LITERAL 434..435
+                NUMBER_INT 434..435 "2"
+            WHITESPACE 435..436 " "
+            NAME_REF 436..437
+              IDENT 436..437 "a"
+        NEWLINE 437..438 "\n"
+        WHITESPACE 438..442 "    "
+        FUNC_EXPR 442..455
+          NAME_REF 442..446
+            IDENT 442..446 "call"
+          WHITESPACE 446..447 " "
+          EXPR_LIST 447..455
+            BIN_EXPR 447..453
+              LITERAL 447..448
+                NUMBER_INT 447..448 "1"
+              WHITESPACE 448..449 " "
+              EQ2 449..451 "=="
+              WHITESPACE 451..452 " "
+              LITERAL 452..453
+                NUMBER_INT 452..453 "2"
+            WHITESPACE 453..454 " "
+            NAME_REF 454..455
+              IDENT 454..455 "a"
+        NEWLINE 455..456 "\n"
+        WHITESPACE 456..460 "    "
+        FUNC_EXPR 460..473
+          NAME_REF 460..464
+            IDENT 460..464 "call"
+          WHITESPACE 464..465 " "
+          EXPR_LIST 465..473
+            BIN_EXPR 465..471
+              LITERAL 465..466
+                NUMBER_INT 465..466 "1"
+              WHITESPACE 466..467 " "
+              EXCLAMATIONEQ 467..469 "!="
+              WHITESPACE 469..470 " "
               LITERAL 470..471
-                NUMBER_INT 470..471 "1"
-              WHITESPACE 471..472 " "
-              GTEQ 472..474 ">="
-              WHITESPACE 474..475 " "
-              LITERAL 475..476
-                NUMBER_INT 475..476 "2"
-        NEWLINE 476..477 "\n"
-        WHITESPACE 477..481 "    "
-        BIN_EXPR 481..492
-          FUNC_EXPR 481..487
-            NAME_REF 481..485
-              IDENT 481..485 "call"
-            WHITESPACE 485..486 " "
-            EXPR_LIST 486..487
-              LITERAL 486..487
-                NUMBER_INT 486..487 "1"
-          WHITESPACE 487..488 " "
-          AMPERSAND2 488..490 "&&"
-          WHITESPACE 490..491 " "
-          LITERAL 491..492
-            NUMBER_INT 491..492 "2"
-        NEWLINE 492..493 "\n"
-        WHITESPACE 493..497 "    "
-        BIN_EXPR 497..508
-          FUNC_EXPR 497..503
-            NAME_REF 497..501
-              IDENT 497..501 "call"
-            WHITESPACE 501..502 " "
-            EXPR_LIST 502..503
-              LITERAL 502..503
-                NUMBER_INT 502..503 "1"
-          WHITESPACE 503..504 " "
-          VBAR2 504..506 "||"
-          WHITESPACE 506..507 " "
-          LITERAL 507..508
-            NUMBER_INT 507..508 "2"
+                NUMBER_INT 470..471 "2"
+            WHITESPACE 471..472 " "
+            NAME_REF 472..473
+              IDENT 472..473 "a"
+        NEWLINE 473..474 "\n"
+        WHITESPACE 474..478 "    "
+        FUNC_EXPR 478..490
+          NAME_REF 478..482
+            IDENT 478..482 "call"
+          WHITESPACE 482..483 " "
+          EXPR_LIST 483..490
+            BIN_EXPR 483..488
+              LITERAL 483..484
+                NUMBER_INT 483..484 "1"
+              WHITESPACE 484..485 " "
+              GT 485..486 ">"
+              WHITESPACE 486..487 " "
+              LITERAL 487..488
+                NUMBER_INT 487..488 "2"
+            WHITESPACE 488..489 " "
+            NAME_REF 489..490
+              IDENT 489..490 "a"
+        NEWLINE 490..491 "\n"
+        WHITESPACE 491..495 "    "
+        FUNC_EXPR 495..508
+          NAME_REF 495..499
+            IDENT 495..499 "call"
+          WHITESPACE 499..500 " "
+          EXPR_LIST 500..508
+            BIN_EXPR 500..506
+              LITERAL 500..501
+                NUMBER_INT 500..501 "1"
+              WHITESPACE 501..502 " "
+              GTEQ 502..504 ">="
+              WHITESPACE 504..505 " "
+              LITERAL 505..506
+                NUMBER_INT 505..506 "2"
+            WHITESPACE 506..507 " "
+            NAME_REF 507..508
+              IDENT 507..508 "a"
         NEWLINE 508..509 "\n"
         WHITESPACE 509..513 "    "
-        FUNC_EXPR 513..523
-          NAME_REF 513..517
-            IDENT 513..517 "call"
-          WHITESPACE 517..518 " "
-          EXPR_LIST 518..523
-            BIN_EXPR 518..523
+        BIN_EXPR 513..524
+          FUNC_EXPR 513..519
+            NAME_REF 513..517
+              IDENT 513..517 "call"
+            WHITESPACE 517..518 " "
+            EXPR_LIST 518..519
               LITERAL 518..519
                 NUMBER_INT 518..519 "1"
-              WHITESPACE 519..520 " "
-              COLON 520..521 ":"
-              WHITESPACE 521..522 " "
-              LITERAL 522..523
-                NUMBER_INT 522..523 "2"
-        NEWLINE 523..524 "\n"
-        WHITESPACE 524..528 "    "
-        FUNC_EXPR 528..537
-          NAME_REF 528..532
-            IDENT 528..532 "call"
-          WHITESPACE 532..533 " "
-          EXPR_LIST 533..537
-            BIN_EXPR 533..537
-              LITERAL 533..534
-                NUMBER_INT 533..534 "1"
-              COLON2 534..536 "::"
-              LITERAL 536..537
-                NUMBER_INT 536..537 "2"
-        NEWLINE 537..539 "\n\n"
-        WHITESPACE 539..543 "    "
-        BIN_EXPR 543..551
-          NAME_REF 543..547
-            IDENT 543..547 "call"
-          WHITESPACE 547..548 " "
-          PLUS 548..549 "+"
+          WHITESPACE 519..520 " "
+          AMPERSAND2 520..522 "&&"
+          WHITESPACE 522..523 " "
+          LITERAL 523..524
+            NUMBER_INT 523..524 "2"
+        NEWLINE 524..525 "\n"
+        WHITESPACE 525..529 "    "
+        BIN_EXPR 529..540
+          FUNC_EXPR 529..535
+            NAME_REF 529..533
+              IDENT 529..533 "call"
+            WHITESPACE 533..534 " "
+            EXPR_LIST 534..535
+              LITERAL 534..535
+                NUMBER_INT 534..535 "1"
+          WHITESPACE 535..536 " "
+          VBAR2 536..538 "||"
+          WHITESPACE 538..539 " "
+          LITERAL 539..540
+            NUMBER_INT 539..540 "2"
+        NEWLINE 540..541 "\n"
+        WHITESPACE 541..545 "    "
+        FUNC_EXPR 545..557
+          NAME_REF 545..549
+            IDENT 545..549 "call"
           WHITESPACE 549..550 " "
-          LITERAL 550..551
-            NUMBER_INT 550..551 "2"
-        NEWLINE 551..552 "\n"
-        WHITESPACE 552..556 "    "
-        FUNC_EXPR 556..563
-          NAME_REF 556..560
-            IDENT 556..560 "call"
-          WHITESPACE 560..561 " "
-          EXPR_LIST 561..563
-            UNARY_EXPR 561..563
-              MINUS 561..562 "-"
-              LITERAL 562..563
-                NUMBER_INT 562..563 "2"
-        NEWLINE 563..564 "\n"
-        WHITESPACE 564..568 "    "
-        FUNC_EXPR 568..575
-          NAME_REF 568..572
-            IDENT 568..572 "call"
-          WHITESPACE 572..573 " "
-          EXPR_LIST 573..575
-            UNARY_EXPR 573..575
-              ASTERISK 573..574 "*"
-              LITERAL 574..575
-                NUMBER_INT 574..575 "2"
-        NEWLINE 575..576 "\n"
-        WHITESPACE 576..580 "    "
-        BIN_EXPR 580..588
-          NAME_REF 580..584
-            IDENT 580..584 "call"
-          WHITESPACE 584..585 " "
-          SLASH 585..586 "/"
-          WHITESPACE 586..587 " "
-          LITERAL 587..588
-            NUMBER_INT 587..588 "2"
-        NEWLINE 588..589 "\n"
-        WHITESPACE 589..593 "    "
-        BIN_EXPR 593..601
-          NAME_REF 593..597
-            IDENT 593..597 "call"
-          WHITESPACE 597..598 " "
-          PERCENT 598..599 "%"
-          WHITESPACE 599..600 " "
-          LITERAL 600..601
-            NUMBER_INT 600..601 "2"
-        NEWLINE 601..602 "\n"
-        WHITESPACE 602..606 "    "
-        BIN_EXPR 606..614
-          NAME_REF 606..610
-            IDENT 606..610 "call"
-          WHITESPACE 610..611 " "
-          CIRCUMFLEX 611..612 "^"
+          EXPR_LIST 550..557
+            BIN_EXPR 550..555
+              LITERAL 550..551
+                NUMBER_INT 550..551 "1"
+              WHITESPACE 551..552 " "
+              COLON 552..553 ":"
+              WHITESPACE 553..554 " "
+              LITERAL 554..555
+                NUMBER_INT 554..555 "2"
+            WHITESPACE 555..556 " "
+            NAME_REF 556..557
+              IDENT 556..557 "a"
+        NEWLINE 557..558 "\n"
+        WHITESPACE 558..562 "    "
+        FUNC_EXPR 562..573
+          NAME_REF 562..566
+            IDENT 562..566 "call"
+          WHITESPACE 566..567 " "
+          EXPR_LIST 567..573
+            BIN_EXPR 567..571
+              LITERAL 567..568
+                NUMBER_INT 567..568 "1"
+              COLON2 568..570 "::"
+              LITERAL 570..571
+                NUMBER_INT 570..571 "2"
+            WHITESPACE 571..572 " "
+            NAME_REF 572..573
+              IDENT 572..573 "a"
+        NEWLINE 573..575 "\n\n"
+        WHITESPACE 575..579 "    "
+        BIN_EXPR 579..587
+          NAME_REF 579..583
+            IDENT 579..583 "call"
+          WHITESPACE 583..584 " "
+          PLUS 584..585 "+"
+          WHITESPACE 585..586 " "
+          LITERAL 586..587
+            NUMBER_INT 586..587 "2"
+        WHITESPACE 587..589 "  "
+        NEWLINE 589..590 "\n"
+        WHITESPACE 590..594 "    "
+        FUNC_EXPR 594..603
+          NAME_REF 594..598
+            IDENT 594..598 "call"
+          WHITESPACE 598..599 " "
+          EXPR_LIST 599..603
+            UNARY_EXPR 599..601
+              MINUS 599..600 "-"
+              LITERAL 600..601
+                NUMBER_INT 600..601 "2"
+            WHITESPACE 601..602 " "
+            NAME_REF 602..603
+              IDENT 602..603 "a"
+        NEWLINE 603..604 "\n"
+        WHITESPACE 604..608 "    "
+        FUNC_EXPR 608..617
+          NAME_REF 608..612
+            IDENT 608..612 "call"
           WHITESPACE 612..613 " "
-          LITERAL 613..614
-            NUMBER_INT 613..614 "2"
-        NEWLINE 614..615 "\n"
-        WHITESPACE 615..619 "    "
-        BIN_EXPR 619..628
-          NAME_REF 619..623
-            IDENT 619..623 "call"
-          WHITESPACE 623..624 " "
-          GT2 624..626 ">>"
+          EXPR_LIST 613..617
+            UNARY_EXPR 613..615
+              ASTERISK 613..614 "*"
+              LITERAL 614..615
+                NUMBER_INT 614..615 "2"
+            WHITESPACE 615..616 " "
+            NAME_REF 616..617
+              IDENT 616..617 "a"
+        NEWLINE 617..618 "\n"
+        WHITESPACE 618..622 "    "
+        BIN_EXPR 622..630
+          NAME_REF 622..626
+            IDENT 622..626 "call"
           WHITESPACE 626..627 " "
-          LITERAL 627..628
-            NUMBER_INT 627..628 "2"
-        NEWLINE 628..629 "\n"
-        WHITESPACE 629..633 "    "
-        BIN_EXPR 633..642
-          NAME_REF 633..637
-            IDENT 633..637 "call"
-          WHITESPACE 637..638 " "
-          LT2 638..640 "<<"
-          WHITESPACE 640..641 " "
-          LITERAL 641..642
-            NUMBER_INT 641..642 "2"
-        NEWLINE 642..643 "\n"
-        WHITESPACE 643..647 "    "
-        FUNC_EXPR 647..654
-          NAME_REF 647..651
-            IDENT 647..651 "call"
-          WHITESPACE 651..652 " "
-          EXPR_LIST 652..654
-            UNARY_EXPR 652..654
-              AMPERSAND 652..653 "&"
-              LITERAL 653..654
-                NUMBER_INT 653..654 "2"
-        NEWLINE 654..655 "\n"
-        WHITESPACE 655..659 "    "
-        BIN_EXPR 659..667
-          NAME_REF 659..663
-            IDENT 659..663 "call"
-          WHITESPACE 663..664 " "
-          VBAR 664..665 "|"
-          WHITESPACE 665..666 " "
-          LITERAL 666..667
-            NUMBER_INT 666..667 "2"
-        NEWLINE 667..668 "\n"
-        WHITESPACE 668..672 "    "
-        BIN_EXPR 672..680
-          NAME_REF 672..676
-            IDENT 672..676 "call"
-          WHITESPACE 676..677 " "
-          LT 677..678 "<"
-          WHITESPACE 678..679 " "
-          LITERAL 679..680
-            NUMBER_INT 679..680 "2"
-        NEWLINE 680..681 "\n"
-        WHITESPACE 681..685 "    "
-        BIN_EXPR 685..694
-          NAME_REF 685..689
-            IDENT 685..689 "call"
+          SLASH 627..628 "/"
+          WHITESPACE 628..629 " "
+          LITERAL 629..630
+            NUMBER_INT 629..630 "2"
+        WHITESPACE 630..632 "  "
+        NEWLINE 632..633 "\n"
+        WHITESPACE 633..637 "    "
+        BIN_EXPR 637..645
+          NAME_REF 637..641
+            IDENT 637..641 "call"
+          WHITESPACE 641..642 " "
+          PERCENT 642..643 "%"
+          WHITESPACE 643..644 " "
+          LITERAL 644..645
+            NUMBER_INT 644..645 "2"
+        WHITESPACE 645..647 "  "
+        NEWLINE 647..648 "\n"
+        WHITESPACE 648..652 "    "
+        BIN_EXPR 652..660
+          NAME_REF 652..656
+            IDENT 652..656 "call"
+          WHITESPACE 656..657 " "
+          CIRCUMFLEX 657..658 "^"
+          WHITESPACE 658..659 " "
+          LITERAL 659..660
+            NUMBER_INT 659..660 "2"
+        WHITESPACE 660..662 "  "
+        NEWLINE 662..663 "\n"
+        WHITESPACE 663..667 "    "
+        BIN_EXPR 667..676
+          NAME_REF 667..671
+            IDENT 667..671 "call"
+          WHITESPACE 671..672 " "
+          GT2 672..674 ">>"
+          WHITESPACE 674..675 " "
+          LITERAL 675..676
+            NUMBER_INT 675..676 "2"
+        WHITESPACE 676..677 " "
+        NEWLINE 677..678 "\n"
+        WHITESPACE 678..682 "    "
+        BIN_EXPR 682..691
+          NAME_REF 682..686
+            IDENT 682..686 "call"
+          WHITESPACE 686..687 " "
+          LT2 687..689 "<<"
           WHITESPACE 689..690 " "
-          LTEQ 690..692 "<="
-          WHITESPACE 692..693 " "
-          LITERAL 693..694
-            NUMBER_INT 693..694 "2"
-        NEWLINE 694..695 "\n"
-        WHITESPACE 695..699 "    "
-        BIN_EXPR 699..708
-          NAME_REF 699..703
-            IDENT 699..703 "call"
-          WHITESPACE 703..704 " "
-          EQ2 704..706 "=="
-          WHITESPACE 706..707 " "
-          LITERAL 707..708
-            NUMBER_INT 707..708 "2"
-        NEWLINE 708..709 "\n"
-        WHITESPACE 709..713 "    "
-        BIN_EXPR 713..722
-          NAME_REF 713..717
-            IDENT 713..717 "call"
+          LITERAL 690..691
+            NUMBER_INT 690..691 "2"
+        WHITESPACE 691..692 " "
+        NEWLINE 692..693 "\n"
+        WHITESPACE 693..697 "    "
+        FUNC_EXPR 697..706
+          NAME_REF 697..701
+            IDENT 697..701 "call"
+          WHITESPACE 701..702 " "
+          EXPR_LIST 702..706
+            UNARY_EXPR 702..704
+              AMPERSAND 702..703 "&"
+              LITERAL 703..704
+                NUMBER_INT 703..704 "2"
+            WHITESPACE 704..705 " "
+            NAME_REF 705..706
+              IDENT 705..706 "a"
+        NEWLINE 706..707 "\n"
+        WHITESPACE 707..711 "    "
+        BIN_EXPR 711..719
+          NAME_REF 711..715
+            IDENT 711..715 "call"
+          WHITESPACE 715..716 " "
+          VBAR 716..717 "|"
           WHITESPACE 717..718 " "
-          EXCLAMATIONEQ 718..720 "!="
-          WHITESPACE 720..721 " "
-          LITERAL 721..722
-            NUMBER_INT 721..722 "2"
-        NEWLINE 722..723 "\n"
-        WHITESPACE 723..727 "    "
-        BIN_EXPR 727..735
-          NAME_REF 727..731
-            IDENT 727..731 "call"
-          WHITESPACE 731..732 " "
-          GT 732..733 ">"
-          WHITESPACE 733..734 " "
-          LITERAL 734..735
-            NUMBER_INT 734..735 "2"
-        NEWLINE 735..736 "\n"
-        WHITESPACE 736..740 "    "
-        BIN_EXPR 740..749
-          NAME_REF 740..744
-            IDENT 740..744 "call"
-          WHITESPACE 744..745 " "
-          GTEQ 745..747 ">="
-          WHITESPACE 747..748 " "
-          LITERAL 748..749
-            NUMBER_INT 748..749 "2"
-        NEWLINE 749..750 "\n"
-        WHITESPACE 750..754 "    "
-        BIN_EXPR 754..763
-          NAME_REF 754..758
-            IDENT 754..758 "call"
-          WHITESPACE 758..759 " "
-          AMPERSAND2 759..761 "&&"
-          WHITESPACE 761..762 " "
-          LITERAL 762..763
-            NUMBER_INT 762..763 "2"
-        NEWLINE 763..764 "\n"
-        WHITESPACE 764..768 "    "
-        BIN_EXPR 768..777
-          NAME_REF 768..772
-            IDENT 768..772 "call"
-          WHITESPACE 772..773 " "
-          VBAR2 773..775 "||"
+          LITERAL 718..719
+            NUMBER_INT 718..719 "2"
+        WHITESPACE 719..721 "  "
+        NEWLINE 721..722 "\n"
+        WHITESPACE 722..726 "    "
+        BIN_EXPR 726..734
+          NAME_REF 726..730
+            IDENT 726..730 "call"
+          WHITESPACE 730..731 " "
+          LT 731..732 "<"
+          WHITESPACE 732..733 " "
+          LITERAL 733..734
+            NUMBER_INT 733..734 "2"
+        WHITESPACE 734..736 "  "
+        NEWLINE 736..737 "\n"
+        WHITESPACE 737..741 "    "
+        BIN_EXPR 741..750
+          NAME_REF 741..745
+            IDENT 741..745 "call"
+          WHITESPACE 745..746 " "
+          LTEQ 746..748 "<="
+          WHITESPACE 748..749 " "
+          LITERAL 749..750
+            NUMBER_INT 749..750 "2"
+        WHITESPACE 750..751 " "
+        NEWLINE 751..752 "\n"
+        WHITESPACE 752..756 "    "
+        BIN_EXPR 756..765
+          NAME_REF 756..760
+            IDENT 756..760 "call"
+          WHITESPACE 760..761 " "
+          EQ2 761..763 "=="
+          WHITESPACE 763..764 " "
+          LITERAL 764..765
+            NUMBER_INT 764..765 "2"
+        WHITESPACE 765..766 " "
+        NEWLINE 766..767 "\n"
+        WHITESPACE 767..771 "    "
+        BIN_EXPR 771..780
+          NAME_REF 771..775
+            IDENT 771..775 "call"
           WHITESPACE 775..776 " "
-          LITERAL 776..777
-            NUMBER_INT 776..777 "2"
-        NEWLINE 777..778 "\n"
-        WHITESPACE 778..782 "    "
-        BIN_EXPR 782..790
-          NAME_REF 782..786
-            IDENT 782..786 "call"
-          WHITESPACE 786..787 " "
-          COLON 787..788 ":"
-          WHITESPACE 788..789 " "
-          LITERAL 789..790
-            NUMBER_INT 789..790 "2"
-        NEWLINE 790..791 "\n"
-        WHITESPACE 791..795 "    "
-        BIN_EXPR 795..802
-          NAME_REF 795..799
-            IDENT 795..799 "call"
-          COLON2 799..801 "::"
-          LITERAL 801..802
-            NUMBER_INT 801..802 "2"
-        NEWLINE 802..804 "\n\n"
-        WHITESPACE 804..808 "    "
-        BIN_EXPR 808..815
-          NAME_REF 808..811
-            IDENT 808..811 "foo"
-          WHITESPACE 811..812 " "
-          EQ 812..813 "="
-          WHITESPACE 813..814 " "
-          LITERAL 814..815
-            NUMBER_INT 814..815 "1"
-        NEWLINE 815..816 "\n"
-        WHITESPACE 816..820 "    "
-        BIN_EXPR 820..828
-          NAME_REF 820..823
-            IDENT 820..823 "foo"
+          EXCLAMATIONEQ 776..778 "!="
+          WHITESPACE 778..779 " "
+          LITERAL 779..780
+            NUMBER_INT 779..780 "2"
+        WHITESPACE 780..781 " "
+        NEWLINE 781..782 "\n"
+        WHITESPACE 782..786 "    "
+        BIN_EXPR 786..794
+          NAME_REF 786..790
+            IDENT 786..790 "call"
+          WHITESPACE 790..791 " "
+          GT 791..792 ">"
+          WHITESPACE 792..793 " "
+          LITERAL 793..794
+            NUMBER_INT 793..794 "2"
+        WHITESPACE 794..796 "  "
+        NEWLINE 796..797 "\n"
+        WHITESPACE 797..801 "    "
+        BIN_EXPR 801..810
+          NAME_REF 801..805
+            IDENT 801..805 "call"
+          WHITESPACE 805..806 " "
+          GTEQ 806..808 ">="
+          WHITESPACE 808..809 " "
+          LITERAL 809..810
+            NUMBER_INT 809..810 "2"
+        WHITESPACE 810..811 " "
+        NEWLINE 811..812 "\n"
+        WHITESPACE 812..816 "    "
+        BIN_EXPR 816..825
+          NAME_REF 816..820
+            IDENT 816..820 "call"
+          WHITESPACE 820..821 " "
+          AMPERSAND2 821..823 "&&"
           WHITESPACE 823..824 " "
-          COLONEQ 824..826 ":="
-          WHITESPACE 826..827 " "
-          LITERAL 827..828
-            NUMBER_INT 827..828 "1"
-        NEWLINE 828..829 "\n"
-        WHITESPACE 829..833 "    "
-        BIN_EXPR 833..841
-          NAME_REF 833..836
-            IDENT 833..836 "foo"
-          WHITESPACE 836..837 " "
-          PLUSEQ 837..839 "+="
-          WHITESPACE 839..840 " "
-          LITERAL 840..841
-            NUMBER_INT 840..841 "1"
+          LITERAL 824..825
+            NUMBER_INT 824..825 "2"
+        WHITESPACE 825..826 " "
+        NEWLINE 826..827 "\n"
+        WHITESPACE 827..831 "    "
+        BIN_EXPR 831..840
+          NAME_REF 831..835
+            IDENT 831..835 "call"
+          WHITESPACE 835..836 " "
+          VBAR2 836..838 "||"
+          WHITESPACE 838..839 " "
+          LITERAL 839..840
+            NUMBER_INT 839..840 "2"
+        WHITESPACE 840..841 " "
         NEWLINE 841..842 "\n"
         WHITESPACE 842..846 "    "
         BIN_EXPR 846..854
-          NAME_REF 846..849
-            IDENT 846..849 "foo"
-          WHITESPACE 849..850 " "
-          MINUSEQ 850..852 "-="
+          NAME_REF 846..850
+            IDENT 846..850 "call"
+          WHITESPACE 850..851 " "
+          COLON 851..852 ":"
           WHITESPACE 852..853 " "
           LITERAL 853..854
-            NUMBER_INT 853..854 "1"
-        NEWLINE 854..855 "\n"
-        WHITESPACE 855..859 "    "
-        BIN_EXPR 859..867
-          NAME_REF 859..862
-            IDENT 859..862 "foo"
-          WHITESPACE 862..863 " "
-          ASTERISKEQ 863..865 "*="
-          WHITESPACE 865..866 " "
-          LITERAL 866..867
-            NUMBER_INT 866..867 "1"
-        NEWLINE 867..868 "\n"
-        WHITESPACE 868..872 "    "
-        BIN_EXPR 872..880
-          NAME_REF 872..875
-            IDENT 872..875 "foo"
-          WHITESPACE 875..876 " "
-          SLASHEQ 876..878 "/="
-          WHITESPACE 878..879 " "
-          LITERAL 879..880
-            NUMBER_INT 879..880 "1"
-        NEWLINE 880..881 "\n"
-        WHITESPACE 881..885 "    "
-        BIN_EXPR 885..893
-          NAME_REF 885..888
-            IDENT 885..888 "foo"
-          WHITESPACE 888..889 " "
-          PERCENTEQ 889..891 "%="
-          WHITESPACE 891..892 " "
-          LITERAL 892..893
-            NUMBER_INT 892..893 "1"
-        NEWLINE 893..894 "\n"
-        WHITESPACE 894..898 "    "
-        BIN_EXPR 898..906
-          NAME_REF 898..901
-            IDENT 898..901 "foo"
-          WHITESPACE 901..902 " "
-          CIRCUMFLEXEQ 902..904 "^="
-          WHITESPACE 904..905 " "
-          LITERAL 905..906
-            NUMBER_INT 905..906 "1"
-        NEWLINE 906..907 "\n"
-        WHITESPACE 907..911 "    "
-        BIN_EXPR 911..919
-          NAME_REF 911..914
-            IDENT 911..914 "foo"
-          WHITESPACE 914..915 " "
-          AMPERSANDEQ 915..917 "&="
-          WHITESPACE 917..918 " "
-          LITERAL 918..919
-            NUMBER_INT 918..919 "1"
-        NEWLINE 919..920 "\n"
-        WHITESPACE 920..924 "    "
-        BIN_EXPR 924..932
-          NAME_REF 924..927
-            IDENT 924..927 "foo"
-          WHITESPACE 927..928 " "
-          VBAREQ 928..930 "|="
-          WHITESPACE 930..931 " "
-          LITERAL 931..932
-            NUMBER_INT 931..932 "1"
-        NEWLINE 932..933 "\n"
-      END_KW 933..936 "end"
-    NEWLINE 936..937 "\n"
+            NUMBER_INT 853..854 "2"
+        WHITESPACE 854..856 "  "
+        NEWLINE 856..857 "\n"
+        WHITESPACE 857..861 "    "
+        BIN_EXPR 861..868
+          NAME_REF 861..865
+            IDENT 861..865 "call"
+          COLON2 865..867 "::"
+          LITERAL 867..868
+            NUMBER_INT 867..868 "2"
+        WHITESPACE 868..871 "   "
+        NEWLINE 871..873 "\n\n"
+        WHITESPACE 873..877 "    "
+        BIN_EXPR 877..884
+          NAME_REF 877..880
+            IDENT 877..880 "foo"
+          WHITESPACE 880..881 " "
+          EQ 881..882 "="
+          WHITESPACE 882..883 " "
+          LITERAL 883..884
+            NUMBER_INT 883..884 "1"
+        NEWLINE 884..885 "\n"
+        WHITESPACE 885..889 "    "
+        BIN_EXPR 889..897
+          NAME_REF 889..892
+            IDENT 889..892 "foo"
+          WHITESPACE 892..893 " "
+          COLONEQ 893..895 ":="
+          WHITESPACE 895..896 " "
+          LITERAL 896..897
+            NUMBER_INT 896..897 "1"
+        NEWLINE 897..898 "\n"
+        WHITESPACE 898..902 "    "
+        BIN_EXPR 902..910
+          NAME_REF 902..905
+            IDENT 902..905 "foo"
+          WHITESPACE 905..906 " "
+          PLUSEQ 906..908 "+="
+          WHITESPACE 908..909 " "
+          LITERAL 909..910
+            NUMBER_INT 909..910 "1"
+        NEWLINE 910..911 "\n"
+        WHITESPACE 911..915 "    "
+        BIN_EXPR 915..923
+          NAME_REF 915..918
+            IDENT 915..918 "foo"
+          WHITESPACE 918..919 " "
+          MINUSEQ 919..921 "-="
+          WHITESPACE 921..922 " "
+          LITERAL 922..923
+            NUMBER_INT 922..923 "1"
+        NEWLINE 923..924 "\n"
+        WHITESPACE 924..928 "    "
+        BIN_EXPR 928..936
+          NAME_REF 928..931
+            IDENT 928..931 "foo"
+          WHITESPACE 931..932 " "
+          ASTERISKEQ 932..934 "*="
+          WHITESPACE 934..935 " "
+          LITERAL 935..936
+            NUMBER_INT 935..936 "1"
+        NEWLINE 936..937 "\n"
+        WHITESPACE 937..941 "    "
+        BIN_EXPR 941..949
+          NAME_REF 941..944
+            IDENT 941..944 "foo"
+          WHITESPACE 944..945 " "
+          SLASHEQ 945..947 "/="
+          WHITESPACE 947..948 " "
+          LITERAL 948..949
+            NUMBER_INT 948..949 "1"
+        NEWLINE 949..950 "\n"
+        WHITESPACE 950..954 "    "
+        BIN_EXPR 954..962
+          NAME_REF 954..957
+            IDENT 954..957 "foo"
+          WHITESPACE 957..958 " "
+          PERCENTEQ 958..960 "%="
+          WHITESPACE 960..961 " "
+          LITERAL 961..962
+            NUMBER_INT 961..962 "1"
+        NEWLINE 962..963 "\n"
+        WHITESPACE 963..967 "    "
+        BIN_EXPR 967..975
+          NAME_REF 967..970
+            IDENT 967..970 "foo"
+          WHITESPACE 970..971 " "
+          CIRCUMFLEXEQ 971..973 "^="
+          WHITESPACE 973..974 " "
+          LITERAL 974..975
+            NUMBER_INT 974..975 "1"
+        NEWLINE 975..976 "\n"
+        WHITESPACE 976..980 "    "
+        BIN_EXPR 980..988
+          NAME_REF 980..983
+            IDENT 980..983 "foo"
+          WHITESPACE 983..984 " "
+          AMPERSANDEQ 984..986 "&="
+          WHITESPACE 986..987 " "
+          LITERAL 987..988
+            NUMBER_INT 987..988 "1"
+        NEWLINE 988..989 "\n"
+        WHITESPACE 989..993 "    "
+        BIN_EXPR 993..1001
+          NAME_REF 993..996
+            IDENT 993..996 "foo"
+          WHITESPACE 996..997 " "
+          VBAREQ 997..999 "|="
+          WHITESPACE 999..1000 " "
+          LITERAL 1000..1001
+            NUMBER_INT 1000..1001 "1"
+        NEWLINE 1001..1002 "\n"
+      END_KW 1002..1005 "end"
+    NEWLINE 1005..1006 "\n"

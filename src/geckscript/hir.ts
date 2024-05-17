@@ -58,7 +58,11 @@ export class FileDatabase {
         cbAnalyze: (done: number, total: number) => void = () => {}
     ) {
         const files = (await fs.readdir(dirPath, { recursive: true })).filter(
-            (e) => e.endsWith(".gek") || e.endsWith(".geck") || e.endsWith("geckrc.json")
+            (e) =>
+                e.endsWith(".txt") ||
+                e.endsWith(".gek") ||
+                e.endsWith(".geck") ||
+                e.endsWith("geckrc.json")
         );
         const total = files.length;
         let done = 0;
@@ -78,7 +82,10 @@ export class FileDatabase {
                 continue;
             }
 
-            if (stat.isDirectory() || (!file.endsWith(".gek") && !file.endsWith(".geck"))) {
+            if (
+                stat.isDirectory() ||
+                (!file.endsWith(".gek") && !file.endsWith(".geck") && !file.endsWith(".txt"))
+            ) {
                 continue;
             }
 

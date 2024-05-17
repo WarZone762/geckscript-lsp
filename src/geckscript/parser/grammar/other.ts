@@ -4,6 +4,29 @@ import { EXPR_FIRST, TYPE, TokenSet } from "../token_set.js";
 import { exprNoFunc, exprPrimary } from "./expressions.js";
 import { stmtListRoot } from "./statements.js";
 
+export function script(p: Parser) {
+    const m = p.start();
+
+    while (p.opt(SyntaxKind.NEWLINE)) {
+        continue;
+    }
+
+    if (p.atTs(new TokenSet([SyntaxKind.BEGIN_KW, SyntaxKind.SCRIPTNAME_KW]))) {
+        if (!p.at(SyntaxKind.BEGIN_KW)) {
+            if (!p.opt(SyntaxKind.SCRIPTNAME_KW)) {
+                p.errRecover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
+            }
+            name(p);
+            restOfLine(p);
+            p.expect(SyntaxKind.NEWLINE);
+        }
+
+        stmtListRoot(p);
+    }
+
+    m.complete(p, SyntaxKind.SCRIPT);
+}
+
 export function nameR(p: Parser, recovery: TokenSet) {
     if (p.at(SyntaxKind.IDENT)) {
         const m = p.start();
@@ -102,25 +125,6 @@ export function blockType(p: Parser) {
     }
 
     m.complete(p, SyntaxKind.BLOCKTYPE_DESIG);
-}
-
-export function script(p: Parser) {
-    const m = p.start();
-
-    while (p.opt(SyntaxKind.NEWLINE)) {
-        continue;
-    }
-
-    if (!p.opt(SyntaxKind.SCRIPTNAME_KW)) {
-        p.errRecover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
-    }
-    name(p);
-    restOfLine(p);
-    p.expect(SyntaxKind.NEWLINE);
-
-    stmtListRoot(p);
-
-    m.complete(p, SyntaxKind.SCRIPT);
 }
 
 export function restOfLine(p: Parser) {

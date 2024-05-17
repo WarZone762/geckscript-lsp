@@ -54,9 +54,6 @@ export class LowerContext {
         }
 
         const scriptName = this.scriptName(node.name());
-        if (scriptName === undefined) {
-            return;
-        }
 
         const symbolTable = new SymbolTable();
         const stmtList = this.stmtList(node.body(), symbolTable);

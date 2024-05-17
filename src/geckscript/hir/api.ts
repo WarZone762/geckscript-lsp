@@ -552,7 +552,9 @@ export function* visitPost(node: HirNode): Generator<HirNode> {
 
 export function* children(node: HirNode): Generator<HirNode, void, undefined> {
     if (node instanceof Script) {
-        yield node.name;
+        if (node.name) {
+            yield node.name;
+        }
         yield node.stmtList;
     } else if (node instanceof StmtList) {
         yield* node.stmts;
