@@ -72,7 +72,8 @@ export function stmtRoot(p: Parser) {
             if (isType(p.cur())) {
                 stmtVarDecl(p);
             } else {
-                p.warnAndNext("statement outside of begin block");
+                stmt(p);
+                // p.warnAndNext("statement outside of begin block");
                 return;
             }
     }
