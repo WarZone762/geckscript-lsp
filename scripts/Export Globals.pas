@@ -24,7 +24,7 @@ begin
     if sig = 'QUST' then
         tmp := EditorID(LinksTo(ElementByName(e, 'SCRI - Script')));
     if tmp <> '' then begin
-        file.Add(Format('    {"type": "%s", "edid": "%s", "origin": "%s", "script": "%s"},', [Signature(e), edid, tmp, BaseName(GetFile(e))]));
+        file.Add(Format('    {"type": "%s", "edid": "%s", "origin": "%s", "script": "%s"},', [Signature(e), edid, BaseName(GetFile(e)), tmp]));
         Exit;
     end;
 

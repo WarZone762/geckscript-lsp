@@ -11,18 +11,13 @@ export function script(p: Parser) {
         continue;
     }
 
-    if (p.atTs(new TokenSet([SyntaxKind.BEGIN_KW, SyntaxKind.SCRIPTNAME_KW]))) {
-        if (!p.at(SyntaxKind.BEGIN_KW)) {
-            if (!p.opt(SyntaxKind.SCRIPTNAME_KW)) {
-                p.errRecover("expected 'scn' or 'ScriptName'", new TokenSet([SyntaxKind.IDENT]));
-            }
-            name(p);
-            restOfLine(p);
-            p.expect(SyntaxKind.NEWLINE);
-        }
-
-        stmtListRoot(p);
+    if (p.opt(SyntaxKind.SCRIPTNAME_KW)) {
+        name(p);
+        restOfLine(p);
+        p.expect(SyntaxKind.NEWLINE);
     }
+
+    stmtListRoot(p);
 
     m.complete(p, SyntaxKind.SCRIPT);
 }
